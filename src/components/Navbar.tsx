@@ -20,10 +20,16 @@ const mainNavItems = [
   { name: "Mitarbeiter", path: "/employees", icon: <UserIcon className="h-5 w-5" /> },
   { name: "Fuhrpark", path: "/fleet", icon: <TruckIcon className="h-5 w-5" /> },
   { name: "Schichtplanung", path: "/shifts", icon: <CalendarIcon className="h-5 w-5" /> },
-  { name: "Dateien hochladen", path: "/file-upload", icon: <FileUpIcon className="h-5 w-5" /> },
   { name: "Scorecard", path: "/scorecard", icon: <BarChart2Icon className="h-5 w-5" /> },
   { name: "Finanzen", path: "/finance", icon: <DollarSignIcon className="h-5 w-5" /> },
 ];
+
+// Moved file upload to be its own item after the separator
+const fileUploadItem = { 
+  name: "Dateien hochladen", 
+  path: "/file-upload", 
+  icon: <FileUpIcon className="h-5 w-5" /> 
+};
 
 const settingsNavItem = { 
   name: "Einstellungen", 
@@ -65,8 +71,22 @@ const Navbar = () => {
                 </Link>
               ))}
               
-              {/* Separator before Settings */}
+              {/* Separator before File Upload */}
               <div className="my-4 border-t border-sidebar-border"></div>
+              
+              {/* File Upload Nav Item moved here */}
+              <Link 
+                key={fileUploadItem.path} 
+                to={fileUploadItem.path}
+                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md group transition-colors ${
+                  location.pathname === fileUploadItem.path 
+                    ? "bg-sidebar-accent text-white" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-white"
+                }`}
+              >
+                <span className="mr-3">{fileUploadItem.icon}</span>
+                {fileUploadItem.name}
+              </Link>
               
               {/* Settings Nav Item */}
               <Link 
@@ -136,8 +156,23 @@ const Navbar = () => {
                 </Link>
               ))}
               
-              {/* Separator before Settings in mobile menu */}
+              {/* Separator before File Upload in mobile menu */}
               <div className="my-4 border-t border-sidebar-border"></div>
+              
+              {/* File Upload Nav Item in mobile menu */}
+              <Link 
+                key={fileUploadItem.path} 
+                to={fileUploadItem.path}
+                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md group transition-colors ${
+                  location.pathname === fileUploadItem.path 
+                    ? "bg-sidebar-accent text-white" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-white"
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="mr-3">{fileUploadItem.icon}</span>
+                {fileUploadItem.name}
+              </Link>
               
               {/* Settings Nav Item in mobile menu */}
               <Link 
