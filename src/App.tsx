@@ -15,7 +15,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <Toaster />
         <Sonner />
         <BrowserRouter>
