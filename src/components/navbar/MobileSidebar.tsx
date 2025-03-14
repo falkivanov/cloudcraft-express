@@ -14,30 +14,30 @@ const MobileSidebar = () => {
   const { mainNavItems, fileUploadItem, settingsNavItem } = navigationItems;
   
   return (
-    <div className="md:hidden flex items-center justify-between h-16 px-4 border-b bg-sidebar">
+    <div className="md:hidden flex items-center justify-between h-20 px-5 border-b bg-sidebar">
       <div className="flex items-center">
-        <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
-          <span className="text-white font-bold text-sm">FS</span>
+        <div className="h-10 w-10 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+          <span className="text-white font-bold text-base">FS</span>
         </div>
-        <h1 className="text-xl font-bold text-white">FinSuite</h1>
+        <h1 className="text-2xl font-bold text-white">FinSuite</h1>
       </div>
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="text-white">
-            <MenuIcon className="h-6 w-6" />
+            <MenuIcon className="h-8 w-8" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-sidebar">
-          <div className="flex items-center h-16 flex-shrink-0 px-4 bg-sidebar-accent border-b">
+        <SheetContent side="left" className="w-72 p-0 bg-sidebar">
+          <div className="flex items-center h-20 flex-shrink-0 px-5 bg-sidebar-accent border-b">
             <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-sm">FS</span>
+              <div className="h-10 w-10 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+                <span className="text-white font-bold text-base">FS</span>
               </div>
-              <h1 className="text-xl font-bold text-white">FinSuite</h1>
+              <h1 className="text-2xl font-bold text-white">FinSuite</h1>
             </div>
           </div>
-          <div className="mt-5 px-3 space-y-1">
-            <SidebarMenu>
+          <div className="mt-5 px-4 space-y-2">
+            <SidebarMenu className="space-y-2">
               {mainNavItems.map((item) => (
                 <NavItem 
                   key={item.path} 
@@ -48,9 +48,9 @@ const MobileSidebar = () => {
               ))}
             </SidebarMenu>
             
-            <SidebarSeparator className="my-4" />
+            <SidebarSeparator className="my-5" />
             
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               <NavItem 
                 item={fileUploadItem} 
                 pathname={location.pathname} 
