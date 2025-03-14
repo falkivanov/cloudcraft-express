@@ -9,7 +9,7 @@ import {
   DollarSignIcon, 
   HomeIcon,
   MenuIcon,
-  XIcon
+  SettingsIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,6 +21,7 @@ const navItems = [
   { name: "Schichtplanung", path: "/shifts", icon: <CalendarIcon className="h-5 w-5" /> },
   { name: "Scorecard", path: "/scorecard", icon: <BarChart2Icon className="h-5 w-5" /> },
   { name: "Finanzen", path: "/finance", icon: <DollarSignIcon className="h-5 w-5" /> },
+  { name: "Einstellungen", path: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
 ];
 
 const Navbar = () => {

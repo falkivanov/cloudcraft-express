@@ -24,6 +24,7 @@ const App = () => (
             <Route path="/shifts" element={<div className="p-8"><h1 className="text-3xl font-bold">Schichtplanung</h1></div>} />
             <Route path="/scorecard" element={<div className="p-8"><h1 className="text-3xl font-bold">Scorecard</h1></div>} />
             <Route path="/finance" element={<div className="p-8"><h1 className="text-3xl font-bold">Finanzen</h1></div>} />
+            <Route path="/settings" element={<div className="p-8"><h1 className="text-3xl font-bold">Einstellungen</h1></div>} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
