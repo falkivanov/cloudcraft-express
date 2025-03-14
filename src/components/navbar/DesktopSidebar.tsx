@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import { navigationItems } from "./navigationItems";
 import NavItem from "./NavItem";
-import SidebarToggle from "./SidebarToggle";
 
 const DesktopSidebar = () => {
   const location = useLocation();
@@ -41,9 +40,6 @@ const DesktopSidebar = () => {
               <span className="text-white font-bold text-sm">FS</span>
             </div>
             <h1 className="text-xl font-bold text-white">FinSuite</h1>
-          </div>
-          <div className="ml-auto">
-            <SidebarToggle />
           </div>
         </SidebarHeader>
         
