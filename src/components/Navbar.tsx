@@ -39,7 +39,12 @@ const Navbar = () => {
       <div className="hidden md:flex w-64 flex-col fixed inset-y-0">
         <div className="flex flex-col flex-1 min-h-0 bg-sidebar border-r">
           <div className="flex items-center h-16 flex-shrink-0 px-4 bg-sidebar-accent border-b">
-            <h1 className="text-xl font-bold text-white">Management System</h1>
+            <div className="flex items-center">
+              <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+                <span className="text-white font-bold text-sm">FS</span>
+              </div>
+              <h1 className="text-xl font-bold text-white">FinSuite</h1>
+            </div>
           </div>
           <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
             <nav className="mt-5 flex-1 px-3 space-y-2">
@@ -91,7 +96,12 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <div className="md:hidden flex items-center justify-between h-16 px-4 border-b bg-sidebar">
-        <h1 className="text-xl font-bold text-white">Management System</h1>
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+            <span className="text-white font-bold text-sm">FS</span>
+          </div>
+          <h1 className="text-xl font-bold text-white">FinSuite</h1>
+        </div>
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-white">
@@ -100,7 +110,12 @@ const Navbar = () => {
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-sidebar">
             <div className="flex items-center h-16 flex-shrink-0 px-4 bg-sidebar-accent border-b">
-              <h1 className="text-xl font-bold text-white">Management System</h1>
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-sm">FS</span>
+                </div>
+                <h1 className="text-xl font-bold text-white">FinSuite</h1>
+              </div>
             </div>
             <nav className="mt-5 px-3 space-y-2">
               {mainNavItems.map((item) => (
