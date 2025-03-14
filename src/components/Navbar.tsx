@@ -14,15 +14,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-const navItems = [
+const mainNavItems = [
   { name: "Dashboard", path: "/", icon: <HomeIcon className="h-5 w-5" /> },
   { name: "Mitarbeiter", path: "/employees", icon: <UserIcon className="h-5 w-5" /> },
   { name: "Fuhrpark", path: "/fleet", icon: <TruckIcon className="h-5 w-5" /> },
   { name: "Schichtplanung", path: "/shifts", icon: <CalendarIcon className="h-5 w-5" /> },
   { name: "Scorecard", path: "/scorecard", icon: <BarChart2Icon className="h-5 w-5" /> },
   { name: "Finanzen", path: "/finance", icon: <DollarSignIcon className="h-5 w-5" /> },
-  { name: "Einstellungen", path: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
 ];
+
+const settingsNavItem = { 
+  name: "Einstellungen", 
+  path: "/settings", 
+  icon: <SettingsIcon className="h-5 w-5" /> 
+};
 
 const Navbar = () => {
   const location = useLocation();
@@ -38,7 +43,7 @@ const Navbar = () => {
           </div>
           <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
             <nav className="mt-5 flex-1 px-3 space-y-2">
-              {navItems.map((item) => (
+              {mainNavItems.map((item) => (
                 <Link 
                   key={item.path} 
                   to={item.path}
@@ -52,6 +57,23 @@ const Navbar = () => {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Separator before Settings */}
+              <div className="my-4 border-t border-sidebar-border"></div>
+              
+              {/* Settings Nav Item */}
+              <Link 
+                key={settingsNavItem.path} 
+                to={settingsNavItem.path}
+                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md group transition-colors ${
+                  location.pathname === settingsNavItem.path 
+                    ? "bg-sidebar-accent text-white" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-white"
+                }`}
+              >
+                <span className="mr-3">{settingsNavItem.icon}</span>
+                {settingsNavItem.name}
+              </Link>
             </nav>
           </div>
           <div className="flex-shrink-0 flex border-t border-sidebar-border p-4">
@@ -81,7 +103,7 @@ const Navbar = () => {
               <h1 className="text-xl font-bold text-white">Management System</h1>
             </div>
             <nav className="mt-5 px-3 space-y-2">
-              {navItems.map((item) => (
+              {mainNavItems.map((item) => (
                 <Link 
                   key={item.path} 
                   to={item.path}
@@ -96,6 +118,24 @@ const Navbar = () => {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Separator before Settings in mobile menu */}
+              <div className="my-4 border-t border-sidebar-border"></div>
+              
+              {/* Settings Nav Item in mobile menu */}
+              <Link 
+                key={settingsNavItem.path} 
+                to={settingsNavItem.path}
+                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md group transition-colors ${
+                  location.pathname === settingsNavItem.path 
+                    ? "bg-sidebar-accent text-white" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-white"
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="mr-3">{settingsNavItem.icon}</span>
+                {settingsNavItem.name}
+              </Link>
             </nav>
           </SheetContent>
         </Sheet>
