@@ -9,7 +9,8 @@ import {
   DollarSignIcon, 
   HomeIcon,
   MenuIcon,
-  SettingsIcon
+  SettingsIcon,
+  FileUpIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,6 +20,7 @@ const mainNavItems = [
   { name: "Mitarbeiter", path: "/employees", icon: <UserIcon className="h-5 w-5" /> },
   { name: "Fuhrpark", path: "/fleet", icon: <TruckIcon className="h-5 w-5" /> },
   { name: "Schichtplanung", path: "/shifts", icon: <CalendarIcon className="h-5 w-5" /> },
+  { name: "Dateien hochladen", path: "/file-upload", icon: <FileUpIcon className="h-5 w-5" /> },
   { name: "Scorecard", path: "/scorecard", icon: <BarChart2Icon className="h-5 w-5" /> },
   { name: "Finanzen", path: "/finance", icon: <DollarSignIcon className="h-5 w-5" /> },
 ];
