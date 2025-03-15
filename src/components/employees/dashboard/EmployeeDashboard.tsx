@@ -1,10 +1,8 @@
 
 import React from "react";
 import { User, Briefcase, Calendar } from "lucide-react";
-import StatCard from "./StatCard";
 import { Employee } from "@/types/employee";
 import { calculateFTE, getEmployeeStatusCounts, getEmployeesByWorkingDays } from "@/utils/employeeUtils";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface EmployeeDashboardProps {
   employees: Employee[];

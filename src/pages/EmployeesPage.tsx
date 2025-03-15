@@ -168,7 +168,7 @@ const EmployeesPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 w-full">
+      <div className="w-full mb-6">
         <EmployeeDashboard employees={employees} />
       </div>
 
