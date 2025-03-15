@@ -8,6 +8,15 @@ export interface RepairEntry {
   companyPaidAmount: number;
 }
 
+export interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  description: string;
+  appointmentType: "Inspektion" | "Reparatur" | "Reifenwechsel" | "Sonstiges";
+  completed: boolean;
+}
+
 export interface Vehicle {
   id: string;
   licensePlate: string;
@@ -18,4 +27,5 @@ export interface Vehicle {
   infleetDate: string;
   defleetDate: string | null;
   repairs?: RepairEntry[];
+  appointments?: Appointment[];
 }
