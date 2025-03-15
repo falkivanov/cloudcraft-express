@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Vehicle } from "@/types/vehicle";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface NewVehicleDialogProps {
   open: boolean;
