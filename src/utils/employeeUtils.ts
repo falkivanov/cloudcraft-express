@@ -29,25 +29,19 @@ export const calculateFTE = (
 /**
  * Gets a count of employees by status
  * @param employees List of employees
- * @returns Object with counts for each status
+ * @returns Object with counts for active and inactive employees
  */
 export const getEmployeeStatusCounts = (employees: Employee[]) => {
   const result = {
     active: 0,
-    inactive: 0,
-    vacation: 0,
-    sick: 0
+    inactive: 0
   };
 
   employees.forEach(employee => {
     if (employee.endDate !== null) {
       result.inactive++;
-    } else if (employee.status === "Aktiv") {
+    } else {
       result.active++;
-    } else if (employee.status === "Urlaub") {
-      result.vacation++;
-    } else if (employee.status === "Krank") {
-      result.sick++;
     }
   });
 

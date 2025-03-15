@@ -13,7 +13,6 @@ const EmploymentInfoSection: React.FC<EmploymentInfoSectionProps> = ({ form }) =
   return (
     <>
       <TextFormField form={form} name="transporterId" label="Transporter ID" />
-      <TextFormField form={form} name="status" label="Status" />
       <DateFormField 
         form={form} 
         name="startDate" 

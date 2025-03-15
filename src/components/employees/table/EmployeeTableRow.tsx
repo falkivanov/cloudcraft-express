@@ -35,7 +35,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
       <TableCell>{formatDate(employee.startDate)}</TableCell>
       {isFormerView && <TableCell>{formatDate(employee.endDate)}</TableCell>}
       <TableCell>
-        <EmployeeStatusBadge status={employee.status} />
+        <EmployeeStatusBadge endDate={employee.endDate} />
       </TableCell>
       <TableCell>
         <EmployeeContactButtons email={employee.email} phone={employee.phone} />

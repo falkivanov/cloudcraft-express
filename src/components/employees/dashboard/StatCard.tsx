@@ -20,7 +20,7 @@ const StatCard: React.FC<StatCardProps> = ({
 }) => {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
