@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Download, Upload, Car } from "lucide-react";
@@ -164,8 +165,8 @@ const FleetPage = () => {
         </Button>
       </div>
 
-      <div className="flex justify-between items-center mb-6 gap-4">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 mb-6 items-center">
+        <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Suche nach Fahrzeugen..."
@@ -174,39 +175,43 @@ const FleetPage = () => {
             className="pl-10"
           />
         </div>
-        <Button variant="outline" className="flex items-center">
+        <Button variant="outline" className="flex items-center whitespace-nowrap">
           <Upload className="mr-2 h-4 w-4" />
           Import
         </Button>
-        <Button variant="outline" className="flex items-center">
+        <Button variant="outline" className="flex items-center whitespace-nowrap">
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">Aktive Fahrzeuge</TabsTrigger>
-          <TabsTrigger value="defleeted">Defleeted Fahrzeuge</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="active">
-          <FleetTable 
-            vehicles={filteredActiveVehicles} 
-            onUpdateVehicle={handleUpdateVehicle}
-            onDefleet={handleDefleetVehicle}
-          />
-        </TabsContent>
-        
-        <TabsContent value="defleeted">
-          <FleetTable 
-            vehicles={filteredDefleetedVehicles} 
-            onUpdateVehicle={handleUpdateVehicle}
-            onDefleet={handleDefleetVehicle}
-            isDefleetView={true}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="w-full overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="active">Aktive Fahrzeuge</TabsTrigger>
+            <TabsTrigger value="defleeted">Defleeted Fahrzeuge</TabsTrigger>
+          </TabsList>
+          
+          <div className="w-full overflow-x-auto">
+            <TabsContent value="active" className="min-w-full">
+              <FleetTable 
+                vehicles={filteredActiveVehicles} 
+                onUpdateVehicle={handleUpdateVehicle}
+                onDefleet={handleDefleetVehicle}
+              />
+            </TabsContent>
+            
+            <TabsContent value="defleeted" className="min-w-full">
+              <FleetTable 
+                vehicles={filteredDefleetedVehicles} 
+                onUpdateVehicle={handleUpdateVehicle}
+                onDefleet={handleDefleetVehicle}
+                isDefleetView={true}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
       
       <NewVehicleDialog 
         open={isNewVehicleDialogOpen}

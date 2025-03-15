@@ -119,85 +119,93 @@ const FleetTable = ({
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border w-full">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Kennzeichen</TableHead>
-              <TableHead>Marke</TableHead>
-              <TableHead>Modell</TableHead>
-              <TableHead>FIN (VIN)</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Infleet Datum</TableHead>
-              {isDefleetView && <TableHead>Defleet Datum</TableHead>}
-              <TableHead className="text-right">Aktionen</TableHead>
+              <TableHead className="w-[15%]">Kennzeichen</TableHead>
+              <TableHead className="w-[12%]">Marke</TableHead>
+              <TableHead className="w-[12%]">Modell</TableHead>
+              <TableHead className="w-[20%]">FIN (VIN)</TableHead>
+              <TableHead className="w-[15%]">Status</TableHead>
+              <TableHead className="w-[15%]">Infleet Datum</TableHead>
+              {isDefleetView && <TableHead className="w-[15%]">Defleet Datum</TableHead>}
+              <TableHead className="text-right w-[10%]">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vehicles.map((vehicle) => (
-              <TableRow key={vehicle.id}>
-                <TableCell className="font-medium">{vehicle.licensePlate}</TableCell>
-                <TableCell>{vehicle.brand}</TableCell>
-                <TableCell>{vehicle.model}</TableCell>
-                <TableCell>{vehicle.vinNumber}</TableCell>
-                <TableCell>
-                  {!isDefleetView ? (
-                    <Select 
-                      defaultValue={vehicle.status}
-                      onValueChange={(value: "Aktiv" | "In Werkstatt") => 
-                        handleStatusChange(vehicle.id, value)
-                      }
-                    >
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue>
-                          <StatusBadge status={vehicle.status} />
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Aktiv">
-                          <StatusBadge status="Aktiv" />
-                        </SelectItem>
-                        <SelectItem value="In Werkstatt">
-                          <StatusBadge status="In Werkstatt" />
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <StatusBadge status={vehicle.status} />
-                  )}
-                </TableCell>
-                <TableCell>{vehicle.infleetDate}</TableCell>
-                {isDefleetView && <TableCell>{vehicle.defleetDate || "—"}</TableCell>}
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Menü öffnen</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewDetails(vehicle)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        <span>Details</span>
-                      </DropdownMenuItem>
-                      {!isDefleetView && (
-                        <DropdownMenuItem onClick={() => handleOpenDefleetDialog(vehicle)}>
-                          <Archive className="mr-2 h-4 w-4" />
-                          <span>Defleet</span>
-                        </DropdownMenuItem>
-                      )}
-                      {isDefleetView && (
-                        <DropdownMenuItem onClick={() => handleReactivateVehicle(vehicle)}>
-                          <ArchiveRestore className="mr-2 h-4 w-4" />
-                          <span>Reaktivieren</span>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {vehicles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={isDefleetView ? 8 : 7} className="h-32 text-center text-muted-foreground">
+                  Keine Fahrzeuge gefunden
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              vehicles.map((vehicle) => (
+                <TableRow key={vehicle.id}>
+                  <TableCell className="font-medium">{vehicle.licensePlate}</TableCell>
+                  <TableCell>{vehicle.brand}</TableCell>
+                  <TableCell>{vehicle.model}</TableCell>
+                  <TableCell className="font-mono text-sm">{vehicle.vinNumber}</TableCell>
+                  <TableCell>
+                    {!isDefleetView ? (
+                      <Select 
+                        defaultValue={vehicle.status}
+                        onValueChange={(value: "Aktiv" | "In Werkstatt") => 
+                          handleStatusChange(vehicle.id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue>
+                            <StatusBadge status={vehicle.status} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Aktiv">
+                            <StatusBadge status="Aktiv" />
+                          </SelectItem>
+                          <SelectItem value="In Werkstatt">
+                            <StatusBadge status="In Werkstatt" />
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <StatusBadge status={vehicle.status} />
+                    )}
+                  </TableCell>
+                  <TableCell>{vehicle.infleetDate}</TableCell>
+                  {isDefleetView && <TableCell>{vehicle.defleetDate || "—"}</TableCell>}
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Menü öffnen</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetails(vehicle)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          <span>Details</span>
+                        </DropdownMenuItem>
+                        {!isDefleetView && (
+                          <DropdownMenuItem onClick={() => handleOpenDefleetDialog(vehicle)}>
+                            <Archive className="mr-2 h-4 w-4" />
+                            <span>Defleet</span>
+                          </DropdownMenuItem>
+                        )}
+                        {isDefleetView && (
+                          <DropdownMenuItem onClick={() => handleReactivateVehicle(vehicle)}>
+                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                            <span>Reaktivieren</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
