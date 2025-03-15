@@ -1,0 +1,133 @@
+
+import React from "react";
+import { Employee } from "@/types/employee";
+import { Button } from "@/components/ui/button";
+import { Edit, IdCard, CalendarDays, MapPin, Cake, FileText, Shield, Clock, Car, Mail, Phone } from "lucide-react";
+
+interface EmployeeDetailsContentProps {
+  employee: Employee;
+  onEdit: (employee: Employee) => void;
+  onClose: () => void;
+}
+
+const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
+  employee,
+  onEdit,
+  onClose
+}) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString('de-DE');
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <IdCard className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Transporter ID</p>
+            <p>{employee.transporterId}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <CalendarDays className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Startdatum</p>
+            <p>{formatDate(employee.startDate)}</p>
+          </div>
+        </div>
+        
+        {employee.endDate && (
+          <div className="flex items-start gap-2">
+            <CalendarDays className="h-4 w-4 mt-1 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Enddatum</p>
+              <p>{formatDate(employee.endDate)}</p>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex items-start gap-2">
+          <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Adresse</p>
+            <p>{employee.address}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Cake className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Geburtsdatum</p>
+            <p>{formatDate(employee.birthday)}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <FileText className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Steuer ID</p>
+            <p>{employee.taxId}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Shield className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Versicherungsnummer</p>
+            <p>{employee.insuranceId}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Arbeitstage pro Woche</p>
+            <p>{employee.workingDaysAWeek}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Car className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Bevorzugtes Fahrzeug</p>
+            <p>{employee.preferredVehicle}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Mail className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Email</p>
+            <p>{employee.email}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <Phone className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Telefon</p>
+            <p>{employee.phone}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="col-span-1 md:col-span-2 pt-4 flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={() => onEdit(employee)}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          Bearbeiten
+        </Button>
+        <Button onClick={onClose}>Schließen</Button>
+      </div>
+    </div>
+  );
+};
+
+export default EmployeeDetailsContent;
