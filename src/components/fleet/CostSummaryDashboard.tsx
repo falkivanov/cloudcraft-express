@@ -69,20 +69,20 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
 
   return (
     <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-xl">Reparaturkosten Übersicht</CardTitle>
+      <CardHeader className="pb-2 pt-4">
+        <CardTitle className="text-lg">Reparaturkosten Übersicht</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <CardContent className="pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {costSummaries.map((summary, index) => (
-            <div key={index} className="flex items-center space-x-3 p-3 border rounded-md">
+            <div key={index} className="flex items-center space-x-3 p-2 border rounded-md">
               <div className="rounded-full bg-muted p-2">
                 {summary.icon}
               </div>
               <div className="w-full">
-                <p className="text-sm font-medium text-muted-foreground">{summary.timeFrame}</p>
-                <p className="text-2xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
-                <div className="flex justify-between items-center mt-1">
+                <p className="text-xs font-medium text-muted-foreground">{summary.timeFrame}</p>
+                <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
+                <div className="flex justify-between items-center">
                   <p className="text-xs text-muted-foreground">
                     Gesamt: {summary.totalCost.toLocaleString('de-DE')} €
                   </p>
