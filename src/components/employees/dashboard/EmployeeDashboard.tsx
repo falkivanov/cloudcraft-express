@@ -42,12 +42,12 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-5 gap-2 text-center">
-              {Object.entries(workingDaysCounts).map(([days, count]) => (
+              {[5, 4, 3, 2, 1].map((days) => (
                 <div key={days} className="flex flex-col items-center">
-                  <div className={`w-full py-2 rounded-md mb-1 ${count > 0 ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                    <span className="text-lg font-medium">{count}</span>
+                  <div className={`w-full py-2 rounded-md mb-1 ${workingDaysCounts[days] > 0 ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                    <span className="text-lg font-medium">{workingDaysCounts[days]}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{days} {parseInt(days) === 1 ? 'Tag' : 'Tage'}</span>
+                  <span className="text-xs text-muted-foreground">{days} {days === 1 ? 'Tag' : 'Tage'}</span>
                 </div>
               ))}
             </div>
