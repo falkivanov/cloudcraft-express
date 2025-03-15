@@ -1,7 +1,7 @@
 
 export interface RepairEntry {
   id: string;
-  date: string;
+  date: string; // We'll keep this for display/sorting purposes, but it will be derived from startDate
   startDate: string;
   endDate: string;
   description: string;

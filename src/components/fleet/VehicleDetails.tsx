@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Dialog,
@@ -64,8 +63,7 @@ const VehicleDetails = ({
   const [isAddingAppointment, setIsAddingAppointment] = useState(false);
   const currentDate = new Date().toISOString().split('T')[0];
   
-  const [newRepair, setNewRepair] = useState<Omit<RepairEntry, "id" | "duration">>({
-    date: currentDate,
+  const [newRepair, setNewRepair] = useState<Omit<RepairEntry, "id" | "duration" | "date">>({
     startDate: currentDate,
     endDate: currentDate,
     description: "",
@@ -141,6 +139,7 @@ const VehicleDetails = ({
     
     const newRepairEntry: RepairEntry = {
       id: (Date.now().toString()),
+      date: newRepair.startDate, // Use startDate as the main date
       ...newRepair,
       duration
     };
@@ -151,7 +150,6 @@ const VehicleDetails = ({
     
     // Reset the form
     setNewRepair({
-      date: currentDate,
       startDate: currentDate,
       endDate: currentDate,
       description: "",
@@ -344,16 +342,7 @@ const VehicleDetails = ({
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="repair-date">Datum</Label>
-                        <Input 
-                          id="repair-date" 
-                          type="date" 
-                          value={newRepair.date}
-                          onChange={(e) => setNewRepair({...newRepair, date: e.target.value})}
-                        />
-                      </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="repair-start-date">Startdatum</Label>
                         <Input 
