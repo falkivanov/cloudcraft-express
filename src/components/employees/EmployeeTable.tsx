@@ -82,8 +82,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Transporter ID</TableHead>
-              <TableHead>Position</TableHead>
-              <TableHead>Abteilung</TableHead>
               <TableHead>Startdatum</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Kontakt</TableHead>
@@ -93,7 +91,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
           <TableBody>
             {employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                   Keine Mitarbeiter gefunden
                 </TableCell>
               </TableRow>
@@ -102,8 +100,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
                 <TableRow key={employee.id}>
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.transporterId}</TableCell>
-                  <TableCell>{employee.position}</TableCell>
-                  <TableCell>{employee.department}</TableCell>
                   <TableCell>{formatDate(employee.startDate)}</TableCell>
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                   <TableCell>

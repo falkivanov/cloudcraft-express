@@ -11,8 +11,6 @@ const initialEmployees: Employee[] = [
   {
     id: "1",
     name: "Max Mustermann",
-    position: "Geschäftsführer",
-    department: "Management",
     email: "max.mustermann@beispiel.de",
     phone: "+49 123 4567890",
     status: "Aktiv",
@@ -29,8 +27,6 @@ const initialEmployees: Employee[] = [
   {
     id: "2",
     name: "Anna Schmidt",
-    position: "Finanzcontroller",
-    department: "Finanzen",
     email: "anna.schmidt@beispiel.de",
     phone: "+49 123 4567891",
     status: "Aktiv",
@@ -47,8 +43,6 @@ const initialEmployees: Employee[] = [
   {
     id: "3",
     name: "Thomas Weber",
-    position: "Vertriebsleiter",
-    department: "Vertrieb",
     email: "thomas.weber@beispiel.de",
     phone: "+49 123 4567892",
     status: "Aktiv",
@@ -65,8 +59,6 @@ const initialEmployees: Employee[] = [
   {
     id: "4",
     name: "Lisa Becker",
-    position: "HR-Managerin",
-    department: "Personal",
     email: "lisa.becker@beispiel.de",
     phone: "+49 123 4567893",
     status: "Urlaub",
@@ -83,8 +75,6 @@ const initialEmployees: Employee[] = [
   {
     id: "5",
     name: "Michael Schulz",
-    position: "IT-Administrator",
-    department: "IT",
     email: "michael.schulz@beispiel.de",
     phone: "+49 123 4567894",
     status: "Aktiv",
@@ -105,9 +95,7 @@ const EmployeesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredEmployees = employees.filter((employee) =>
-    employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    employee.department.toLowerCase().includes(searchQuery.toLowerCase())
+    employee.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
