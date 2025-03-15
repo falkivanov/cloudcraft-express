@@ -14,21 +14,16 @@ interface NavItemProps {
 }
 
 const NavItem = ({ item, pathname, onClick }: NavItemProps) => {
-  console.log("NavItem rendering", item.name, "isActive:", pathname === item.path);
-  
-  // Make sure to prepend /dashboard to our paths
-  const path = item.path.startsWith('/') ? `/dashboard${item.path}` : `/dashboard/${item.path}`;
-  
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         asChild
         isActive={pathname === item.path}
         tooltip={item.name}
-        className="text-base py-3"
+        className="text-base py-3" // Increased text size and padding
       >
-        <Link to={path} onClick={onClick} className="flex items-center">
-          <span className="scale-125 mr-2">
+        <Link to={item.path} onClick={onClick} className="flex items-center">
+          <span className="scale-125 mr-1">
             {item.icon}
           </span>
           <span className="font-medium">{item.name}</span>

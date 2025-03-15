@@ -1,27 +1,21 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import { useSidebar } from "@/components/ui/sidebar";
 
 const Layout = () => {
-  const { setOpen } = useSidebar();
-  
-  // Force sidebar to be open on mount
-  useEffect(() => {
-    console.log("Layout mounted - FORCING sidebar open");
-    setOpen(true);
-  }, [setOpen]);
+  const { open } = useSidebar();
   
   return (
-    <>
+    <div className="flex h-screen bg-background">
       <Navbar />
-      <div className="flex-1 md:ml-64">
-        <main className="p-6 min-h-screen">
+      <div className="flex flex-col flex-1 w-full pl-16 md:pl-16">
+        <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>
       </div>
-    </>
+    </div>
   );
 };
 
