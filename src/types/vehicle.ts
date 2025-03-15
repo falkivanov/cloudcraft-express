@@ -9,6 +9,9 @@ export interface RepairEntry {
   duration: number; // Automatically calculated from startDate/endDate
   totalCost: number;
   companyPaidAmount: number;
+  causeType: "Verschleiß" | "Unfall";
+  causedByEmployeeId?: string;
+  causedByEmployeeName?: string;
 }
 
 export interface Appointment {

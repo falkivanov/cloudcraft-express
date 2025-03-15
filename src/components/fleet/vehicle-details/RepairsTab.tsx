@@ -24,7 +24,10 @@ const RepairsTab = ({ vehicle, onUpdateVehicle }: RepairsTabProps) => {
     description: "",
     location: "",
     totalCost: 0,
-    companyPaidAmount: 0
+    companyPaidAmount: 0,
+    causeType: "Verschleiß",
+    causedByEmployeeId: undefined,
+    causedByEmployeeName: undefined
   });
 
   const calculateDuration = (startDate: string, endDate: string): number => {
@@ -63,7 +66,10 @@ const RepairsTab = ({ vehicle, onUpdateVehicle }: RepairsTabProps) => {
       description: "",
       location: "",
       totalCost: 0,
-      companyPaidAmount: 0
+      companyPaidAmount: 0,
+      causeType: "Verschleiß",
+      causedByEmployeeId: undefined,
+      causedByEmployeeName: undefined
     });
     
     setIsAddingRepair(false);

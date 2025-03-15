@@ -1,11 +1,22 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Dummy-Daten für Mitarbeiter - In einer realen Anwendung würden diese aus einer API kommen
+const employees = [
+  { id: "1", name: "Max Mustermann" },
+  { id: "2", name: "Anna Schmidt" },
+  { id: "3", name: "Thomas Müller" },
+  { id: "4", name: "Lisa Weber" },
+  { id: "5", name: "Michael Fischer" },
+];
 
 interface RepairFormProps {
   newRepair: {
@@ -15,6 +26,9 @@ interface RepairFormProps {
     location: string;
     totalCost: number;
     companyPaidAmount: number;
+    causeType: "Verschleiß" | "Unfall";
+    causedByEmployeeId?: string;
+    causedByEmployeeName?: string;
   };
   setNewRepair: React.Dispatch<React.SetStateAction<{
     startDate: string;
@@ -23,6 +37,9 @@ interface RepairFormProps {
     location: string;
     totalCost: number;
     companyPaidAmount: number;
+    causeType: "Verschleiß" | "Unfall";
+    causedByEmployeeId?: string;
+    causedByEmployeeName?: string;
   }>>;
   onCancel: () => void;
   onSubmit: () => void;
@@ -61,7 +78,25 @@ const RepairForm = ({ newRepair, setNewRepair, onCancel, onSubmit }: RepairFormP
       return;
     }
 
+    if (newRepair.causeType === "Unfall" && !newRepair.causedByEmployeeId) {
+      toast({
+        title: "Fehler",
+        description: "Bitte wählen Sie den verursachenden Mitarbeiter aus.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     onSubmit();
+  };
+
+  const handleEmployeeSelect = (employeeId: string) => {
+    const selectedEmployee = employees.find(emp => emp.id === employeeId);
+    setNewRepair({
+      ...newRepair, 
+      causedByEmployeeId: employeeId,
+      causedByEmployeeName: selectedEmployee?.name
+    });
   };
 
   return (
@@ -112,6 +147,47 @@ const RepairForm = ({ newRepair, setNewRepair, onCancel, onSubmit }: RepairFormP
                 rows={3}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Ursache</Label>
+              <RadioGroup 
+                value={newRepair.causeType}
+                onValueChange={(value: "Verschleiß" | "Unfall") => 
+                  setNewRepair({...newRepair, causeType: value, causedByEmployeeId: value === "Verschleiß" ? undefined : newRepair.causedByEmployeeId})
+                }
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Verschleiß" id="verschleiss" />
+                  <Label htmlFor="verschleiss">Verschleiß</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Unfall" id="unfall" />
+                  <Label htmlFor="unfall">Unfall</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {newRepair.causeType === "Unfall" && (
+              <div className="space-y-2">
+                <Label htmlFor="caused-by-employee">Verursacht durch</Label>
+                <Select 
+                  value={newRepair.causedByEmployeeId}
+                  onValueChange={handleEmployeeSelect}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Mitarbeiter auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map(employee => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {employee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="repair-total-cost">Gesamtkosten (€)</Label>
