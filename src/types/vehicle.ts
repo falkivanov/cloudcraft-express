@@ -2,8 +2,11 @@
 export interface RepairEntry {
   id: string;
   date: string;
+  startDate: string;
+  endDate: string;
   description: string;
-  duration: number; // Dauer in Tagen
+  location: string;
+  duration: number; // Automatically calculated from startDate/endDate
   totalCost: number;
   companyPaidAmount: number;
 }
@@ -13,6 +16,7 @@ export interface Appointment {
   date: string;
   time: string;
   description: string;
+  location: string;
   appointmentType: "Inspektion" | "Reparatur" | "Reifenwechsel" | "Sonstiges";
   completed: boolean;
 }

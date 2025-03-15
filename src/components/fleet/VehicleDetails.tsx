@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Vehicle, RepairEntry, Appointment } from "@/types/vehicle";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,18 +62,23 @@ const VehicleDetails = ({
   const [activeTab, setActiveTab] = useState("details");
   const [isAddingRepair, setIsAddingRepair] = useState(false);
   const [isAddingAppointment, setIsAddingAppointment] = useState(false);
-  const [newRepair, setNewRepair] = useState<Omit<RepairEntry, "id">>({
-    date: new Date().toISOString().split('T')[0],
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const [newRepair, setNewRepair] = useState<Omit<RepairEntry, "id" | "duration">>({
+    date: currentDate,
+    startDate: currentDate,
+    endDate: currentDate,
     description: "",
-    duration: 1,
+    location: "",
     totalCost: 0,
     companyPaidAmount: 0
   });
   
   const [newAppointment, setNewAppointment] = useState<Omit<Appointment, "id">>({
-    date: new Date().toISOString().split('T')[0],
+    date: currentDate,
     time: "09:00",
     description: "",
+    location: "",
     appointmentType: "Inspektion",
     completed: false
   });
@@ -93,6 +98,12 @@ const VehicleDetails = ({
     }
   };
 
+  const calculateDuration = (startDate: string, endDate: string): number => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.max(0, differenceInDays(end, start) + 1); // +1 to include both start and end dates
+  };
+
   const handleAddRepair = () => {
     if (!vehicle) return;
     
@@ -105,12 +116,33 @@ const VehicleDetails = ({
       return;
     }
 
+    if (!newRepair.location.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte geben Sie den Ort der Reparatur ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (new Date(newRepair.endDate) < new Date(newRepair.startDate)) {
+      toast({
+        title: "Fehler",
+        description: "Das Enddatum kann nicht vor dem Startdatum liegen.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const duration = calculateDuration(newRepair.startDate, newRepair.endDate);
+    
     const updatedVehicle = { ...vehicle };
     const repairs = updatedVehicle.repairs || [];
     
     const newRepairEntry: RepairEntry = {
       id: (Date.now().toString()),
-      ...newRepair
+      ...newRepair,
+      duration
     };
     
     updatedVehicle.repairs = [...repairs, newRepairEntry];
@@ -119,9 +151,11 @@ const VehicleDetails = ({
     
     // Reset the form
     setNewRepair({
-      date: new Date().toISOString().split('T')[0],
+      date: currentDate,
+      startDate: currentDate,
+      endDate: currentDate,
       description: "",
-      duration: 1,
+      location: "",
       totalCost: 0,
       companyPaidAmount: 0
     });
@@ -146,6 +180,15 @@ const VehicleDetails = ({
       return;
     }
 
+    if (!newAppointment.location.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte geben Sie den Ort des Termins ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const updatedVehicle = { ...vehicle };
     const appointments = updatedVehicle.appointments || [];
     
@@ -160,9 +203,10 @@ const VehicleDetails = ({
     
     // Reset the form
     setNewAppointment({
-      date: new Date().toISOString().split('T')[0],
+      date: currentDate,
       time: "09:00",
       description: "",
+      location: "",
       appointmentType: "Inspektion",
       completed: false
     });
@@ -300,7 +344,7 @@ const VehicleDetails = ({
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="repair-date">Datum</Label>
                         <Input 
@@ -311,15 +355,32 @@ const VehicleDetails = ({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="repair-duration">Dauer (Tage)</Label>
+                        <Label htmlFor="repair-start-date">Startdatum</Label>
                         <Input 
-                          id="repair-duration" 
-                          type="number" 
-                          min="1"
-                          value={newRepair.duration}
-                          onChange={(e) => setNewRepair({...newRepair, duration: parseInt(e.target.value) || 1})}
+                          id="repair-start-date" 
+                          type="date" 
+                          value={newRepair.startDate}
+                          onChange={(e) => setNewRepair({...newRepair, startDate: e.target.value})}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="repair-end-date">Enddatum</Label>
+                        <Input 
+                          id="repair-end-date" 
+                          type="date" 
+                          value={newRepair.endDate}
+                          onChange={(e) => setNewRepair({...newRepair, endDate: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="repair-location">Werkstatt / Ort</Label>
+                      <Input 
+                        id="repair-location" 
+                        placeholder="Name und Ort der Werkstatt"
+                        value={newRepair.location}
+                        onChange={(e) => setNewRepair({...newRepair, location: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="repair-description">Beschreibung</Label>
@@ -378,11 +439,17 @@ const VehicleDetails = ({
                               <CardTitle className="text-base">{formatDateString(repair.date)}</CardTitle>
                               <div className="text-sm text-muted-foreground">
                                 {repair.duration} {repair.duration === 1 ? 'Tag' : 'Tage'} Ausfallzeit
+                                {repair.location && ` • ${repair.location}`}
                               </div>
                             </div>
                           </CardHeader>
                           <CardContent className="pb-2">
                             <p className="text-sm">{repair.description}</p>
+                            {repair.startDate && repair.endDate && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Zeitraum: {formatDateString(repair.startDate)} - {formatDateString(repair.endDate)}
+                              </p>
+                            )}
                           </CardContent>
                           <CardFooter className="flex justify-between pt-0">
                             <div className="text-sm">
@@ -461,6 +528,15 @@ const VehicleDetails = ({
                       </div>
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="appointment-location">Ort</Label>
+                      <Input 
+                        id="appointment-location" 
+                        placeholder="Werkstatt / Ort des Termins"
+                        value={newAppointment.location}
+                        onChange={(e) => setNewAppointment({...newAppointment, location: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="appointment-type">Art des Termins</Label>
                       <Select 
                         defaultValue={newAppointment.appointmentType}
@@ -521,6 +597,7 @@ const VehicleDetails = ({
                               </div>
                               <div className="text-sm text-muted-foreground">
                                 {appointment.appointmentType}
+                                {appointment.location && ` • ${appointment.location}`}
                               </div>
                             </div>
                           </CardHeader>

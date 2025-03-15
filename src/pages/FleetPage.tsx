@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Download, Upload, Car } from "lucide-react";
@@ -15,6 +16,9 @@ const sampleRepairs: RepairEntry[] = [
   {
     id: "1",
     date: "2023-05-10",
+    startDate: "2023-05-10",
+    endDate: "2023-05-10",
+    location: "ATU Frankfurt",
     description: "Ölwechsel und Inspektion",
     duration: 1,
     totalCost: 350.00,
@@ -23,6 +27,9 @@ const sampleRepairs: RepairEntry[] = [
   {
     id: "2",
     date: "2023-08-22",
+    startDate: "2023-08-22",
+    endDate: "2023-08-23",
+    location: "Mercedes Werkstatt Berlin",
     description: "Bremsen vorne erneuert",
     duration: 2,
     totalCost: 520.75,
@@ -35,6 +42,7 @@ const sampleAppointments: Appointment[] = [
     id: "1",
     date: "2023-12-15",
     time: "10:30",
+    location: "BMW Service Center",
     description: "Jahresinspektion",
     appointmentType: "Inspektion",
     completed: true
@@ -43,6 +51,7 @@ const sampleAppointments: Appointment[] = [
     id: "2",
     date: "2024-02-10",
     time: "14:00",
+    location: "Reifendienst Schmidt",
     description: "Winterreifen wechseln",
     appointmentType: "Reifenwechsel",
     completed: false
@@ -51,6 +60,7 @@ const sampleAppointments: Appointment[] = [
     id: "3",
     date: format(new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     time: "09:15",
+    location: "Autohaus Wagner",
     description: "Softwareupdate Navigationssystem",
     appointmentType: "Sonstiges",
     completed: false
