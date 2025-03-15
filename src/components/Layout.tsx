@@ -7,14 +7,16 @@ import { useSidebar } from "@/components/ui/sidebar";
 const Layout = () => {
   const { open, setOpen } = useSidebar();
   
-  // Ensure sidebar is open on mount
+  // Ensure sidebar is ALWAYS open on mount
   useEffect(() => {
+    console.log("Layout mounted, setting sidebar open");
     setOpen(true);
-    console.log("Layout mounted, sidebar opened:", open);
   }, [setOpen]);
   
+  console.log("Layout rendering, sidebar state:", open);
+  
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-background">
       <Navbar />
       <div 
         className={`flex-1 transition-all duration-200 ${

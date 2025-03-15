@@ -20,10 +20,10 @@ const NavItem = ({ item, pathname, onClick }: NavItemProps) => {
         asChild
         isActive={pathname === item.path}
         tooltip={item.name}
-        className="text-base py-3" // Increased text size and padding
+        className="text-base py-3"
       >
         <Link to={item.path} onClick={onClick} className="flex items-center">
-          <span className="scale-125 mr-1">
+          <span className="scale-125 mr-2">
             {item.icon}
           </span>
           <span className="font-medium">{item.name}</span>
