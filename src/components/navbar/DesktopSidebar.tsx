@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -16,24 +16,20 @@ import NavItem from "./NavItem";
 const DesktopSidebar = () => {
   const location = useLocation();
   const { mainNavItems, fileUploadItem, settingsNavItem } = navigationItems;
-  const { setOpen } = useSidebar();
+  const { open, setOpen } = useSidebar();
   
-  // Hover-Funktion für die Sidebar
+  useEffect(() => {
+    console.log("DesktopSidebar mounted, sidebar state:", open);
+  }, [open]);
+  
+  // Only add hover functionality, don't auto-collapse
   const handleMouseEnter = () => {
-    setOpen(true);
-  };
-  
-  const handleMouseLeave = () => {
-    setOpen(false);
+    if (!open) setOpen(true);
   };
   
   return (
-    <div 
-      className="h-full"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Sidebar variant="sidebar" collapsible="icon">
+    <div className="h-full">
+      <Sidebar variant="sidebar" collapsible="none">
         <SidebarHeader className="flex items-center h-16 px-4 bg-sidebar-accent border-b">
           <div className="flex items-center">
             <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">

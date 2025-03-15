@@ -4,10 +4,12 @@ import DesktopSidebar from "./navbar/DesktopSidebar";
 import MobileSidebar from "./navbar/MobileSidebar";
 
 const Navbar = () => {
+  console.log("Navbar component rendering");
+  
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed inset-y-0 left-0 z-40">
+      <div className="hidden md:flex fixed inset-y-0 left-0 z-40">
         <DesktopSidebar />
       </div>
 
