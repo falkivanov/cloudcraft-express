@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Download, Upload, Car } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FleetTable from "@/components/fleet/FleetTable";
 import { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,7 @@ const initialVehicles: Vehicle[] = [
 const FleetPage = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
@@ -81,7 +83,22 @@ const FleetPage = () => {
     };
   }, [setOpen]);
 
-  const filteredVehicles = vehicles.filter((vehicle) =>
+  const activeVehicles = vehicles.filter(
+    vehicle => vehicle.status !== "Defleet"
+  );
+
+  const defleetedVehicles = vehicles.filter(
+    vehicle => vehicle.status === "Defleet"
+  );
+
+  const filteredActiveVehicles = activeVehicles.filter((vehicle) =>
+    vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    vehicle.vinNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredDefleetedVehicles = defleetedVehicles.filter((vehicle) =>
     vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
     vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
     vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -92,6 +109,23 @@ const FleetPage = () => {
     setVehicles(vehicles.map(vehicle => 
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
     ));
+  };
+
+  const handleDefleetVehicle = (vehicle: Vehicle, defleetDate: string) => {
+    const updatedVehicle = {
+      ...vehicle,
+      status: "Defleet" as const,
+      defleetDate: defleetDate
+    };
+    
+    setVehicles(vehicles.map(v => 
+      v.id === vehicle.id ? updatedVehicle : v
+    ));
+    
+    toast({
+      title: "Fahrzeug defleeted",
+      description: `Das Fahrzeug ${vehicle.licensePlate} wurde defleeted.`,
+    });
   };
 
   return (
@@ -124,10 +158,29 @@ const FleetPage = () => {
         </Button>
       </div>
 
-      <FleetTable 
-        vehicles={filteredVehicles} 
-        onUpdateVehicle={handleUpdateVehicle}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="active">Aktive Fahrzeuge</TabsTrigger>
+          <TabsTrigger value="defleeted">Defleeted Fahrzeuge</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="active">
+          <FleetTable 
+            vehicles={filteredActiveVehicles} 
+            onUpdateVehicle={handleUpdateVehicle}
+            onDefleet={handleDefleetVehicle}
+          />
+        </TabsContent>
+        
+        <TabsContent value="defleeted">
+          <FleetTable 
+            vehicles={filteredDefleetedVehicles} 
+            onUpdateVehicle={handleUpdateVehicle}
+            onDefleet={handleDefleetVehicle}
+            isDefleetView={true}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
