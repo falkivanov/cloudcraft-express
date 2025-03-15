@@ -8,10 +8,14 @@ const Layout = () => {
   const { open } = useSidebar();
   
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Navbar />
-      <div className={`flex flex-col flex-1 w-full transition-all duration-200 ${open ? 'md:pl-64' : 'md:pl-16'} pl-0`}>
-        <main className="flex-1 overflow-y-auto bg-background">
+      <div 
+        className={`flex-1 overflow-hidden transition-all duration-200 ${
+          open ? 'md:ml-64' : 'md:ml-16'
+        } ml-0`}
+      >
+        <main className="h-full w-full overflow-y-auto p-4">
           <Outlet />
         </main>
       </div>

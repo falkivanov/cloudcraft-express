@@ -5,15 +5,17 @@ import MobileSidebar from "./navbar/MobileSidebar";
 
 const Navbar = () => {
   return (
-    <div className="flex flex-col h-screen">
+    <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:block">
+      <div className="hidden md:block fixed left-0 top-0 z-40 h-full">
         <DesktopSidebar />
       </div>
 
       {/* Mobile Menu */}
-      <MobileSidebar />
-    </div>
+      <div className="md:hidden">
+        <MobileSidebar />
+      </div>
+    </>
   );
 };
 

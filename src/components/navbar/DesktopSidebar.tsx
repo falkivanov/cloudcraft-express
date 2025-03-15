@@ -29,7 +29,7 @@ const DesktopSidebar = () => {
   
   return (
     <div 
-      className="h-full fixed left-0 top-0 z-40"
+      className="h-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
