@@ -60,6 +60,8 @@ const VehicleDetails = ({
   onUpdateVehicle
 }: VehicleDetailsProps) => {
   const [activeTab, setActiveTab] = useState("details");
+  const [isAddingRepair, setIsAddingRepair] = useState(false);
+  const [isAddingAppointment, setIsAddingAppointment] = useState(false);
   const [newRepair, setNewRepair] = useState<Omit<RepairEntry, "id">>({
     date: new Date().toISOString().split('T')[0],
     description: "",
@@ -68,7 +70,6 @@ const VehicleDetails = ({
     companyPaidAmount: 0
   });
   
-  // Add state for new appointment
   const [newAppointment, setNewAppointment] = useState<Omit<Appointment, "id">>({
     date: new Date().toISOString().split('T')[0],
     time: "09:00",
@@ -125,6 +126,8 @@ const VehicleDetails = ({
       companyPaidAmount: 0
     });
     
+    setIsAddingRepair(false);
+    
     toast({
       title: "Reparatur hinzugefügt",
       description: `Reparatur wurde erfolgreich zum Fahrzeug ${vehicle.licensePlate} hinzugefügt.`
@@ -163,6 +166,8 @@ const VehicleDetails = ({
       appointmentType: "Inspektion",
       completed: false
     });
+    
+    setIsAddingAppointment(false);
     
     toast({
       title: "Termin hinzugefügt",
@@ -279,257 +284,266 @@ const VehicleDetails = ({
           </TabsContent>
           
           <TabsContent value="workshop" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Werkstattaufenthalte</CardTitle>
-                <CardDescription>Alle Reparaturen und Werkstattaufenthalte des Fahrzeugs</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!vehicle.repairs || vehicle.repairs.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground">
-                    Keine Reparaturen gefunden
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {vehicle.repairs.map((repair) => (
-                      <Card key={repair.id} className="bg-muted/30">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-base">{formatDateString(repair.date)}</CardTitle>
-                            <div className="text-sm text-muted-foreground">
-                              {repair.duration} {repair.duration === 1 ? 'Tag' : 'Tage'} Ausfallzeit
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <p className="text-sm">{repair.description}</p>
-                        </CardContent>
-                        <CardFooter className="flex justify-between pt-0">
-                          <div className="text-sm">
-                            <span className="font-medium">Gesamtkosten:</span> {repair.totalCost.toFixed(2)} €
-                          </div>
-                          <div className="text-sm">
-                            <span className="font-medium">Unternehmen bezahlt:</span> {repair.companyPaidAmount.toFixed(2)} €
-                          </div>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Card className="w-full">
-                  <CardHeader>
-                    <CardTitle>Neue Reparatur</CardTitle>
-                    <CardDescription>Fügen Sie eine neue Reparatur oder einen Werkstattaufenthalt hinzu</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="repair-date">Datum</Label>
-                          <Input 
-                            id="repair-date" 
-                            type="date" 
-                            value={newRepair.date}
-                            onChange={(e) => setNewRepair({...newRepair, date: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="repair-duration">Dauer (Tage)</Label>
-                          <Input 
-                            id="repair-duration" 
-                            type="number" 
-                            min="1"
-                            value={newRepair.duration}
-                            onChange={(e) => setNewRepair({...newRepair, duration: parseInt(e.target.value) || 1})}
-                          />
-                        </div>
-                      </div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Werkstattaufenthalte</h3>
+              <Button onClick={() => setIsAddingRepair(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Neue Reparatur
+              </Button>
+            </div>
+            
+            {isAddingRepair ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Neue Reparatur</CardTitle>
+                  <CardDescription>Fügen Sie eine neue Reparatur oder einen Werkstattaufenthalt hinzu</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="repair-description">Beschreibung</Label>
-                        <Textarea 
-                          id="repair-description" 
-                          placeholder="Beschreiben Sie die durchgeführten Arbeiten"
-                          value={newRepair.description}
-                          onChange={(e) => setNewRepair({...newRepair, description: e.target.value})}
-                          rows={3}
+                        <Label htmlFor="repair-date">Datum</Label>
+                        <Input 
+                          id="repair-date" 
+                          type="date" 
+                          value={newRepair.date}
+                          onChange={(e) => setNewRepair({...newRepair, date: e.target.value})}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="repair-total-cost">Gesamtkosten (€)</Label>
-                          <Input 
-                            id="repair-total-cost" 
-                            type="number" 
-                            min="0"
-                            step="0.01"
-                            value={newRepair.totalCost}
-                            onChange={(e) => setNewRepair({...newRepair, totalCost: parseFloat(e.target.value) || 0})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="repair-company-paid">Unternehmen bezahlt (€)</Label>
-                          <Input 
-                            id="repair-company-paid" 
-                            type="number" 
-                            min="0"
-                            step="0.01"
-                            value={newRepair.companyPaidAmount}
-                            onChange={(e) => setNewRepair({...newRepair, companyPaidAmount: parseFloat(e.target.value) || 0})}
-                          />
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="repair-duration">Dauer (Tage)</Label>
+                        <Input 
+                          id="repair-duration" 
+                          type="number" 
+                          min="1"
+                          value={newRepair.duration}
+                          onChange={(e) => setNewRepair({...newRepair, duration: parseInt(e.target.value) || 1})}
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-end space-x-2">
-                    <Button onClick={handleAddRepair}>Reparatur hinzufügen</Button>
-                  </CardFooter>
-                </Card>
-              </CardFooter>
-            </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="repair-description">Beschreibung</Label>
+                      <Textarea 
+                        id="repair-description" 
+                        placeholder="Beschreiben Sie die durchgeführten Arbeiten"
+                        value={newRepair.description}
+                        onChange={(e) => setNewRepair({...newRepair, description: e.target.value})}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="repair-total-cost">Gesamtkosten (€)</Label>
+                        <Input 
+                          id="repair-total-cost" 
+                          type="number" 
+                          min="0"
+                          step="0.01"
+                          value={newRepair.totalCost}
+                          onChange={(e) => setNewRepair({...newRepair, totalCost: parseFloat(e.target.value) || 0})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="repair-company-paid">Unternehmen bezahlt (€)</Label>
+                        <Input 
+                          id="repair-company-paid" 
+                          type="number" 
+                          min="0"
+                          step="0.01"
+                          value={newRepair.companyPaidAmount}
+                          onChange={(e) => setNewRepair({...newRepair, companyPaidAmount: parseFloat(e.target.value) || 0})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsAddingRepair(false)}>Abbrechen</Button>
+                  <Button onClick={handleAddRepair}>Reparatur hinzufügen</Button>
+                </CardFooter>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  {!vehicle.repairs || vehicle.repairs.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      Keine Reparaturen gefunden
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {vehicle.repairs.map((repair) => (
+                        <Card key={repair.id} className="bg-muted/30">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-base">{formatDateString(repair.date)}</CardTitle>
+                              <div className="text-sm text-muted-foreground">
+                                {repair.duration} {repair.duration === 1 ? 'Tag' : 'Tage'} Ausfallzeit
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pb-2">
+                            <p className="text-sm">{repair.description}</p>
+                          </CardContent>
+                          <CardFooter className="flex justify-between pt-0">
+                            <div className="text-sm">
+                              <span className="font-medium">Gesamtkosten:</span> {repair.totalCost.toFixed(2)} €
+                            </div>
+                            <div className="text-sm">
+                              <span className="font-medium">Unternehmen bezahlt:</span> {repair.companyPaidAmount.toFixed(2)} €
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
           <TabsContent value="appointments" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Termine</CardTitle>
-                <CardDescription>Anstehende und vergangene Termine für das Fahrzeug</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!vehicle.appointments || vehicle.appointments.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground">
-                    Keine Termine gefunden
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {vehicle.appointments.map((appointment) => (
-                      <Card key={appointment.id} className={cn("bg-muted/30", appointment.completed && "bg-muted/10")}>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <CardTitle className="text-base">
-                                {formatDateString(appointment.date)}, {appointment.time} Uhr
-                              </CardTitle>
-                              {appointment.completed && (
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                  Erledigt
-                                </span>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Termine</h3>
+              <Button onClick={() => setIsAddingAppointment(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Neuer Termin
+              </Button>
+            </div>
+            
+            {isAddingAppointment ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Neuer Termin</CardTitle>
+                  <CardDescription>Vereinbaren Sie einen neuen Termin für das Fahrzeug</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Datum</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
                               )}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {appointment.appointmentType}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <p className="text-sm">{appointment.description}</p>
-                        </CardContent>
-                        <CardFooter className="flex justify-end pt-0">
-                          <Button 
-                            variant={appointment.completed ? "outline" : "default"} 
-                            size="sm"
-                            onClick={() => handleCompleteAppointment(appointment.id)}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            {appointment.completed ? "Auf nicht erledigt setzen" : "Als erledigt markieren"}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Card className="w-full">
-                  <CardHeader>
-                    <CardTitle>Neuer Termin</CardTitle>
-                    <CardDescription>Vereinbaren Sie einen neuen Termin für das Fahrzeug</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Datum</Label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full justify-start text-left font-normal",
-                                  !selectedDate && "text-muted-foreground"
-                                )}
-                              >
-                                <Calendar className="mr-2 h-4 w-4" />
-                                {selectedDate ? (
-                                  format(selectedDate, "dd.MM.yyyy", { locale: de })
-                                ) : (
-                                  <span>Datum wählen</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <CalendarComponent
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={handleDateSelect}
-                                initialFocus
-                                className={cn("p-3 pointer-events-auto")}
-                                locale={de}
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="appointment-time">Uhrzeit</Label>
-                          <Input 
-                            id="appointment-time" 
-                            type="time" 
-                            value={newAppointment.time}
-                            onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
-                          />
-                        </div>
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {selectedDate ? (
+                                format(selectedDate, "dd.MM.yyyy", { locale: de })
+                              ) : (
+                                <span>Datum wählen</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={selectedDate}
+                              onSelect={handleDateSelect}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                              locale={de}
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="appointment-type">Art des Termins</Label>
-                        <Select 
-                          defaultValue={newAppointment.appointmentType}
-                          onValueChange={(value: "Inspektion" | "Reparatur" | "Reifenwechsel" | "Sonstiges") => 
-                            setNewAppointment({...newAppointment, appointmentType: value})
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Terminart wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Inspektion">Inspektion</SelectItem>
-                            <SelectItem value="Reparatur">Reparatur</SelectItem>
-                            <SelectItem value="Reifenwechsel">Reifenwechsel</SelectItem>
-                            <SelectItem value="Sonstiges">Sonstiges</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="appointment-description">Beschreibung</Label>
-                        <Textarea 
-                          id="appointment-description" 
-                          placeholder="Geben Sie Details zum Termin an"
-                          value={newAppointment.description}
-                          onChange={(e) => setNewAppointment({...newAppointment, description: e.target.value})}
-                          rows={3}
+                        <Label htmlFor="appointment-time">Uhrzeit</Label>
+                        <Input 
+                          id="appointment-time" 
+                          type="time" 
+                          value={newAppointment.time}
+                          onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
                         />
                       </div>
                     </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-end space-x-2">
-                    <Button onClick={handleAddAppointment}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Termin hinzufügen
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </CardFooter>
-            </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="appointment-type">Art des Termins</Label>
+                      <Select 
+                        defaultValue={newAppointment.appointmentType}
+                        onValueChange={(value: "Inspektion" | "Reparatur" | "Reifenwechsel" | "Sonstiges") => 
+                          setNewAppointment({...newAppointment, appointmentType: value})
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Terminart wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Inspektion">Inspektion</SelectItem>
+                          <SelectItem value="Reparatur">Reparatur</SelectItem>
+                          <SelectItem value="Reifenwechsel">Reifenwechsel</SelectItem>
+                          <SelectItem value="Sonstiges">Sonstiges</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="appointment-description">Beschreibung</Label>
+                      <Textarea 
+                        id="appointment-description" 
+                        placeholder="Geben Sie Details zum Termin an"
+                        value={newAppointment.description}
+                        onChange={(e) => setNewAppointment({...newAppointment, description: e.target.value})}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsAddingAppointment(false)}>Abbrechen</Button>
+                  <Button onClick={handleAddAppointment}>Termin hinzufügen</Button>
+                </CardFooter>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  {!vehicle.appointments || vehicle.appointments.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      Keine Termine gefunden
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {vehicle.appointments.map((appointment) => (
+                        <Card key={appointment.id} className={cn("bg-muted/30", appointment.completed && "bg-muted/10")}>
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <CardTitle className="text-base">
+                                  {formatDateString(appointment.date)}, {appointment.time} Uhr
+                                </CardTitle>
+                                {appointment.completed && (
+                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                    Erledigt
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {appointment.appointmentType}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pb-2">
+                            <p className="text-sm">{appointment.description}</p>
+                          </CardContent>
+                          <CardFooter className="flex justify-end pt-0">
+                            <Button 
+                              variant={appointment.completed ? "outline" : "default"} 
+                              size="sm"
+                              onClick={() => handleCompleteAppointment(appointment.id)}
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              {appointment.completed ? "Auf nicht erledigt setzen" : "Als erledigt markieren"}
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
         
