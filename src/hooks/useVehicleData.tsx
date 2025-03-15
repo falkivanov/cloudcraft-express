@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Vehicle, RepairEntry, Appointment } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
@@ -224,6 +223,20 @@ export const useVehicleData = () => {
     });
   };
 
+  // Import multiple vehicles
+  const handleImportVehicles = (importedVehicles: Vehicle[]) => {
+    const lastId = vehicles.length > 0 
+      ? Math.max(...vehicles.map(v => parseInt(v.id))) 
+      : 0;
+    
+    const vehiclesWithIds = importedVehicles.map((vehicle, index) => ({
+      ...vehicle,
+      id: (lastId + index + 1).toString()
+    }));
+    
+    setVehicles([...vehicles, ...vehiclesWithIds]);
+  };
+
   return {
     vehicles,
     searchQuery,
@@ -234,6 +247,7 @@ export const useVehicleData = () => {
     filteredDefleetedVehicles,
     handleUpdateVehicle,
     handleDefleetVehicle,
-    handleAddVehicle
+    handleAddVehicle,
+    handleImportVehicles
   };
 };

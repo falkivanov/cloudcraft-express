@@ -23,7 +23,8 @@ const FleetPage = () => {
     filteredDefleetedVehicles,
     handleUpdateVehicle,
     handleDefleetVehicle,
-    handleAddVehicle
+    handleAddVehicle,
+    handleImportVehicles
   } = useVehicleData();
 
   useEffect(() => {
@@ -53,6 +54,8 @@ const FleetPage = () => {
       <FleetFilter 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        vehicles={vehicles}
+        onImportVehicles={handleImportVehicles}
       />
 
       <div className="w-full overflow-x-auto">
