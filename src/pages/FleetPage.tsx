@@ -5,6 +5,7 @@ import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
 import FleetTabs from "@/components/fleet/FleetTabs";
 import FleetStatsOverview from "@/components/fleet/FleetStatsOverview";
+import CostSummaryDashboard from "@/components/fleet/CostSummaryDashboard";
 import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { useVehicleData } from "@/hooks/useVehicleData";
 
@@ -35,7 +36,10 @@ const FleetPage = () => {
         </Button>
       </div>
 
-      <FleetStatsOverview vehicles={vehicles} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <FleetStatsOverview vehicles={vehicles} />
+        <CostSummaryDashboard vehicles={vehicles} />
+      </div>
 
       <FleetFilter 
         searchQuery={searchQuery}

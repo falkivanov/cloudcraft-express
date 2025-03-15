@@ -15,49 +15,44 @@ const FleetStatsOverview = ({ vehicles }: FleetStatsProps) => {
   const inWorkshopVehicles = vehicles.filter(v => v.status === "In Werkstatt").length;
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <StatCard 
-        title="Gesamte Fahrzeuge" 
-        value={totalVehicles} 
-        icon={<Truck className="h-8 w-8 text-blue-500" />} 
-        description="Alle aktiven Fahrzeuge im Fuhrpark"
-      />
-      <StatCard 
-        title="Aktive Fahrzeuge" 
-        value={activeVehicles} 
-        icon={<CheckCircle className="h-8 w-8 text-green-500" />} 
-        description="Fahrzeuge im normalen Betrieb"
-      />
-      <StatCard 
-        title="In Werkstatt" 
-        value={inWorkshopVehicles} 
-        icon={<Wrench className="h-8 w-8 text-orange-500" />} 
-        description="Aktuell in Reparatur oder Wartung"
-      />
-    </div>
+    <Card className="mb-6">
+      <CardContent className="flex flex-wrap justify-between p-6">
+        <StatItem 
+          title="Gesamte Fahrzeuge" 
+          value={totalVehicles} 
+          icon={<Truck className="h-6 w-6 text-blue-500" />} 
+        />
+        <StatItem 
+          title="Aktive Fahrzeuge" 
+          value={activeVehicles} 
+          icon={<CheckCircle className="h-6 w-6 text-green-500" />} 
+        />
+        <StatItem 
+          title="In Werkstatt" 
+          value={inWorkshopVehicles} 
+          icon={<Wrench className="h-6 w-6 text-orange-500" />} 
+        />
+      </CardContent>
+    </Card>
   );
 };
 
-interface StatCardProps {
+interface StatItemProps {
   title: string;
   value: number;
   icon: React.ReactNode;
-  description: string;
 }
 
-const StatCard = ({ title, value, icon, description }: StatCardProps) => (
-  <Card>
-    <CardContent className="flex items-center p-6">
-      <div className="mr-4">
-        {icon}
-      </div>
-      <div>
-        <h3 className="text-lg font-medium">{title}</h3>
-        <p className="text-3xl font-bold">{value}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-    </CardContent>
-  </Card>
+const StatItem = ({ title, value, icon }: StatItemProps) => (
+  <div className="flex items-center space-x-3 p-2">
+    <div className="rounded-full bg-muted p-2">
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p className="text-2xl font-bold">{value}</p>
+    </div>
+  </div>
 );
 
 export default FleetStatsOverview;
