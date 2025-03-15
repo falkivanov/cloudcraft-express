@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import FileUploadPage from "./pages/FileUploadPage";
+import EmployeesPage from "./pages/EmployeesPage";
 import NotFound from "./pages/NotFound";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -23,7 +24,7 @@ const App = () => (
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/file-upload" element={<FileUploadPage />} />
-              <Route path="/employees" element={<div className="p-8"><h1 className="text-3xl font-bold">Mitarbeiter</h1></div>} />
+              <Route path="/employees" element={<EmployeesPage />} />
               <Route path="/fleet" element={<div className="p-8"><h1 className="text-3xl font-bold">Fuhrpark</h1></div>} />
               <Route path="/shifts" element={<div className="p-8"><h1 className="text-3xl font-bold">Schichtplanung</h1></div>} />
               <Route path="/scorecard" element={<div className="p-8"><h1 className="text-3xl font-bold">Scorecard</h1></div>} />
