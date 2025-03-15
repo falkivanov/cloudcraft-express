@@ -12,7 +12,8 @@ export const sampleRepairs: RepairEntry[] = [
     description: "Ölwechsel und Inspektion",
     duration: 1,
     totalCost: 350.00,
-    companyPaidAmount: 350.00
+    companyPaidAmount: 350.00,
+    causeType: "Verschleiß"
   },
   {
     id: "2",
@@ -23,7 +24,8 @@ export const sampleRepairs: RepairEntry[] = [
     description: "Bremsen vorne erneuert",
     duration: 2,
     totalCost: 520.75,
-    companyPaidAmount: 450.00
+    companyPaidAmount: 450.00,
+    causeType: "Verschleiß"
   }
 ];
 
@@ -135,7 +137,8 @@ export const initialVehicles: Vehicle[] = [
         description: "Getriebeschaden, kompletter Austausch notwendig",
         duration: 14,
         totalCost: 4800.00,
-        companyPaidAmount: 3000.00
+        companyPaidAmount: 3000.00,
+        causeType: "Verschleiß"
       }
     ],
     appointments: []
