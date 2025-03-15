@@ -3,6 +3,7 @@ import React from "react";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
 import { Edit, IdCard, CalendarDays, MapPin, Cake, FileText, Shield, Clock, Car, Mail, Phone } from "lucide-react";
+import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsContentProps {
   employee: Employee;
@@ -15,11 +16,6 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
   onEdit,
   onClose
 }) => {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString('de-DE');
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
       <div className="space-y-2">
