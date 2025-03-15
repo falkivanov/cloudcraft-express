@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import EmployeeFilter from "@/components/employees/EmployeeFilter";
 import EmployeeTabs from "@/components/employees/EmployeeTabs";
+import EmployeeDashboard from "@/components/employees/dashboard/EmployeeDashboard";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -166,6 +167,8 @@ const EmployeesPage = () => {
           Neuer Mitarbeiter
         </Button>
       </div>
+
+      <EmployeeDashboard employees={employees} />
 
       <EmployeeFilter
         searchQuery={searchQuery}
