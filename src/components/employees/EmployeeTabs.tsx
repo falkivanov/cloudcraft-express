@@ -27,19 +27,23 @@ const EmployeeTabs = ({
       </TabsList>
       
       <div className="w-full overflow-x-auto">
-        <TabsContent value="active" className="min-w-full min-h-[500px]">
-          <EmployeeTable 
-            employees={filteredActiveEmployees} 
-            onUpdateEmployee={onUpdateEmployee}
-          />
+        <TabsContent value="active" className="min-w-full min-h-[500px] w-full">
+          <div className="border rounded-lg w-full">
+            <EmployeeTable 
+              employees={filteredActiveEmployees} 
+              onUpdateEmployee={onUpdateEmployee}
+            />
+          </div>
         </TabsContent>
         
-        <TabsContent value="former" className="min-w-full min-h-[500px]">
-          <EmployeeTable 
-            employees={filteredFormerEmployees} 
-            onUpdateEmployee={onUpdateEmployee}
-            isFormerView={true}
-          />
+        <TabsContent value="former" className="min-w-full min-h-[500px] w-full">
+          <div className="border rounded-lg w-full">
+            <EmployeeTable 
+              employees={filteredFormerEmployees} 
+              onUpdateEmployee={onUpdateEmployee}
+              isFormerView={true}
+            />
+          </div>
         </TabsContent>
       </div>
     </Tabs>

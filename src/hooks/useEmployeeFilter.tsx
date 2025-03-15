@@ -18,23 +18,27 @@ export const useEmployeeFilter = (employees: Employee[]) => {
   );
 
   // Filter nach Suchbegriff
-  const filteredActiveEmployees = useMemo(() => 
-    activeEmployees.filter((employee) =>
+  const filteredActiveEmployees = useMemo(() => {
+    const filtered = activeEmployees.filter((employee) =>
       employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       employee.transporterId.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    [activeEmployees, searchQuery]
-  );
+    );
+    
+    // Ensure filteredActiveEmployees is never empty to maintain table structure
+    return filtered;
+  }, [activeEmployees, searchQuery]);
 
-  const filteredFormerEmployees = useMemo(() => 
-    formerEmployees.filter((employee) =>
+  const filteredFormerEmployees = useMemo(() => {
+    const filtered = formerEmployees.filter((employee) =>
       employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       employee.transporterId.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    [formerEmployees, searchQuery]
-  );
+    );
+    
+    // Ensure filteredFormerEmployees is never empty to maintain table structure
+    return filtered;
+  }, [formerEmployees, searchQuery]);
 
   return {
     searchQuery,
