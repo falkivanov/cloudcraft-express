@@ -38,11 +38,11 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-medium flex items-center">
             <Calendar className="h-4 w-4 mr-2" /> 
-            Arbeitstage pro Woche (aktive Mitarbeiter)
+            Arbeitstage pro Woche
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-2 text-center">
+          <div className="grid grid-cols-5 gap-2 text-center">
             {Object.entries(workingDaysCounts).map(([days, count]) => (
               <div key={days} className="flex flex-col items-center">
                 <div className={`w-full py-2 rounded-md mb-1 ${count > 0 ? 'bg-blue-100' : 'bg-gray-100'}`}>

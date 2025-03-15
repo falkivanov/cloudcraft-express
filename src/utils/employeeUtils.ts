@@ -51,23 +51,21 @@ export const getEmployeeStatusCounts = (employees: Employee[]) => {
 /**
  * Gets a count of active employees by working days per week
  * @param employees List of employees
- * @returns Object with counts for each working days value
+ * @returns Object with counts for each working days value (1-5)
  */
 export const getEmployeesByWorkingDays = (employees: Employee[]) => {
-  // Initialize the result object with all possible working days (1-7)
+  // Initialize the result object with working days (1-5)
   const result: { [key: number]: number } = {
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
     5: 0,
-    6: 0,
-    7: 0
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0
   };
 
   // Count only active employees
   employees.forEach(employee => {
-    if (employee.endDate === null && employee.workingDaysAWeek >= 1 && employee.workingDaysAWeek <= 7) {
+    if (employee.endDate === null && employee.workingDaysAWeek >= 1 && employee.workingDaysAWeek <= 5) {
       result[employee.workingDaysAWeek]++;
     }
   });
