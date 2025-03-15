@@ -1,6 +1,6 @@
 
 import React, { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Vehicle } from "@/types/vehicle";
 import { subDays, subMonths, isAfter, parseISO } from "date-fns";
 import { Clock, TrendingUp, DollarSign } from "lucide-react";
@@ -69,10 +69,7 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
 
   return (
     <Card className="mb-6">
-      <CardHeader className="pb-2 pt-4">
-        <CardTitle className="text-lg">Reparaturkosten Übersicht</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-4 pb-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {costSummaries.map((summary, index) => (
             <div key={index} className="flex items-center space-x-3 p-2 border rounded-md">
@@ -96,6 +93,7 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
             </div>
           ))}
         </div>
+        <p className="text-[10px] text-muted-foreground text-center mt-2">Reparaturkosten Übersicht</p>
       </CardContent>
     </Card>
   );
