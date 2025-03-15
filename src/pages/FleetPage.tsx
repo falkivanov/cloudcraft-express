@@ -95,6 +95,7 @@ const initialVehicles: Vehicle[] = [
         id: "4",
         date: format(new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
         time: "11:00",
+        location: "Mercedes Service Center",
         description: "Inspektion nach Herstellervorgaben",
         appointmentType: "Inspektion",
         completed: false
@@ -138,6 +139,9 @@ const initialVehicles: Vehicle[] = [
       {
         id: "3",
         date: "2023-11-15",
+        startDate: "2023-11-15",
+        endDate: "2023-11-29",
+        location: "Opel Servicecenter Hamburg",
         description: "Getriebeschaden, kompletter Austausch notwendig",
         duration: 14,
         totalCost: 4800.00,
