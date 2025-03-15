@@ -11,8 +11,8 @@ import {
 import { 
   MoreHorizontal, 
   Eye, 
-  Trash,
-  Archive
+  Archive,
+  ArchiveRestore
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Vehicle } from "@/types/vehicle";
@@ -98,12 +98,22 @@ const FleetTable = ({
       onDefleet(selectedVehicle, defleetDate);
       setIsDefleetDialogOpen(false);
       setSelectedVehicle(null);
-      
-      toast({
-        title: "Fahrzeug defleeted",
-        description: `Das Fahrzeug ${selectedVehicle.licensePlate} wurde defleeted.`,
-      });
     }
+  };
+
+  const handleReactivateVehicle = (vehicle: Vehicle) => {
+    const updatedVehicle = {
+      ...vehicle,
+      status: "Aktiv" as const,
+      defleetDate: null
+    };
+    
+    onUpdateVehicle(updatedVehicle);
+    
+    toast({
+      title: "Fahrzeug reaktiviert",
+      description: `Das Fahrzeug ${vehicle.licensePlate} wurde reaktiviert.`,
+    });
   };
 
   return (
@@ -168,6 +178,12 @@ const FleetTable = ({
                         <DropdownMenuItem onClick={() => handleOpenDefleetDialog(vehicle)}>
                           <Archive className="mr-2 h-4 w-4" />
                           <span>Defleet</span>
+                        </DropdownMenuItem>
+                      )}
+                      {isDefleetView && (
+                        <DropdownMenuItem onClick={() => handleReactivateVehicle(vehicle)}>
+                          <ArchiveRestore className="mr-2 h-4 w-4" />
+                          <span>Reaktivieren</span>
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

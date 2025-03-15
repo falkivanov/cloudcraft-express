@@ -109,6 +109,14 @@ const FleetPage = () => {
     setVehicles(vehicles.map(vehicle => 
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
     ));
+    
+    // If a vehicle was reactivated from defleet status
+    if (updatedVehicle.status !== "Defleet" && vehicles.find(v => v.id === updatedVehicle.id)?.status === "Defleet") {
+      toast({
+        title: "Fahrzeug reaktiviert",
+        description: `Das Fahrzeug ${updatedVehicle.licensePlate} wurde reaktiviert.`,
+      });
+    }
   };
 
   const handleDefleetVehicle = (vehicle: Vehicle, defleetDate: string) => {
