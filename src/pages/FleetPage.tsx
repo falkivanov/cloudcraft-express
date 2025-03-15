@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
 import FleetTabs from "@/components/fleet/FleetTabs";
+import FleetStatsOverview from "@/components/fleet/FleetStatsOverview";
 import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { useVehicleData } from "@/hooks/useVehicleData";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -13,6 +14,7 @@ const FleetPage = () => {
   const { setOpen } = useSidebar();
   
   const {
+    vehicles,
     searchQuery,
     setSearchQuery,
     activeTab,
@@ -45,6 +47,8 @@ const FleetPage = () => {
           Neues Fahrzeug
         </Button>
       </div>
+
+      <FleetStatsOverview vehicles={vehicles} />
 
       <FleetFilter 
         searchQuery={searchQuery}
