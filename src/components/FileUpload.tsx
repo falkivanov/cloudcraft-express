@@ -113,6 +113,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
           Laden Sie Ihre Dateien hoch für die Analyse und Verarbeitung
         </CardDescription>
       </CardHeader>
+      
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-1">
@@ -184,7 +185,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Information</AlertTitle>
             <AlertDescription>
-              {selectedFileType === "pdf" && "PDF-Dateien werden für Dokumentenanalyse verwendet."}
+              {selectedFileType === "pdf" && "PDF-Dateien werden für Dokumentenanalyse verwendet. OCR wird automatisch für gescannte Dokumente angewendet."}
               {selectedFileType === "excel" && "Excel-Dateien werden für Datenimport und -analyse verwendet."}
               {selectedFileType === "csv" && "CSV-Dateien werden für Datenimport und -analyse verwendet."}
               {selectedFileType === "html" && "HTML-Dateien werden für Web-Scraping und -Analyse verwendet."}

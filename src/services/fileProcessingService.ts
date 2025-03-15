@@ -1,9 +1,10 @@
 
 import * as pdfParse from 'pdf-parse';
 import { createWorker } from 'tesseract.js';
-import { toast } from "sonner";
 
+// Definiert die Struktur einer verarbeiteten Datei
 export interface ProcessedFile {
+  id: string;
   fileName: string;
   fileType: string;
   fileSize: number;
@@ -11,124 +12,129 @@ export interface ProcessedFile {
   processedAt: Date;
 }
 
+// Lokaler Speicherschlüssel für verarbeitete Dateien
+const STORAGE_KEY = 'processed_files';
+
 export class FileProcessingService {
-  // Verarbeitet Dateien basierend auf ihrem Typ
-  static async processFile(file: File, type: string): Promise<ProcessedFile> {
-    console.log(`Processing ${type} file: ${file.name}`);
-    let content = '';
-
-    try {
-      switch (type) {
-        case 'pdf':
-          content = await this.processPdf(file);
-          break;
-        case 'excel':
-          content = await this.processExcel(file);
-          break;
-        case 'csv':
-          content = await this.processCsv(file);
-          break;
-        case 'html':
-          content = await this.processHtml(file);
-          break;
-        default:
-          content = 'Unsupported file type';
-      }
-
-      return {
-        fileName: file.name,
-        fileType: type,
-        fileSize: file.size,
-        content,
-        processedAt: new Date(),
-      };
-    } catch (error) {
-      console.error(`Error processing ${type} file:`, error);
-      toast.error(`Fehler bei der Verarbeitung der Datei: ${file.name}`);
-      throw error;
-    }
+  // Holt verarbeitete Dateien aus dem lokalen Speicher
+  static getProcessedFiles(): ProcessedFile[] {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
   }
 
-  // Verarbeitet PDF-Dateien mit OCR wenn nötig
-  private static async processPdf(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+  // Speichert eine verarbeitete Datei im lokalen Speicher
+  static saveProcessedFile(file: ProcessedFile): void {
+    const files = FileProcessingService.getProcessedFiles();
+    files.unshift(file); // Neueste zuerst hinzufügen
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+  }
 
+  // Verarbeitet eine Datei basierend auf ihrem Typ
+  static async processFile(file: File, type: string): Promise<ProcessedFile> {
+    let content = '';
+
+    switch (type) {
+      case 'pdf':
+        content = await FileProcessingService.processPdf(file);
+        break;
+      case 'excel':
+      case 'csv':
+        content = await FileProcessingService.processTabularData(file);
+        break;
+      case 'html':
+        content = await FileProcessingService.processHtml(file);
+        break;
+      default:
+        content = await FileProcessingService.processGenericText(file);
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      fileName: file.name,
+      fileType: type,
+      fileSize: file.size,
+      content,
+      processedAt: new Date(),
+    };
+  }
+
+  // Verarbeitet PDF-Dateien und extrahiert Text
+  private static async processPdf(file: File): Promise<string> {
     try {
-      // PDF-Parse für text-basierte PDFs
-      const pdfData = await pdfParse(buffer);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = new Uint8Array(arrayBuffer);
       
-      // Wenn Text erkannt wurde, diesen zurückgeben
-      if (pdfData.text && pdfData.text.trim().length > 0) {
-        return pdfData.text;
+      try {
+        // Versuche zuerst mit pdf-parse (für PDFs mit bereits eingebettetem Text)
+        const data = await pdfParse(buffer);
+        if (data.text && data.text.trim().length > 0) {
+          return data.text;
+        }
+      } catch (e) {
+        console.log('PDF-Parse-Fehler, versuche OCR:', e);
       }
-      
-      // Wenn kein Text erkannt wurde, OCR verwenden
-      return await this.performOcr(file);
+
+      // Wenn pdf-parse keinen Text findet oder fehlschlägt, nutze OCR
+      return await FileProcessingService.performOcr(file);
     } catch (error) {
-      console.error('Error parsing PDF, trying OCR:', error);
-      return await this.performOcr(file);
+      console.error('Fehler bei der PDF-Verarbeitung:', error);
+      return `Fehler bei der Verarbeitung der PDF-Datei: ${error}`;
     }
   }
 
   // Führt OCR auf einer Datei aus
   private static async performOcr(file: File): Promise<string> {
-    toast.info("OCR wird gestartet. Das kann einen Moment dauern...");
-    
-    const worker = await createWorker('deu+eng');
-    
     try {
-      const image = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const worker = await createWorker('deu+eng'); // Unterstützung für Deutsch und Englisch
       
-      if (!ctx) {
-        throw new Error('Konnte keinen Canvas-Kontext erstellen');
-      }
-      
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx.drawImage(image, 0, 0);
-      
-      const { data } = await worker.recognize(canvas);
+      const imageData = await FileProcessingService.fileToImageData(file);
+      const result = await worker.recognize(imageData);
       await worker.terminate();
       
-      return data.text;
+      return result.data.text || 'Kein Text mit OCR erkannt';
     } catch (error) {
       console.error('OCR-Fehler:', error);
-      await worker.terminate();
-      throw new Error('OCR konnte nicht durchgeführt werden');
+      return `OCR-Verarbeitungsfehler: ${error}`;
     }
   }
 
-  // Verarbeitet Excel-Dateien - Platzhalter für zukünftige Implementierung
-  private static async processExcel(file: File): Promise<string> {
-    // Für echte Implementierung würden wir eine Excel-Bibliothek wie xlsx verwenden
-    return 'Excel-Verarbeitung noch nicht implementiert';
+  // Konvertiert eine Datei in ImageData für OCR
+  private static async fileToImageData(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
-  // Verarbeitet CSV-Dateien
-  private static async processCsv(file: File): Promise<string> {
-    const text = await file.text();
+  // Verarbeitet tabellarische Daten (Excel, CSV)
+  private static async processTabularData(file: File): Promise<string> {
+    // Einfache Textextraktion für CSV-Dateien
+    // Für Excel würde hier eine spezifischere Verarbeitung implementiert
+    const text = await FileProcessingService.processGenericText(file);
     return text;
   }
 
   // Verarbeitet HTML-Dateien
   private static async processHtml(file: File): Promise<string> {
-    const text = await file.text();
-    return text;
+    const text = await FileProcessingService.processGenericText(file);
+    
+    // Einfache Entfernung von HTML-Tags
+    const strippedText = text.replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+      
+    return strippedText;
   }
 
-  // Speichert verarbeitete Dateien im localStorage
-  static saveProcessedFile(processedFile: ProcessedFile): void {
-    const storedFiles = this.getProcessedFiles();
-    storedFiles.push(processedFile);
-    localStorage.setItem('processedFiles', JSON.stringify(storedFiles));
-  }
-
-  // Holt alle verarbeiteten Dateien aus dem localStorage
-  static getProcessedFiles(): ProcessedFile[] {
-    const storedFiles = localStorage.getItem('processedFiles');
-    return storedFiles ? JSON.parse(storedFiles) : [];
+  // Generische Textextraktion für einfache Dateitypen
+  private static async processGenericText(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
   }
 }
