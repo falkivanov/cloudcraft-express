@@ -8,8 +8,8 @@ const Navbar = () => {
   
   return (
     <>
-      {/* Desktop Sidebar - changed to absolute positioning to ensure it's visible */}
-      <div className="hidden md:block absolute inset-y-0 left-0 z-40">
+      {/* Desktop Sidebar - fixed position to ensure it's always visible */}
+      <div className="hidden md:block fixed inset-y-0 left-0 z-40">
         <DesktopSidebar />
       </div>
 

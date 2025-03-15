@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -16,15 +16,13 @@ import NavItem from "./NavItem";
 const DesktopSidebar = () => {
   const location = useLocation();
   const { mainNavItems, fileUploadItem, settingsNavItem } = navigationItems;
-  const { open, setOpen } = useSidebar();
+  const { setOpen } = useSidebar();
   
-  // Force sidebar to be open on mount
-  useEffect(() => {
-    console.log("DesktopSidebar mounted, forcing sidebar open");
+  // Force sidebar to be open when component mounts
+  React.useEffect(() => {
+    console.log("DesktopSidebar mounted - forcing sidebar open");
     setOpen(true);
   }, [setOpen]);
-  
-  console.log("DesktopSidebar rendering, sidebar state:", open);
   
   return (
     <div className="h-full">
