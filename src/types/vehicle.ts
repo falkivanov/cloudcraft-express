@@ -1,4 +1,13 @@
 
+export interface RepairEntry {
+  id: string;
+  date: string;
+  description: string;
+  duration: number; // Dauer in Tagen
+  totalCost: number;
+  companyPaidAmount: number;
+}
+
 export interface Vehicle {
   id: string;
   licensePlate: string;
@@ -8,4 +17,5 @@ export interface Vehicle {
   status: "Aktiv" | "In Werkstatt" | "Defleet";
   infleetDate: string;
   defleetDate: string | null;
+  repairs?: RepairEntry[];
 }

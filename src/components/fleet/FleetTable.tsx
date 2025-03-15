@@ -38,8 +38,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import StatusBadge from "./StatusBadge";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import VehicleDetails from "./VehicleDetails";
 
 interface FleetTableProps {
   vehicles: Vehicle[];
@@ -221,53 +222,12 @@ const FleetTable = ({
         </Table>
       </div>
 
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Fahrzeugdetails</DialogTitle>
-            <DialogDescription>
-              Details zum ausgewählten Fahrzeug
-            </DialogDescription>
-          </DialogHeader>
-          {selectedVehicle && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">Kennzeichen:</span>
-                <span>{selectedVehicle.licensePlate}</span>
-              </div>
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">Marke:</span>
-                <span>{selectedVehicle.brand}</span>
-              </div>
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">Modell:</span>
-                <span>{selectedVehicle.model}</span>
-              </div>
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">FIN (VIN):</span>
-                <span>{selectedVehicle.vinNumber}</span>
-              </div>
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">Status:</span>
-                <span>{selectedVehicle.status}</span>
-              </div>
-              <div className="grid grid-cols-2 items-center gap-4">
-                <span className="font-medium">Infleet Datum:</span>
-                <span>{formatDateString(selectedVehicle.infleetDate)}</span>
-              </div>
-              {selectedVehicle.defleetDate && (
-                <div className="grid grid-cols-2 items-center gap-4">
-                  <span className="font-medium">Defleet Datum:</span>
-                  <span>{formatDateString(selectedVehicle.defleetDate)}</span>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex justify-end">
-            <Button onClick={handleCloseDetails}>Schließen</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VehicleDetails 
+        vehicle={selectedVehicle} 
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onUpdateVehicle={onUpdateVehicle}
+      />
 
       <Dialog open={isDefleetDialogOpen} onOpenChange={setIsDefleetDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

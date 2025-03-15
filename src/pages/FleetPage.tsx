@@ -4,12 +4,31 @@ import { Search, Download, Upload, Car } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FleetTable from "@/components/fleet/FleetTable";
-import { Vehicle } from "@/types/vehicle";
+import { Vehicle, RepairEntry } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
 import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+
+const sampleRepairs: RepairEntry[] = [
+  {
+    id: "1",
+    date: "2023-05-10",
+    description: "Ölwechsel und Inspektion",
+    duration: 1,
+    totalCost: 350.00,
+    companyPaidAmount: 350.00
+  },
+  {
+    id: "2",
+    date: "2023-08-22",
+    description: "Bremsen vorne erneuert",
+    duration: 2,
+    totalCost: 520.75,
+    companyPaidAmount: 450.00
+  }
+];
 
 const initialVehicles: Vehicle[] = [
   {
@@ -20,7 +39,8 @@ const initialVehicles: Vehicle[] = [
     vinNumber: "WBAKV210900J39048",
     status: "Aktiv",
     infleetDate: "2021-05-15",
-    defleetDate: null
+    defleetDate: null,
+    repairs: sampleRepairs
   },
   {
     id: "2",
@@ -30,7 +50,8 @@ const initialVehicles: Vehicle[] = [
     vinNumber: "WDDWJ4JB9KF089367",
     status: "Aktiv",
     infleetDate: "2020-10-23",
-    defleetDate: null
+    defleetDate: null,
+    repairs: []
   },
   {
     id: "3",
@@ -40,7 +61,8 @@ const initialVehicles: Vehicle[] = [
     vinNumber: "WVWZZZ1KZAM654321",
     status: "Aktiv",
     infleetDate: "2022-03-07",
-    defleetDate: null
+    defleetDate: null,
+    repairs: []
   },
   {
     id: "4",
@@ -50,7 +72,8 @@ const initialVehicles: Vehicle[] = [
     vinNumber: "WAUZZZ8E57A123456",
     status: "Defleet",
     infleetDate: "2019-08-12",
-    defleetDate: "2023-01-20"
+    defleetDate: "2023-01-20",
+    repairs: []
   },
   {
     id: "5",
@@ -60,7 +83,17 @@ const initialVehicles: Vehicle[] = [
     vinNumber: "W0L0AHL3572123456",
     status: "In Werkstatt",
     infleetDate: "2021-11-30",
-    defleetDate: null
+    defleetDate: null,
+    repairs: [
+      {
+        id: "3",
+        date: "2023-11-15",
+        description: "Getriebeschaden, kompletter Austausch notwendig",
+        duration: 14,
+        totalCost: 4800.00,
+        companyPaidAmount: 3000.00
+      }
+    ]
   }
 ];
 
