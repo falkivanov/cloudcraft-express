@@ -34,36 +34,36 @@ const DesktopSidebar = () => {
       onMouseLeave={handleMouseLeave}
     >
       <Sidebar variant="sidebar" collapsible="icon">
-        <SidebarHeader className="flex items-center h-20 px-5 bg-sidebar-accent border-b">
+        <SidebarHeader className="flex items-center h-16 px-4 bg-sidebar-accent border-b">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-base">FS</span>
+            <div className="h-8 w-8 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+              <span className="text-white font-bold text-sm">FS</span>
             </div>
-            <h1 className="text-2xl font-bold text-white">FinSuite</h1>
+            <h1 className="text-xl font-bold text-white">FinSuite</h1>
           </div>
         </SidebarHeader>
         
         <SidebarContent className="p-2">
-          <SidebarMenu className="space-y-2">
+          <SidebarMenu className="space-y-1">
             {mainNavItems.map((item) => (
               <NavItem key={item.path} item={item} pathname={location.pathname} onClick={() => {}} />
             ))}
           </SidebarMenu>
           
-          <SidebarSeparator className="my-5" />
+          <SidebarSeparator className="my-3" />
           
-          <SidebarMenu className="space-y-2">
+          <SidebarMenu className="space-y-1">
             <NavItem item={fileUploadItem} pathname={location.pathname} onClick={() => {}} />
             <NavItem item={settingsNavItem} pathname={location.pathname} onClick={() => {}} />
           </SidebarMenu>
         </SidebarContent>
         
-        <SidebarFooter className="flex-shrink-0 border-t border-sidebar-border p-5">
-          <div className="flex-shrink-0 w-full group block">
+        <SidebarFooter className="border-t border-sidebar-border p-4">
+          <div className="w-full block">
             <div className="flex items-center">
-              <div className="ml-3">
-                <p className="text-base font-medium text-sidebar-foreground">Administrator</p>
-                <p className="text-sm text-sidebar-foreground/70">CEO Account</p>
+              <div>
+                <p className="text-sm font-medium text-sidebar-foreground">Administrator</p>
+                <p className="text-xs text-sidebar-foreground/70">CEO Account</p>
               </div>
             </div>
           </div>

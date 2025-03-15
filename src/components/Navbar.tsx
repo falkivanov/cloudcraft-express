@@ -7,7 +7,7 @@ const Navbar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex h-screen fixed left-0 top-0 z-40">
+      <div className="hidden md:block fixed left-0 top-0 z-40 h-screen">
         <DesktopSidebar />
       </div>
 

@@ -8,14 +8,14 @@ const Layout = () => {
   const { open } = useSidebar();
   
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex flex-col md:flex-row min-h-screen w-full bg-background">
       <Navbar />
       <div 
         className={`flex-1 transition-all duration-200 ${
           open ? 'md:ml-64' : 'md:ml-16'
         }`}
       >
-        <main className="p-6">
+        <main className="p-6 min-h-[calc(100vh-theme(spacing.12))]">
           <Outlet />
         </main>
       </div>
