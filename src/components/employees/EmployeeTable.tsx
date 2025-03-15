@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -21,7 +20,8 @@ import {
   Shield,
   Clock,
   Car,
-  IdCard
+  IdCard,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,14 +40,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Employee } from "@/types/employee";
+import EmployeeForm from "./EmployeeForm";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 interface EmployeeTableProps {
   employees: Employee[];
+  onUpdateEmployee?: (updatedEmployee: Employee) => void;
 }
 
-const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
+const EmployeeTable: React.FC<EmployeeTableProps> = ({ 
+  employees,
+  onUpdateEmployee = () => {} 
+}) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [openEditSheet, setOpenEditSheet] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -67,6 +81,17 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
   const handleViewDetails = (employee: Employee) => {
     setSelectedEmployee(employee);
     setOpenDialog(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setOpenEditSheet(true);
+  };
+
+  const handleSaveEmployee = (updatedEmployee: Employee) => {
+    onUpdateEmployee(updatedEmployee);
+    setOpenEditSheet(false);
+    setEditingEmployee(null);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -125,7 +150,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
                           <IdCard className="mr-2 h-4 w-4" />
                           <span>Details</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Bearbeiten</span>
                         </DropdownMenuItem>
@@ -249,13 +274,43 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees }) => {
                 </div>
               </div>
               
-              <div className="col-span-1 md:col-span-2 pt-4 flex justify-end">
+              <div className="col-span-1 md:col-span-2 pt-4 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (selectedEmployee) {
+                      handleEditEmployee(selectedEmployee);
+                      setOpenDialog(false);
+                    }
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Bearbeiten
+                </Button>
                 <Button onClick={() => setOpenDialog(false)}>Schließen</Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <Sheet open={openEditSheet} onOpenChange={setOpenEditSheet}>
+        <SheetContent className="sm:max-w-xl overflow-y-auto">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Mitarbeiter bearbeiten</SheetTitle>
+            <SheetDescription>
+              Die Informationen des Mitarbeiters anpassen
+            </SheetDescription>
+          </SheetHeader>
+          {editingEmployee && (
+            <EmployeeForm
+              employee={editingEmployee}
+              onSubmit={handleSaveEmployee}
+              onCancel={() => setOpenEditSheet(false)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };

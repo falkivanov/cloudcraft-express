@@ -5,6 +5,7 @@ import { UserPlus, Download, Upload, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import EmployeeTable from "@/components/employees/EmployeeTable";
 import { Employee } from "@/types/employee";
+import { useToast } from "@/hooks/use-toast";
 
 // Beispieldaten für Mitarbeiter
 const initialEmployees: Employee[] = [
@@ -93,10 +94,22 @@ const initialEmployees: Employee[] = [
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   const filteredEmployees = employees.filter((employee) =>
     employee.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleUpdateEmployee = (updatedEmployee: Employee) => {
+    setEmployees(employees.map(emp => 
+      emp.id === updatedEmployee.id ? updatedEmployee : emp
+    ));
+    
+    toast({
+      title: "Mitarbeiter aktualisiert",
+      description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`,
+    });
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -128,7 +141,10 @@ const EmployeesPage = () => {
         </Button>
       </div>
 
-      <EmployeeTable employees={filteredEmployees} />
+      <EmployeeTable 
+        employees={filteredEmployees} 
+        onUpdateEmployee={handleUpdateEmployee}
+      />
     </div>
   );
 };
