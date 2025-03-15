@@ -5,9 +5,12 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { EmployeeFormData } from "./employeeFormSchema";
 
+// We need to restrict the name to only text fields, excluding date fields
+type TextFormFieldName = Exclude<keyof EmployeeFormData, "startDate" | "endDate" | "birthday">;
+
 interface TextFormFieldProps {
   form: UseFormReturn<EmployeeFormData>;
-  name: keyof EmployeeFormData;
+  name: TextFormFieldName;
   label: string;
   type?: string;
   min?: number;
