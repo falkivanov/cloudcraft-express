@@ -70,9 +70,7 @@ const FleetPage = () => {
 
   // Reset sidebar state when component unmounts or mounts
   useEffect(() => {
-    // Allow sidebar to be interactive again on component mount
     const handleMouseMove = () => {
-      // Re-enable sidebar interactivity
       document.body.style.pointerEvents = 'auto';
     };
 
@@ -86,23 +84,14 @@ const FleetPage = () => {
   const filteredVehicles = vehicles.filter((vehicle) =>
     vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
     vehicle.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    vehicle.model.toLowerCase().includes(searchQuery.toLowerCase())
+    vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    vehicle.vinNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleUpdateVehicle = (updatedVehicle: Vehicle) => {
-    // If status is not 'Defleet', ensure defleetDate is null
-    if (updatedVehicle.status !== "Defleet") {
-      updatedVehicle.defleetDate = null;
-    }
-    
     setVehicles(vehicles.map(vehicle => 
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
     ));
-    
-    toast({
-      title: "Fahrzeug aktualisiert",
-      description: `Die Daten des Fahrzeugs ${updatedVehicle.licensePlate} wurden erfolgreich aktualisiert.`,
-    });
   };
 
   return (
