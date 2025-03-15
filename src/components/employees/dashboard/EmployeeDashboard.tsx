@@ -18,7 +18,7 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
   return (
     <div className="mb-8">
       <h2 className="text-lg font-semibold mb-4">Mitarbeiter Übersicht</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <StatCard 
           title="Aktive Mitarbeiter" 
           value={statusCounts.active} 
@@ -32,28 +32,28 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
           icon={Briefcase}
           colorClass="bg-purple-100 text-purple-600"
         />
-      </div>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium flex items-center">
-            <Calendar className="h-4 w-4 mr-2" /> 
-            Arbeitstage pro Woche
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-5 gap-2 text-center">
-            {Object.entries(workingDaysCounts).map(([days, count]) => (
-              <div key={days} className="flex flex-col items-center">
-                <div className={`w-full py-2 rounded-md mb-1 ${count > 0 ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                  <span className="text-lg font-medium">{count}</span>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium flex items-center">
+              <Calendar className="h-4 w-4 mr-2" /> 
+              Arbeitstage pro Woche
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-5 gap-2 text-center">
+              {Object.entries(workingDaysCounts).map(([days, count]) => (
+                <div key={days} className="flex flex-col items-center">
+                  <div className={`w-full py-2 rounded-md mb-1 ${count > 0 ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                    <span className="text-lg font-medium">{count}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{days} {parseInt(days) === 1 ? 'Tag' : 'Tage'}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{days} {parseInt(days) === 1 ? 'Tag' : 'Tage'}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
