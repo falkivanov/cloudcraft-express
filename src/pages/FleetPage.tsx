@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Download, Upload, Car } from "lucide-react";
@@ -8,6 +7,7 @@ import FleetTable from "@/components/fleet/FleetTable";
 import { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
+import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 
 // Beispieldaten für Fahrzeuge
 const initialVehicles: Vehicle[] = [
@@ -67,6 +67,7 @@ const FleetPage = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
+  const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
@@ -136,11 +137,28 @@ const FleetPage = () => {
     });
   };
 
+  const handleAddVehicle = (vehicleData: Omit<Vehicle, "id">) => {
+    // Generate a new ID - in a real app this would be handled by the backend
+    const newId = (Math.max(...vehicles.map(v => parseInt(v.id))) + 1).toString();
+    
+    const newVehicle: Vehicle = {
+      id: newId,
+      ...vehicleData
+    };
+    
+    setVehicles([...vehicles, newVehicle]);
+    
+    toast({
+      title: "Fahrzeug hinzugefügt",
+      description: `Das Fahrzeug ${newVehicle.licensePlate} wurde erfolgreich hinzugefügt.`,
+    });
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Fuhrpark</h1>
-        <Button>
+        <Button onClick={() => setIsNewVehicleDialogOpen(true)}>
           <Car className="mr-2" />
           Neues Fahrzeug
         </Button>
@@ -189,6 +207,12 @@ const FleetPage = () => {
           />
         </TabsContent>
       </Tabs>
+      
+      <NewVehicleDialog 
+        open={isNewVehicleDialogOpen}
+        onOpenChange={setIsNewVehicleDialogOpen}
+        onSubmit={handleAddVehicle}
+      />
     </div>
   );
 };

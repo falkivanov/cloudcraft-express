@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import StatusBadge from "./StatusBadge";
 
 interface FleetTableProps {
   vehicles: Vehicle[];
@@ -148,7 +149,9 @@ const FleetTable = ({
                       }
                     >
                       <SelectTrigger className="w-[130px]">
-                        <SelectValue placeholder="Status" />
+                        <SelectValue placeholder="Status">
+                          <StatusBadge status={vehicle.status} />
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Aktiv">Aktiv</SelectItem>
@@ -156,7 +159,7 @@ const FleetTable = ({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <span>Defleet</span>
+                    <StatusBadge status={vehicle.status} />
                   )}
                 </TableCell>
                 <TableCell>{vehicle.infleetDate}</TableCell>
