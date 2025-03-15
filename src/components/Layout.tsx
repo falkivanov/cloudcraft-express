@@ -1,27 +1,27 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import { useSidebar } from "@/components/ui/sidebar";
 
 const Layout = () => {
-  const { open } = useSidebar();
+  const { setOpen } = useSidebar();
   
-  console.log("Layout rendering with sidebar state:", open);
+  // Force sidebar to be open on mount
+  useEffect(() => {
+    console.log("Layout mounted - FORCING sidebar open");
+    setOpen(true);
+  }, [setOpen]);
   
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <>
       <Navbar />
-      <div 
-        className={`flex-1 transition-all duration-200 ${
-          open ? 'md:ml-64' : 'md:ml-16'
-        }`}
-      >
+      <div className="flex-1 md:ml-64">
         <main className="p-6 min-h-screen">
           <Outlet />
         </main>
       </div>
-    </div>
+    </>
   );
 };
 

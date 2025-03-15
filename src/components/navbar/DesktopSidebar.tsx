@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -19,9 +19,12 @@ const DesktopSidebar = () => {
   const { setOpen } = useSidebar();
   
   // Force sidebar to be open when component mounts
-  React.useEffect(() => {
-    console.log("DesktopSidebar mounted - forcing sidebar open");
-    setOpen(true);
+  useEffect(() => {
+    console.log("DesktopSidebar mounted - FORCING SIDEBAR OPEN");
+    setTimeout(() => {
+      setOpen(true);
+      console.log("Sidebar should now be open");
+    }, 100);
   }, [setOpen]);
   
   return (
