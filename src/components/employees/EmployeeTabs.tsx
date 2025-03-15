@@ -27,14 +27,14 @@ const EmployeeTabs = ({
       </TabsList>
       
       <div className="w-full overflow-x-auto">
-        <TabsContent value="active" className="min-w-full">
+        <TabsContent value="active" className="min-w-full min-h-[500px]">
           <EmployeeTable 
             employees={filteredActiveEmployees} 
             onUpdateEmployee={onUpdateEmployee}
           />
         </TabsContent>
         
-        <TabsContent value="former" className="min-w-full">
+        <TabsContent value="former" className="min-w-full min-h-[500px]">
           <EmployeeTable 
             employees={filteredFormerEmployees} 
             onUpdateEmployee={onUpdateEmployee}
