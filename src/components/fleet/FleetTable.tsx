@@ -157,7 +157,7 @@ const FleetTable = ({
                   <TableCell className="font-medium">{vehicle.licensePlate}</TableCell>
                   <TableCell>{vehicle.brand}</TableCell>
                   <TableCell>{vehicle.model}</TableCell>
-                  <TableCell className="font-mono text-sm">{vehicle.vinNumber}</TableCell>
+                  <TableCell>{vehicle.vinNumber}</TableCell>
                   <TableCell>
                     {!isDefleetView ? (
                       <Select 
