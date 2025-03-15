@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -71,7 +70,6 @@ const FleetTable = ({
   const handleCloseDetails = () => {
     setIsDetailsOpen(false);
     setSelectedVehicle(null);
-    // Ensure body pointer events are re-enabled
     document.body.style.pointerEvents = 'auto';
   };
 
@@ -119,14 +117,11 @@ const FleetTable = ({
     });
   };
 
-  // Format date to DD/MM/YYYY
   const formatDateString = (dateString: string | null): string => {
     if (!dateString) return "—";
     try {
-      // Parse the ISO date string to a Date object
       const date = new Date(dateString);
-      // Format to DD/MM/YYYY
-      return format(date, 'dd/MM/yyyy', { locale: de });
+      return format(date, 'dd.MM.yyyy', { locale: de });
     } catch (error) {
       console.error("Invalid date format", error);
       return dateString;
@@ -226,7 +221,6 @@ const FleetTable = ({
         </Table>
       </div>
 
-      {/* Vehicle Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -275,7 +269,6 @@ const FleetTable = ({
         </DialogContent>
       </Dialog>
 
-      {/* Defleet Dialog */}
       <Dialog open={isDefleetDialogOpen} onOpenChange={setIsDefleetDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

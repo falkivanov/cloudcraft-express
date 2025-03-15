@@ -11,7 +11,6 @@ import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
-// Beispieldaten für Fahrzeuge mit konsistentem Datumsformat
 const initialVehicles: Vehicle[] = [
   {
     id: "1",
@@ -151,6 +150,12 @@ const FleetPage = () => {
       title: "Fahrzeug hinzugefügt",
       description: `Das Fahrzeug ${newVehicle.licensePlate} wurde erfolgreich hinzugefügt.`,
     });
+  };
+
+  const formatDateDisplay = (dateString: string | null): string => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    return format(date, 'dd.MM.yyyy', { locale: de });
   };
 
   return (

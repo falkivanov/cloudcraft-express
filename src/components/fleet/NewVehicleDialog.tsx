@@ -1,4 +1,3 @@
-
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -50,7 +49,6 @@ const NewVehicleDialog = ({ open, onOpenChange, onSubmit }: NewVehicleDialogProp
   });
 
   const handleSubmit = (data: z.infer<typeof vehicleFormSchema>) => {
-    // Ensure all required properties are included for Vehicle type
     const newVehicle: Omit<Vehicle, "id"> = {
       licensePlate: data.licensePlate,
       brand: data.brand,
@@ -64,6 +62,11 @@ const NewVehicleDialog = ({ open, onOpenChange, onSubmit }: NewVehicleDialogProp
     onSubmit(newVehicle);
     form.reset();
     onOpenChange(false);
+  };
+
+  const formatDisplayDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return format(date, 'dd.MM.yyyy', { locale: de });
   };
 
   return (
