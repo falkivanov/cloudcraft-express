@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Download, Upload, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import EmployeeTable from "@/components/employees/EmployeeTable";
+import { UserPlus } from "lucide-react";
+import EmployeeFilter from "@/components/employees/EmployeeFilter";
+import EmployeeTabs from "@/components/employees/EmployeeTabs";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useEmployeeFilter } from "@/hooks/useEmployeeFilter";
 
 // Beispieldaten für Mitarbeiter
 const initialEmployees: Employee[] = [
@@ -89,14 +90,39 @@ const initialEmployees: Employee[] = [
     insuranceId: "SV-36925814",
     workingDaysAWeek: 5,
     preferredVehicle: "Opel Astra"
+  },
+  // Füge einen ehemaligen Mitarbeiter hinzu
+  {
+    id: "6",
+    name: "Sarah Meyer",
+    email: "sarah.meyer@beispiel.de",
+    phone: "+49 123 4567895",
+    status: "Inaktiv",
+    transporterId: "TR-006",
+    startDate: "2018-05-01",
+    endDate: "2023-12-31",
+    address: "Musterstraße 42, 10115 Berlin",
+    birthday: "1988-11-15",
+    taxId: "DE123456788",
+    insuranceId: "SV-87654322",
+    workingDaysAWeek: 5,
+    preferredVehicle: "BMW 3er"
   }
 ];
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
-  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { setOpen } = useSidebar();
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    activeTab,
+    setActiveTab,
+    filteredActiveEmployees,
+    filteredFormerEmployees
+  } = useEmployeeFilter(employees);
 
   // Reset sidebar state when component unmounts or mounts
   useEffect(() => {
@@ -113,10 +139,6 @@ const EmployeesPage = () => {
     };
   }, [setOpen]);
 
-  const filteredEmployees = employees.filter((employee) =>
-    employee.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleUpdateEmployee = (updatedEmployee: Employee) => {
     setEmployees(employees.map(emp => 
       emp.id === updatedEmployee.id ? updatedEmployee : emp
@@ -128,40 +150,38 @@ const EmployeesPage = () => {
     });
   };
 
+  const handleNewEmployee = () => {
+    toast({
+      title: "Neuer Mitarbeiter",
+      description: "Diese Funktion wird noch implementiert.",
+    });
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Mitarbeiter</h1>
-        <Button>
+        <Button onClick={handleNewEmployee}>
           <UserPlus className="mr-2" />
           Neuer Mitarbeiter
         </Button>
       </div>
 
-      <div className="flex justify-between items-center mb-6 gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Suche nach Mitarbeitern..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button variant="outline" className="flex items-center">
-          <Upload className="mr-2 h-4 w-4" />
-          Import
-        </Button>
-        <Button variant="outline" className="flex items-center">
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
-      </div>
-
-      <EmployeeTable 
-        employees={filteredEmployees} 
-        onUpdateEmployee={handleUpdateEmployee}
+      <EmployeeFilter
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        employees={employees}
       />
+
+      <div className="w-full overflow-x-auto">
+        <EmployeeTabs 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          filteredActiveEmployees={filteredActiveEmployees}
+          filteredFormerEmployees={filteredFormerEmployees}
+          onUpdateEmployee={handleUpdateEmployee}
+        />
+      </div>
     </div>
   );
 };

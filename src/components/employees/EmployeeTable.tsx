@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Table,
@@ -21,7 +22,8 @@ import {
   Clock,
   Car,
   IdCard,
-  X
+  UserCheck,
+  UserMinus
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Employee } from "@/types/employee";
 import EmployeeForm from "./EmployeeForm";
+import ContractEndDialog from "./ContractEndDialog";
 import {
   Sheet,
   SheetContent,
@@ -52,16 +55,22 @@ import {
 interface EmployeeTableProps {
   employees: Employee[];
   onUpdateEmployee?: (updatedEmployee: Employee) => void;
+  isFormerView?: boolean;
 }
 
 const EmployeeTable: React.FC<EmployeeTableProps> = ({ 
   employees,
-  onUpdateEmployee = () => {} 
+  onUpdateEmployee = () => {},
+  isFormerView = false
 }) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [openEditSheet, setOpenEditSheet] = useState(false);
+  const [isContractEndDialogOpen, setIsContractEndDialogOpen] = useState(false);
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -99,6 +108,36 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return new Date(dateString).toLocaleDateString('de-DE');
   };
 
+  const handleOpenContractEndDialog = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsContractEndDialogOpen(true);
+  };
+
+  const handleEndContract = () => {
+    if (selectedEmployee && onUpdateEmployee) {
+      const updatedEmployee = {
+        ...selectedEmployee,
+        status: "Inaktiv",
+        endDate: endDate
+      };
+      
+      onUpdateEmployee(updatedEmployee);
+      setIsContractEndDialogOpen(false);
+      setSelectedEmployee(null);
+    }
+  };
+
+  const handleReactivateEmployee = (employee: Employee) => {
+    if (onUpdateEmployee) {
+      const updatedEmployee = {
+        ...employee,
+        endDate: null,
+        status: "Aktiv"
+      };
+      onUpdateEmployee(updatedEmployee);
+    }
+  };
+
   return (
     <>
       <div className="border rounded-lg">
@@ -108,6 +147,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
               <TableHead>Name</TableHead>
               <TableHead>Transporter ID</TableHead>
               <TableHead>Startdatum</TableHead>
+              {isFormerView && <TableHead>Enddatum</TableHead>}
               <TableHead>Status</TableHead>
               <TableHead>Kontakt</TableHead>
               <TableHead className="w-[80px]"></TableHead>
@@ -116,8 +156,8 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           <TableBody>
             {employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                  Keine Mitarbeiter gefunden
+                <TableCell colSpan={isFormerView ? 7 : 6} className="text-center py-10 text-muted-foreground">
+                  {isFormerView ? "Keine ehemaligen Mitarbeiter gefunden" : "Keine Mitarbeiter gefunden"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -126,6 +166,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.transporterId}</TableCell>
                   <TableCell>{formatDate(employee.startDate)}</TableCell>
+                  {isFormerView && <TableCell>{formatDate(employee.endDate)}</TableCell>}
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
@@ -154,6 +195,18 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Bearbeiten</span>
                         </DropdownMenuItem>
+                        {!isFormerView && (
+                          <DropdownMenuItem onClick={() => handleOpenContractEndDialog(employee)}>
+                            <UserMinus className="mr-2 h-4 w-4" />
+                            <span>Vertrag beenden</span>
+                          </DropdownMenuItem>
+                        )}
+                        {isFormerView && (
+                          <DropdownMenuItem onClick={() => handleReactivateEmployee(employee)}>
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            <span>Reaktivieren</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -311,6 +364,15 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           )}
         </SheetContent>
       </Sheet>
+
+      <ContractEndDialog
+        selectedEmployee={selectedEmployee}
+        open={isContractEndDialogOpen}
+        endDate={endDate}
+        onOpenChange={setIsContractEndDialogOpen}
+        onEndDateChange={setEndDate}
+        onEndContract={handleEndContract}
+      />
     </>
   );
 };
