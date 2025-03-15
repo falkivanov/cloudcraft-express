@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Vehicle, RepairEntry, Appointment } from "@/types/vehicle";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,6 +102,25 @@ const VehicleDetails = ({
     return Math.max(0, differenceInDays(end, start) + 1); // +1 to include both start and end dates
   };
 
+  const sortedRepairs = React.useMemo(() => {
+    if (!vehicle?.repairs) return [];
+    return [...vehicle.repairs].sort((a, b) => {
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+    });
+  }, [vehicle?.repairs]);
+
+  const sortedAppointments = React.useMemo(() => {
+    if (!vehicle?.appointments) return [];
+    return [...vehicle.appointments].sort((a, b) => {
+      const dateA = parseISO(a.date);
+      const dateB = parseISO(b.date);
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateB.getTime() - dateA.getTime();
+      }
+      return a.time.localeCompare(b.time);
+    });
+  }, [vehicle?.appointments]);
+
   const handleAddRepair = () => {
     if (!vehicle) return;
     
@@ -148,7 +167,6 @@ const VehicleDetails = ({
     
     onUpdateVehicle(updatedVehicle);
     
-    // Reset the form
     setNewRepair({
       startDate: currentDate,
       endDate: currentDate,
@@ -199,7 +217,6 @@ const VehicleDetails = ({
     
     onUpdateVehicle(updatedVehicle);
     
-    // Reset the form
     setNewAppointment({
       date: currentDate,
       time: "09:00",
@@ -415,13 +432,13 @@ const VehicleDetails = ({
             ) : (
               <Card>
                 <CardContent className="pt-6">
-                  {!vehicle.repairs || vehicle.repairs.length === 0 ? (
+                  {!sortedRepairs.length ? (
                     <div className="text-center py-6 text-muted-foreground">
                       Keine Reparaturen gefunden
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {vehicle.repairs.map((repair) => (
+                      {sortedRepairs.map((repair) => (
                         <Card key={repair.id} className="bg-muted/30">
                           <CardHeader className="pb-2">
                             <div className="flex justify-between items-center">
@@ -564,13 +581,13 @@ const VehicleDetails = ({
             ) : (
               <Card>
                 <CardContent className="pt-6">
-                  {!vehicle.appointments || vehicle.appointments.length === 0 ? (
+                  {!sortedAppointments.length ? (
                     <div className="text-center py-6 text-muted-foreground">
                       Keine Termine gefunden
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {vehicle.appointments.map((appointment) => (
+                      {sortedAppointments.map((appointment) => (
                         <Card key={appointment.id} className={cn("bg-muted/30", appointment.completed && "bg-muted/10")}>
                           <CardHeader className="pb-2">
                             <div className="flex justify-between items-center">

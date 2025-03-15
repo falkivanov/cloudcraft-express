@@ -118,6 +118,10 @@ const FleetTable = ({
     });
   };
 
+  const handleDoubleClick = (vehicle: Vehicle) => {
+    handleViewDetails(vehicle);
+  };
+
   const formatDateString = (dateString: string | null): string => {
     if (!dateString) return "—";
     try {
@@ -154,7 +158,11 @@ const FleetTable = ({
               </TableRow>
             ) : (
               vehicles.map((vehicle) => (
-                <TableRow key={vehicle.id}>
+                <TableRow 
+                  key={vehicle.id} 
+                  onDoubleClick={() => handleDoubleClick(vehicle)}
+                  className="cursor-pointer"
+                >
                   <TableCell className="font-medium">{vehicle.licensePlate}</TableCell>
                   <TableCell>{vehicle.brand}</TableCell>
                   <TableCell>{vehicle.model}</TableCell>
