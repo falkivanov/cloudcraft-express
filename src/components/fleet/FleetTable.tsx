@@ -148,7 +148,7 @@ const FleetTable = ({
                         handleStatusChange(vehicle.id, value)
                       }
                     >
-                      <SelectTrigger className="w-[140px]">
+                      <SelectTrigger className="w-[160px]">
                         <SelectValue>
                           <StatusBadge status={vehicle.status} />
                         </SelectValue>

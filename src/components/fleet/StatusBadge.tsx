@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
@@ -9,25 +8,27 @@ interface StatusBadgeProps {
 
 const StatusBadge = ({ status }: StatusBadgeProps) => {
   let className = "";
+  let indicatorClass = "";
   
   switch (status) {
     case "Aktiv":
-      className = "bg-green-100 text-green-800 hover:bg-green-200 whitespace-nowrap";
+      indicatorClass = "bg-green-500";
       break;
     case "In Werkstatt":
-      className = "bg-orange-100 text-orange-800 hover:bg-orange-200 whitespace-nowrap";
+      indicatorClass = "bg-orange-500";
       break;
     case "Defleet":
-      className = "bg-red-100 text-red-800 hover:bg-red-200 whitespace-nowrap";
+      indicatorClass = "bg-red-500";
       break;
     default:
-      className = "whitespace-nowrap";
+      indicatorClass = "bg-gray-300";
   }
 
   return (
-    <Badge variant="outline" className={cn(className)}>
-      {status}
-    </Badge>
+    <div className="flex items-center gap-2 whitespace-nowrap">
+      <div className={cn("w-3 h-3 rounded-sm", indicatorClass)} />
+      <span>{status}</span>
+    </div>
   );
 };
 
