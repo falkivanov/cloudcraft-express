@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Download, Upload, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import EmployeeTable from "@/components/employees/EmployeeTable";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
+import { useSidebar } from "@/components/ui/sidebar";
 
 // Beispieldaten für Mitarbeiter
 const initialEmployees: Employee[] = [
@@ -95,6 +96,22 @@ const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { setOpen } = useSidebar();
+
+  // Reset sidebar state when component unmounts or mounts
+  useEffect(() => {
+    // Allow sidebar to be interactive again on component mount
+    const handleMouseMove = () => {
+      // Re-enable sidebar interactivity
+      document.body.style.pointerEvents = 'auto';
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [setOpen]);
 
   const filteredEmployees = employees.filter((employee) =>
     employee.name.toLowerCase().includes(searchQuery.toLowerCase())
