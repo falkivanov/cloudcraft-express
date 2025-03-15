@@ -5,7 +5,7 @@ export interface Vehicle {
   brand: string;
   model: string;
   vinNumber: string;
-  status: string;
+  status: "Aktiv" | "In Werkstatt" | "Defleet";
   infleetDate: string;
   defleetDate: string | null;
 }

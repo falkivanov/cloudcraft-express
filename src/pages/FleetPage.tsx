@@ -46,7 +46,7 @@ const initialVehicles: Vehicle[] = [
     brand: "Audi",
     model: "A4",
     vinNumber: "WAUZZZ8E57A123456",
-    status: "Inaktiv",
+    status: "Defleet",
     infleetDate: "2019-08-12",
     defleetDate: "2023-01-20"
   },
@@ -56,7 +56,7 @@ const initialVehicles: Vehicle[] = [
     brand: "Opel",
     model: "Astra",
     vinNumber: "W0L0AHL3572123456",
-    status: "Aktiv",
+    status: "In Werkstatt",
     infleetDate: "2021-11-30",
     defleetDate: null
   }
@@ -90,6 +90,11 @@ const FleetPage = () => {
   );
 
   const handleUpdateVehicle = (updatedVehicle: Vehicle) => {
+    // If status is not 'Defleet', ensure defleetDate is null
+    if (updatedVehicle.status !== "Defleet") {
+      updatedVehicle.defleetDate = null;
+    }
+    
     setVehicles(vehicles.map(vehicle => 
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
     ));

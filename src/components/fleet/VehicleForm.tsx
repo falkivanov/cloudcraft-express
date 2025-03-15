@@ -13,6 +13,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Vehicle } from "@/types/vehicle";
 
 interface VehicleFormProps {
@@ -27,7 +34,9 @@ const vehicleFormSchema = z.object({
   brand: z.string().min(1, "Marke ist erforderlich"),
   model: z.string().min(1, "Modell ist erforderlich"),
   vinNumber: z.string().min(1, "VIN ist erforderlich"),
-  status: z.string().min(1, "Status ist erforderlich"),
+  status: z.enum(["Aktiv", "In Werkstatt", "Defleet"], {
+    required_error: "Status ist erforderlich",
+  }),
   infleetDate: z.string().min(1, "Infleet Datum ist erforderlich"),
   defleetDate: z.string().nullable(),
 });
@@ -48,6 +57,9 @@ const VehicleForm = ({ vehicle, onSubmit, onCancel }: VehicleFormProps) => {
     resolver: zodResolver(vehicleFormSchema),
     defaultValues,
   });
+
+  const watchStatus = form.watch("status");
+  const showDefleetDate = watchStatus === "Defleet";
 
   return (
     <Form {...form}>
@@ -117,9 +129,21 @@ const VehicleForm = ({ vehicle, onSubmit, onCancel }: VehicleFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status auswählen" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Aktiv">Aktiv</SelectItem>
+                  <SelectItem value="In Werkstatt">In Werkstatt</SelectItem>
+                  <SelectItem value="Defleet">Defleet</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -139,24 +163,26 @@ const VehicleForm = ({ vehicle, onSubmit, onCancel }: VehicleFormProps) => {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="defleetDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Defleet Datum</FormLabel>
-              <FormControl>
-                <Input 
-                  type="date" 
-                  {...field} 
-                  value={field.value || ""} 
-                  onChange={(e) => field.onChange(e.target.value || null)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showDefleetDate && (
+          <FormField
+            control={form.control}
+            name="defleetDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Defleet Datum</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    {...field} 
+                    value={field.value || ""} 
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button variant="outline" onClick={onCancel} type="button">
