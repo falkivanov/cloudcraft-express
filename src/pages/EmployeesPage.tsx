@@ -168,7 +168,9 @@ const EmployeesPage = () => {
         </Button>
       </div>
 
-      <EmployeeDashboard employees={employees} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <EmployeeDashboard employees={employees} />
+      </div>
 
       <EmployeeFilter
         searchQuery={searchQuery}
