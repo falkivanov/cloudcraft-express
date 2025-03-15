@@ -1,11 +1,9 @@
 
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Vehicle, RepairEntry } from "@/types/vehicle";
+import { Vehicle } from "@/types/vehicle";
 import { subDays, subMonths, isAfter, parseISO } from "date-fns";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Area, AreaChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend, Bar, BarChart } from "recharts";
-import { DollarSign, Clock, TrendingUp } from "lucide-react";
+import { Clock, TrendingUp, DollarSign } from "lucide-react";
 
 interface CostSummaryProps {
   vehicles: Vehicle[];
@@ -69,75 +67,34 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
     });
   }, [allRepairs, timeFrames]);
 
-  // Prepare data for the chart
-  const chartData = useMemo(() => {
-    return costSummaries.map(summary => ({
-      name: summary.timeFrame,
-      Gesamt: Math.round(summary.totalCost),
-      Unternehmen: Math.round(summary.companyPaidCost),
-      Mitarbeiter: Math.round(summary.employeePaidCost)
-    }));
-  }, [costSummaries]);
-
   return (
     <Card className="mb-6">
       <CardHeader>
         <CardTitle className="text-xl">Reparaturkosten Übersicht</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {costSummaries.map((summary, index) => (
-            <div key={index} className="flex items-center space-x-3 p-2 border rounded-md">
+            <div key={index} className="flex items-center space-x-3 p-3 border rounded-md">
               <div className="rounded-full bg-muted p-2">
                 {summary.icon}
               </div>
-              <div>
+              <div className="w-full">
                 <p className="text-sm font-medium text-muted-foreground">{summary.timeFrame}</p>
-                <p className="text-lg font-bold">{summary.totalCost.toLocaleString('de-DE')} €</p>
-                <p className="text-xs text-muted-foreground">
-                  Unternehmen: {summary.companyPaidCost.toLocaleString('de-DE')} € 
-                  {summary.repairCount > 0 && ` (${summary.repairCount} Reparaturen)`}
-                </p>
+                <p className="text-2xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    Gesamt: {summary.totalCost.toLocaleString('de-DE')} €
+                  </p>
+                  {summary.repairCount > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {summary.repairCount} Reparaturen
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ))}
-        </div>
-        
-        <div className="h-72">
-          <ChartContainer 
-            config={{
-              Gesamt: { theme: { light: "#4338ca", dark: "#818cf8" } },
-              Unternehmen: { theme: { light: "#0ea5e9", dark: "#38bdf8" } },
-              Mitarbeiter: { theme: { light: "#f97316", dark: "#fb923c" } },
-            }}
-          >
-            <BarChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip 
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-background border rounded-md p-2 shadow-md">
-                        <p className="font-bold">{label}</p>
-                        {payload.map((item, index) => (
-                          <p key={index} style={{ color: item.color }}>
-                            {item.name}: {item.value.toLocaleString('de-DE')} €
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Legend />
-              <Bar dataKey="Gesamt" fill="var(--color-Gesamt)" />
-              <Bar dataKey="Unternehmen" fill="var(--color-Unternehmen)" />
-              <Bar dataKey="Mitarbeiter" fill="var(--color-Mitarbeiter)" />
-            </BarChart>
-          </ChartContainer>
         </div>
       </CardContent>
     </Card>
