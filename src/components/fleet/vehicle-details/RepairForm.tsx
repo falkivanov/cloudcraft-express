@@ -1,22 +1,13 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Dummy-Daten für Mitarbeiter - In einer realen Anwendung würden diese aus einer API kommen
-const employees = [
-  { id: "1", name: "Max Mustermann" },
-  { id: "2", name: "Anna Schmidt" },
-  { id: "3", name: "Thomas Müller" },
-  { id: "4", name: "Lisa Weber" },
-  { id: "5", name: "Michael Fischer" },
-];
+import { employees } from "./form/EmployeeSelect";
+import RepairDatesSection from "./form/RepairDatesSection";
+import RepairDetailsSection from "./form/RepairDetailsSection";
+import RepairCauseSection from "./form/RepairCauseSection";
+import RepairCostSection from "./form/RepairCostSection";
 
 interface RepairFormProps {
   newRepair: {
@@ -108,110 +99,35 @@ const RepairForm = ({ newRepair, setNewRepair, onCancel, onSubmit }: RepairFormP
       <form onSubmit={handleSubmit}>
         <CardContent>
           <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="repair-start-date">Startdatum</Label>
-                <Input 
-                  id="repair-start-date" 
-                  type="date" 
-                  value={newRepair.startDate}
-                  onChange={(e) => setNewRepair({...newRepair, startDate: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="repair-end-date">Enddatum</Label>
-                <Input 
-                  id="repair-end-date" 
-                  type="date" 
-                  value={newRepair.endDate}
-                  onChange={(e) => setNewRepair({...newRepair, endDate: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="repair-location">Werkstatt / Ort</Label>
-              <Input 
-                id="repair-location" 
-                placeholder="Name und Ort der Werkstatt"
-                value={newRepair.location}
-                onChange={(e) => setNewRepair({...newRepair, location: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="repair-description">Beschreibung</Label>
-              <Textarea 
-                id="repair-description" 
-                placeholder="Beschreiben Sie die durchgeführten Arbeiten"
-                value={newRepair.description}
-                onChange={(e) => setNewRepair({...newRepair, description: e.target.value})}
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Ursache</Label>
-              <RadioGroup 
-                value={newRepair.causeType}
-                onValueChange={(value: "Verschleiß" | "Unfall") => 
-                  setNewRepair({...newRepair, causeType: value, causedByEmployeeId: value === "Verschleiß" ? undefined : newRepair.causedByEmployeeId})
-                }
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Verschleiß" id="verschleiss" />
-                  <Label htmlFor="verschleiss">Verschleiß</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Unfall" id="unfall" />
-                  <Label htmlFor="unfall">Unfall</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            {newRepair.causeType === "Unfall" && (
-              <div className="space-y-2">
-                <Label htmlFor="caused-by-employee">Verursacht durch</Label>
-                <Select 
-                  value={newRepair.causedByEmployeeId}
-                  onValueChange={handleEmployeeSelect}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Mitarbeiter auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map(employee => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <RepairDatesSection 
+              startDate={newRepair.startDate}
+              endDate={newRepair.endDate}
+              onStartDateChange={(value) => setNewRepair({...newRepair, startDate: value})}
+              onEndDateChange={(value) => setNewRepair({...newRepair, endDate: value})}
+            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="repair-total-cost">Gesamtkosten (€)</Label>
-                <Input 
-                  id="repair-total-cost" 
-                  type="number" 
-                  min="0"
-                  step="0.01"
-                  value={newRepair.totalCost}
-                  onChange={(e) => setNewRepair({...newRepair, totalCost: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="repair-company-paid">Unternehmen bezahlt (€)</Label>
-                <Input 
-                  id="repair-company-paid" 
-                  type="number" 
-                  min="0"
-                  step="0.01"
-                  value={newRepair.companyPaidAmount}
-                  onChange={(e) => setNewRepair({...newRepair, companyPaidAmount: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-            </div>
+            <RepairDetailsSection 
+              location={newRepair.location}
+              description={newRepair.description}
+              onLocationChange={(value) => setNewRepair({...newRepair, location: value})}
+              onDescriptionChange={(value) => setNewRepair({...newRepair, description: value})}
+            />
+
+            <RepairCauseSection 
+              causeType={newRepair.causeType}
+              causedByEmployeeId={newRepair.causedByEmployeeId}
+              onCauseTypeChange={(value) => 
+                setNewRepair({...newRepair, causeType: value, causedByEmployeeId: value === "Verschleiß" ? undefined : newRepair.causedByEmployeeId})
+              }
+              onEmployeeSelect={handleEmployeeSelect}
+            />
+
+            <RepairCostSection 
+              totalCost={newRepair.totalCost}
+              companyPaidAmount={newRepair.companyPaidAmount}
+              onTotalCostChange={(value) => setNewRepair({...newRepair, totalCost: value})}
+              onCompanyPaidChange={(value) => setNewRepair({...newRepair, companyPaidAmount: value})}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
