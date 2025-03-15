@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
@@ -7,11 +7,9 @@ import FleetTabs from "@/components/fleet/FleetTabs";
 import FleetStatsOverview from "@/components/fleet/FleetStatsOverview";
 import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { useVehicleData } from "@/hooks/useVehicleData";
-import { useSidebar } from "@/components/ui/sidebar";
 
 const FleetPage = () => {
   const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
-  const { setOpen } = useSidebar();
   
   const {
     vehicles,
@@ -26,18 +24,6 @@ const FleetPage = () => {
     handleAddVehicle,
     handleImportVehicles
   } = useVehicleData();
-
-  useEffect(() => {
-    const handleMouseMove = () => {
-      document.body.style.pointerEvents = 'auto';
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [setOpen]);
 
   return (
     <div className="container mx-auto py-8">
