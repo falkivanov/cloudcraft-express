@@ -11,7 +11,7 @@ const Layout = () => {
     <div className="flex h-screen bg-background">
       <Navbar />
       <div className="flex flex-col flex-1 w-full pl-16 md:pl-16">
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 overflow-y-auto bg-background w-full">
           <Outlet />
         </main>
       </div>

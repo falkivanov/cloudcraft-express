@@ -14,7 +14,7 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
   const workingDaysCounts = getEmployeesByWorkingDays(employees);
   
   return (
-    <div className="w-full">
+    <div className="w-full max-w-full">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <div className="bg-white rounded-lg p-6 shadow-sm border w-full">
           <div className="flex justify-between items-start mb-2">
