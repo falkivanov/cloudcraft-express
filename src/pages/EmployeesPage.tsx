@@ -15,7 +15,16 @@ const initialEmployees: Employee[] = [
     department: "Management",
     email: "max.mustermann@beispiel.de",
     phone: "+49 123 4567890",
-    status: "Aktiv"
+    status: "Aktiv",
+    transporterId: "TR-001",
+    startDate: "2020-01-15",
+    endDate: null,
+    address: "Hauptstraße 1, 10115 Berlin",
+    birthday: "1980-05-10",
+    taxId: "DE123456789",
+    insuranceId: "SV-12345678",
+    workingDaysAWeek: 5,
+    preferredVehicle: "BMW X5"
   },
   {
     id: "2",
@@ -24,7 +33,16 @@ const initialEmployees: Employee[] = [
     department: "Finanzen",
     email: "anna.schmidt@beispiel.de",
     phone: "+49 123 4567891",
-    status: "Aktiv"
+    status: "Aktiv",
+    transporterId: "TR-002",
+    startDate: "2019-08-01",
+    endDate: null,
+    address: "Lindenstraße 25, 10969 Berlin",
+    birthday: "1985-09-15",
+    taxId: "DE987654321",
+    insuranceId: "SV-87654321",
+    workingDaysAWeek: 5,
+    preferredVehicle: "VW Golf"
   },
   {
     id: "3",
@@ -33,7 +51,16 @@ const initialEmployees: Employee[] = [
     department: "Vertrieb",
     email: "thomas.weber@beispiel.de",
     phone: "+49 123 4567892",
-    status: "Aktiv"
+    status: "Aktiv",
+    transporterId: "TR-003",
+    startDate: "2018-03-01",
+    endDate: null,
+    address: "Friedrichstraße 123, 10117 Berlin",
+    birthday: "1978-12-03",
+    taxId: "DE135792468",
+    insuranceId: "SV-13579246",
+    workingDaysAWeek: 5,
+    preferredVehicle: "Mercedes C-Klasse"
   },
   {
     id: "4",
@@ -42,7 +69,16 @@ const initialEmployees: Employee[] = [
     department: "Personal",
     email: "lisa.becker@beispiel.de",
     phone: "+49 123 4567893",
-    status: "Urlaub"
+    status: "Urlaub",
+    transporterId: "TR-004",
+    startDate: "2021-06-15",
+    endDate: null,
+    address: "Kurfürstendamm 234, 10719 Berlin",
+    birthday: "1990-04-22",
+    taxId: "DE246813579",
+    insuranceId: "SV-24681357",
+    workingDaysAWeek: 4,
+    preferredVehicle: "Audi A4"
   },
   {
     id: "5",
@@ -51,7 +87,16 @@ const initialEmployees: Employee[] = [
     department: "IT",
     email: "michael.schulz@beispiel.de",
     phone: "+49 123 4567894",
-    status: "Aktiv"
+    status: "Aktiv",
+    transporterId: "TR-005",
+    startDate: "2017-11-01",
+    endDate: null,
+    address: "Alexanderplatz 5, 10178 Berlin",
+    birthday: "1983-07-30",
+    taxId: "DE369258147",
+    insuranceId: "SV-36925814",
+    workingDaysAWeek: 5,
+    preferredVehicle: "Opel Astra"
   }
 ];
 
