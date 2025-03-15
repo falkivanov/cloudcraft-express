@@ -12,16 +12,16 @@ const StatusBadge = ({ status }: StatusBadgeProps) => {
   
   switch (status) {
     case "Aktiv":
-      className = "bg-green-100 text-green-800 hover:bg-green-200";
+      className = "bg-green-100 text-green-800 hover:bg-green-200 whitespace-nowrap";
       break;
     case "In Werkstatt":
-      className = "bg-orange-100 text-orange-800 hover:bg-orange-200";
+      className = "bg-orange-100 text-orange-800 hover:bg-orange-200 whitespace-nowrap";
       break;
     case "Defleet":
-      className = "bg-red-100 text-red-800 hover:bg-red-200";
+      className = "bg-red-100 text-red-800 hover:bg-red-200 whitespace-nowrap";
       break;
     default:
-      className = "";
+      className = "whitespace-nowrap";
   }
 
   return (

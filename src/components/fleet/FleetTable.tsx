@@ -148,14 +148,18 @@ const FleetTable = ({
                         handleStatusChange(vehicle.id, value)
                       }
                     >
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue placeholder="Status">
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue>
                           <StatusBadge status={vehicle.status} />
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Aktiv">Aktiv</SelectItem>
-                        <SelectItem value="In Werkstatt">In Werkstatt</SelectItem>
+                        <SelectItem value="Aktiv">
+                          <StatusBadge status="Aktiv" />
+                        </SelectItem>
+                        <SelectItem value="In Werkstatt">
+                          <StatusBadge status="In Werkstatt" />
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (

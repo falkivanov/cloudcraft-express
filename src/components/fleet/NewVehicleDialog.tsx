@@ -49,11 +49,18 @@ const NewVehicleDialog = ({ open, onOpenChange, onSubmit }: NewVehicleDialogProp
   });
 
   const handleSubmit = (data: z.infer<typeof vehicleFormSchema>) => {
-    onSubmit({
-      ...data,
+    // Ensure all required properties are included for Vehicle type
+    const newVehicle: Omit<Vehicle, "id"> = {
+      licensePlate: data.licensePlate,
+      brand: data.brand,
+      model: data.model,
+      vinNumber: data.vinNumber,
+      infleetDate: data.infleetDate,
       status: "Aktiv",
       defleetDate: null,
-    });
+    };
+    
+    onSubmit(newVehicle);
     form.reset();
     onOpenChange(false);
   };
