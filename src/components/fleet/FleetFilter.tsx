@@ -2,10 +2,16 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Download, Upload } from "lucide-react";
+import { Search, Download, Upload, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Vehicle } from "@/types/vehicle";
 import { exportToCSV, parseCSVImport } from "@/utils/csvUtils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FleetFilterProps {
   searchQuery: string;
@@ -69,6 +75,43 @@ const FleetFilter = ({
     }
   };
 
+  const handleDownloadSample = () => {
+    // Create a simple sample with just the headers
+    const sampleVehicles: Vehicle[] = [
+      {
+        id: "sample-1",
+        licensePlate: "B-XX 1234",
+        brand: "BMW",
+        model: "X5",
+        vinNumber: "WBAKV210900J39048",
+        status: "Aktiv",
+        infleetDate: new Date().toISOString().split('T')[0],
+        defleetDate: null,
+        repairs: [],
+        appointments: []
+      },
+      {
+        id: "sample-2",
+        licensePlate: "M-YY 5678",
+        brand: "Mercedes",
+        model: "C-Klasse",
+        vinNumber: "WDDWJ4JB9KF089367",
+        status: "In Werkstatt",
+        infleetDate: new Date().toISOString().split('T')[0],
+        defleetDate: null,
+        repairs: [],
+        appointments: []
+      }
+    ];
+    
+    exportToCSV(sampleVehicles, 'fahrzeug-muster');
+    
+    toast({
+      title: "Beispieldatei heruntergeladen",
+      description: "Die Beispieldatei wurde erfolgreich heruntergeladen.",
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 mb-6 items-center">
       <div className="relative">
@@ -89,10 +132,24 @@ const FleetFilter = ({
         onChange={handleFileChange}
       />
       
-      <Button variant="outline" onClick={handleImportClick} className="flex items-center whitespace-nowrap">
-        <Upload className="mr-2 h-4 w-4" />
-        Import
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex items-center whitespace-nowrap">
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleImportClick}>
+            <Upload className="mr-2 h-4 w-4" />
+            Datei hochladen
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleDownloadSample}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Beispieldatei herunterladen
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       
       <Button variant="outline" onClick={handleExport} className="flex items-center whitespace-nowrap">
         <Download className="mr-2 h-4 w-4" />
