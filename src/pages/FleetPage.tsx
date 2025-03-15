@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Download, Upload, Car } from "lucide-react";
@@ -9,8 +8,10 @@ import { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
 import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
-// Beispieldaten für Fahrzeuge
+// Beispieldaten für Fahrzeuge mit konsistentem Datumsformat
 const initialVehicles: Vehicle[] = [
   {
     id: "1",
@@ -72,7 +73,6 @@ const FleetPage = () => {
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
-  // Reset sidebar state when component unmounts or mounts
   useEffect(() => {
     const handleMouseMove = () => {
       document.body.style.pointerEvents = 'auto';
@@ -112,7 +112,6 @@ const FleetPage = () => {
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
     ));
     
-    // If a vehicle was reactivated from defleet status
     if (updatedVehicle.status !== "Defleet" && vehicles.find(v => v.id === updatedVehicle.id)?.status === "Defleet") {
       toast({
         title: "Fahrzeug reaktiviert",
@@ -139,7 +138,6 @@ const FleetPage = () => {
   };
 
   const handleAddVehicle = (vehicleData: Omit<Vehicle, "id">) => {
-    // Generate a new ID - in a real app this would be handled by the backend
     const newId = (Math.max(...vehicles.map(v => parseInt(v.id))) + 1).toString();
     
     const newVehicle: Vehicle = {
@@ -185,7 +183,7 @@ const FleetPage = () => {
         </Button>
       </div>
 
-      <div className="w-full overflow-hidden">
+      <div className="w-full overflow-x-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="active">Aktive Fahrzeuge</TabsTrigger>

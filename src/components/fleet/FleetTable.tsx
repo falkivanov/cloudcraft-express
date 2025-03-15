@@ -39,6 +39,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import StatusBadge from "./StatusBadge";
+import { format, parse } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface FleetTableProps {
   vehicles: Vehicle[];
@@ -117,6 +119,20 @@ const FleetTable = ({
     });
   };
 
+  // Format date to DD/MM/YYYY
+  const formatDateString = (dateString: string | null): string => {
+    if (!dateString) return "—";
+    try {
+      // Parse the ISO date string to a Date object
+      const date = new Date(dateString);
+      // Format to DD/MM/YYYY
+      return format(date, 'dd/MM/yyyy', { locale: de });
+    } catch (error) {
+      console.error("Invalid date format", error);
+      return dateString;
+    }
+  };
+
   return (
     <>
       <div className="rounded-md border w-full">
@@ -173,8 +189,8 @@ const FleetTable = ({
                       <StatusBadge status={vehicle.status} />
                     )}
                   </TableCell>
-                  <TableCell>{vehicle.infleetDate}</TableCell>
-                  {isDefleetView && <TableCell>{vehicle.defleetDate || "—"}</TableCell>}
+                  <TableCell>{formatDateString(vehicle.infleetDate)}</TableCell>
+                  {isDefleetView && <TableCell>{formatDateString(vehicle.defleetDate)}</TableCell>}
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -243,12 +259,12 @@ const FleetTable = ({
               </div>
               <div className="grid grid-cols-2 items-center gap-4">
                 <span className="font-medium">Infleet Datum:</span>
-                <span>{selectedVehicle.infleetDate}</span>
+                <span>{formatDateString(selectedVehicle.infleetDate)}</span>
               </div>
               {selectedVehicle.defleetDate && (
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-medium">Defleet Datum:</span>
-                  <span>{selectedVehicle.defleetDate}</span>
+                  <span>{formatDateString(selectedVehicle.defleetDate)}</span>
                 </div>
               )}
             </div>
