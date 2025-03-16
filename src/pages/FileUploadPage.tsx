@@ -1,5 +1,7 @@
+
 import React, { useState } from "react";
 import FileUpload from "@/components/file-upload/FileUpload";
+import CustomerContactExample from "@/components/file-upload/CustomerContactExample";
 import {
   Tabs,
   TabsContent,
@@ -133,6 +135,7 @@ const FileUploadPage = () => {
         </TabsList>
         <TabsContent value="upload" className="mt-6">
           <FileUpload onFileUpload={handleFileUpload} />
+          <CustomerContactExample />
         </TabsContent>
         <TabsContent value="history" className="mt-6">
           {uploadHistory.length > 0 ? (
