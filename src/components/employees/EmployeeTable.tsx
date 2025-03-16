@@ -30,7 +30,7 @@ import ContractEndDialog from "./ContractEndDialog";
 import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
 import { useEmployeeTable } from "@/hooks/useEmployeeTable";
-import { ArrowUpDown, CheckSquare, Square, RefreshCw } from "lucide-react";
+import { ArrowUpDown, CheckSquare, Square, RefreshCw, Trash2 } from "lucide-react";
 
 type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
 type SortDirection = "asc" | "desc";
@@ -76,7 +76,9 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     handleSaveEmployee,
     handleOpenContractEndDialog,
     handleEndContract,
-    handleReactivateEmployee
+    handleReactivateEmployee,
+    handleBatchReactivate,
+    handleBatchDelete
   } = useEmployeeTable(employees, onUpdateEmployee);
 
   const SortableHeader = ({ field, children }: { field: SortField, children: React.ReactNode }) => (
@@ -110,18 +112,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
       setSelectedEmployees(employees.map(e => e.id));
     }
     setSelectAll(!selectAll);
-  };
-
-  const handleBatchReactivate = () => {
-    selectedEmployees.forEach(id => {
-      const employee = employees.find(e => e.id === id);
-      if (employee) {
-        handleReactivateEmployee(employee);
-      }
-    });
-    // Clear selection after performing the action
-    setSelectedEmployees([]);
-    setSelectAll(false);
   };
 
   return (
@@ -180,12 +170,21 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
       {isFormerView && selectedEmployees.length > 0 && (
         <div className="mt-4 flex gap-2">
           <Button 
-            onClick={handleBatchReactivate}
+            onClick={() => handleBatchReactivate(selectedEmployees)}
             className="flex items-center gap-2"
             variant="outline"
           >
             <RefreshCw className="h-4 w-4" />
             {selectedEmployees.length} Mitarbeiter reaktivieren
+          </Button>
+          
+          <Button 
+            onClick={() => handleBatchDelete(selectedEmployees)}
+            className="flex items-center gap-2"
+            variant="destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+            {selectedEmployees.length} Mitarbeiter löschen
           </Button>
         </div>
       )}

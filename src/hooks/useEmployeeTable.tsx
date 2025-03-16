@@ -79,6 +79,23 @@ export const useEmployeeTable = (
     });
   };
 
+  const handleBatchDelete = (employeeIds: string[]) => {
+    if (!onUpdateEmployee) return;
+    
+    employeeIds.forEach(id => {
+      const employee = employees.find(e => e.id === id);
+      if (employee) {
+        // Mark the employee as deleted
+        // In a real app, you might want to use a separate deletion API
+        const updatedEmployee = {
+          ...employee,
+          status: "Gelöscht"
+        };
+        onUpdateEmployee(updatedEmployee);
+      }
+    });
+  };
+
   return {
     // State
     selectedEmployee,
@@ -101,6 +118,7 @@ export const useEmployeeTable = (
     handleOpenContractEndDialog,
     handleEndContract,
     handleReactivateEmployee,
-    handleBatchReactivate
+    handleBatchReactivate,
+    handleBatchDelete
   };
 };
