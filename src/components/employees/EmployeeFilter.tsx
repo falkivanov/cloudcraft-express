@@ -30,7 +30,7 @@ const EmployeeFilter = ({
   uniqueVehicles
 }: EmployeeFilterProps) => {
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-4 mb-6 bg-background">
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-center">
         <EmployeeSearch 
           searchQuery={searchQuery} 

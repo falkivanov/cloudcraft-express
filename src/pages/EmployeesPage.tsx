@@ -8,7 +8,7 @@ const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-full">
+    <div className="container mx-auto px-4 py-8 max-w-full bg-background">
       <EmployeePageHeader 
         onAddEmployeeClick={() => setIsAddEmployeeDialogOpen(true)} 
       />

@@ -17,7 +17,7 @@ export const useEmployeeFilter = (employees: Employee[]) => {
   const uniqueVehicles = useMemo(() => {
     const vehicles = new Set<string>();
     employees.forEach(employee => {
-      if (employee.preferredVehicle) {
+      if (employee.preferredVehicle && employee.preferredVehicle.trim() !== "") {
         vehicles.add(employee.preferredVehicle);
       }
     });
@@ -52,7 +52,7 @@ export const useEmployeeFilter = (employees: Employee[]) => {
     }
 
     // Then apply vehicle filter if set
-    if (vehicleFilter) {
+    if (vehicleFilter && vehicleFilter.trim() !== "") {
       filtered = filtered.filter(employee => 
         employee.preferredVehicle === vehicleFilter
       );

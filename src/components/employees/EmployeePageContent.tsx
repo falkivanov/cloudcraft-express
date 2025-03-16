@@ -82,7 +82,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   };
 
   return (
-    <>
+    <div className="bg-background">
       <div className="w-full mb-6">
         <EmployeeDashboard employees={employees} />
       </div>
@@ -99,7 +99,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         uniqueVehicles={uniqueVehicles}
       />
 
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-x-auto bg-background">
         <EmployeeTabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -117,7 +117,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         onOpenChange={setIsAddEmployeeDialogOpen}
         onAddEmployee={handleAddEmployee}
       />
-    </>
+    </div>
   );
 };
 
