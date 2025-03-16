@@ -14,7 +14,9 @@ const EmployeesPage = () => {
       />
       
       <EmployeePageContent 
-        initialEmployees={initialEmployees} 
+        initialEmployees={initialEmployees}
+        isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
+        setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
       />
     </div>
   );

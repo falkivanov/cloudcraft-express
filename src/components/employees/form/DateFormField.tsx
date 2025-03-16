@@ -55,7 +55,7 @@ const DateFormField: React.FC<DateFormFieldProps> = ({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={field.value as Date || undefined}
+                selected={field.value as Date}
                 onSelect={field.onChange}
                 disabled={disableFutureDates ? (date) => date > new Date() : undefined}
                 initialFocus

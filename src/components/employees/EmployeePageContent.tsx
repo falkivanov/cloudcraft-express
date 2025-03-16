@@ -11,13 +11,16 @@ import AddEmployeeDialog from "./AddEmployeeDialog";
 
 interface EmployeePageContentProps {
   initialEmployees: Employee[];
+  isAddEmployeeDialogOpen?: boolean;
+  setIsAddEmployeeDialogOpen?: (open: boolean) => void;
 }
 
 const EmployeePageContent: React.FC<EmployeePageContentProps> = ({ 
-  initialEmployees 
+  initialEmployees,
+  isAddEmployeeDialogOpen = false,
+  setIsAddEmployeeDialogOpen = () => {}
 }) => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
-  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
