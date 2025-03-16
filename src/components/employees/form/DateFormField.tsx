@@ -13,7 +13,7 @@ import { EmployeeFormData } from "./employeeFormSchema";
 
 interface DateFormFieldProps {
   form: UseFormReturn<EmployeeFormData>;
-  name: "startDate" | "endDate" | "birthday";
+  name: "startDate" | "endDate"; // Removed birthday as it's no longer needed
   label: string;
   isOptional?: boolean;
   disableFutureDates?: boolean;
@@ -44,7 +44,7 @@ const DateFormField: React.FC<DateFormFieldProps> = ({
                   )}
                 >
                   {field.value ? (
-                    format(field.value, "P", { locale: de })
+                    format(field.value as Date, "P", { locale: de })
                   ) : (
                     <span>Datum auswählen</span>
                   )}
@@ -55,10 +55,11 @@ const DateFormField: React.FC<DateFormFieldProps> = ({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={field.value || undefined}
+                selected={field.value as Date || undefined}
                 onSelect={field.onChange}
                 disabled={disableFutureDates ? (date) => date > new Date() : undefined}
                 initialFocus
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
