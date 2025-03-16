@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -22,13 +22,15 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Employee } from "@/types/employee";
 import EmployeeForm from "./EmployeeForm";
 import ContractEndDialog from "./ContractEndDialog";
 import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
 import { useEmployeeTable } from "@/hooks/useEmployeeTable";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, CheckSquare, Square, RefreshCw } from "lucide-react";
 
 type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
 type SortDirection = "asc" | "desc";
@@ -50,6 +52,9 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   sortDirection,
   onSort
 }) => {
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
   const {
     // State
     selectedEmployee,
@@ -86,12 +91,54 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     </TableHead>
   );
 
+  const toggleSelect = (employeeId: string) => {
+    setSelectedEmployees(prev => {
+      if (prev.includes(employeeId)) {
+        return prev.filter(id => id !== employeeId);
+      } else {
+        return [...prev, employeeId];
+      }
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      // If all are selected, unselect all
+      setSelectedEmployees([]);
+    } else {
+      // If not all are selected, select all
+      setSelectedEmployees(employees.map(e => e.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleBatchReactivate = () => {
+    selectedEmployees.forEach(id => {
+      const employee = employees.find(e => e.id === id);
+      if (employee) {
+        handleReactivateEmployee(employee);
+      }
+    });
+    // Clear selection after performing the action
+    setSelectedEmployees([]);
+    setSelectAll(false);
+  };
+
   return (
     <>
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
+              {isFormerView && (
+                <TableHead className="w-[50px]">
+                  <Checkbox 
+                    checked={selectAll}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
+              )}
               <SortableHeader field="name">Name</SortableHeader>
               <TableHead>Transporter ID</TableHead>
               <SortableHeader field="startDate">Startdatum</SortableHeader>
@@ -107,7 +154,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           <TableBody>
             {employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isFormerView ? 10 : 9} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={isFormerView ? 11 : 9} className="text-center py-10 text-muted-foreground">
                   {isFormerView ? "Keine ehemaligen Mitarbeiter gefunden" : "Keine Mitarbeiter gefunden"}
                 </TableCell>
               </TableRow>
@@ -121,12 +168,27 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   onEditEmployee={handleEditEmployee}
                   onOpenContractEndDialog={handleOpenContractEndDialog}
                   onReactivateEmployee={handleReactivateEmployee}
+                  isSelected={selectedEmployees.includes(employee.id)}
+                  onToggleSelect={() => toggleSelect(employee.id)}
                 />
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {isFormerView && selectedEmployees.length > 0 && (
+        <div className="mt-4 flex gap-2">
+          <Button 
+            onClick={handleBatchReactivate}
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {selectedEmployees.length} Mitarbeiter reaktivieren
+          </Button>
+        </div>
+      )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl">

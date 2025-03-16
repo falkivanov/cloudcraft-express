@@ -63,6 +63,22 @@ export const useEmployeeTable = (
     }
   };
 
+  const handleBatchReactivate = (employeeIds: string[]) => {
+    if (!onUpdateEmployee) return;
+    
+    employeeIds.forEach(id => {
+      const employee = employees.find(e => e.id === id);
+      if (employee) {
+        const updatedEmployee = {
+          ...employee,
+          endDate: null,
+          status: "Aktiv"
+        };
+        onUpdateEmployee(updatedEmployee);
+      }
+    });
+  };
+
   return {
     // State
     selectedEmployee,
@@ -84,6 +100,7 @@ export const useEmployeeTable = (
     handleSaveEmployee,
     handleOpenContractEndDialog,
     handleEndContract,
-    handleReactivateEmployee
+    handleReactivateEmployee,
+    handleBatchReactivate
   };
 };
