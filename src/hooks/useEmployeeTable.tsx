@@ -15,16 +15,19 @@ export const useEmployeeTable = (
     new Date().toISOString().split('T')[0]
   );
 
+  // Function to handle viewing employee details
   const handleViewDetails = (employee: Employee) => {
     setSelectedEmployee(employee);
     setOpenDialog(true);
   };
 
+  // Function to handle editing an employee
   const handleEditEmployee = (employee: Employee) => {
     setEditingEmployee(employee);
     setOpenEditSheet(true);
   };
 
+  // Function to handle saving employee changes
   const handleSaveEmployee = (updatedEmployee: Employee) => {
     if (onUpdateEmployee) {
       onUpdateEmployee(updatedEmployee);
@@ -33,67 +36,86 @@ export const useEmployeeTable = (
     setEditingEmployee(null);
   };
 
+  // Function to open the contract end dialog
   const handleOpenContractEndDialog = (employee: Employee) => {
     setSelectedEmployee(employee);
     setIsContractEndDialogOpen(true);
   };
 
+  // Function to handle ending an employee contract
   const handleEndContract = () => {
-    if (selectedEmployee && onUpdateEmployee) {
-      const updatedEmployee = {
-        ...selectedEmployee,
-        status: "Inaktiv",
-        endDate: endDate
-      };
-      
-      onUpdateEmployee(updatedEmployee);
-      setIsContractEndDialogOpen(false);
-      setSelectedEmployee(null);
-    }
+    if (!selectedEmployee || !onUpdateEmployee) return;
+    
+    const updatedEmployee = {
+      ...selectedEmployee,
+      status: "Inaktiv",
+      endDate: endDate
+    };
+    
+    onUpdateEmployee(updatedEmployee);
+    setIsContractEndDialogOpen(false);
+    setSelectedEmployee(null);
   };
 
+  // Function to reactivate a single employee
   const handleReactivateEmployee = (employee: Employee) => {
-    if (onUpdateEmployee) {
-      const updatedEmployee = {
-        ...employee,
-        endDate: null,
-        status: "Aktiv"
-      };
-      onUpdateEmployee(updatedEmployee);
-    }
+    if (!onUpdateEmployee) return;
+    
+    const updatedEmployee = {
+      ...employee,
+      endDate: null,
+      status: "Aktiv"
+    };
+    onUpdateEmployee(updatedEmployee);
   };
 
+  // Function to handle batch reactivation of employees
   const handleBatchReactivate = (employeeIds: string[]) => {
     if (!onUpdateEmployee) return;
     
     employeeIds.forEach(id => {
       const employee = employees.find(e => e.id === id);
       if (employee) {
-        const updatedEmployee = {
-          ...employee,
-          endDate: null,
-          status: "Aktiv"
-        };
-        onUpdateEmployee(updatedEmployee);
+        reactivateEmployee(employee);
       }
     });
   };
 
+  // Helper function to reactivate an employee
+  const reactivateEmployee = (employee: Employee) => {
+    if (!onUpdateEmployee) return;
+    
+    const updatedEmployee = {
+      ...employee,
+      endDate: null,
+      status: "Aktiv"
+    };
+    onUpdateEmployee(updatedEmployee);
+  };
+
+  // Function to handle batch deletion of employees
   const handleBatchDelete = (employeeIds: string[]) => {
     if (!onUpdateEmployee) return;
     
     employeeIds.forEach(id => {
       const employee = employees.find(e => e.id === id);
       if (employee) {
-        // Mark the employee as deleted
-        // In a real app, you might want to use a separate deletion API
-        const updatedEmployee = {
-          ...employee,
-          status: "Gelöscht"
-        };
-        onUpdateEmployee(updatedEmployee);
+        deleteEmployee(employee);
       }
     });
+  };
+
+  // Helper function to mark an employee as deleted
+  const deleteEmployee = (employee: Employee) => {
+    if (!onUpdateEmployee) return;
+    
+    // Mark the employee as deleted
+    // In a real app, you might want to use a separate deletion API
+    const updatedEmployee = {
+      ...employee,
+      status: "Gelöscht"
+    };
+    onUpdateEmployee(updatedEmployee);
   };
 
   return {
