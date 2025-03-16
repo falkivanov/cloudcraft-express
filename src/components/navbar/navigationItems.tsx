@@ -9,6 +9,10 @@ import {
   HomeIcon,
   SettingsIcon,
   FileUpIcon,
+  CheckIcon,
+  PhoneCallIcon,
+  ClipboardIcon,
+  TicketIcon,
 } from "lucide-react";
 
 interface NavItem {
@@ -22,8 +26,16 @@ const mainNavItems: NavItem[] = [
   { name: "Mitarbeiter", path: "/employees", icon: <UserIcon className="h-5 w-5" /> },
   { name: "Fuhrpark", path: "/fleet", icon: <TruckIcon className="h-5 w-5" /> },
   { name: "Schichtplanung", path: "/shifts", icon: <CalendarIcon className="h-5 w-5" /> },
-  { name: "Scorecard", path: "/scorecard", icon: <BarChart2Icon className="h-5 w-5" /> },
+  { name: "Qualität", path: "/quality", icon: <BarChart2Icon className="h-5 w-5" /> },
   { name: "Finanzen", path: "/finance", icon: <DollarSignIcon className="h-5 w-5" /> },
+];
+
+// Unterpunkte für die Qualitätsseite
+export const qualitySubItems: NavItem[] = [
+  { name: "Scorecard", path: "/quality/scorecard", icon: <CheckIcon className="h-5 w-5" /> },
+  { name: "Customer Contact", path: "/quality/customer-contact", icon: <PhoneCallIcon className="h-5 w-5" /> },
+  { name: "POD", path: "/quality/pod", icon: <ClipboardIcon className="h-5 w-5" /> },
+  { name: "Concessions", path: "/quality/concessions", icon: <TicketIcon className="h-5 w-5" /> },
 ];
 
 const fileUploadItem: NavItem = { 
@@ -41,5 +53,6 @@ const settingsNavItem: NavItem = {
 export const navigationItems = {
   mainNavItems,
   fileUploadItem,
-  settingsNavItem
+  settingsNavItem,
+  qualitySubItems
 };
