@@ -7,9 +7,10 @@ import { Vehicle } from "@/types/vehicle";
 interface FleetStatsProps {
   vehicles: Vehicle[];
   onFilterChange?: (status: "all" | "active" | "workshop") => void;
+  activeFilter?: "all" | "active" | "workshop";
 }
 
-const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
+const FleetStatsOverview = ({ vehicles, onFilterChange, activeFilter = "all" }: FleetStatsProps) => {
   // Calculate stats
   const totalVehicles = vehicles.filter(v => v.status !== "Defleet").length;
   const activeVehicles = vehicles.filter(v => v.status === "Aktiv").length;
@@ -17,7 +18,9 @@ const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
   
   const handleStatClick = (statusFilter: "all" | "active" | "workshop") => {
     if (onFilterChange) {
-      onFilterChange(statusFilter);
+      // If the same filter is already active, reset to "all"
+      const newFilter = activeFilter === statusFilter ? "all" : statusFilter;
+      onFilterChange(newFilter);
     }
   };
   
@@ -30,6 +33,7 @@ const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
           icon={<Truck className="h-6 w-6 text-blue-500" />} 
           onClick={() => handleStatClick("all")}
           clickable={!!onFilterChange}
+          active={activeFilter === "all"}
         />
         <StatItem 
           title="Aktive Fahrzeuge" 
@@ -37,6 +41,7 @@ const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
           icon={<CheckCircle className="h-6 w-6 text-green-500" />} 
           onClick={() => handleStatClick("active")}
           clickable={!!onFilterChange}
+          active={activeFilter === "active"}
         />
         <StatItem 
           title="In Werkstatt" 
@@ -44,6 +49,7 @@ const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
           icon={<Wrench className="h-6 w-6 text-orange-500" />} 
           onClick={() => handleStatClick("workshop")}
           clickable={!!onFilterChange}
+          active={activeFilter === "workshop"}
         />
       </CardContent>
     </Card>
@@ -56,11 +62,12 @@ interface StatItemProps {
   icon: React.ReactNode;
   onClick?: () => void;
   clickable?: boolean;
+  active?: boolean;
 }
 
-const StatItem = ({ title, value, icon, onClick, clickable }: StatItemProps) => (
+const StatItem = ({ title, value, icon, onClick, clickable, active }: StatItemProps) => (
   <div 
-    className={`flex items-center space-x-3 p-2 ${clickable ? 'cursor-pointer hover:bg-gray-100 rounded-md transition-colors' : ''}`}
+    className={`flex items-center space-x-3 p-2 ${clickable ? 'cursor-pointer hover:bg-gray-100 rounded-md transition-colors' : ''} ${active ? 'bg-gray-100 rounded-md' : ''}`}
     onClick={onClick}
   >
     <div className="rounded-full bg-muted p-2">

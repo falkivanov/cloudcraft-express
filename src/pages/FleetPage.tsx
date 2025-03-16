@@ -53,6 +53,7 @@ const FleetPage = () => {
         <FleetStatsOverview 
           vehicles={vehicles} 
           onFilterChange={handleStatusFilterChange}
+          activeFilter={statusFilter}
         />
         <CostSummaryDashboard vehicles={vehicles} />
       </div>
