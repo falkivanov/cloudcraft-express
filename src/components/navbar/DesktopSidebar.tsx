@@ -16,7 +16,7 @@ import NavItem from "./NavItem";
 const DesktopSidebar = () => {
   const location = useLocation();
   const { mainNavItems, fileUploadItem, settingsNavItem } = navigationItems;
-  const { setOpen } = useSidebar();
+  const { setOpen, open } = useSidebar();
   
   // Hover-Funktion für die Sidebar
   const handleMouseEnter = () => {
@@ -34,12 +34,14 @@ const DesktopSidebar = () => {
       onMouseLeave={handleMouseLeave}
     >
       <Sidebar variant="sidebar" collapsible="icon">
-        <SidebarHeader className="flex items-center h-20 px-5 bg-sidebar-accent border-b">
+        <SidebarHeader className="flex items-center h-16 px-4 bg-sidebar-accent border-b">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-[#0EA5E9] flex items-center justify-center mr-3">
+            <div className="h-10 w-10 rounded-full bg-[#0EA5E9] flex items-center justify-center">
               <span className="text-white font-bold text-base">FS</span>
             </div>
-            <h1 className="text-2xl font-bold text-white">FinSuite</h1>
+            {open && (
+              <h1 className="text-xl font-bold text-white ml-3 transition-opacity duration-200">FinSuite</h1>
+            )}
           </div>
         </SidebarHeader>
         
@@ -58,15 +60,23 @@ const DesktopSidebar = () => {
           </SidebarMenu>
         </SidebarContent>
         
-        <SidebarFooter className="flex-shrink-0 border-t border-sidebar-border p-5">
-          <div className="flex-shrink-0 w-full group block">
-            <div className="flex items-center">
-              <div className="ml-3">
-                <p className="text-base font-medium text-sidebar-foreground">Administrator</p>
-                <p className="text-sm text-sidebar-foreground/70">CEO Account</p>
+        <SidebarFooter className="flex-shrink-0 border-t border-sidebar-border p-4">
+          {open ? (
+            <div className="flex-shrink-0 w-full group block">
+              <div className="flex items-center">
+                <div className="ml-0">
+                  <p className="text-base font-medium text-sidebar-foreground">Administrator</p>
+                  <p className="text-sm text-sidebar-foreground/70">CEO Account</p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-slate-600 flex items-center justify-center">
+                <span className="text-white text-xs">A</span>
+              </div>
+            </div>
+          )}
         </SidebarFooter>
       </Sidebar>
     </div>
