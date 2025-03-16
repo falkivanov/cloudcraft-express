@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -9,7 +8,6 @@ const QualityTabs = () => {
   const location = useLocation();
   const pathname = location.pathname;
   
-  // Bestimme den aktiven Tab basierend auf dem aktuellen Pfad
   const getActiveTab = () => {
     if (pathname.includes("scorecard")) return "scorecard";
     if (pathname.includes("customer-contact")) return "customer-contact";
@@ -21,7 +19,6 @@ const QualityTabs = () => {
   const activeTab = getActiveTab();
 
   const handleTabChange = (value: string) => {
-    // Navigiere zur entsprechenden Unterseite
     switch (value) {
       case "scorecard":
         navigate("/quality/scorecard");
@@ -77,7 +74,7 @@ const QualityTabs = () => {
       
       <TabsContent value="pod">
         <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">POD (Proof of Delivery)</h2>
+          <h2 className="text-2xl font-bold mb-4">POD</h2>
           <p>Liefernachweise und Zustellungsdokumentation.</p>
         </div>
       </TabsContent>

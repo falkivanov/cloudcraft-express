@@ -18,7 +18,7 @@ export const fileCategories = [
   },
   { 
     id: "pod", 
-    name: "POD (Proof of Delivery)", 
+    name: "POD", 
     expectedType: "pdf",
     icon: File,
     description: "Liefernachweise (POD) im PDF-Format"
