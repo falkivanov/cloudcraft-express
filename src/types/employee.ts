@@ -14,4 +14,6 @@ export interface Employee {
   insuranceId: string;
   workingDaysAWeek: number;
   preferredVehicle: string;
+  preferredWorkingDays: string[]; // Neue Eigenschaft: Präferierte Arbeitstage
+  wantsToWorkSixDays: boolean;   // Neue Eigenschaft: Möchte 6 Tage arbeiten
 }

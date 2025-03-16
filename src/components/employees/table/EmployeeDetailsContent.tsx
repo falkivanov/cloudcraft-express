@@ -2,7 +2,7 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
-import { Edit, IdCard, CalendarDays, MapPin, Cake, FileText, Shield, Clock, Car, Mail, Phone } from "lucide-react";
+import { Edit, IdCard, CalendarDays, MapPin, Cake, FileText, Shield, Clock, Car, Mail, Phone, Calendar } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsContentProps {
@@ -86,6 +86,26 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
             <p>{employee.workingDaysAWeek}</p>
           </div>
         </div>
+        
+        <div className="flex items-start gap-2">
+          <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Präferierte Arbeitstage</p>
+            <p>{employee.preferredWorkingDays && employee.preferredWorkingDays.length > 0 
+               ? employee.preferredWorkingDays.join(', ') 
+               : 'Keine Präferenzen'}</p>
+          </div>
+        </div>
+        
+        {employee.workingDaysAWeek === 5 && (
+          <div className="flex items-start gap-2">
+            <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Möchte 6 Tage arbeiten</p>
+              <p>{employee.wantsToWorkSixDays ? 'Ja' : 'Nein'}</p>
+            </div>
+          </div>
+        )}
         
         <div className="flex items-start gap-2">
           <Car className="h-4 w-4 mt-1 text-muted-foreground" />

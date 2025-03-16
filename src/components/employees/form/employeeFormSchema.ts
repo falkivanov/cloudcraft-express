@@ -15,6 +15,8 @@ export const employeeFormSchema = z.object({
   insuranceId: z.string().min(1, { message: "Versicherungsnummer muss angegeben werden" }),
   workingDaysAWeek: z.coerce.number().min(1).max(7, { message: "Zwischen 1 und 7 Tagen" }),
   preferredVehicle: z.string().min(1, { message: "Bevorzugtes Fahrzeug muss angegeben werden" }),
+  preferredWorkingDays: z.array(z.string()).optional().default([]),
+  wantsToWorkSixDays: z.boolean().optional().default(false),
 });
 
 export type EmployeeFormData = z.infer<typeof employeeFormSchema>;

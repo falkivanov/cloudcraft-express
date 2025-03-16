@@ -8,6 +8,7 @@ import { employeeFormSchema, EmployeeFormData } from "./form/employeeFormSchema"
 import PersonalInfoSection from "./form/PersonalInfoSection";
 import EmploymentInfoSection from "./form/EmploymentInfoSection";
 import AdditionalInfoSection from "./form/AdditionalInfoSection";
+import PreferredWorkingDaysSection from "./form/PreferredWorkingDaysSection";
 import EmployeeFormActions from "./form/EmployeeFormActions";
 
 interface EmployeeFormProps {
@@ -31,6 +32,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       endDate: employee.endDate ? new Date(employee.endDate) : null,
       birthday: employee.birthday ? new Date(employee.birthday) : undefined,
       workingDaysAWeek: employee.workingDaysAWeek || 5,
+      preferredWorkingDays: employee.preferredWorkingDays || [],
+      wantsToWorkSixDays: employee.wantsToWorkSixDays || false,
     },
   });
 
@@ -51,6 +54,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
           <PersonalInfoSection form={form} />
           <EmploymentInfoSection form={form} />
           <AdditionalInfoSection form={form} />
+          <PreferredWorkingDaysSection form={form} />
         </div>
 
         <EmployeeFormActions onCancel={onCancel} submitLabel={isNewEmployee ? "Hinzufügen" : "Speichern"} />
