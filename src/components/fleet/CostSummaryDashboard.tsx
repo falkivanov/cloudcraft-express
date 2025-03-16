@@ -158,13 +158,13 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
             </div>
           ))}
         </div>
-        <div className="mt-2 flex items-center justify-start ml-2">
+        <div className="mt-2 flex items-center justify-end mr-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
-              <TooltipContent side="right" align="start" className="whitespace-nowrap">
+              <TooltipContent side="left" align="end" className="whitespace-nowrap">
                 Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
               </TooltipContent>
             </Tooltip>
