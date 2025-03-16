@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Vehicle } from "@/types/vehicle";
@@ -157,13 +158,13 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
             </div>
           ))}
         </div>
-        <div className="text-center mt-2 flex items-center justify-center">
+        <div className="mt-2 flex items-center justify-start ml-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
-              <TooltipContent side="right" align="center" className="whitespace-nowrap">
+              <TooltipContent side="right" align="start" className="whitespace-nowrap">
                 Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
               </TooltipContent>
             </Tooltip>
