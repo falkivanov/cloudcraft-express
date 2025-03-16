@@ -27,7 +27,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE123456789",
     insuranceId: "SV-12345678",
     workingDaysAWeek: 5,
-    preferredVehicle: "BMW X5"
+    preferredVehicle: "BMW X5",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: false
   },
   {
     id: "2",
@@ -43,7 +45,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE987654321",
     insuranceId: "SV-87654321",
     workingDaysAWeek: 5,
-    preferredVehicle: "VW Golf"
+    preferredVehicle: "VW Golf",
+    preferredWorkingDays: ["Mo", "Di", "Do", "Fr", "Sa"],
+    wantsToWorkSixDays: true
   },
   {
     id: "3",
@@ -59,7 +63,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE135792468",
     insuranceId: "SV-13579246",
     workingDaysAWeek: 5,
-    preferredVehicle: "Mercedes C-Klasse"
+    preferredVehicle: "Mercedes C-Klasse",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: false
   },
   {
     id: "4",
@@ -75,7 +81,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE246813579",
     insuranceId: "SV-24681357",
     workingDaysAWeek: 4,
-    preferredVehicle: "Audi A4"
+    preferredVehicle: "Audi A4",
+    preferredWorkingDays: ["Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: false
   },
   {
     id: "5",
@@ -91,7 +99,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE369258147",
     insuranceId: "SV-36925814",
     workingDaysAWeek: 5,
-    preferredVehicle: "Opel Astra"
+    preferredVehicle: "Opel Astra",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: true
   },
   // Füge einen ehemaligen Mitarbeiter hinzu
   {
@@ -108,7 +118,9 @@ const initialEmployees: Employee[] = [
     taxId: "DE123456788",
     insuranceId: "SV-87654322",
     workingDaysAWeek: 5,
-    preferredVehicle: "BMW 3er"
+    preferredVehicle: "BMW 3er",
+    preferredWorkingDays: ["Mo", "Mi", "Do", "Fr", "Sa"],
+    wantsToWorkSixDays: false
   }
 ];
 

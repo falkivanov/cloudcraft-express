@@ -6,7 +6,7 @@ import { UseFormReturn } from "react-hook-form";
 import { EmployeeFormData } from "./employeeFormSchema";
 
 // We need to restrict the name to only text fields, excluding date fields
-type TextFormFieldName = Exclude<keyof EmployeeFormData, "startDate" | "endDate" | "birthday">;
+type TextFormFieldName = Exclude<keyof EmployeeFormData, "startDate" | "endDate" | "birthday" | "preferredWorkingDays" | "wantsToWorkSixDays">;
 
 interface TextFormFieldProps {
   form: UseFormReturn<EmployeeFormData>;
@@ -33,7 +33,13 @@ const TextFormField: React.FC<TextFormFieldProps> = ({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input {...field} type={type} min={min} max={max} />
+            <Input 
+              {...field} 
+              type={type} 
+              min={min} 
+              max={max} 
+              value={typeof field.value === 'boolean' ? (field.value ? 'true' : 'false') : field.value}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
