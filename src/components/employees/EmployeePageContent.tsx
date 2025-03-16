@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -12,16 +13,30 @@ interface EmployeePageContentProps {
   initialEmployees: Employee[];
   isAddEmployeeDialogOpen?: boolean;
   setIsAddEmployeeDialogOpen?: (open: boolean) => void;
+  setEmployees?: (employees: Employee[]) => void;
 }
 
 const EmployeePageContent: React.FC<EmployeePageContentProps> = ({ 
   initialEmployees,
   isAddEmployeeDialogOpen = false,
-  setIsAddEmployeeDialogOpen = () => {}
+  setIsAddEmployeeDialogOpen = () => {},
+  setEmployees
 }) => {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setLocalEmployees] = useState<Employee[]>(initialEmployees);
   const { toast } = useToast();
   const { setOpen } = useSidebar();
+
+  // Update parent state when employees change
+  useEffect(() => {
+    if (setEmployees) {
+      setEmployees(employees);
+    }
+  }, [employees, setEmployees]);
+
+  // Update local state when initialEmployees changes
+  useEffect(() => {
+    setLocalEmployees(initialEmployees);
+  }, [initialEmployees]);
 
   const {
     searchQuery,
@@ -48,9 +63,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   }, [setOpen]);
 
   const handleUpdateEmployee = (updatedEmployee: Employee) => {
-    setEmployees(employees.map(emp => 
+    const updatedEmployees = employees.map(emp => 
       emp.id === updatedEmployee.id ? updatedEmployee : emp
-    ));
+    );
+    
+    setLocalEmployees(updatedEmployees);
     
     toast({
       title: "Mitarbeiter aktualisiert",
@@ -59,7 +76,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   };
 
   const handleAddEmployee = (newEmployee: Employee) => {
-    setEmployees([...employees, newEmployee]);
+    setLocalEmployees([...employees, newEmployee]);
     setIsAddEmployeeDialogOpen(false);
     
     toast({
@@ -69,7 +86,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   };
 
   const handleImportEmployees = (importedEmployees: Employee[]) => {
-    setEmployees(prevEmployees => [...prevEmployees, ...importedEmployees]);
+    setLocalEmployees(prevEmployees => [...prevEmployees, ...importedEmployees]);
   };
 
   return (

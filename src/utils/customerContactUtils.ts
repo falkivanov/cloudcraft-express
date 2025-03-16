@@ -1,4 +1,5 @@
 
+import { Employee } from "@/types/employee";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 
 interface ContactReportData {
@@ -10,6 +11,19 @@ interface ContactReportData {
   percentage: number;
 }
 
+// Helper function to get employees from localStorage or fallback to initial data
+const getEmployees = (): Employee[] => {
+  try {
+    const storedEmployees = localStorage.getItem('employees');
+    if (storedEmployees) {
+      return JSON.parse(storedEmployees);
+    }
+  } catch (error) {
+    console.error("Error loading employees from localStorage:", error);
+  }
+  return initialEmployees;
+};
+
 export const parseCustomerContactReport = (htmlContent: string): ContactReportData[] => {
   // Create a temporary DOM element to parse the HTML
   const parser = new DOMParser();
@@ -17,6 +31,9 @@ export const parseCustomerContactReport = (htmlContent: string): ContactReportDa
   
   // Get all rows from the report table
   const rows = Array.from(doc.querySelectorAll("table tr")).slice(1); // Skip header row
+  
+  // Get employees from localStorage or initial data
+  const employees = getEmployees();
   
   return rows.map(row => {
     const cells = Array.from(row.querySelectorAll("td"));
@@ -28,7 +45,7 @@ export const parseCustomerContactReport = (htmlContent: string): ContactReportDa
     const percentage = parseFloat(cells[3]?.textContent?.trim().replace("%", "") || "0");
     
     // Find the employee by transporterId
-    const employee = initialEmployees.find(emp => emp.transporterId === transporterId);
+    const employee = employees.find(emp => emp.transporterId === transporterId);
     
     // Extract first name (assuming name format is "First Last")
     const firstName = employee?.name.split(" ")[0] || "";
