@@ -1,25 +1,45 @@
 
-import React from "react";
-import { Mail, Phone } from "lucide-react";
+import React, { useState } from "react";
+import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EmployeeContactButtonsProps {
-  email: string;
   phone: string;
 }
 
 const EmployeeContactButtons: React.FC<EmployeeContactButtonsProps> = ({ 
-  email, 
   phone 
 }) => {
+  const [showPhoneNumber, setShowPhoneNumber] = useState(false);
+
+  const handlePhoneClick = () => {
+    setShowPhoneNumber(prev => !prev);
+  };
+
   return (
-    <div className="flex space-x-2">
-      <Button variant="ghost" size="icon" title={email}>
-        <Mail className="h-4 w-4" />
-      </Button>
-      <Button variant="ghost" size="icon" title={phone}>
-        <Phone className="h-4 w-4" />
-      </Button>
+    <div className="flex items-center space-x-2">
+      {showPhoneNumber ? (
+        <span className="text-sm font-medium">{phone}</span>
+      ) : (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handlePhoneClick}
+                aria-label="Telefonnummer anzeigen"
+              >
+                <Phone className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Telefonnummer anzeigen</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };

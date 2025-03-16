@@ -64,19 +64,18 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
         <EmployeeStatusBadge endDate={employee.endDate} />
       </TableCell>
       <TableCell>
-        <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center text-gray-600">
-            <Calendar className="h-4 w-4 mr-1" /> {employee.workingDaysAWeek}
-          </span>
-          <span className="text-gray-400">|</span>
-          <span className="inline-flex items-center text-gray-600">
-            <Car className="h-4 w-4 mr-1" /> {employee.preferredVehicle.substring(0, 10)}{employee.preferredVehicle.length > 10 ? '...' : ''}
-          </span>
-        </div>
+        <span className="inline-flex items-center text-gray-600">
+          <Calendar className="h-4 w-4 mr-1" /> {employee.workingDaysAWeek}
+        </span>
+      </TableCell>
+      <TableCell>
+        <span className="inline-flex items-center text-gray-600">
+          <Car className="h-4 w-4 mr-1" /> {employee.preferredVehicle.substring(0, 10)}{employee.preferredVehicle.length > 10 ? '...' : ''}
+        </span>
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
-          {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((day, index) => (
+          {["Mo", "Di", "Mi", "Do", "Fr", "Sa"].map((day, index) => (
             <span 
               key={index} 
               className={`text-xs px-1.5 py-0.5 rounded-full ${
@@ -92,7 +91,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
-          <EmployeeContactButtons email={employee.email} phone={employee.phone} />
+          <EmployeeContactButtons phone={employee.phone} />
           
           {telegramLink && (
             <a 

@@ -2,7 +2,7 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
-import { Edit, IdCard, CalendarDays, MapPin, Clock, Car, Mail, Phone, Calendar, MessageCircle, AlignJustify, CheckCircle, XCircle } from "lucide-react";
+import { Edit, IdCard, CalendarDays, MapPin, Clock, Car, Phone, Calendar, MessageCircle, AlignJustify, CheckCircle, XCircle } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsContentProps {
@@ -16,6 +16,9 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
   onEdit,
   onClose
 }) => {
+  // Array of day abbreviations (Monday to Saturday)
+  const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
       <div className="space-y-2">
@@ -84,7 +87,7 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           <div>
             <p className="text-sm font-medium">Präferierte Arbeitstage</p>
             <div className="flex flex-wrap gap-1 mt-1">
-              {["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"].map((day) => (
+              {weekDays.map((day) => (
                 <span 
                   key={day} 
                   className={`text-xs px-2 py-1 rounded-full ${
@@ -93,7 +96,7 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
                       : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  {day.substring(0, 2)}
+                  {day}
                 </span>
               ))}
             </div>
@@ -125,14 +128,6 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           <div>
             <p className="text-sm font-medium">Bevorzugtes Fahrzeug</p>
             <p>{employee.preferredVehicle}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-2">
-          <Mail className="h-4 w-4 mt-1 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Email</p>
-            <p>{employee.email}</p>
           </div>
         </div>
         
