@@ -3,8 +3,14 @@ import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Vehicle } from "@/types/vehicle";
 import { subDays, subMonths, isAfter, parseISO, addMonths, format } from "date-fns";
-import { Clock, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Clock, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CostSummaryProps {
   vehicles: Vehicle[];
@@ -162,7 +168,20 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-muted-foreground text-center mt-2">Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)</p>
+        <div className="text-center mt-2 flex items-center justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-[10px] max-w-[200px]">
+                  Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardContent>
     </Card>
   );
