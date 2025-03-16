@@ -1,14 +1,6 @@
 
 import React, { useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,15 +14,13 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Employee } from "@/types/employee";
 import EmployeeForm from "./EmployeeForm";
 import ContractEndDialog from "./ContractEndDialog";
-import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
 import { useEmployeeTable } from "@/hooks/useEmployeeTable";
-import { ArrowUpDown, CheckSquare, Square, RefreshCw, Trash2 } from "lucide-react";
+import EmployeeTableContent from "./table/EmployeeTableContent";
+import BatchActionButtons from "./table/BatchActionButtons";
 
 type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
 type SortDirection = "asc" | "desc";
@@ -81,18 +71,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     handleBatchDelete
   } = useEmployeeTable(employees, onUpdateEmployee);
 
-  const SortableHeader = ({ field, children }: { field: SortField, children: React.ReactNode }) => (
-    <TableHead 
-      className="cursor-pointer hover:bg-gray-50"
-      onClick={() => onSort(field)}
-    >
-      <div className="flex items-center space-x-1">
-        <span>{children}</span>
-        <ArrowUpDown className={`h-4 w-4 ${sortField === field ? 'text-primary' : 'text-muted-foreground'}`} />
-      </div>
-    </TableHead>
-  );
-
   const toggleSelect = (employeeId: string) => {
     setSelectedEmployees(prev => {
       if (prev.includes(employeeId)) {
@@ -117,76 +95,28 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   return (
     <>
       <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {isFormerView && (
-                <TableHead className="w-[50px]">
-                  <Checkbox 
-                    checked={selectAll}
-                    onCheckedChange={toggleSelectAll}
-                    aria-label="Alle auswählen"
-                  />
-                </TableHead>
-              )}
-              <SortableHeader field="name">Name</SortableHeader>
-              <TableHead>Transporter ID</TableHead>
-              <SortableHeader field="startDate">Startdatum</SortableHeader>
-              {isFormerView && <TableHead>Enddatum</TableHead>}
-              <TableHead>Status</TableHead>
-              <SortableHeader field="workingDaysAWeek">Arbeitstage</SortableHeader>
-              <SortableHeader field="preferredVehicle">Fahrzeug</SortableHeader>
-              <TableHead>Präferierte Tage</TableHead>
-              <TableHead>Kontakt</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {employees.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={isFormerView ? 11 : 9} className="text-center py-10 text-muted-foreground">
-                  {isFormerView ? "Keine ehemaligen Mitarbeiter gefunden" : "Keine Mitarbeiter gefunden"}
-                </TableCell>
-              </TableRow>
-            ) : (
-              employees.map((employee) => (
-                <EmployeeTableRow
-                  key={employee.id}
-                  employee={employee}
-                  isFormerView={isFormerView}
-                  onViewDetails={handleViewDetails}
-                  onEditEmployee={handleEditEmployee}
-                  onOpenContractEndDialog={handleOpenContractEndDialog}
-                  onReactivateEmployee={handleReactivateEmployee}
-                  isSelected={selectedEmployees.includes(employee.id)}
-                  onToggleSelect={() => toggleSelect(employee.id)}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <EmployeeTableContent 
+          employees={employees}
+          isFormerView={isFormerView}
+          sortField={sortField}
+          onSort={onSort}
+          onViewDetails={handleViewDetails}
+          onEditEmployee={handleEditEmployee}
+          onOpenContractEndDialog={handleOpenContractEndDialog}
+          onReactivateEmployee={handleReactivateEmployee}
+          selectedEmployees={selectedEmployees}
+          onToggleSelect={toggleSelect}
+          selectAll={selectAll}
+          onToggleSelectAll={toggleSelectAll}
+        />
       </div>
 
       {isFormerView && selectedEmployees.length > 0 && (
-        <div className="mt-4 flex gap-2">
-          <Button 
-            onClick={() => handleBatchReactivate(selectedEmployees)}
-            className="flex items-center gap-2"
-            variant="outline"
-          >
-            <RefreshCw className="h-4 w-4" />
-            {selectedEmployees.length} Mitarbeiter reaktivieren
-          </Button>
-          
-          <Button 
-            onClick={() => handleBatchDelete(selectedEmployees)}
-            className="flex items-center gap-2"
-            variant="destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            {selectedEmployees.length} Mitarbeiter löschen
-          </Button>
-        </div>
+        <BatchActionButtons 
+          selectedCount={selectedEmployees.length}
+          onReactivate={() => handleBatchReactivate(selectedEmployees)}
+          onDelete={() => handleBatchDelete(selectedEmployees)}
+        />
       )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
