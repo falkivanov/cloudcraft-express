@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ import EmployeeForm from "./EmployeeForm";
 import ContractEndDialog from "./ContractEndDialog";
 import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
+import { useEmployeeTable } from "@/hooks/useEmployeeTable";
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -39,60 +40,29 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onUpdateEmployee = () => {},
   isFormerView = false
 }) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [openEditSheet, setOpenEditSheet] = useState(false);
-  const [isContractEndDialogOpen, setIsContractEndDialogOpen] = useState(false);
-  const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
-
-  const handleViewDetails = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setOpenDialog(true);
-  };
-
-  const handleEditEmployee = (employee: Employee) => {
-    setEditingEmployee(employee);
-    setOpenEditSheet(true);
-  };
-
-  const handleSaveEmployee = (updatedEmployee: Employee) => {
-    onUpdateEmployee(updatedEmployee);
-    setOpenEditSheet(false);
-    setEditingEmployee(null);
-  };
-
-  const handleOpenContractEndDialog = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setIsContractEndDialogOpen(true);
-  };
-
-  const handleEndContract = () => {
-    if (selectedEmployee && onUpdateEmployee) {
-      const updatedEmployee = {
-        ...selectedEmployee,
-        status: "Inaktiv",
-        endDate: endDate
-      };
-      
-      onUpdateEmployee(updatedEmployee);
-      setIsContractEndDialogOpen(false);
-      setSelectedEmployee(null);
-    }
-  };
-
-  const handleReactivateEmployee = (employee: Employee) => {
-    if (onUpdateEmployee) {
-      const updatedEmployee = {
-        ...employee,
-        endDate: null,
-        status: "Aktiv"
-      };
-      onUpdateEmployee(updatedEmployee);
-    }
-  };
+  const {
+    // State
+    selectedEmployee,
+    openDialog,
+    editingEmployee,
+    openEditSheet,
+    isContractEndDialogOpen,
+    endDate,
+    
+    // State setters
+    setOpenDialog,
+    setOpenEditSheet,
+    setIsContractEndDialogOpen,
+    setEndDate,
+    
+    // Handlers
+    handleViewDetails,
+    handleEditEmployee,
+    handleSaveEmployee,
+    handleOpenContractEndDialog,
+    handleEndContract,
+    handleReactivateEmployee
+  } = useEmployeeTable(employees, onUpdateEmployee);
 
   return (
     <>
