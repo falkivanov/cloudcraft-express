@@ -32,7 +32,7 @@ const FleetTabs = ({
 }: FleetTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="mb-4">
+      <TabsList className="mb-2">
         <TabsTrigger value="active">Aktive Fahrzeuge</TabsTrigger>
         <TabsTrigger value="defleeted">Defleeted Fahrzeuge</TabsTrigger>
       </TabsList>
