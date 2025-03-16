@@ -3,8 +3,17 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { UploadIcon } from "lucide-react";
+import { UploadIcon, CheckCircle, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+
+interface DriverComplianceData {
+  name: string;
+  firstName: string;
+  totalAddresses: number;
+  totalContacts: number;
+  compliancePercentage: number;
+}
 
 const QualityPage = () => {
   const location = useLocation();
@@ -13,6 +22,7 @@ const QualityPage = () => {
   const [scorecardData, setScoreCardData] = useState<any>(null);
   const [podData, setPodData] = useState<any>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
+  const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   
   // Beim Laden der Komponente und bei Änderung des Pfads
   // die Daten aus dem LocalStorage laden
@@ -20,6 +30,11 @@ const QualityPage = () => {
     if (pathname.includes("/quality/customer-contact")) {
       const data = localStorage.getItem("customerContactData");
       setCustomerContactData(data);
+      
+      // Parse HTML to extract driver compliance data
+      if (data) {
+        parseCustomerContactData(data);
+      }
     } else if (pathname.includes("/quality/scorecard")) {
       try {
         const data = localStorage.getItem("scorecardData");
@@ -50,6 +65,57 @@ const QualityPage = () => {
     }
   }, [pathname]);
   
+  // Parse customer contact HTML to extract driver data
+  const parseCustomerContactData = (htmlContent: string) => {
+    try {
+      // Create a DOM parser to extract data from HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+      
+      // Find table rows with driver data
+      const rows = doc.querySelectorAll("table tr");
+      const extractedData: DriverComplianceData[] = [];
+      
+      // Skip header row, start from index 1
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].querySelectorAll("td");
+        if (cells.length >= 6) { // Make sure we have enough cells
+          const fullName = cells[0].textContent?.trim() || "";
+          const nameParts = fullName.split(" ");
+          const firstName = nameParts[0] || "";
+          const totalAddresses = parseInt(cells[1].textContent?.trim() || "0", 10);
+          const totalContacts = parseInt(cells[2].textContent?.trim() || "0", 10);
+          const complianceText = cells[5].textContent?.trim() || "0%";
+          const compliancePercentage = parseFloat(complianceText.replace("%", ""));
+          
+          extractedData.push({
+            name: fullName,
+            firstName,
+            totalAddresses,
+            totalContacts,
+            compliancePercentage
+          });
+        }
+      }
+      
+      setDriversData(extractedData);
+    } catch (error) {
+      console.error("Error parsing customer contact HTML:", error);
+    }
+  };
+  
+  // Generate personalized message for drivers with compliance below 98%
+  const generateDriverMessage = (driver: DriverComplianceData) => {
+    return `Hi ${driver.firstName}, letzte Woche musstest du ${driver.totalAddresses} Kunden kontaktiert, hast aber nur ${driver.totalContacts} kontaktiert. Immer wenn du ein Paket nicht zustellen kannst musst du den Kunden anrufen oder eine SMS schreiben. Bitte versuch diese Woche auf 100% zu kommen.`;
+  };
+
+  // Style for compliance values
+  const getComplianceStyle = (percentage: number) => {
+    return percentage < 98 
+      ? "bg-red-100 text-red-800 font-semibold"
+      : "bg-green-100 text-green-800 font-semibold";
+  };
+  
   // Determine which quality section to display based on the current path
   const renderContent = () => {
     if (pathname.includes("/quality/scorecard")) {
@@ -78,12 +144,46 @@ const QualityPage = () => {
             <p className="mb-4">Kundenkontaktberichte und Kommunikationsanalysen.</p>
             
             {customerContactData ? (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Geladene Wochendaten</h3>
+              <div className="mt-6 space-y-6">
+                {/* Enhanced display with colored compliance values */}
                 <div 
-                  className="max-h-[500px] overflow-auto border rounded p-4 bg-slate-50"
-                  dangerouslySetInnerHTML={{ __html: customerContactData }} 
+                  className="max-h-[500px] overflow-auto border rounded p-4 bg-slate-50 customer-contact-report"
+                  dangerouslySetInnerHTML={{ 
+                    __html: customerContactData.replace(
+                      /<td>(\d+(\.\d+)?)%<\/td>/g, 
+                      (match, percentage) => {
+                        const value = parseFloat(percentage);
+                        const colorClass = value < 98 ? 'bg-red-100 text-red-800 font-semibold' : 'bg-green-100 text-green-800 font-semibold';
+                        return `<td class="${colorClass} px-2 py-1 rounded">${value}%</td>`;
+                      }
+                    ) 
+                  }} 
                 />
+                
+                {/* Display personalized messages for drivers with compliance below 98% */}
+                {driversData.filter(driver => driver.compliancePercentage < 98).length > 0 && (
+                  <div className="mt-8 border rounded-lg p-4 bg-amber-50">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      Personalisierte Nachrichten für Fahrer mit Compliance unter 98%
+                    </h3>
+                    <div className="space-y-4">
+                      {driversData
+                        .filter(driver => driver.compliancePercentage < 98)
+                        .map((driver, index) => (
+                          <div key={index} className="p-3 bg-white rounded-md border">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="font-semibold">{driver.name}</span>
+                              <Badge className={getComplianceStyle(driver.compliancePercentage)}>
+                                {driver.compliancePercentage}%
+                              </Badge>
+                            </div>
+                            <p className="text-sm">{generateDriverMessage(driver)}</p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               renderNoDataMessage("Customer Contact")
