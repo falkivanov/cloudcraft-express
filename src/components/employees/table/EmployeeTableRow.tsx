@@ -5,7 +5,7 @@ import { Employee } from "@/types/employee";
 import EmployeeStatusBadge from "./EmployeeStatusBadge";
 import EmployeeContactButtons from "./EmployeeContactButtons";
 import EmployeeActions from "./EmployeeActions";
-import { Calendar, Car } from "lucide-react";
+import { Calendar, Car, MessageCircle } from "lucide-react";
 
 interface EmployeeTableRowProps {
   employee: Employee;
@@ -29,9 +29,31 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
     return new Date(dateString).toLocaleDateString('de-DE');
   };
 
+  // Get row background color based on status
+  const getRowBackgroundColor = () => {
+    if (employee.endDate === null) {
+      // For active employees, no special color
+      return "";
+    } else {
+      // For inactive employees, light gray background
+      const daysSinceEnd = Math.floor(
+        (new Date().getTime() - new Date(employee.endDate).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      if (daysSinceEnd < 30) {
+        return "bg-orange-50"; // Recently inactive
+      }
+      return "bg-gray-50"; // Long inactive
+    }
+  };
+
+  // Create Telegram link if username exists
+  const telegramLink = employee.telegramUsername ? 
+    `https://t.me/${employee.telegramUsername.replace('@', '')}` : null;
+
   return (
     <TableRow 
-      className="cursor-pointer hover:bg-gray-50"
+      className={`cursor-pointer hover:bg-gray-100 ${getRowBackgroundColor()}`}
       onDoubleClick={() => onViewDetails(employee)}
     >
       <TableCell className="font-medium">{employee.name}</TableCell>
@@ -69,7 +91,21 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
         </div>
       </TableCell>
       <TableCell>
-        <EmployeeContactButtons email={employee.email} phone={employee.phone} />
+        <div className="flex items-center space-x-2">
+          <EmployeeContactButtons email={employee.email} phone={employee.phone} />
+          
+          {telegramLink && (
+            <a 
+              href={telegramLink}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-8 h-8 text-blue-500 bg-blue-50 rounded-full hover:bg-blue-100"
+              title={`Telegram: ${employee.telegramUsername}`}
+            >
+              <MessageCircle className="h-4 w-4" />
+            </a>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <EmployeeActions

@@ -30,7 +30,15 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     activeTab,
     setActiveTab,
     filteredActiveEmployees,
-    filteredFormerEmployees
+    filteredFormerEmployees,
+    sortField,
+    sortDirection,
+    handleSort,
+    workingDaysFilter,
+    setWorkingDaysFilter,
+    vehicleFilter,
+    setVehicleFilter,
+    uniqueVehicles
   } = useEmployeeFilter(employees);
 
   // Reset sidebar state when component unmounts or mounts
@@ -84,6 +92,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         onSearchChange={setSearchQuery}
         employees={employees}
         onImportEmployees={handleImportEmployees}
+        workingDaysFilter={workingDaysFilter}
+        onWorkingDaysFilterChange={setWorkingDaysFilter}
+        vehicleFilter={vehicleFilter}
+        onVehicleFilterChange={setVehicleFilter}
+        uniqueVehicles={uniqueVehicles}
       />
 
       <div className="w-full overflow-x-auto">
@@ -93,6 +106,9 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
           filteredActiveEmployees={filteredActiveEmployees}
           filteredFormerEmployees={filteredFormerEmployees}
           onUpdateEmployee={handleUpdateEmployee}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

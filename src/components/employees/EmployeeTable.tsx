@@ -28,17 +28,27 @@ import ContractEndDialog from "./ContractEndDialog";
 import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
 import { useEmployeeTable } from "@/hooks/useEmployeeTable";
+import { ArrowUpDown } from "lucide-react";
+
+type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
+type SortDirection = "asc" | "desc";
 
 interface EmployeeTableProps {
   employees: Employee[];
   onUpdateEmployee?: (updatedEmployee: Employee) => void;
   isFormerView?: boolean;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }
 
 const EmployeeTable: React.FC<EmployeeTableProps> = ({ 
   employees,
   onUpdateEmployee = () => {},
-  isFormerView = false
+  isFormerView = false,
+  sortField,
+  sortDirection,
+  onSort
 }) => {
   const {
     // State
@@ -64,18 +74,30 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     handleReactivateEmployee
   } = useEmployeeTable(employees, onUpdateEmployee);
 
+  const SortableHeader = ({ field, children }: { field: SortField, children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-gray-50"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center space-x-1">
+        <span>{children}</span>
+        <ArrowUpDown className={`h-4 w-4 ${sortField === field ? 'text-primary' : 'text-muted-foreground'}`} />
+      </div>
+    </TableHead>
+  );
+
   return (
     <>
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <SortableHeader field="name">Name</SortableHeader>
               <TableHead>Transporter ID</TableHead>
-              <TableHead>Startdatum</TableHead>
+              <SortableHeader field="startDate">Startdatum</SortableHeader>
               {isFormerView && <TableHead>Enddatum</TableHead>}
               <TableHead>Status</TableHead>
-              <TableHead>Arbeitstage/Fahrzeug</TableHead>
+              <SortableHeader field="workingDaysAWeek">Arbeitstage/Fahrzeug</SortableHeader>
               <TableHead>Präferierte Tage</TableHead>
               <TableHead>Kontakt</TableHead>
               <TableHead className="w-[80px]"></TableHead>

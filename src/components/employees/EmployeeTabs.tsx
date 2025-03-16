@@ -4,12 +4,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmployeeTable from "./EmployeeTable";
 import { Employee } from "@/types/employee";
 
+type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
+type SortDirection = "asc" | "desc";
+
 interface EmployeeTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   filteredActiveEmployees: Employee[];
   filteredFormerEmployees: Employee[];
   onUpdateEmployee: (employee: Employee) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }
 
 const EmployeeTabs = ({
@@ -17,7 +23,10 @@ const EmployeeTabs = ({
   setActiveTab,
   filteredActiveEmployees,
   filteredFormerEmployees,
-  onUpdateEmployee
+  onUpdateEmployee,
+  sortField,
+  sortDirection,
+  onSort
 }: EmployeeTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -32,6 +41,9 @@ const EmployeeTabs = ({
             <EmployeeTable 
               employees={filteredActiveEmployees} 
               onUpdateEmployee={onUpdateEmployee}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={onSort}
             />
           </div>
         </TabsContent>
@@ -42,6 +54,9 @@ const EmployeeTabs = ({
               employees={filteredFormerEmployees} 
               onUpdateEmployee={onUpdateEmployee}
               isFormerView={true}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={onSort}
             />
           </div>
         </TabsContent>
