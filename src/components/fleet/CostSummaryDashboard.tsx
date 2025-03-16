@@ -135,6 +135,18 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
   return (
     <Card className="mb-6">
       <CardContent className="pt-4 pb-2">
+        <div className="flex items-center mb-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help mr-2" />
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-[300px] whitespace-nowrap">
+                Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {costSummaries.map((summary, index) => (
             <div key={index} className="flex items-center space-x-3 p-2 border rounded-md">
@@ -167,20 +179,6 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
               </div>
             </div>
           ))}
-        </div>
-        <div className="text-center mt-2 flex items-center justify-center">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-[10px] max-w-[200px]">
-                  Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </CardContent>
     </Card>
