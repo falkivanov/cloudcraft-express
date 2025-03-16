@@ -30,16 +30,16 @@ const EmployeeAdvancedFilter: React.FC<EmployeeAdvancedFilterProps> = ({
       <div className="w-full md:w-auto">
         <Label htmlFor="working-days-filter" className="mb-2 block">Arbeitstage pro Woche</Label>
         <Select
-          value={workingDaysFilter?.toString() || ""}
+          value={workingDaysFilter?.toString() || "all"}
           onValueChange={(value) => 
-            onWorkingDaysFilterChange(value ? parseInt(value) : null)
+            onWorkingDaysFilterChange(value === "all" ? null : parseInt(value))
           }
         >
           <SelectTrigger id="working-days-filter" className="w-[180px]">
             <SelectValue placeholder="Alle Tage" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Alle Tage</SelectItem>
+            <SelectItem value="all">Alle Tage</SelectItem>
             {[1, 2, 3, 4, 5, 6, 7].map((days) => (
               <SelectItem key={days} value={days.toString()}>
                 {days} {days === 1 ? 'Tag' : 'Tage'}
@@ -52,14 +52,14 @@ const EmployeeAdvancedFilter: React.FC<EmployeeAdvancedFilterProps> = ({
       <div className="w-full md:w-auto">
         <Label htmlFor="vehicle-filter" className="mb-2 block">Bevorzugtes Fahrzeug</Label>
         <Select
-          value={vehicleFilter}
-          onValueChange={onVehicleFilterChange}
+          value={vehicleFilter || "all"}
+          onValueChange={(value) => onVehicleFilterChange(value === "all" ? "" : value)}
         >
           <SelectTrigger id="vehicle-filter" className="w-[180px]">
             <SelectValue placeholder="Alle Fahrzeuge" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Alle Fahrzeuge</SelectItem>
+            <SelectItem value="all">Alle Fahrzeuge</SelectItem>
             {uniqueVehicles.map((vehicle) => (
               <SelectItem key={vehicle} value={vehicle}>
                 {vehicle}
