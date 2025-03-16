@@ -159,7 +159,7 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
           ))}
         </div>
         <div className="mt-2 flex items-center justify-end mr-2">
-          <TooltipProvider>
+          <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
