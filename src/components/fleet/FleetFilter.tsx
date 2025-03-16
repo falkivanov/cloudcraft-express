@@ -2,7 +2,7 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Download, Upload, FileDown, Truck, Car, CarOff } from "lucide-react";
+import { Search, Download, Upload, FileDown, Truck, Car, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Vehicle } from "@/types/vehicle";
 import { exportToCSV, parseCSVImport } from "@/utils/csvUtils";
@@ -232,7 +232,7 @@ const FleetFilter = ({
             Nur aktive Fahrzeuge
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExportInactive}>
-            <CarOff className="mr-2 h-4 w-4" />
+            <Ban className="mr-2 h-4 w-4" />
             Nur defleete Fahrzeuge
           </DropdownMenuItem>
         </DropdownMenuContent>
