@@ -17,9 +17,6 @@ import {
   Archive, 
   ArchiveRestore, 
   Edit, 
-  FileText,
-  Car,
-  Calendar,
   AlertTriangle
 } from "lucide-react";
 import StatusBadge from "../StatusBadge";
@@ -64,12 +61,6 @@ const FleetTableRow = ({
   const handleDoubleClick = () => {
     onViewDetails(vehicle);
   };
-
-  // Determine if vehicle has upcoming appointments
-  const hasAppointments = vehicle.appointments && vehicle.appointments.length > 0;
-  const hasUpcomingAppointments = hasAppointments && vehicle.appointments!.some(
-    appointment => !appointment.completed && new Date(appointment.date) > new Date()
-  );
 
   return (
     <TableRow 
@@ -130,25 +121,6 @@ const FleetTableRow = ({
               <Edit className="mr-2 h-4 w-4" />
               <span>Fahrzeug bearbeiten</span>
             </DropdownMenuItem>
-            
-            <DropdownMenuSeparator />
-            
-            <DropdownMenuItem>
-              <FileText className="mr-2 h-4 w-4" />
-              <span>Dokumente</span>
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem>
-              <Car className="mr-2 h-4 w-4" />
-              <span>Fahrtenbuch</span>
-            </DropdownMenuItem>
-            
-            {hasUpcomingAppointments && (
-              <DropdownMenuItem>
-                <Calendar className="mr-2 h-4 w-4 text-orange-500" />
-                <span>Anstehende Termine</span>
-              </DropdownMenuItem>
-            )}
             
             <DropdownMenuSeparator />
             
