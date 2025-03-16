@@ -7,9 +7,21 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Eye, Archive, ArchiveRestore } from "lucide-react";
+import { 
+  MoreHorizontal, 
+  Eye, 
+  Archive, 
+  ArchiveRestore, 
+  Edit, 
+  FileText,
+  Car,
+  Calendar,
+  AlertTriangle
+} from "lucide-react";
 import StatusBadge from "../StatusBadge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -52,6 +64,12 @@ const FleetTableRow = ({
   const handleDoubleClick = () => {
     onViewDetails(vehicle);
   };
+
+  // Determine if vehicle has upcoming appointments
+  const hasAppointments = vehicle.appointments && vehicle.appointments.length > 0;
+  const hasUpcomingAppointments = hasAppointments && vehicle.appointments!.some(
+    appointment => !appointment.completed && new Date(appointment.date) > new Date()
+  );
 
   return (
     <TableRow 
@@ -99,21 +117,62 @@ const FleetTableRow = ({
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Fahrzeugaktionen</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
             <DropdownMenuItem onClick={() => onViewDetails(vehicle)}>
               <Eye className="mr-2 h-4 w-4" />
-              <span>Details</span>
+              <span>Details anzeigen</span>
             </DropdownMenuItem>
+            
+            <DropdownMenuItem>
+              <Edit className="mr-2 h-4 w-4" />
+              <span>Fahrzeug bearbeiten</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Dokumente</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem>
+              <Car className="mr-2 h-4 w-4" />
+              <span>Fahrtenbuch</span>
+            </DropdownMenuItem>
+            
+            {hasUpcomingAppointments && (
+              <DropdownMenuItem>
+                <Calendar className="mr-2 h-4 w-4 text-orange-500" />
+                <span>Anstehende Termine</span>
+              </DropdownMenuItem>
+            )}
+            
+            <DropdownMenuSeparator />
+            
             {!isDefleetView && (
-              <DropdownMenuItem onClick={() => onOpenDefleetDialog(vehicle)}>
+              <DropdownMenuItem 
+                onClick={() => onOpenDefleetDialog(vehicle)}
+                className="text-destructive"
+              >
                 <Archive className="mr-2 h-4 w-4" />
                 <span>Defleet</span>
               </DropdownMenuItem>
             )}
+            
             {isDefleetView && (
               <DropdownMenuItem onClick={() => onReactivateVehicle(vehicle)}>
                 <ArchiveRestore className="mr-2 h-4 w-4" />
                 <span>Reaktivieren</span>
+              </DropdownMenuItem>
+            )}
+            
+            {vehicle.status === "In Werkstatt" && (
+              <DropdownMenuItem className="text-amber-600">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                <span>In Werkstatt</span>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
