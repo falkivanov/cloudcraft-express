@@ -1,5 +1,6 @@
 
 import { Employee } from "@/types/employee";
+import { parseCSVContent, extractCSVHeaders, getColumnIndex, validateCSVHeaders } from "./csvParserUtils";
 
 /**
  * Parses a CSV file and returns an array of Employee objects
@@ -16,67 +17,40 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
           return;
         }
         
-        // Split into rows and skip header row
-        const rows = csvContent.split('\n');
-        const headers = rows[0].split(',').map(header => 
-          header.replace(/"/g, '').trim()
-        );
-        
-        // Validate headers (minimal validation)
+        // Extract headers and validate
+        const headers = extractCSVHeaders(csvContent);
         const requiredFields = ['Name', 'Email', 'Telefon', 'Status', 'Transporter ID'];
-        const hasAllRequiredFields = requiredFields.every(field => 
-          headers.some(header => header.includes(field))
-        );
         
-        if (!hasAllRequiredFields) {
+        if (!validateCSVHeaders(headers, requiredFields)) {
           reject(new Error('CSV-Datei fehlen erforderliche Spalten'));
           return;
         }
         
-        // Parse data rows
+        // Parse all rows including headers
+        const allRows = parseCSVContent(csvContent);
+        
+        // Skip header row and process data rows
+        const dataRows = allRows.slice(1);
         const employees: Employee[] = [];
-        for (let i = 1; i < rows.length; i++) {
-          if (!rows[i].trim()) continue; // Skip empty rows
-          
-          // Split by comma but respect quoted values
-          let rowData: string[] = [];
-          let inQuotes = false;
-          let currentValue = '';
-          
-          for (let j = 0; j < rows[i].length; j++) {
-            const char = rows[i][j];
-            
-            if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-              rowData.push(currentValue.replace(/"/g, ''));
-              currentValue = '';
-            } else {
-              currentValue += char;
-            }
-          }
-          
-          // Add the last value
-          if (currentValue) {
-            rowData.push(currentValue.replace(/"/g, ''));
-          }
-          
+        
+        // Get column indices for all fields
+        const nameIndex = getColumnIndex(headers, 'Name');
+        const emailIndex = getColumnIndex(headers, 'Email');
+        const phoneIndex = getColumnIndex(headers, 'Telefon');
+        const statusIndex = getColumnIndex(headers, 'Status');
+        const transporterIdIndex = getColumnIndex(headers, 'Transporter ID');
+        const startDateIndex = getColumnIndex(headers, 'Startdatum');
+        const endDateIndex = getColumnIndex(headers, 'Enddatum');
+        const addressIndex = getColumnIndex(headers, 'Adresse');
+        const telegramIndex = getColumnIndex(headers, 'Telegram');
+        const workingDaysAWeekIndex = getColumnIndex(headers, 'Arbeitstage pro Woche');
+        const preferredVehicleIndex = getColumnIndex(headers, 'Bevorzugtes Fahrzeug');
+        const preferredWorkingDaysIndex = getColumnIndex(headers, 'Bevorzugte Arbeitstage');
+        const wantsToWorkSixDaysIndex = getColumnIndex(headers, 'Möchte 6 Tage');
+        
+        // Process each data row
+        for (const rowData of dataRows) {
           if (rowData.length < 5) continue; // Skip invalid rows
-          
-          // Get column indices
-          const nameIndex = headers.findIndex(h => h.includes('Name'));
-          const emailIndex = headers.findIndex(h => h.includes('Email'));
-          const phoneIndex = headers.findIndex(h => h.includes('Telefon'));
-          const statusIndex = headers.findIndex(h => h.includes('Status'));
-          const transporterIdIndex = headers.findIndex(h => h.includes('Transporter ID'));
-          const startDateIndex = headers.findIndex(h => h.includes('Startdatum'));
-          const endDateIndex = headers.findIndex(h => h.includes('Enddatum'));
-          const addressIndex = headers.findIndex(h => h.includes('Adresse'));
-          const telegramIndex = headers.findIndex(h => h.includes('Telegram'));
-          const workingDaysAWeekIndex = headers.findIndex(h => h.includes('Arbeitstage pro Woche'));
-          const preferredVehicleIndex = headers.findIndex(h => h.includes('Bevorzugtes Fahrzeug'));
-          const preferredWorkingDaysIndex = headers.findIndex(h => h.includes('Bevorzugte Arbeitstage'));
-          const wantsToWorkSixDaysIndex = headers.findIndex(h => h.includes('Möchte 6 Tage'));
           
           // Determine the status
           const status = statusIndex >= 0 ? rowData[statusIndex].trim() : 'Aktiv';
