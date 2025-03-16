@@ -28,7 +28,7 @@ const EmployeeContactButtons: React.FC<EmployeeContactButtonsProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2">
-          <p className="text-sm font-medium">+{phone}</p>
+          <p className="text-sm font-medium">{phone}</p>
         </PopoverContent>
       </Popover>
     </div>
