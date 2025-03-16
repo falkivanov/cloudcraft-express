@@ -1,10 +1,46 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
+import FileUpload from "@/components/file-upload/FileUpload";
+import { toast } from "sonner";
 
 const QualityPage = () => {
   const location = useLocation();
   const pathname = location.pathname;
+  const [customerContactData, setCustomerContactData] = useState<string | null>(null);
+  
+  const handleFileUpload = (file: File, type: string) => {
+    console.log(`Processing ${type} file:`, file);
+    
+    if (pathname.includes("/quality/customer-contact")) {
+      if (type === "html") {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            setCustomerContactData(e.target.result as string);
+            toast.success(
+              `Customer Contact Datei erfolgreich verarbeitet: ${file.name}`,
+              {
+                description: `Wochendaten wurden aktualisiert`,
+              }
+            );
+          }
+        };
+        
+        reader.onerror = () => {
+          toast.error(`Fehler beim Lesen der HTML-Datei: ${file.name}`);
+        };
+        
+        reader.readAsText(file);
+      } else {
+        toast.error("Für Customer Contact werden nur HTML-Dateien unterstützt");
+      }
+    } else {
+      // Für andere Qualitätsbereiche können hier spezifische Verarbeitungen hinzugefügt werden
+      toast.success(`Datei erfolgreich hochgeladen: ${file.name}`);
+    }
+  };
   
   // Determine which quality section to display based on the current path
   const renderContent = () => {
@@ -17,9 +53,31 @@ const QualityPage = () => {
       );
     } else if (pathname.includes("/quality/customer-contact")) {
       return (
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Customer Contact</h2>
-          <p>Kundenkontaktberichte und Kommunikationsanalysen.</p>
+        <div className="space-y-6">
+          <div className="p-4 border rounded-lg bg-background">
+            <h2 className="text-2xl font-bold mb-4">Customer Contact</h2>
+            <p className="mb-4">Kundenkontaktberichte und Kommunikationsanalysen.</p>
+            
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">Wochendaten hochladen</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Laden Sie die wöchentliche HTML-Datei mit den Customer Contact Daten hoch.
+              </p>
+              <FileUpload 
+                onFileUpload={handleFileUpload} 
+              />
+            </div>
+          </div>
+          
+          {customerContactData && (
+            <div className="p-4 border rounded-lg bg-background">
+              <h3 className="text-xl font-bold mb-4">Vorschau der hochgeladenen Daten</h3>
+              <div 
+                className="max-h-[500px] overflow-auto border rounded p-4"
+                dangerouslySetInnerHTML={{ __html: customerContactData }} 
+              />
+            </div>
+          )}
         </div>
       );
     } else if (pathname.includes("/quality/pod")) {
