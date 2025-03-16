@@ -1,33 +1,33 @@
 
-import { FilePdfIcon, FileTextIcon, FileIcon, FileSpreadsheetIcon } from "lucide-react";
+import { FilePdf, FileText, File, FileSpreadsheet } from "lucide-react";
 
 export const fileCategories = [
   { 
     id: "scorecard", 
     name: "Scorecard", 
     expectedType: "pdf",
-    icon: FilePdfIcon,
+    icon: FilePdf,
     description: "Scorecard-Daten im PDF-Format"
   },
   { 
     id: "customerContact", 
     name: "Customer Contact", 
     expectedType: "html",
-    icon: FileTextIcon,
+    icon: FileText,
     description: "Customer Contact Berichte im HTML-Format"
   },
   { 
     id: "pod", 
     name: "POD (Proof of Delivery)", 
     expectedType: "pdf",
-    icon: FilePdfIcon,
+    icon: FilePdf,
     description: "Liefernachweise (POD) im PDF-Format"
   },
   { 
     id: "concessions", 
     name: "Concessions", 
     expectedType: "excel",
-    icon: FileSpreadsheetIcon,
+    icon: FileSpreadsheet,
     description: "Concessions-Daten im Excel-Format (.xlsx)"
   },
 ];
