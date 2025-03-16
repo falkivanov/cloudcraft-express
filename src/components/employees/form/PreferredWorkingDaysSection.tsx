@@ -46,7 +46,12 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
                   onValueChange={field.onChange}
                 >
                   {weekDays.map((day) => (
-                    <ToggleGroupItem key={day.value} value={day.value} aria-label={day.label}>
+                    <ToggleGroupItem 
+                      key={day.value} 
+                      value={day.value} 
+                      aria-label={day.label}
+                      className="data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300 data-[state=on]:font-medium transition-colors"
+                    >
                       {day.label}
                     </ToggleGroupItem>
                   ))}
@@ -75,9 +80,6 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
                   <FormLabel>
                     Möchte 6 Tage arbeiten
                   </FormLabel>
-                  <FormDescription>
-                    Der Mitarbeiter möchte auf einen 6-Tage-Arbeitsplan wechseln
-                  </FormDescription>
                 </div>
               </FormItem>
             )}
