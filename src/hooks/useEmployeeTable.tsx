@@ -1,6 +1,25 @@
 
 import { useState } from "react";
 import { Employee } from "@/types/employee";
+import { toast } from "sonner";
+
+// Helper functions
+const markEmployeeInactive = (employee: Employee, endDate: string): Employee => ({
+  ...employee,
+  status: "Inaktiv",
+  endDate: endDate
+});
+
+const markEmployeeActive = (employee: Employee): Employee => ({
+  ...employee,
+  endDate: null,
+  status: "Aktiv"
+});
+
+const markEmployeeDeleted = (employee: Employee): Employee => ({
+  ...employee,
+  status: "Gelöscht"
+});
 
 export const useEmployeeTable = (
   employees: Employee[],
@@ -46,12 +65,7 @@ export const useEmployeeTable = (
   const handleEndContract = () => {
     if (!selectedEmployee || !onUpdateEmployee) return;
     
-    const updatedEmployee = {
-      ...selectedEmployee,
-      status: "Inaktiv",
-      endDate: endDate
-    };
-    
+    const updatedEmployee = markEmployeeInactive(selectedEmployee, endDate);
     onUpdateEmployee(updatedEmployee);
     setIsContractEndDialogOpen(false);
     setSelectedEmployee(null);
@@ -61,11 +75,16 @@ export const useEmployeeTable = (
   const handleReactivateEmployee = (employee: Employee) => {
     if (!onUpdateEmployee) return;
     
-    const updatedEmployee = {
-      ...employee,
-      endDate: null,
-      status: "Aktiv"
-    };
+    const updatedEmployee = markEmployeeActive(employee);
+    onUpdateEmployee(updatedEmployee);
+    toast.success(`Mitarbeiter ${employee.name} wurde reaktiviert`);
+  };
+
+  // Helper function to reactivate an employee
+  const reactivateEmployee = (employee: Employee) => {
+    if (!onUpdateEmployee) return;
+    
+    const updatedEmployee = markEmployeeActive(employee);
     onUpdateEmployee(updatedEmployee);
   };
 
@@ -73,23 +92,30 @@ export const useEmployeeTable = (
   const handleBatchReactivate = (employeeIds: string[]) => {
     if (!onUpdateEmployee) return;
     
+    if (employeeIds.length === 0) {
+      toast.warning("Keine Mitarbeiter ausgewählt");
+      return;
+    }
+    
+    let reactivatedCount = 0;
     employeeIds.forEach(id => {
       const employee = employees.find(e => e.id === id);
       if (employee) {
         reactivateEmployee(employee);
+        reactivatedCount++;
       }
     });
+    
+    if (reactivatedCount > 0) {
+      toast.success(`${reactivatedCount} Mitarbeiter wurden reaktiviert`);
+    }
   };
 
-  // Helper function to reactivate an employee
-  const reactivateEmployee = (employee: Employee) => {
+  // Helper function to mark an employee as deleted
+  const deleteEmployee = (employee: Employee) => {
     if (!onUpdateEmployee) return;
     
-    const updatedEmployee = {
-      ...employee,
-      endDate: null,
-      status: "Aktiv"
-    };
+    const updatedEmployee = markEmployeeDeleted(employee);
     onUpdateEmployee(updatedEmployee);
   };
 
@@ -97,25 +123,23 @@ export const useEmployeeTable = (
   const handleBatchDelete = (employeeIds: string[]) => {
     if (!onUpdateEmployee) return;
     
+    if (employeeIds.length === 0) {
+      toast.warning("Keine Mitarbeiter ausgewählt");
+      return;
+    }
+    
+    let deletedCount = 0;
     employeeIds.forEach(id => {
       const employee = employees.find(e => e.id === id);
       if (employee) {
         deleteEmployee(employee);
+        deletedCount++;
       }
     });
-  };
-
-  // Helper function to mark an employee as deleted
-  const deleteEmployee = (employee: Employee) => {
-    if (!onUpdateEmployee) return;
     
-    // Mark the employee as deleted
-    // In a real app, you might want to use a separate deletion API
-    const updatedEmployee = {
-      ...employee,
-      status: "Gelöscht"
-    };
-    onUpdateEmployee(updatedEmployee);
+    if (deletedCount > 0) {
+      toast.success(`${deletedCount} Mitarbeiter wurden gelöscht`);
+    }
   };
 
   return {
