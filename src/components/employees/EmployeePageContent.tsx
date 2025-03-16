@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -33,19 +32,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     filteredFormerEmployees,
     sortField,
     sortDirection,
-    handleSort,
-    workingDaysFilter,
-    setWorkingDaysFilter,
-    vehicleFilter,
-    setVehicleFilter,
-    uniqueVehicles
+    handleSort
   } = useEmployeeFilter(employees);
 
-  // Reset sidebar state when component unmounts or mounts
   useEffect(() => {
-    // Allow sidebar to be interactive again on component mount
     const handleMouseMove = () => {
-      // Re-enable sidebar interactivity
       document.body.style.pointerEvents = 'auto';
     };
 
@@ -92,11 +83,6 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         onSearchChange={setSearchQuery}
         employees={employees}
         onImportEmployees={handleImportEmployees}
-        workingDaysFilter={workingDaysFilter}
-        onWorkingDaysFilterChange={setWorkingDaysFilter}
-        vehicleFilter={vehicleFilter}
-        onVehicleFilterChange={setVehicleFilter}
-        uniqueVehicles={uniqueVehicles}
       />
 
       <div className="w-full overflow-x-auto bg-background">

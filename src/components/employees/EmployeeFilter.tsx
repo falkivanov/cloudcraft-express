@@ -11,11 +11,6 @@ interface EmployeeFilterProps {
   onSearchChange: (query: string) => void;
   employees: Employee[];
   onImportEmployees?: (employees: Employee[]) => void;
-  workingDaysFilter: number | null;
-  onWorkingDaysFilterChange: (value: number | null) => void;
-  vehicleFilter: string;
-  onVehicleFilterChange: (value: string) => void;
-  uniqueVehicles: string[];
 }
 
 const EmployeeFilter = ({ 
@@ -23,11 +18,6 @@ const EmployeeFilter = ({
   onSearchChange,
   employees,
   onImportEmployees,
-  workingDaysFilter,
-  onWorkingDaysFilterChange,
-  vehicleFilter,
-  onVehicleFilterChange,
-  uniqueVehicles
 }: EmployeeFilterProps) => {
   return (
     <div className="space-y-4 mb-6 bg-background">
@@ -40,13 +30,7 @@ const EmployeeFilter = ({
         <EmployeeExport employees={employees} />
       </div>
       
-      <EmployeeAdvancedFilter
-        workingDaysFilter={workingDaysFilter}
-        onWorkingDaysFilterChange={onWorkingDaysFilterChange}
-        vehicleFilter={vehicleFilter}
-        onVehicleFilterChange={onVehicleFilterChange}
-        uniqueVehicles={uniqueVehicles}
-      />
+      <EmployeeAdvancedFilter />
     </div>
   );
 };
