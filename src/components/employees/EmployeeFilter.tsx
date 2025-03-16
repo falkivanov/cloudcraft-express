@@ -2,13 +2,14 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Download, Upload, FileDown } from "lucide-react";
+import { Search, Download, Upload, FileDown, UserCheck, UserX, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Employee } from "@/types/employee";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { exportEmployeesToCSV, parseEmployeeCSVImport, generateEmployeeSampleCSV } from "@/utils/employeeCSVUtils";
@@ -29,7 +30,7 @@ const EmployeeFilter = ({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = () => {
+  const handleExportAll = () => {
     if (employees.length === 0) {
       toast({
         title: "Export nicht möglich",
@@ -39,10 +40,64 @@ const EmployeeFilter = ({
     }
     
     try {
-      exportEmployeesToCSV(employees, `mitarbeiter_export_${new Date().toISOString().slice(0, 10)}`);
+      exportEmployeesToCSV(employees, `mitarbeiter_alle_${new Date().toISOString().slice(0, 10)}`);
       toast({
         title: "Export erfolgreich",
         description: `${employees.length} Mitarbeiter wurden erfolgreich exportiert.`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: "Beim Exportieren der Daten ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportActive = () => {
+    const activeEmployees = employees.filter(employee => employee.endDate === null);
+    
+    if (activeEmployees.length === 0) {
+      toast({
+        title: "Export nicht möglich",
+        description: "Keine aktiven Mitarbeiterdaten vorhanden zum Exportieren.",
+      });
+      return;
+    }
+    
+    try {
+      exportEmployeesToCSV(activeEmployees, `mitarbeiter_aktiv_${new Date().toISOString().slice(0, 10)}`);
+      toast({
+        title: "Export erfolgreich",
+        description: `${activeEmployees.length} aktive Mitarbeiter wurden erfolgreich exportiert.`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: "Beim Exportieren der Daten ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportInactive = () => {
+    const inactiveEmployees = employees.filter(employee => employee.endDate !== null);
+    
+    if (inactiveEmployees.length === 0) {
+      toast({
+        title: "Export nicht möglich",
+        description: "Keine ehemaligen Mitarbeiterdaten vorhanden zum Exportieren.",
+      });
+      return;
+    }
+    
+    try {
+      exportEmployeesToCSV(inactiveEmployees, `mitarbeiter_ehemalige_${new Date().toISOString().slice(0, 10)}`);
+      toast({
+        title: "Export erfolgreich",
+        description: `${inactiveEmployees.length} ehemalige Mitarbeiter wurden erfolgreich exportiert.`,
       });
     } catch (error) {
       console.error("Export error:", error);
@@ -158,10 +213,28 @@ const EmployeeFilter = ({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Button variant="outline" onClick={handleExport} className="flex items-center whitespace-nowrap">
-        <Download className="mr-2 h-4 w-4" />
-        Export
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex items-center whitespace-nowrap">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleExportAll}>
+            <Users className="mr-2 h-4 w-4" />
+            Alle Mitarbeiter
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportActive}>
+            <UserCheck className="mr-2 h-4 w-4" />
+            Nur aktive Mitarbeiter
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportInactive}>
+            <UserX className="mr-2 h-4 w-4" />
+            Nur ehemalige Mitarbeiter
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
