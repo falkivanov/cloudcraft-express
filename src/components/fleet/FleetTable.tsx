@@ -12,18 +12,27 @@ import EmptyState from "./table/EmptyState";
 import DefleetDialog from "./table/DefleetDialog";
 import { useFleetTable } from "@/hooks/useFleetTable";
 
+type SortField = "licensePlate" | "brand" | "model" | "vinNumber" | "infleetDate";
+type SortDirection = "asc" | "desc";
+
 interface FleetTableProps {
   vehicles: Vehicle[];
   onUpdateVehicle: (vehicle: Vehicle) => void;
   onDefleet: (vehicle: Vehicle, defleetDate: string) => void;
   isDefleetView?: boolean;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }
 
 const FleetTable = ({ 
   vehicles, 
   onUpdateVehicle, 
   onDefleet,
-  isDefleetView = false 
+  isDefleetView = false,
+  sortField,
+  sortDirection,
+  onSort
 }: FleetTableProps) => {
   const {
     selectedVehicle,
@@ -44,7 +53,12 @@ const FleetTable = ({
     <>
       <div className="rounded-md border w-full">
         <Table className="w-full table-fixed">
-          <FleetTableHeader isDefleetView={isDefleetView} />
+          <FleetTableHeader 
+            isDefleetView={isDefleetView} 
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
+          />
           <TableBody>
             {vehicles.length === 0 ? (
               <EmptyState isDefleetView={isDefleetView} />

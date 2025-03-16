@@ -4,6 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FleetTable from "./FleetTable";
 import { Vehicle } from "@/types/vehicle";
 
+type SortField = "licensePlate" | "brand" | "model" | "vinNumber" | "infleetDate";
+type SortDirection = "asc" | "desc";
+
 interface FleetTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -11,6 +14,9 @@ interface FleetTabsProps {
   filteredDefleetedVehicles: Vehicle[];
   onUpdateVehicle: (vehicle: Vehicle) => void;
   onDefleet: (vehicle: Vehicle, defleetDate: string) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }
 
 const FleetTabs = ({
@@ -19,7 +25,10 @@ const FleetTabs = ({
   filteredActiveVehicles,
   filteredDefleetedVehicles,
   onUpdateVehicle,
-  onDefleet
+  onDefleet,
+  sortField,
+  sortDirection,
+  onSort
 }: FleetTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -34,6 +43,9 @@ const FleetTabs = ({
             vehicles={filteredActiveVehicles} 
             onUpdateVehicle={onUpdateVehicle}
             onDefleet={onDefleet}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
         </TabsContent>
         
@@ -43,6 +55,9 @@ const FleetTabs = ({
             onUpdateVehicle={onUpdateVehicle}
             onDefleet={onDefleet}
             isDefleetView={true}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
         </TabsContent>
       </div>

@@ -23,7 +23,10 @@ const FleetPage = () => {
     handleUpdateVehicle,
     handleDefleetVehicle,
     handleAddVehicle,
-    handleImportVehicles
+    handleImportVehicles,
+    sortField,
+    sortDirection,
+    handleSort
   } = useVehicleData();
 
   return (
@@ -56,6 +59,9 @@ const FleetPage = () => {
           filteredDefleetedVehicles={filteredDefleetedVehicles}
           onUpdateVehicle={handleUpdateVehicle}
           onDefleet={handleDefleetVehicle}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
       

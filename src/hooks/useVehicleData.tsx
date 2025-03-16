@@ -19,7 +19,10 @@ export const useVehicleData = () => {
     activeTab,
     setActiveTab,
     filteredActiveVehicles,
-    filteredDefleetedVehicles
+    filteredDefleetedVehicles,
+    sortField,
+    sortDirection,
+    handleSort
   } = useVehicleFilter(vehicles);
 
   // This fixes a UI issue with pointer events that was in the original code
@@ -46,6 +49,9 @@ export const useVehicleData = () => {
     handleUpdateVehicle,
     handleDefleetVehicle,
     handleAddVehicle,
-    handleImportVehicles
+    handleImportVehicles,
+    sortField,
+    sortDirection,
+    handleSort
   };
 };
