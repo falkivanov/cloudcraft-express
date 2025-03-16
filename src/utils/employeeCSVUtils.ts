@@ -136,24 +136,35 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
           const preferredWorkingDaysIndex = headers.findIndex(h => h.includes('Bevorzugte Arbeitstage'));
           const wantsToWorkSixDaysIndex = headers.findIndex(h => h.includes('Möchte 6 Tage'));
           
+          // Determine the status
+          const status = statusIndex >= 0 ? rowData[statusIndex].trim() : 'Aktiv';
+          
+          // Determine the end date
+          // If status is 'Aktiv', endDate should be null regardless of what's in the CSV
+          const endDate = (statusIndex >= 0 && status.toLowerCase() === 'aktiv')
+            ? null
+            : (endDateIndex >= 0 && rowData[endDateIndex]?.trim()) 
+              ? rowData[endDateIndex].trim() 
+              : null;
+          
           // Create employee object with required fields
           const employee: Employee = {
-            id: `import-${Date.now()}-${i}`, // Generate a temporary ID
+            id: `import-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, // Generate a unique ID
             name: nameIndex >= 0 ? rowData[nameIndex] : 'Unbekannt',
             email: emailIndex >= 0 ? rowData[emailIndex] : '',
             phone: phoneIndex >= 0 ? rowData[phoneIndex] : '',
-            status: statusIndex >= 0 ? rowData[statusIndex] : 'Aktiv',
+            status: status, // Use the determined status
             transporterId: transporterIdIndex >= 0 ? rowData[transporterIdIndex] : '',
             startDate: startDateIndex >= 0 && rowData[startDateIndex] ? rowData[startDateIndex] : new Date().toISOString().split('T')[0],
-            endDate: endDateIndex >= 0 && rowData[endDateIndex] ? rowData[endDateIndex] : null,
+            endDate: endDate, // Use the determined endDate
             address: addressIndex >= 0 ? rowData[addressIndex] : '',
             telegramUsername: telegramIndex >= 0 ? rowData[telegramIndex] : '',
             workingDaysAWeek: workingDaysAWeekIndex >= 0 && rowData[workingDaysAWeekIndex] ? parseInt(rowData[workingDaysAWeekIndex]) : 5,
             preferredVehicle: preferredVehicleIndex >= 0 ? rowData[preferredVehicleIndex] : '',
             preferredWorkingDays: preferredWorkingDaysIndex >= 0 && rowData[preferredWorkingDaysIndex] 
-              ? rowData[preferredWorkingDaysIndex].split(',') 
+              ? rowData[preferredWorkingDaysIndex].split(',').map(day => day.trim())
               : ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
-            wantsToWorkSixDays: wantsToWorkSixDaysIndex >= 0 ? rowData[wantsToWorkSixDaysIndex].includes('Ja') : false
+            wantsToWorkSixDays: wantsToWorkSixDaysIndex >= 0 ? rowData[wantsToWorkSixDaysIndex].toLowerCase().includes('ja') : false
           };
           
           employees.push(employee);
