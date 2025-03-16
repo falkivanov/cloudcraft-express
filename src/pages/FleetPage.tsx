@@ -54,8 +54,8 @@ const FleetPage = () => {
   const groupedDefleetedVehicles = useGroupedVehicles(filteredDefleetedVehicles, groupBy);
 
   return (
-    <div className="container mx-auto py-4">
-      <div className="flex justify-between items-center mb-4">
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Fuhrpark</h1>
         <Button onClick={() => setIsNewVehicleDialogOpen(true)}>
           <Car className="mr-2" />
@@ -63,7 +63,7 @@ const FleetPage = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <FleetStatsOverview 
           vehicles={vehicles} 
           onFilterChange={handleStatusFilterChange}
@@ -72,7 +72,7 @@ const FleetPage = () => {
         <CostSummaryDashboard vehicles={vehicles} />
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-3">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
         <FleetFilter 
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -112,7 +112,7 @@ const FleetPage = () => {
           />
         ) : (
           <div className="w-full overflow-x-auto">
-            <div className="mb-2 border-b">
+            <div className="mb-4 border-b">
               <div className="flex">
                 <button 
                   className={`px-4 py-2 ${activeTab === "active" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}

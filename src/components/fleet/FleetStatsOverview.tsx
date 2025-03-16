@@ -25,12 +25,12 @@ const FleetStatsOverview = ({ vehicles, onFilterChange, activeFilter = "all" }: 
   };
   
   return (
-    <Card className="mb-3">
-      <CardContent className="flex flex-wrap justify-between p-3">
+    <Card className="mb-6">
+      <CardContent className="flex flex-wrap justify-between p-6">
         <StatItem 
           title="Gesamte Fahrzeuge" 
           value={totalVehicles} 
-          icon={<Truck className="h-5 w-5 text-blue-500" />} 
+          icon={<Truck className="h-6 w-6 text-blue-500" />} 
           onClick={() => handleStatClick("all")}
           clickable={!!onFilterChange}
           active={activeFilter === "all"}
@@ -38,7 +38,7 @@ const FleetStatsOverview = ({ vehicles, onFilterChange, activeFilter = "all" }: 
         <StatItem 
           title="Aktive Fahrzeuge" 
           value={activeVehicles} 
-          icon={<CheckCircle className="h-5 w-5 text-green-500" />} 
+          icon={<CheckCircle className="h-6 w-6 text-green-500" />} 
           onClick={() => handleStatClick("active")}
           clickable={!!onFilterChange}
           active={activeFilter === "active"}
@@ -46,7 +46,7 @@ const FleetStatsOverview = ({ vehicles, onFilterChange, activeFilter = "all" }: 
         <StatItem 
           title="In Werkstatt" 
           value={inWorkshopVehicles} 
-          icon={<Wrench className="h-5 w-5 text-orange-500" />} 
+          icon={<Wrench className="h-6 w-6 text-orange-500" />} 
           onClick={() => handleStatClick("workshop")}
           clickable={!!onFilterChange}
           active={activeFilter === "workshop"}
@@ -67,7 +67,7 @@ interface StatItemProps {
 
 const StatItem = ({ title, value, icon, onClick, clickable, active }: StatItemProps) => (
   <div 
-    className={`flex items-center space-x-2 p-2 ${clickable ? 'cursor-pointer hover:bg-gray-100 rounded-md transition-colors' : ''} ${active ? 'bg-gray-100 rounded-md' : ''}`}
+    className={`flex items-center space-x-3 p-2 ${clickable ? 'cursor-pointer hover:bg-gray-100 rounded-md transition-colors' : ''} ${active ? 'bg-gray-100 rounded-md' : ''}`}
     onClick={onClick}
   >
     <div className="rounded-full bg-muted p-2">

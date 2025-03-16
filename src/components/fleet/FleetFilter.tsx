@@ -19,7 +19,7 @@ const FleetFilter = ({
   onImportVehicles 
 }: FleetFilterProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 mb-2 items-center">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 mb-6 items-center">
       <FleetSearch 
         searchQuery={searchQuery} 
         onSearchChange={onSearchChange} 

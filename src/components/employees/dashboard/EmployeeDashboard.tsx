@@ -64,6 +64,7 @@ const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ employees }) => {
           </div>
         </div>
       </div>
+      <p className="text-[10px] text-muted-foreground text-center mt-2">Mitarbeiter Übersicht</p>
     </div>
   );
 };
