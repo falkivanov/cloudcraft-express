@@ -15,6 +15,7 @@ interface EmployeeTableRowProps {
   onEditEmployee: (employee: Employee) => void;
   onOpenContractEndDialog: (employee: Employee) => void;
   onReactivateEmployee: (employee: Employee) => void;
+  onDeleteEmployee?: (employee: Employee) => void;
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }
@@ -26,6 +27,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
   onEditEmployee,
   onOpenContractEndDialog,
   onReactivateEmployee,
+  onDeleteEmployee,
   isSelected = false,
   onToggleSelect = () => {}
 }) => {
@@ -133,6 +135,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
           onEditEmployee={onEditEmployee}
           onOpenContractEndDialog={onOpenContractEndDialog}
           onReactivateEmployee={onReactivateEmployee}
+          onDeleteEmployee={onDeleteEmployee}
         />
       </TableCell>
     </TableRow>
