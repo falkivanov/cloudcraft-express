@@ -51,17 +51,13 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
         return isAfter(repairDate, startDate);
       });
       
-      // Calculate total costs
-      const totalCost = relevantRepairs.reduce((sum, repair) => sum + repair.totalCost, 0);
+      // Calculate company paid costs
       const companyPaidCost = relevantRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
-      const employeePaidCost = totalCost - companyPaidCost;
       
       return {
         timeFrame: timeFrame.label,
         icon: timeFrame.icon,
-        totalCost,
         companyPaidCost,
-        employeePaidCost,
         repairCount: relevantRepairs.length
       };
     });
@@ -79,16 +75,11 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
               <div className="w-full">
                 <p className="text-xs font-medium text-muted-foreground">{summary.timeFrame}</p>
                 <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
-                <div className="flex justify-between items-center">
+                {summary.repairCount > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Gesamt: {summary.totalCost.toLocaleString('de-DE')} €
+                    {summary.repairCount} Reparaturen
                   </p>
-                  {summary.repairCount > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {summary.repairCount} Reparaturen
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           ))}
