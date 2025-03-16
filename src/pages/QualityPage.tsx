@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import CustomerContactTable from "@/components/quality/CustomerContactTable";
 
 const QualityPage = () => {
   const location = useLocation();
@@ -79,11 +79,7 @@ const QualityPage = () => {
             
             {customerContactData ? (
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Geladene Wochendaten</h3>
-                <div 
-                  className="max-h-[500px] overflow-auto border rounded p-4 bg-slate-50"
-                  dangerouslySetInnerHTML={{ __html: customerContactData }} 
-                />
+                <CustomerContactTable htmlContent={customerContactData} />
               </div>
             ) : (
               renderNoDataMessage("Customer Contact")
@@ -94,7 +90,7 @@ const QualityPage = () => {
     } else if (pathname.includes("/quality/pod")) {
       return (
         <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">POD (Proof of Delivery)</h2>
+          <h2 className="text-2xl font-bold mb-4">POD</h2>
           <p className="mb-4">Liefernachweise und Zustellungsdokumentation.</p>
           
           {podData ? (
