@@ -29,7 +29,10 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
   };
 
   return (
-    <TableRow>
+    <TableRow 
+      className="cursor-pointer"
+      onDoubleClick={() => onViewDetails(employee)}
+    >
       <TableCell className="font-medium">{employee.name}</TableCell>
       <TableCell>{employee.transporterId}</TableCell>
       <TableCell>{formatDate(employee.startDate)}</TableCell>

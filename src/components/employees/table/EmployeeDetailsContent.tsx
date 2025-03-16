@@ -2,7 +2,7 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
-import { Edit, IdCard, CalendarDays, MapPin, Clock, Car, Mail, Phone, Calendar, MessageCircle } from "lucide-react";
+import { Edit, IdCard, CalendarDays, MapPin, Clock, Car, Mail, Phone, Calendar, MessageCircle, AlignJustify, CheckCircle, XCircle } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsContentProps {
@@ -24,6 +24,14 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           <div>
             <p className="text-sm font-medium">Transporter ID</p>
             <p>{employee.transporterId}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start gap-2">
+          <AlignJustify className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Status</p>
+            <p>{employee.status}</p>
           </div>
         </div>
         
@@ -75,9 +83,20 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium">Präferierte Arbeitstage</p>
-            <p>{employee.preferredWorkingDays && employee.preferredWorkingDays.length > 0 
-               ? employee.preferredWorkingDays.join(', ') 
-               : 'Keine Präferenzen'}</p>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"].map((day) => (
+                <span 
+                  key={day} 
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    employee.preferredWorkingDays?.includes(day) 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {day.substring(0, 2)}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
         
@@ -86,7 +105,17 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
             <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium">Möchte 6 Tage arbeiten</p>
-              <p>{employee.wantsToWorkSixDays ? 'Ja' : 'Nein'}</p>
+              <div className="mt-1">
+                {employee.wantsToWorkSixDays ? (
+                  <span className="inline-flex items-center text-green-600">
+                    <CheckCircle className="h-4 w-4 mr-1" /> Ja
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center text-red-600">
+                    <XCircle className="h-4 w-4 mr-1" /> Nein
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
