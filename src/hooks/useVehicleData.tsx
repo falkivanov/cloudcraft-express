@@ -22,7 +22,9 @@ export const useVehicleData = () => {
     filteredDefleetedVehicles,
     sortField,
     sortDirection,
-    handleSort
+    handleSort,
+    statusFilter,
+    setStatusFilter
   } = useVehicleFilter(vehicles);
 
   // This fixes a UI issue with pointer events that was in the original code
@@ -52,6 +54,8 @@ export const useVehicleData = () => {
     handleImportVehicles,
     sortField,
     sortDirection,
-    handleSort
+    handleSort,
+    statusFilter,
+    setStatusFilter
   };
 };

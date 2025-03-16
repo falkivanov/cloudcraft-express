@@ -4,12 +4,14 @@ import { Vehicle } from "@/types/vehicle";
 
 type SortField = "licensePlate" | "brand" | "model" | "vinNumber" | "infleetDate";
 type SortDirection = "asc" | "desc";
+type StatusFilter = "all" | "active" | "workshop";
 
 export const useVehicleFilter = (vehicles: Vehicle[]) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
   const [sortField, setSortField] = useState<SortField>("licensePlate");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   // Filter nach Aktiven und Defleeten Fahrzeugen
   const activeVehicles = useMemo(() => 
@@ -21,6 +23,21 @@ export const useVehicleFilter = (vehicles: Vehicle[]) => {
     vehicles.filter(vehicle => vehicle.status === "Defleet"),
     [vehicles]
   );
+
+  // Filter based on status filter (used for the stats cards)
+  const statusFilteredVehicles = useMemo(() => {
+    const nonDefleeted = vehicles.filter(vehicle => vehicle.status !== "Defleet");
+    
+    if (statusFilter === "all") {
+      return nonDefleeted;
+    } else if (statusFilter === "active") {
+      return nonDefleeted.filter(vehicle => vehicle.status === "Aktiv");
+    } else if (statusFilter === "workshop") {
+      return nonDefleeted.filter(vehicle => vehicle.status === "In Werkstatt");
+    }
+    
+    return nonDefleeted;
+  }, [vehicles, statusFilter]);
 
   // Apply filters and sorting
   const applyFiltersAndSort = (vehicleList: Vehicle[]) => {
@@ -63,8 +80,8 @@ export const useVehicleFilter = (vehicles: Vehicle[]) => {
 
   // Apply filters and sorting to active and defleet vehicles
   const filteredActiveVehicles = useMemo(() => 
-    applyFiltersAndSort(activeVehicles),
-    [activeVehicles, searchQuery, sortField, sortDirection]
+    applyFiltersAndSort(statusFilter === "all" ? activeVehicles : statusFilteredVehicles),
+    [activeVehicles, statusFilteredVehicles, searchQuery, sortField, sortDirection, statusFilter]
   );
 
   const filteredDefleetedVehicles = useMemo(() => 
@@ -91,6 +108,8 @@ export const useVehicleFilter = (vehicles: Vehicle[]) => {
     filteredDefleetedVehicles,
     sortField,
     sortDirection,
-    handleSort
+    handleSort,
+    statusFilter,
+    setStatusFilter
   };
 };

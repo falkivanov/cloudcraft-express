@@ -26,8 +26,18 @@ const FleetPage = () => {
     handleImportVehicles,
     sortField,
     sortDirection,
-    handleSort
+    handleSort,
+    statusFilter,
+    setStatusFilter
   } = useVehicleData();
+
+  // Handle filter by card click
+  const handleStatusFilterChange = (newStatusFilter: "all" | "active" | "workshop") => {
+    setStatusFilter(newStatusFilter);
+    // When filtering by status, we should also set the active tab to "active"
+    // to show the filtered vehicles in the active vehicles tab
+    setActiveTab("active");
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -40,7 +50,10 @@ const FleetPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <FleetStatsOverview vehicles={vehicles} />
+        <FleetStatsOverview 
+          vehicles={vehicles} 
+          onFilterChange={handleStatusFilterChange}
+        />
         <CostSummaryDashboard vehicles={vehicles} />
       </div>
 

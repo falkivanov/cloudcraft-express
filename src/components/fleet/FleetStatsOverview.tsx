@@ -6,13 +6,20 @@ import { Vehicle } from "@/types/vehicle";
 
 interface FleetStatsProps {
   vehicles: Vehicle[];
+  onFilterChange?: (status: "all" | "active" | "workshop") => void;
 }
 
-const FleetStatsOverview = ({ vehicles }: FleetStatsProps) => {
+const FleetStatsOverview = ({ vehicles, onFilterChange }: FleetStatsProps) => {
   // Calculate stats
   const totalVehicles = vehicles.filter(v => v.status !== "Defleet").length;
   const activeVehicles = vehicles.filter(v => v.status === "Aktiv").length;
   const inWorkshopVehicles = vehicles.filter(v => v.status === "In Werkstatt").length;
+  
+  const handleStatClick = (statusFilter: "all" | "active" | "workshop") => {
+    if (onFilterChange) {
+      onFilterChange(statusFilter);
+    }
+  };
   
   return (
     <Card className="mb-6">
@@ -21,16 +28,22 @@ const FleetStatsOverview = ({ vehicles }: FleetStatsProps) => {
           title="Gesamte Fahrzeuge" 
           value={totalVehicles} 
           icon={<Truck className="h-6 w-6 text-blue-500" />} 
+          onClick={() => handleStatClick("all")}
+          clickable={!!onFilterChange}
         />
         <StatItem 
           title="Aktive Fahrzeuge" 
           value={activeVehicles} 
           icon={<CheckCircle className="h-6 w-6 text-green-500" />} 
+          onClick={() => handleStatClick("active")}
+          clickable={!!onFilterChange}
         />
         <StatItem 
           title="In Werkstatt" 
           value={inWorkshopVehicles} 
           icon={<Wrench className="h-6 w-6 text-orange-500" />} 
+          onClick={() => handleStatClick("workshop")}
+          clickable={!!onFilterChange}
         />
       </CardContent>
     </Card>
@@ -41,10 +54,15 @@ interface StatItemProps {
   title: string;
   value: number;
   icon: React.ReactNode;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
-const StatItem = ({ title, value, icon }: StatItemProps) => (
-  <div className="flex items-center space-x-3 p-2">
+const StatItem = ({ title, value, icon, onClick, clickable }: StatItemProps) => (
+  <div 
+    className={`flex items-center space-x-3 p-2 ${clickable ? 'cursor-pointer hover:bg-gray-100 rounded-md transition-colors' : ''}`}
+    onClick={onClick}
+  >
     <div className="rounded-full bg-muted p-2">
       {icon}
     </div>
