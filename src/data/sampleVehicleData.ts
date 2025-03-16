@@ -1,4 +1,3 @@
-
 import { Vehicle, RepairEntry, Appointment } from "@/types/vehicle";
 import { format } from "date-fns";
 
@@ -70,7 +69,21 @@ export const initialVehicles: Vehicle[] = [
     status: "Aktiv",
     infleetDate: "2021-05-15",
     defleetDate: null,
-    repairs: sampleRepairs,
+    repairs: [
+      ...sampleRepairs,
+      {
+        id: "13",
+        date: format(new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        startDate: format(new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        endDate: format(new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        location: "ATU Frankfurt",
+        description: "Inspektion und neue Wischerblätter",
+        duration: 1,
+        totalCost: 220.50,
+        companyPaidAmount: 220.50,
+        causeType: "Verschleiß"
+      }
+    ],
     appointments: sampleAppointments
   },
   {
@@ -82,7 +95,20 @@ export const initialVehicles: Vehicle[] = [
     status: "Aktiv",
     infleetDate: "2020-10-23",
     defleetDate: null,
-    repairs: [],
+    repairs: [
+      {
+        id: "14",
+        date: format(new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        startDate: format(new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        endDate: format(new Date(new Date().getTime() - 5 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        location: "Mercedes Servicecenter",
+        description: "Kupplung erneuert und Bremsen geprüft",
+        duration: 3,
+        totalCost: 1245.80,
+        companyPaidAmount: 1245.80,
+        causeType: "Verschleiß"
+      }
+    ],
     appointments: [
       {
         id: "4",
@@ -144,7 +170,6 @@ export const initialVehicles: Vehicle[] = [
     ],
     appointments: []
   },
-  // Adding more vehicles with repair histories for better dashboard data
   {
     id: "6",
     licensePlate: "B-MK 4321",
@@ -178,6 +203,18 @@ export const initialVehicles: Vehicle[] = [
         totalCost: 120.00,
         companyPaidAmount: 120.00,
         causeType: "Verschleiß"
+      },
+      {
+        id: "15",
+        date: format(new Date(new Date().getTime() - 10 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        startDate: format(new Date(new Date().getTime() - 10 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        endDate: format(new Date(new Date().getTime() - 10 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        location: "BMW Servicezentrum",
+        description: "Software Update und Fehlerdiagnose",
+        duration: 1,
+        totalCost: 180.00,
+        companyPaidAmount: 180.00,
+        causeType: "Verschleiß"
       }
     ],
     appointments: []
@@ -203,6 +240,20 @@ export const initialVehicles: Vehicle[] = [
         totalCost: 640.30,
         companyPaidAmount: 640.30,
         causeType: "Verschleiß"
+      },
+      {
+        id: "16",
+        date: format(new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        startDate: format(new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        endDate: format(new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        location: "Ford Servicecenter",
+        description: "Frontscheibe repariert",
+        duration: 1,
+        totalCost: 350.00,
+        companyPaidAmount: 350.00,
+        causeType: "Unfall",
+        causedByEmployeeId: "4",
+        causedByEmployeeName: "Lisa Weber"
       }
     ],
     appointments: []
@@ -267,6 +318,18 @@ export const initialVehicles: Vehicle[] = [
         causeType: "Unfall",
         causedByEmployeeId: "2",
         causedByEmployeeName: "Max Mustermann"
+      },
+      {
+        id: "17",
+        date: format(new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        startDate: format(new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        endDate: format(new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+        location: "Mercedes Service Express",
+        description: "Fehlerbehebung Elektronik (Klimaanlage)",
+        duration: 1,
+        totalCost: 320.45,
+        companyPaidAmount: 320.45,
+        causeType: "Verschleiß"
       }
     ],
     appointments: []
@@ -291,6 +354,18 @@ export const initialVehicles: Vehicle[] = [
         duration: 4,
         totalCost: 0.00,
         companyPaidAmount: 0.00,
+        causeType: "Verschleiß"
+      },
+      {
+        id: "18",
+        date: format(new Date(), "yyyy-MM-dd"),
+        startDate: format(new Date(), "yyyy-MM-dd"),
+        endDate: format(new Date(), "yyyy-MM-dd"),
+        location: "Tesla Service Center Berlin",
+        description: "Wartungsarbeiten Batterie und Elektro-Check",
+        duration: 1,
+        totalCost: 580.75,
+        companyPaidAmount: 580.75,
         causeType: "Verschleiß"
       }
     ],
