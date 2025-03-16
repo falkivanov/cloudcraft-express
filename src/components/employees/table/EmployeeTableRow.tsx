@@ -1,7 +1,6 @@
 
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Employee } from "@/types/employee";
 import EmployeeStatusBadge from "./EmployeeStatusBadge";
 import EmployeeContactButtons from "./EmployeeContactButtons";
@@ -15,9 +14,6 @@ interface EmployeeTableRowProps {
   onEditEmployee: (employee: Employee) => void;
   onOpenContractEndDialog: (employee: Employee) => void;
   onReactivateEmployee: (employee: Employee) => void;
-  onDeleteEmployee?: (employee: Employee) => void;
-  isSelected?: boolean;
-  onToggleSelect?: () => void;
 }
 
 const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
@@ -26,10 +22,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
   onViewDetails,
   onEditEmployee,
   onOpenContractEndDialog,
-  onReactivateEmployee,
-  onDeleteEmployee,
-  isSelected = false,
-  onToggleSelect = () => {}
+  onReactivateEmployee
 }) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "-";
@@ -38,10 +31,6 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
 
   // Get row background color based on status
   const getRowBackgroundColor = () => {
-    if (isSelected) {
-      return "bg-blue-50"; // Selected row 
-    }
-    
     if (employee.endDate === null) {
       // For active employees, no special color
       return "";
@@ -67,16 +56,6 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
       className={`cursor-pointer hover:bg-gray-100 ${getRowBackgroundColor()}`}
       onDoubleClick={() => onViewDetails(employee)}
     >
-      {isFormerView && (
-        <TableCell className="pr-0 pl-4">
-          <Checkbox 
-            checked={isSelected}
-            onCheckedChange={onToggleSelect}
-            aria-label={`Wähle ${employee.name}`}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </TableCell>
-      )}
       <TableCell className="font-medium">{employee.name}</TableCell>
       <TableCell>{employee.transporterId}</TableCell>
       <TableCell>{formatDate(employee.startDate)}</TableCell>
@@ -135,7 +114,6 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
           onEditEmployee={onEditEmployee}
           onOpenContractEndDialog={onOpenContractEndDialog}
           onReactivateEmployee={onReactivateEmployee}
-          onDeleteEmployee={onDeleteEmployee}
         />
       </TableCell>
     </TableRow>

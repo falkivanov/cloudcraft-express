@@ -1,5 +1,13 @@
 
-import React, { useState } from "react";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +25,10 @@ import {
 import { Employee } from "@/types/employee";
 import EmployeeForm from "./EmployeeForm";
 import ContractEndDialog from "./ContractEndDialog";
+import EmployeeTableRow from "./table/EmployeeTableRow";
 import EmployeeDetailsContent from "./table/EmployeeDetailsContent";
 import { useEmployeeTable } from "@/hooks/useEmployeeTable";
-import EmployeeTableContent from "./table/EmployeeTableContent";
-import BatchActionButtons from "./table/BatchActionButtons";
+import { ArrowUpDown } from "lucide-react";
 
 type SortField = "name" | "startDate" | "workingDaysAWeek" | "preferredVehicle";
 type SortDirection = "asc" | "desc";
@@ -42,9 +50,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   sortDirection,
   onSort
 }) => {
-  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-
   const {
     // State
     selectedEmployee,
@@ -66,61 +71,62 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     handleSaveEmployee,
     handleOpenContractEndDialog,
     handleEndContract,
-    handleReactivateEmployee,
-    handleBatchReactivate,
-    handleBatchDelete,
-    // Add the single employee delete handler
-    handleDeleteEmployee
+    handleReactivateEmployee
   } = useEmployeeTable(employees, onUpdateEmployee);
 
-  const toggleSelect = (employeeId: string) => {
-    setSelectedEmployees(prev => {
-      if (prev.includes(employeeId)) {
-        return prev.filter(id => id !== employeeId);
-      } else {
-        return [...prev, employeeId];
-      }
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      // If all are selected, unselect all
-      setSelectedEmployees([]);
-    } else {
-      // If not all are selected, select all
-      setSelectedEmployees(employees.map(e => e.id));
-    }
-    setSelectAll(!selectAll);
-  };
+  const SortableHeader = ({ field, children }: { field: SortField, children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-gray-50"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center space-x-1">
+        <span>{children}</span>
+        <ArrowUpDown className={`h-4 w-4 ${sortField === field ? 'text-primary' : 'text-muted-foreground'}`} />
+      </div>
+    </TableHead>
+  );
 
   return (
     <>
       <div className="border rounded-lg">
-        <EmployeeTableContent 
-          employees={employees}
-          isFormerView={isFormerView}
-          sortField={sortField}
-          onSort={onSort}
-          onViewDetails={handleViewDetails}
-          onEditEmployee={handleEditEmployee}
-          onOpenContractEndDialog={handleOpenContractEndDialog}
-          onReactivateEmployee={handleReactivateEmployee}
-          onDeleteEmployee={handleDeleteEmployee}
-          selectedEmployees={selectedEmployees}
-          onToggleSelect={toggleSelect}
-          selectAll={selectAll}
-          onToggleSelectAll={toggleSelectAll}
-        />
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableHeader field="name">Name</SortableHeader>
+              <TableHead>Transporter ID</TableHead>
+              <SortableHeader field="startDate">Startdatum</SortableHeader>
+              {isFormerView && <TableHead>Enddatum</TableHead>}
+              <TableHead>Status</TableHead>
+              <SortableHeader field="workingDaysAWeek">Arbeitstage</SortableHeader>
+              <SortableHeader field="preferredVehicle">Fahrzeug</SortableHeader>
+              <TableHead>Präferierte Tage</TableHead>
+              <TableHead>Kontakt</TableHead>
+              <TableHead className="w-[80px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={isFormerView ? 10 : 9} className="text-center py-10 text-muted-foreground">
+                  {isFormerView ? "Keine ehemaligen Mitarbeiter gefunden" : "Keine Mitarbeiter gefunden"}
+                </TableCell>
+              </TableRow>
+            ) : (
+              employees.map((employee) => (
+                <EmployeeTableRow
+                  key={employee.id}
+                  employee={employee}
+                  isFormerView={isFormerView}
+                  onViewDetails={handleViewDetails}
+                  onEditEmployee={handleEditEmployee}
+                  onOpenContractEndDialog={handleOpenContractEndDialog}
+                  onReactivateEmployee={handleReactivateEmployee}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
-
-      {isFormerView && selectedEmployees.length > 0 && (
-        <BatchActionButtons 
-          selectedCount={selectedEmployees.length}
-          onReactivate={() => handleBatchReactivate(selectedEmployees)}
-          onDelete={() => handleBatchDelete(selectedEmployees)}
-        />
-      )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl">
