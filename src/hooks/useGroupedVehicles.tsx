@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { Vehicle } from "@/types/vehicle";
 
-type GroupKey = "brand" | "model" | "status" | "none";
+type GroupKey = "brand" | "model" | "none";
 
 export const useGroupedVehicles = (vehicles: Vehicle[], groupBy: GroupKey = "none") => {
   const groupedVehicles = useMemo(() => {

@@ -25,7 +25,7 @@ import {
 const FleetPage = () => {
   const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "group">("list");
-  const [groupBy, setGroupBy] = useState<"brand" | "model" | "status" | "none">("none");
+  const [groupBy, setGroupBy] = useState<"brand" | "model" | "none">("none");
   
   const {
     vehicles,
@@ -98,7 +98,7 @@ const FleetPage = () => {
           {viewMode === "group" && (
             <Select 
               value={groupBy} 
-              onValueChange={(value: "brand" | "model" | "status" | "none") => setGroupBy(value)}
+              onValueChange={(value: "brand" | "model" | "none") => setGroupBy(value)}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Gruppieren nach..." />
@@ -107,7 +107,6 @@ const FleetPage = () => {
                 <SelectItem value="none">Keine Gruppierung</SelectItem>
                 <SelectItem value="brand">Nach Marke</SelectItem>
                 <SelectItem value="model">Nach Modell</SelectItem>
-                <SelectItem value="status">Nach Status</SelectItem>
               </SelectContent>
             </Select>
           )}
