@@ -137,24 +137,22 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
               </div>
               <div className="w-full">
                 <p className="text-xs font-medium text-muted-foreground">{summary.timeFrame}</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
-                  {summary.percentChange !== 0 && (
-                    <div className="flex items-center">
-                      {summary.percentChange > 0 ? (
-                        <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200 flex items-center gap-0.5">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {Math.abs(summary.percentChange).toFixed(1)}%
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200 flex items-center gap-0.5">
-                          <ArrowDownRight className="h-3 w-3" />
-                          {Math.abs(summary.percentChange).toFixed(1)}%
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
+                {summary.percentChange !== 0 && (
+                  <div className="flex items-center mt-1">
+                    {summary.percentChange > 0 ? (
+                      <Badge variant="outline" className="text-[10px] bg-red-50 text-red-600 border-red-200 flex items-center gap-0.5 py-0">
+                        <ArrowUpRight className="h-2.5 w-2.5" />
+                        {Math.abs(summary.percentChange).toFixed(1)}%
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200 flex items-center gap-0.5 py-0">
+                        <ArrowDownRight className="h-2.5 w-2.5" />
+                        {Math.abs(summary.percentChange).toFixed(1)}%
+                      </Badge>
+                    )}
+                  </div>
+                )}
                 {summary.repairCount > 0 && (
                   <p className="text-xs text-muted-foreground">
                     {summary.repairCount} Reparaturen
