@@ -105,6 +105,8 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
               <TableHead>Startdatum</TableHead>
               {isFormerView && <TableHead>Enddatum</TableHead>}
               <TableHead>Status</TableHead>
+              <TableHead>Arbeitstage/Fahrzeug</TableHead>
+              <TableHead>Präferierte Tage</TableHead>
               <TableHead>Kontakt</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -112,7 +114,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           <TableBody>
             {employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isFormerView ? 7 : 6} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={isFormerView ? 9 : 8} className="text-center py-10 text-muted-foreground">
                   {isFormerView ? "Keine ehemaligen Mitarbeiter gefunden" : "Keine Mitarbeiter gefunden"}
                 </TableCell>
               </TableRow>
