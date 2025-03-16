@@ -1,12 +1,12 @@
 
-import { FilePdf, FileText, File, FileSpreadsheet } from "lucide-react";
+import { FileText, File, FileSpreadsheet } from "lucide-react";
 
 export const fileCategories = [
   { 
     id: "scorecard", 
     name: "Scorecard", 
     expectedType: "pdf",
-    icon: FilePdf,
+    icon: File,
     description: "Scorecard-Daten im PDF-Format"
   },
   { 
@@ -20,7 +20,7 @@ export const fileCategories = [
     id: "pod", 
     name: "POD (Proof of Delivery)", 
     expectedType: "pdf",
-    icon: FilePdf,
+    icon: File,
     description: "Liefernachweise (POD) im PDF-Format"
   },
   { 
