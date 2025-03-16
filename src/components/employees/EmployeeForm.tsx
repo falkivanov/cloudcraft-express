@@ -14,21 +14,23 @@ interface EmployeeFormProps {
   employee: Employee;
   onSubmit: (data: Employee) => void;
   onCancel: () => void;
+  isNewEmployee?: boolean;
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({
   employee,
   onSubmit,
-  onCancel
+  onCancel,
+  isNewEmployee = false
 }) => {
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
       ...employee,
-      startDate: new Date(employee.startDate),
+      startDate: employee.startDate ? new Date(employee.startDate) : new Date(),
       endDate: employee.endDate ? new Date(employee.endDate) : null,
-      birthday: new Date(employee.birthday),
-      workingDaysAWeek: employee.workingDaysAWeek,
+      birthday: employee.birthday ? new Date(employee.birthday) : undefined,
+      workingDaysAWeek: employee.workingDaysAWeek || 5,
     },
   });
 
@@ -51,7 +53,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
           <AdditionalInfoSection form={form} />
         </div>
 
-        <EmployeeFormActions onCancel={onCancel} />
+        <EmployeeFormActions onCancel={onCancel} submitLabel={isNewEmployee ? "Hinzufügen" : "Speichern"} />
       </form>
     </Form>
   );

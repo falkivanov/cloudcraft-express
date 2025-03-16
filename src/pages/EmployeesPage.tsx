@@ -9,6 +9,7 @@ import { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useEmployeeFilter } from "@/hooks/useEmployeeFilter";
+import AddEmployeeDialog from "@/components/employees/AddEmployeeDialog";
 
 // Beispieldaten für Mitarbeiter
 const initialEmployees: Employee[] = [
@@ -113,6 +114,7 @@ const initialEmployees: Employee[] = [
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
@@ -151,10 +153,13 @@ const EmployeesPage = () => {
     });
   };
 
-  const handleNewEmployee = () => {
+  const handleAddEmployee = (newEmployee: Employee) => {
+    setEmployees([...employees, newEmployee]);
+    setIsAddEmployeeDialogOpen(false);
+    
     toast({
-      title: "Neuer Mitarbeiter",
-      description: "Diese Funktion wird noch implementiert.",
+      title: "Mitarbeiter hinzugefügt",
+      description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`,
     });
   };
 
@@ -162,7 +167,7 @@ const EmployeesPage = () => {
     <div className="container mx-auto px-4 py-8 max-w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Mitarbeiter</h1>
-        <Button onClick={handleNewEmployee}>
+        <Button onClick={() => setIsAddEmployeeDialogOpen(true)}>
           <UserPlus className="mr-2" />
           Neuer Mitarbeiter
         </Button>
@@ -187,6 +192,12 @@ const EmployeesPage = () => {
           onUpdateEmployee={handleUpdateEmployee}
         />
       </div>
+
+      <AddEmployeeDialog
+        open={isAddEmployeeDialogOpen}
+        onOpenChange={setIsAddEmployeeDialogOpen}
+        onAddEmployee={handleAddEmployee}
+      />
     </div>
   );
 };
