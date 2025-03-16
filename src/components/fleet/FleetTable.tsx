@@ -1,16 +1,16 @@
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
 } from "@/components/ui/table";
 import { Vehicle } from "@/types/vehicle";
-import { useToast } from "@/hooks/use-toast";
 import VehicleDetails from "./VehicleDetails";
 import FleetTableHeader from "./table/FleetTableHeader";
 import FleetTableRow from "./table/FleetTableRow";
 import EmptyState from "./table/EmptyState";
 import DefleetDialog from "./table/DefleetDialog";
+import { useFleetTable } from "@/hooks/useFleetTable";
 
 interface FleetTableProps {
   vehicles: Vehicle[];
@@ -25,68 +25,20 @@ const FleetTable = ({
   onDefleet,
   isDefleetView = false 
 }: FleetTableProps) => {
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isDefleetDialogOpen, setIsDefleetDialogOpen] = useState(false);
-  const [defleetDate, setDefleetDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
-  const { toast } = useToast();
-
-  const handleViewDetails = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle);
-    setIsDetailsOpen(true);
-  };
-
-  const handleCloseDetails = () => {
-    setIsDetailsOpen(false);
-    setSelectedVehicle(null);
-    document.body.style.pointerEvents = 'auto';
-  };
-
-  const handleStatusChange = (vehicleId: string, newStatus: "Aktiv" | "In Werkstatt") => {
-    const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (vehicle) {
-      const updatedVehicle = { 
-        ...vehicle, 
-        status: newStatus
-      };
-      onUpdateVehicle(updatedVehicle);
-      
-      toast({
-        title: "Status aktualisiert",
-        description: `Der Status des Fahrzeugs ${updatedVehicle.licensePlate} wurde auf ${newStatus} geändert.`,
-      });
-    }
-  };
-
-  const handleOpenDefleetDialog = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle);
-    setIsDefleetDialogOpen(true);
-  };
-
-  const handleDefleet = () => {
-    if (selectedVehicle) {
-      onDefleet(selectedVehicle, defleetDate);
-      setIsDefleetDialogOpen(false);
-      setSelectedVehicle(null);
-    }
-  };
-
-  const handleReactivateVehicle = (vehicle: Vehicle) => {
-    const updatedVehicle = {
-      ...vehicle,
-      status: "Aktiv" as const,
-      defleetDate: null
-    };
-    
-    onUpdateVehicle(updatedVehicle);
-    
-    toast({
-      title: "Fahrzeug reaktiviert",
-      description: `Das Fahrzeug ${vehicle.licensePlate} wurde reaktiviert.`,
-    });
-  };
+  const {
+    selectedVehicle,
+    isDetailsOpen,
+    isDefleetDialogOpen,
+    defleetDate,
+    setIsDetailsOpen,
+    setDefleetDate,
+    setIsDefleetDialogOpen,
+    handleViewDetails,
+    handleStatusChange,
+    handleOpenDefleetDialog,
+    handleDefleet,
+    handleReactivateVehicle
+  } = useFleetTable(vehicles, onUpdateVehicle, onDefleet, isDefleetView);
 
   return (
     <>
