@@ -81,11 +81,12 @@ export const useEmployeeTable = (
   };
 
   // Helper function to reactivate an employee
-  const reactivateEmployee = (employee: Employee) => {
-    if (!onUpdateEmployee) return;
-    
+  const reactivateEmployee = (employee: Employee): Employee => {
     const updatedEmployee = markEmployeeActive(employee);
-    onUpdateEmployee(updatedEmployee);
+    if (onUpdateEmployee) {
+      onUpdateEmployee(updatedEmployee);
+    }
+    return updatedEmployee;
   };
 
   // Function to handle batch reactivation of employees
@@ -112,11 +113,12 @@ export const useEmployeeTable = (
   };
 
   // Helper function to mark an employee as deleted
-  const deleteEmployee = (employee: Employee) => {
-    if (!onUpdateEmployee) return;
-    
+  const deleteEmployee = (employee: Employee): Employee => {
     const updatedEmployee = markEmployeeDeleted(employee);
-    onUpdateEmployee(updatedEmployee);
+    if (onUpdateEmployee) {
+      onUpdateEmployee(updatedEmployee);
+    }
+    return updatedEmployee;
   };
 
   // Function to handle batch deletion of employees
@@ -128,14 +130,21 @@ export const useEmployeeTable = (
       return;
     }
     
+    console.log("Deleting employees with IDs:", employeeIds);
+    
     let deletedCount = 0;
+    const updatedEmployees: Employee[] = [];
+    
     employeeIds.forEach(id => {
       const employee = employees.find(e => e.id === id);
       if (employee) {
-        deleteEmployee(employee);
+        const updated = deleteEmployee(employee);
+        updatedEmployees.push(updated);
         deletedCount++;
       }
     });
+    
+    console.log(`Marked ${deletedCount} employees as deleted`);
     
     if (deletedCount > 0) {
       toast.success(`${deletedCount} Mitarbeiter wurden gelöscht`);

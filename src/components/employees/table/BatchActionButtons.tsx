@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Trash2 } from "lucide-react";
 import {
@@ -25,9 +25,16 @@ const BatchActionButtons: React.FC<BatchActionButtonsProps> = ({
   onReactivate,
   onDelete
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   if (selectedCount === 0) {
     return null;
   }
+
+  const handleDelete = () => {
+    onDelete();
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="mt-4 flex gap-2">
@@ -40,7 +47,7 @@ const BatchActionButtons: React.FC<BatchActionButtonsProps> = ({
         {selectedCount} Mitarbeiter reaktivieren
       </Button>
       
-      <AlertDialog>
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <AlertDialogTrigger asChild>
           <Button 
             className="flex items-center gap-2"
@@ -59,7 +66,7 @@ const BatchActionButtons: React.FC<BatchActionButtonsProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete}>Löschen</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Löschen</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
