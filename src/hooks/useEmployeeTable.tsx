@@ -112,6 +112,15 @@ export const useEmployeeTable = (
     }
   };
 
+  // Function to handle individual employee deletion
+  const handleDeleteEmployee = (employee: Employee) => {
+    if (!onUpdateEmployee) return;
+    
+    const updatedEmployee = markEmployeeDeleted(employee);
+    onUpdateEmployee(updatedEmployee);
+    toast.success(`Mitarbeiter ${employee.name} wurde gelöscht`);
+  };
+
   // Helper function to mark an employee as deleted
   const deleteEmployee = (employee: Employee): Employee => {
     const updatedEmployee = markEmployeeDeleted(employee);
@@ -174,6 +183,7 @@ export const useEmployeeTable = (
     handleEndContract,
     handleReactivateEmployee,
     handleBatchReactivate,
+    handleDeleteEmployee,
     handleBatchDelete
   };
 };

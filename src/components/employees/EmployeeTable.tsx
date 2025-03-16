@@ -68,7 +68,9 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     handleEndContract,
     handleReactivateEmployee,
     handleBatchReactivate,
-    handleBatchDelete
+    handleBatchDelete,
+    // Add the single employee delete handler
+    handleDeleteEmployee
   } = useEmployeeTable(employees, onUpdateEmployee);
 
   const toggleSelect = (employeeId: string) => {
@@ -104,6 +106,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
           onEditEmployee={handleEditEmployee}
           onOpenContractEndDialog={handleOpenContractEndDialog}
           onReactivateEmployee={handleReactivateEmployee}
+          onDeleteEmployee={handleDeleteEmployee}
           selectedEmployees={selectedEmployees}
           onToggleSelect={toggleSelect}
           selectAll={selectAll}
