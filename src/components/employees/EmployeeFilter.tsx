@@ -11,41 +11,112 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { exportEmployeesToCSV, parseEmployeeCSVImport, generateEmployeeSampleCSV } from "@/utils/employeeCSVUtils";
 
 interface EmployeeFilterProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   employees: Employee[];
+  onImportEmployees?: (employees: Employee[]) => void;
 }
 
 const EmployeeFilter = ({ 
   searchQuery, 
   onSearchChange,
-  employees
+  employees,
+  onImportEmployees
 }: EmployeeFilterProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Diese Funktionen können später implementiert werden
   const handleExport = () => {
-    toast({
-      title: "Export Funktion",
-      description: "Export-Funktion noch nicht implementiert.",
-    });
+    if (employees.length === 0) {
+      toast({
+        title: "Export nicht möglich",
+        description: "Keine Mitarbeiterdaten vorhanden zum Exportieren.",
+      });
+      return;
+    }
+    
+    try {
+      exportEmployeesToCSV(employees, `mitarbeiter_export_${new Date().toISOString().slice(0, 10)}`);
+      toast({
+        title: "Export erfolgreich",
+        description: `${employees.length} Mitarbeiter wurden erfolgreich exportiert.`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: "Beim Exportieren der Daten ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleImportClick = () => {
-    toast({
-      title: "Import Funktion",
-      description: "Import-Funktion noch nicht implementiert.",
-    });
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      toast({
+        title: "Import wird verarbeitet",
+        description: "Bitte warten...",
+      });
+      
+      const importedEmployees = await parseEmployeeCSVImport(file);
+      
+      if (importedEmployees.length === 0) {
+        toast({
+          title: "Import fehlgeschlagen",
+          description: "Keine gültigen Mitarbeiterdaten in der Datei gefunden.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Call the onImportEmployees callback if provided
+      if (onImportEmployees) {
+        onImportEmployees(importedEmployees);
+        toast({
+          title: "Import erfolgreich",
+          description: `${importedEmployees.length} Mitarbeiter wurden erfolgreich importiert.`,
+        });
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      toast({
+        title: "Import fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Beim Importieren der Daten ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleDownloadSample = () => {
-    toast({
-      title: "Beispieldatei",
-      description: "Beispieldatei-Funktion noch nicht implementiert.",
-    });
+    try {
+      generateEmployeeSampleCSV();
+      toast({
+        title: "Beispieldatei heruntergeladen",
+        description: "Eine Vorlage für den Mitarbeiter-Import wurde heruntergeladen.",
+      });
+    } catch (error) {
+      console.error("Template download error:", error);
+      toast({
+        title: "Download fehlgeschlagen",
+        description: "Beim Herunterladen der Vorlage ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -65,6 +136,7 @@ const EmployeeFilter = ({
         ref={fileInputRef}
         accept=".csv" 
         className="hidden"
+        onChange={handleFileChange}
       />
       
       <DropdownMenu>

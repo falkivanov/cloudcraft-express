@@ -69,6 +69,10 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     });
   };
 
+  const handleImportEmployees = (importedEmployees: Employee[]) => {
+    setEmployees(prevEmployees => [...prevEmployees, ...importedEmployees]);
+  };
+
   return (
     <>
       <div className="w-full mb-6">
@@ -79,6 +83,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         employees={employees}
+        onImportEmployees={handleImportEmployees}
       />
 
       <div className="w-full overflow-x-auto">
