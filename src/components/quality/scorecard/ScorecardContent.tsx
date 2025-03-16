@@ -1,13 +1,12 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { UploadIcon, BarChart, UsersRound } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScorecardTimeFrame from "./ScorecardTimeFrame";
 import CompanyKPIs from "./CompanyKPIs";
 import DriverKPIs from "./DriverKPIs";
 import { ScorecardKPI, DriverKPI } from "./types";
+import NoDataMessage from "../NoDataMessage";
 
 interface ScorecardContentProps {
   scorecardData: any | null;
@@ -61,7 +60,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   ];
 
   if (!scorecardData) {
-    return renderNoDataMessage("Scorecard");
+    return <NoDataMessage category="Scorecard" />;
   }
 
   return (
@@ -94,24 +93,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
-};
-
-// Helper function for "No data" message
-const renderNoDataMessage = (category: string) => {
-  return (
-    <div className="mt-6 p-6 border rounded-lg bg-gray-50 text-center">
-      <p className="text-lg font-medium mb-3">Keine {category}-Daten verfügbar</p>
-      <p className="text-muted-foreground mb-4">
-        Bitte laden Sie zuerst eine Datei hoch, um die Daten hier anzuzeigen.
-      </p>
-      <Button asChild>
-        <Link to="/file-upload" className="flex items-center gap-2">
-          <UploadIcon className="h-4 w-4" />
-          <span>Zur Upload-Seite</span>
-        </Link>
-      </Button>
     </div>
   );
 };
