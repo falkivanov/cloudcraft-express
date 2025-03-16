@@ -30,7 +30,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       ...employee,
       startDate: employee.startDate ? new Date(employee.startDate) : new Date(),
       endDate: employee.endDate ? new Date(employee.endDate) : null,
-      birthday: employee.birthday ? new Date(employee.birthday) : undefined,
+      telegramUsername: employee.telegramUsername || "",
       workingDaysAWeek: employee.workingDaysAWeek || 5,
       preferredWorkingDays: employee.preferredWorkingDays || [],
       wantsToWorkSixDays: employee.wantsToWorkSixDays || false,
@@ -43,7 +43,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       ...data,
       startDate: data.startDate.toISOString().split("T")[0],
       endDate: data.endDate ? data.endDate.toISOString().split("T")[0] : null,
-      birthday: data.birthday.toISOString().split("T")[0],
     });
   };
 

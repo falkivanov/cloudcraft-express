@@ -13,8 +13,6 @@ interface AdditionalInfoSectionProps {
 const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({ form }) => {
   return (
     <>
-      <TextFormField form={form} name="taxId" label="Steuer ID" />
-      <TextFormField form={form} name="insuranceId" label="Versicherungsnummer" />
       <TextFormField 
         form={form} 
         name="workingDaysAWeek" 

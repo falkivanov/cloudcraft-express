@@ -2,7 +2,7 @@
 import React from "react";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
-import { Edit, IdCard, CalendarDays, MapPin, Cake, FileText, Shield, Clock, Car, Mail, Phone, Calendar } from "lucide-react";
+import { Edit, IdCard, CalendarDays, MapPin, Clock, Car, Mail, Phone, Calendar, MessageCircle } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 
 interface EmployeeDetailsContentProps {
@@ -54,31 +54,15 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
         </div>
         
         <div className="flex items-start gap-2">
-          <Cake className="h-4 w-4 mt-1 text-muted-foreground" />
+          <MessageCircle className="h-4 w-4 mt-1 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Geburtsdatum</p>
-            <p>{formatDate(employee.birthday)}</p>
+            <p className="text-sm font-medium">Telegram</p>
+            <p>{employee.telegramUsername || "-"}</p>
           </div>
         </div>
       </div>
       
       <div className="space-y-2">
-        <div className="flex items-start gap-2">
-          <FileText className="h-4 w-4 mt-1 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Steuer ID</p>
-            <p>{employee.taxId}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-2">
-          <Shield className="h-4 w-4 mt-1 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Versicherungsnummer</p>
-            <p>{employee.insuranceId}</p>
-          </div>
-        </div>
-        
         <div className="flex items-start gap-2">
           <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
           <div>

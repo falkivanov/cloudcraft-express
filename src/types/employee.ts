@@ -9,11 +9,9 @@ export interface Employee {
   startDate: string;
   endDate: string | null;
   address: string;
-  birthday: string;
-  taxId: string;
-  insuranceId: string;
+  telegramUsername: string; // New field for Telegram username
   workingDaysAWeek: number;
   preferredVehicle: string;
-  preferredWorkingDays: string[]; // Neue Eigenschaft: Präferierte Arbeitstage
-  wantsToWorkSixDays: boolean;   // Neue Eigenschaft: Möchte 6 Tage arbeiten
+  preferredWorkingDays: string[];
+  wantsToWorkSixDays: boolean;
 }
