@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Vehicle } from "@/types/vehicle";
@@ -42,7 +41,6 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
     { label: "Letzte 12 Monate", icon: <DollarSign className="h-4 w-4" />, months: 12 }
   ];
 
-  // Get all repairs from all vehicles
   const allRepairs = useMemo(() => {
     return vehicles.flatMap(vehicle => 
       vehicle.repairs?.map(repair => ({
@@ -52,12 +50,10 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
     );
   }, [vehicles]);
 
-  // Calculate costs for each time frame
   const costSummaries: CostSummary[] = useMemo(() => {
     const today = new Date();
     
     return timeFrames.map(timeFrame => {
-      // Current period
       let currentStartDate;
       if (timeFrame.days) {
         currentStartDate = subDays(today, timeFrame.days);
@@ -65,7 +61,6 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
         currentStartDate = subMonths(today, timeFrame.months);
       }
       
-      // Previous period (same length, just before current)
       let previousStartDate;
       let previousEndDate;
       if (timeFrame.days) {
@@ -76,19 +71,16 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
         previousEndDate = subDays(currentStartDate, 1);
       }
       
-      // Filter repairs within the current time frame
       const currentRepairs = allRepairs.filter(repair => {
         const repairDate = parseISO(repair.startDate);
         return isAfter(repairDate, currentStartDate);
       });
       
-      // Filter repairs within the previous time frame
       const previousRepairs = allRepairs.filter(repair => {
         const repairDate = parseISO(repair.startDate);
         return isAfter(repairDate, previousStartDate) && !isAfter(repairDate, previousEndDate);
       });
       
-      // Count active vehicles in each period
       const activeVehiclesInCurrentPeriod = new Set(
         currentRepairs.map(repair => repair.vehicleLicensePlate)
       ).size;
@@ -97,11 +89,9 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
         previousRepairs.map(repair => repair.vehicleLicensePlate)
       ).size;
       
-      // Calculate normalized costs (per vehicle)
       const currentCompanyPaidCost = currentRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
       const previousCompanyPaidCost = previousRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
       
-      // Normalize costs per vehicle to account for fleet size changes
       const currentNormalizedCost = activeVehiclesInCurrentPeriod > 0 
         ? currentCompanyPaidCost / activeVehiclesInCurrentPeriod 
         : 0;
@@ -110,12 +100,11 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
         ? previousCompanyPaidCost / activeVehiclesInPreviousPeriod 
         : 0;
       
-      // Calculate percent change, handling edge cases
       let percentChange = 0;
       if (previousNormalizedCost > 0) {
         percentChange = ((currentNormalizedCost - previousNormalizedCost) / previousNormalizedCost) * 100;
       } else if (currentNormalizedCost > 0) {
-        percentChange = 100; // If there was no cost before but now there is, that's a 100% increase
+        percentChange = 100;
       }
       
       return {
@@ -135,18 +124,6 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
   return (
     <Card className="mb-6">
       <CardContent className="pt-4 pb-2">
-        <div className="flex items-center mb-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help mr-2" />
-              </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-[300px] whitespace-nowrap">
-                Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {costSummaries.map((summary, index) => (
             <div key={index} className="flex items-center space-x-3 p-2 border rounded-md">
@@ -179,6 +156,18 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
               </div>
             </div>
           ))}
+        </div>
+        <div className="text-center mt-2 flex items-center justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="whitespace-nowrap">
+                Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardContent>
     </Card>
