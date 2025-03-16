@@ -1,27 +1,45 @@
 
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { getFileTypeInfo } from "./fileTypes";
+import { getCategoryInfo } from "./fileCategories";
 
-export const useFileUpload = (onFileUpload?: (file: File, type: string) => void) => {
-  const [selectedFileType, setSelectedFileType] = useState<string>("pdf");
+export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateAndSetFile = (selectedFile: File) => {
-    const fileTypeInfo = getFileTypeInfo(selectedFileType);
+    const categoryInfo = getCategoryInfo(selectedCategory);
+    
+    if (!categoryInfo) {
+      toast.error("Ungültige Kategorie ausgewählt");
+      return;
+    }
+    
+    // Dateiendung prüfen
     const fileExtension = `.${selectedFile.name.split('.').pop()?.toLowerCase()}`;
     
-    if (fileTypeInfo?.extensions.includes(fileExtension)) {
+    // Prüfen, ob die Datei dem erwarteten Typ entspricht
+    let isValid = false;
+    
+    if (categoryInfo.expectedType === "pdf" && fileExtension === ".pdf") {
+      isValid = true;
+    } else if (categoryInfo.expectedType === "html" && (fileExtension === ".html" || fileExtension === ".htm")) {
+      isValid = true;
+    } else if (categoryInfo.expectedType === "excel" && (fileExtension === ".xlsx" || fileExtension === ".xls")) {
+      isValid = true;
+    }
+    
+    if (isValid) {
       setFile(selectedFile);
       toast.success(`Datei "${selectedFile.name}" ausgewählt`);
     } else {
-      toast.error(`Ungültiger Dateityp. Bitte wählen Sie eine ${fileTypeInfo?.name} Datei aus.`);
+      toast.error(`Ungültiger Dateityp für ${categoryInfo.name}. Erwartet wird: ${categoryInfo.expectedType.toUpperCase()}`);
     }
   };
 
-  const handleTypeChange = (value: string) => {
-    setSelectedFileType(value);
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
     setFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -30,11 +48,14 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string) => void)
 
   const handleUpload = () => {
     if (file) {
-      onFileUpload?.(file, selectedFileType);
-      toast.success(`Datei "${file.name}" erfolgreich hochgeladen`);
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      const categoryInfo = getCategoryInfo(selectedCategory);
+      if (categoryInfo) {
+        onFileUpload?.(file, categoryInfo.expectedType, selectedCategory);
+        toast.success(`Datei "${file.name}" erfolgreich als ${categoryInfo.name} hochgeladen`);
+        setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
     } else {
       toast.error("Bitte wählen Sie zuerst eine Datei aus");
@@ -42,10 +63,10 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string) => void)
   };
 
   return {
-    selectedFileType,
+    selectedCategory,
     file,
     fileInputRef,
-    handleTypeChange,
+    handleCategoryChange,
     validateAndSetFile,
     handleUpload
   };

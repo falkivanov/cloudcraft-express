@@ -8,46 +8,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import FileTypeSelector from "./FileTypeSelector";
+import FileCategorySelector from "./FileTypeSelector";
 import DropZone from "./DropZone";
 import FileTypeInfo from "./FileTypeInfo";
 import UploadButton from "./UploadButton";
 import { useFileUpload } from "./useFileUpload";
+import { getCategoryInfo } from "./fileCategories";
 
 interface FileUploadProps {
-  onFileUpload?: (file: File, type: string) => void;
+  onFileUpload?: (file: File, type: string, category: string) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
   const {
-    selectedFileType,
+    selectedCategory,
     file,
     fileInputRef,
-    handleTypeChange,
+    handleCategoryChange,
     validateAndSetFile,
     handleUpload
   } = useFileUpload(onFileUpload);
+
+  const categoryInfo = getCategoryInfo(selectedCategory);
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Datei hochladen</CardTitle>
         <CardDescription>
-          Laden Sie Ihre Dateien hoch für die Analyse und Verarbeitung
+          Wählen Sie die Kategorie der Datei und laden Sie diese hoch
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-1">
-            <FileTypeSelector 
-              selectedFileType={selectedFileType}
-              onTypeChange={handleTypeChange}
+            <FileCategorySelector 
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
             />
           </div>
           
           <div className="md:col-span-3">
             <DropZone
-              selectedFileType={selectedFileType}
+              selectedFileType={categoryInfo?.expectedType || ""}
               file={file}
               onFileChange={validateAndSetFile}
               fileInputRef={fileInputRef}
@@ -55,7 +58,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
           </div>
         </div>
 
-        <FileTypeInfo fileType={selectedFileType} />
+        {categoryInfo && (
+          <div className="p-4 rounded-lg bg-muted">
+            <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+              {React.createElement(categoryInfo.icon, { className: "h-4 w-4" })}
+              {categoryInfo.name}
+            </h3>
+            <p className="text-sm text-muted-foreground">{categoryInfo.description}</p>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-end">
         <UploadButton 

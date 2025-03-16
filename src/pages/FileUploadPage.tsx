@@ -17,23 +17,8 @@ const FileUploadPage = () => {
     category: string;
   }[]>([]);
 
-  const handleFileUpload = (file: File, type: string) => {
-    console.log(`Processing ${type} file:`, file);
-    
-    // Datei-Kategorie basierend auf dem Dateityp und Namen bestimmen
-    let fileCategory = "Allgemein";
-    
-    // Versuchen, die Kategorie aus dem Dateinamen zu erkennen
-    const fileName = file.name.toLowerCase();
-    if (fileName.includes("customer") || fileName.includes("contact") || fileName.includes("cc")) {
-      fileCategory = "Customer Contact";
-    } else if (fileName.includes("scorecard") || fileName.includes("score")) {
-      fileCategory = "Scorecard";
-    } else if (fileName.includes("pod") || fileName.includes("delivery")) {
-      fileCategory = "POD";
-    } else if (fileName.includes("concession") || fileName.includes("exception")) {
-      fileCategory = "Concessions";
-    }
+  const handleFileUpload = (file: File, type: string, category: string) => {
+    console.log(`Processing ${category} file:`, file);
     
     // File Reader zum Verarbeiten der Datei
     const reader = new FileReader();
@@ -41,7 +26,7 @@ const FileUploadPage = () => {
     reader.onload = (e) => {
       if (e.target?.result) {
         // Dateiinhalt in LocalStorage speichern für die entsprechende Kategorie
-        if (fileCategory === "Customer Contact" && type === "html") {
+        if (category === "customerContact" && type === "html") {
           localStorage.setItem("customerContactData", e.target.result as string);
           toast.success(
             `Customer Contact Datei erfolgreich verarbeitet: ${file.name}`,
@@ -49,7 +34,7 @@ const FileUploadPage = () => {
               description: `Wochendaten wurden aktualisiert`,
             }
           );
-        } else if (fileCategory === "Scorecard") {
+        } else if (category === "scorecard") {
           localStorage.setItem("scorecardData", JSON.stringify({
             content: e.target.result,
             type: type,
@@ -61,7 +46,7 @@ const FileUploadPage = () => {
               description: `Scorecard-Daten wurden aktualisiert`,
             }
           );
-        } else if (fileCategory === "POD") {
+        } else if (category === "pod") {
           localStorage.setItem("podData", JSON.stringify({
             content: e.target.result,
             type: type,
@@ -73,7 +58,7 @@ const FileUploadPage = () => {
               description: `POD-Daten wurden aktualisiert`,
             }
           );
-        } else if (fileCategory === "Concessions") {
+        } else if (category === "concessions") {
           localStorage.setItem("concessionsData", JSON.stringify({
             content: e.target.result,
             type: type,
@@ -89,7 +74,7 @@ const FileUploadPage = () => {
           toast.success(
             `Datei erfolgreich verarbeitet: ${file.name}`,
             {
-              description: `Dateityp: ${type.toUpperCase()}, Kategorie: ${fileCategory}`,
+              description: `Dateityp: ${type.toUpperCase()}, Kategorie: ${category}`,
             }
           );
         }
@@ -100,7 +85,7 @@ const FileUploadPage = () => {
             name: file.name,
             type: type,
             timestamp: new Date(),
-            category: fileCategory
+            category: category
           },
           ...prev
         ]);
@@ -118,6 +103,26 @@ const FileUploadPage = () => {
     }
   };
 
+  const getCategoryDisplayName = (categoryId: string) => {
+    switch (categoryId) {
+      case "scorecard": return "Scorecard";
+      case "customerContact": return "Customer Contact";
+      case "pod": return "POD";
+      case "concessions": return "Concessions";
+      default: return categoryId;
+    }
+  };
+
+  const getCategoryColorClass = (categoryId: string) => {
+    switch (categoryId) {
+      case "scorecard": return "bg-green-100 text-green-800";
+      case "customerContact": return "bg-blue-100 text-blue-800";
+      case "pod": return "bg-purple-100 text-purple-800";
+      case "concessions": return "bg-orange-100 text-orange-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Datei-Uploads</h1>
@@ -131,13 +136,13 @@ const FileUploadPage = () => {
           <div className="mb-4 p-4 border rounded-lg bg-amber-50 text-amber-800">
             <h3 className="font-medium">Hinweis zur Dateizuordnung:</h3>
             <p className="text-sm">
-              Dateien werden basierend auf ihrem Namen automatisch zugeordnet. Für eine korrekte Zuordnung, benennen Sie Ihre Dateien wie folgt:
+              Wählen Sie die passende Kategorie für Ihre Datei aus und laden Sie sie im richtigen Format hoch:
             </p>
             <ul className="text-sm mt-2 list-disc list-inside">
-              <li>Customer Contact: Enthält "customer", "contact" oder "cc" im Namen</li>
-              <li>Scorecard: Enthält "scorecard" oder "score" im Namen</li>
-              <li>POD: Enthält "pod" oder "delivery" im Namen</li>
-              <li>Concessions: Enthält "concession" oder "exception" im Namen</li>
+              <li>Scorecard: PDF-Format (.pdf)</li>
+              <li>Customer Contact: HTML-Format (.html, .htm)</li>
+              <li>POD: PDF-Format (.pdf)</li>
+              <li>Concessions: Excel-Format (.xlsx)</li>
             </ul>
           </div>
           <FileUpload onFileUpload={handleFileUpload} />
@@ -160,14 +165,8 @@ const FileUploadPage = () => {
                       <tr key={index} className="border-b">
                         <td className="p-3">{item.name}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            item.category === "Customer Contact" ? "bg-blue-100 text-blue-800" :
-                            item.category === "Scorecard" ? "bg-green-100 text-green-800" :
-                            item.category === "POD" ? "bg-purple-100 text-purple-800" :
-                            item.category === "Concessions" ? "bg-orange-100 text-orange-800" :
-                            "bg-gray-100 text-gray-800"
-                          }`}>
-                            {item.category}
+                          <span className={`px-2 py-1 rounded text-xs ${getCategoryColorClass(item.category)}`}>
+                            {getCategoryDisplayName(item.category)}
                           </span>
                         </td>
                         <td className="p-3 uppercase">{item.type}</td>
