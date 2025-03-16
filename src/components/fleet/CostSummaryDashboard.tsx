@@ -2,8 +2,9 @@
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Vehicle } from "@/types/vehicle";
-import { subDays, subMonths, isAfter, parseISO } from "date-fns";
-import { Clock, TrendingUp, DollarSign } from "lucide-react";
+import { subDays, subMonths, isAfter, parseISO, addMonths, format } from "date-fns";
+import { Clock, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface CostSummaryProps {
   vehicles: Vehicle[];
@@ -14,6 +15,18 @@ interface TimeFrame {
   icon: React.ReactNode;
   days?: number;
   months?: number;
+}
+
+interface CostSummary {
+  timeFrame: string;
+  icon: React.ReactNode;
+  companyPaidCost: number;
+  repairCount: number;
+  percentChange: number;
+  vehicleCount: {
+    current: number;
+    previous: number;
+  };
 }
 
 const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
@@ -34,31 +47,81 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
   }, [vehicles]);
 
   // Calculate costs for each time frame
-  const costSummaries = useMemo(() => {
+  const costSummaries: CostSummary[] = useMemo(() => {
     const today = new Date();
     
     return timeFrames.map(timeFrame => {
-      let startDate;
+      // Current period
+      let currentStartDate;
       if (timeFrame.days) {
-        startDate = subDays(today, timeFrame.days);
+        currentStartDate = subDays(today, timeFrame.days);
       } else if (timeFrame.months) {
-        startDate = subMonths(today, timeFrame.months);
+        currentStartDate = subMonths(today, timeFrame.months);
       }
       
-      // Filter repairs within the time frame
-      const relevantRepairs = allRepairs.filter(repair => {
+      // Previous period (same length, just before current)
+      let previousStartDate;
+      let previousEndDate;
+      if (timeFrame.days) {
+        previousStartDate = subDays(currentStartDate, timeFrame.days);
+        previousEndDate = subDays(currentStartDate, 1);
+      } else if (timeFrame.months) {
+        previousStartDate = subMonths(currentStartDate, timeFrame.months);
+        previousEndDate = subDays(currentStartDate, 1);
+      }
+      
+      // Filter repairs within the current time frame
+      const currentRepairs = allRepairs.filter(repair => {
         const repairDate = parseISO(repair.startDate);
-        return isAfter(repairDate, startDate);
+        return isAfter(repairDate, currentStartDate);
       });
       
-      // Calculate company paid costs
-      const companyPaidCost = relevantRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
+      // Filter repairs within the previous time frame
+      const previousRepairs = allRepairs.filter(repair => {
+        const repairDate = parseISO(repair.startDate);
+        return isAfter(repairDate, previousStartDate) && !isAfter(repairDate, previousEndDate);
+      });
+      
+      // Count active vehicles in each period
+      const activeVehiclesInCurrentPeriod = new Set(
+        currentRepairs.map(repair => repair.vehicleLicensePlate)
+      ).size;
+      
+      const activeVehiclesInPreviousPeriod = new Set(
+        previousRepairs.map(repair => repair.vehicleLicensePlate)
+      ).size;
+      
+      // Calculate normalized costs (per vehicle)
+      const currentCompanyPaidCost = currentRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
+      const previousCompanyPaidCost = previousRepairs.reduce((sum, repair) => sum + repair.companyPaidAmount, 0);
+      
+      // Normalize costs per vehicle to account for fleet size changes
+      const currentNormalizedCost = activeVehiclesInCurrentPeriod > 0 
+        ? currentCompanyPaidCost / activeVehiclesInCurrentPeriod 
+        : 0;
+      
+      const previousNormalizedCost = activeVehiclesInPreviousPeriod > 0 
+        ? previousCompanyPaidCost / activeVehiclesInPreviousPeriod 
+        : 0;
+      
+      // Calculate percent change, handling edge cases
+      let percentChange = 0;
+      if (previousNormalizedCost > 0) {
+        percentChange = ((currentNormalizedCost - previousNormalizedCost) / previousNormalizedCost) * 100;
+      } else if (currentNormalizedCost > 0) {
+        percentChange = 100; // If there was no cost before but now there is, that's a 100% increase
+      }
       
       return {
         timeFrame: timeFrame.label,
         icon: timeFrame.icon,
-        companyPaidCost,
-        repairCount: relevantRepairs.length
+        companyPaidCost: currentCompanyPaidCost,
+        repairCount: currentRepairs.length,
+        percentChange,
+        vehicleCount: {
+          current: activeVehiclesInCurrentPeriod,
+          previous: activeVehiclesInPreviousPeriod
+        }
       };
     });
   }, [allRepairs, timeFrames]);
@@ -74,7 +137,24 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
               </div>
               <div className="w-full">
                 <p className="text-xs font-medium text-muted-foreground">{summary.timeFrame}</p>
-                <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xl font-bold">{summary.companyPaidCost.toLocaleString('de-DE')} €</p>
+                  {summary.percentChange !== 0 && (
+                    <div className="flex items-center">
+                      {summary.percentChange > 0 ? (
+                        <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200 flex items-center gap-0.5">
+                          <ArrowUpRight className="h-3 w-3" />
+                          {Math.abs(summary.percentChange).toFixed(1)}%
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200 flex items-center gap-0.5">
+                          <ArrowDownRight className="h-3 w-3" />
+                          {Math.abs(summary.percentChange).toFixed(1)}%
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {summary.repairCount > 0 && (
                   <p className="text-xs text-muted-foreground">
                     {summary.repairCount} Reparaturen
@@ -84,7 +164,7 @@ const CostSummaryDashboard = ({ vehicles }: CostSummaryProps) => {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-muted-foreground text-center mt-2">Reparaturkosten Übersicht</p>
+        <p className="text-[10px] text-muted-foreground text-center mt-2">Reparaturkosten Übersicht (% Änderung zur Vorperiode, Fahrzeuganzahl-bereinigt)</p>
       </CardContent>
     </Card>
   );
