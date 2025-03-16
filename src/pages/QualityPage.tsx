@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { UploadIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import QualityTabs from "@/components/quality/QualityTabs";
 
 const QualityPage = () => {
   const location = useLocation();
@@ -79,11 +79,14 @@ const QualityPage = () => {
             
             {customerContactData ? (
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Geladene Wochendaten</h3>
+                <h3 className="text-lg font-semibold mb-2">Contact Compliance Report</h3>
                 <div 
-                  className="max-h-[500px] overflow-auto border rounded p-4 bg-slate-50"
+                  className="max-h-[600px] overflow-auto border rounded p-4 bg-slate-50 shadow-inner"
                   dangerouslySetInnerHTML={{ __html: customerContactData }} 
                 />
+                <div className="mt-4 text-sm text-muted-foreground">
+                  <p>Sie können jederzeit eine neue HTML-Datei über die Upload-Seite hochladen, um diese Daten zu aktualisieren.</p>
+                </div>
               </div>
             ) : (
               renderNoDataMessage("Customer Contact")
@@ -159,6 +162,7 @@ const QualityPage = () => {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Qualitätsmanagement</h1>
+      <QualityTabs />
       {renderContent()}
     </div>
   );
