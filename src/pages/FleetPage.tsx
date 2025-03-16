@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Car, List, Grid2X2 } from "lucide-react";
+import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
 import FleetTabs from "@/components/fleet/FleetTabs";
 import FleetStatsOverview from "@/components/fleet/FleetStatsOverview";
@@ -10,10 +10,6 @@ import NewVehicleDialog from "@/components/fleet/NewVehicleDialog";
 import { useVehicleData } from "@/hooks/useVehicleData";
 import { useGroupedVehicles } from "@/hooks/useGroupedVehicles";
 import VehicleGroupView from "@/components/fleet/VehicleGroupView";
-import { 
-  ToggleGroup, 
-  ToggleGroupItem 
-} from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -24,7 +20,6 @@ import {
 
 const FleetPage = () => {
   const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "group">("list");
   const [groupBy, setGroupBy] = useState<"brand" | "model" | "none">("none");
   
   const {
@@ -55,8 +50,8 @@ const FleetPage = () => {
   };
 
   // Get grouped vehicles based on selected grouping option
-  const groupedActiveVehicles = useGroupedVehicles(filteredActiveVehicles, viewMode === "group" ? groupBy : "none");
-  const groupedDefleetedVehicles = useGroupedVehicles(filteredDefleetedVehicles, viewMode === "group" ? groupBy : "none");
+  const groupedActiveVehicles = useGroupedVehicles(filteredActiveVehicles, groupBy);
+  const groupedDefleetedVehicles = useGroupedVehicles(filteredDefleetedVehicles, groupBy);
 
   return (
     <div className="container mx-auto py-8">
@@ -86,35 +81,24 @@ const FleetPage = () => {
         />
         
         <div className="flex items-center space-x-2">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "list" | "group")}>
-            <ToggleGroupItem value="list" aria-label="Listenansicht">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="group" aria-label="Gruppierte Ansicht">
-              <Grid2X2 className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-          
-          {viewMode === "group" && (
-            <Select 
-              value={groupBy} 
-              onValueChange={(value: "brand" | "model" | "none") => setGroupBy(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Gruppieren nach..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Keine Gruppierung</SelectItem>
-                <SelectItem value="brand">Nach Marke</SelectItem>
-                <SelectItem value="model">Nach Modell</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+          <Select 
+            value={groupBy} 
+            onValueChange={(value: "brand" | "model" | "none") => setGroupBy(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Gruppieren nach..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Keine Gruppierung</SelectItem>
+              <SelectItem value="brand">Nach Marke</SelectItem>
+              <SelectItem value="model">Nach Modell</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="w-full overflow-x-auto">
-        {viewMode === "list" ? (
+        {groupBy === "none" ? (
           <FleetTabs 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -129,14 +113,20 @@ const FleetPage = () => {
         ) : (
           <div className="w-full overflow-x-auto">
             <div className="mb-4 border-b">
-              <ToggleGroup type="single" value={activeTab} onValueChange={(value) => value && setActiveTab(value)}>
-                <ToggleGroupItem value="active" className="rounded-none border-b-2 border-transparent data-[state=on]:border-primary data-[state=on]:bg-transparent px-4">
+              <div className="flex">
+                <button 
+                  className={`px-4 py-2 ${activeTab === "active" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+                  onClick={() => setActiveTab("active")}
+                >
                   Aktive Fahrzeuge
-                </ToggleGroupItem>
-                <ToggleGroupItem value="defleeted" className="rounded-none border-b-2 border-transparent data-[state=on]:border-primary data-[state=on]:bg-transparent px-4">
+                </button>
+                <button 
+                  className={`px-4 py-2 ${activeTab === "defleeted" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+                  onClick={() => setActiveTab("defleeted")}
+                >
                   Defleeted Fahrzeuge
-                </ToggleGroupItem>
-              </ToggleGroup>
+                </button>
+              </div>
             </div>
             
             {activeTab === "active" && (
