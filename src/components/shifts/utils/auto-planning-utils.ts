@@ -106,7 +106,7 @@ export const createAutomaticPlan = ({
     });
   });
   
-  // Second pass: Fill remaining positions
+  // Second pass: Fill remaining positions with respect to preferred days
   weekDays.forEach((day, dayIndex) => {
     // In maximum mode, try to assign everyone up to their capacity
     // In forecast mode, only fill up to the required count
@@ -119,10 +119,14 @@ export const createAutomaticPlan = ({
     // Skip if no more positions to fill
     if (remaining <= 0) return;
     
-    // Try to assign flexible employees or those with remaining capacity
-    const eligibleEmployees = sortedEmployees.filter(employee => 
+    const dayAbbr = getDayAbbreviation(day);
+    
+    // First, try to assign flexible employees based on their preferred days
+    // This ensures that even flexible employees' preferences are considered
+    let eligibleEmployees = sortedEmployees.filter(employee => 
       employeeAssignments[employee.id] < employee.workingDaysAWeek &&
-      canEmployeeWorkOnDay(employee, day, isTemporarilyFlexible)
+      (employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)) &&
+      employee.preferredWorkingDays.includes(dayAbbr)
     );
     
     // Sort by number of assignments (prefer those with fewer assignments first)
@@ -130,7 +134,7 @@ export const createAutomaticPlan = ({
       employeeAssignments[a.id] - employeeAssignments[b.id]
     );
     
-    // Assign up to the required number or maximum possible in maximum mode
+    // Assign preferred employees first
     for (let i = 0; i < remaining && i < eligibleEmployees.length; i++) {
       const employee = eligibleEmployees[i];
       
@@ -144,6 +148,39 @@ export const createAutomaticPlan = ({
       employeeAssignments[employee.id]++;
       filledPositions[dayIndex]++;
     }
+    
+    // If still positions to fill and in maximum mode, add any flexible employees
+    // who haven't reached their max days, regardless of preference
+    if (planningMode === "maximum" && filledPositions[dayIndex] < requiredCount) {
+      const updatedRemaining = requiredCount - filledPositions[dayIndex];
+      
+      // Only truly flexible employees can be assigned to non-preferred days
+      const remainingEligibleEmployees = sortedEmployees.filter(employee => 
+        employeeAssignments[employee.id] < employee.workingDaysAWeek &&
+        employee.isWorkingDaysFlexible &&
+        !employee.preferredWorkingDays.includes(dayAbbr) // Specifically on non-preferred days
+      );
+      
+      // Sort by number of assignments (prefer those with fewer assignments first)
+      remainingEligibleEmployees.sort((a, b) => 
+        employeeAssignments[a.id] - employeeAssignments[b.id]
+      );
+      
+      // Assign up to the required number or maximum possible in maximum mode
+      for (let i = 0; i < updatedRemaining && i < remainingEligibleEmployees.length; i++) {
+        const employee = remainingEligibleEmployees[i];
+        
+        plan.push({
+          employeeId: employee.id,
+          date: formatDateKey(day),
+          shiftType: "Arbeit"
+        });
+        
+        // Update tracking counter
+        employeeAssignments[employee.id]++;
+        filledPositions[dayIndex]++;
+      }
+    }
   });
   
   // Return the complete assignment plan
@@ -155,4 +192,3 @@ export const canAutoPlan = (requiredEmployees: Record<number, number>, dayCount:
   // Now we can auto-plan even if forecast isn't set
   return true;
 };
-
