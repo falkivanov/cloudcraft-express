@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Employee } from "@/types/employee";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PhoneIcon, AtSignIcon } from "lucide-react";
 
 interface NextDaySchedulePageProps {
   scheduledEmployees: Employee[];
@@ -33,34 +32,20 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
           <p className="text-muted-foreground text-lg">Keine Mitarbeiter für diesen Tag eingeplant.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {scheduledEmployees.map((employee) => (
-            <Card key={employee.id} className="overflow-hidden">
-              <CardHeader className="bg-primary/5 pb-3">
-                <CardTitle className="text-lg">{employee.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="space-y-3">
-                  {employee.telegramUsername && (
-                    <div className="flex items-center">
-                      <AtSignIcon className="h-4 w-4 mr-2 text-blue-500" />
-                      <span className="text-blue-500">@{employee.telegramUsername}</span>
-                    </div>
-                  )}
-                  {employee.phone && (
-                    <div className="flex items-center">
-                      <PhoneIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{employee.phone}</span>
-                    </div>
-                  )}
-                  <div className="text-sm text-muted-foreground mt-2">
-                    <span className="font-medium">Bevorzugte Tage:</span> {employee.preferredWorkingDays.join(", ")}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-primary/5 pb-2">
+            <CardTitle className="text-lg">Eingeplante Mitarbeiter</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <ul className="space-y-2">
+              {scheduledEmployees.map((employee) => (
+                <li key={employee.id} className="py-2 border-b last:border-b-0">
+                  <span className="font-medium">{employee.name}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
