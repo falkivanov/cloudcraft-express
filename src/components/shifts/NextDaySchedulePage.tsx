@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Employee } from "@/types/employee";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import StartTimeWaves, { WaveAssignment } from "./StartTimeWaves";
+import StartTimeWaves from "./StartTimeWaves";
+import { WaveAssignment } from "@/types/shift";
 import { Clock, Users } from "lucide-react";
 
 interface NextDaySchedulePageProps {

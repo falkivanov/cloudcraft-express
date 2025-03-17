@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -6,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Employee } from "@/types/employee";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, Waves, X } from "lucide-react";
-import StartTimeWaves, { WaveAssignment } from "./StartTimeWaves";
+import StartTimeWaves from "./StartTimeWaves";
+import { WaveAssignment } from "@/types/shift";
 
 interface NextDayScheduleProps {
   scheduledEmployees: Employee[];
@@ -28,7 +28,6 @@ const NextDaySchedule: React.FC<NextDayScheduleProps> = ({
     }))
   );
   
-  // Group employees by wave
   const employeesByWave = waveAssignments.reduce((groups, assignment) => {
     const { waveNumber, startTime, employeeId } = assignment;
     const waveKey = `${waveNumber}-${startTime}`;
@@ -49,15 +48,12 @@ const NextDaySchedule: React.FC<NextDayScheduleProps> = ({
     return groups;
   }, {} as Record<string, { waveNumber: number, startTime: string, employees: Employee[] }>);
   
-  // Sort waves by time
   const sortedWaves = Object.values(employeesByWave).sort((a, b) => 
     a.startTime.localeCompare(b.startTime) || a.waveNumber - b.waveNumber
   );
   
-  // Check if all employees are in the same wave
   const singleWave = sortedWaves.length === 1;
   
-  // Handle wave assignments
   const handleAssignWaves = (assignments: WaveAssignment[]) => {
     setWaveAssignments(assignments);
   };
