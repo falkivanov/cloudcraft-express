@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Employee } from "@/types/employee";
@@ -44,26 +45,31 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       const customEvent = event as CustomEvent;
       const { assignment, action, countAsScheduled } = customEvent.detail;
       
+      // Use functional state updates to avoid race conditions
       if (action === 'add') {
         setScheduledEmployees(prev => {
-          const newCount = {...prev};
+          // Make a copy to avoid mutating previous state
+          const newCounts = {...prev};
+          
           // Only count if shiftType is "Arbeit"
           if (countAsScheduled) {
-            newCount[assignment.date] = (newCount[assignment.date] || 0) + 1;
+            newCounts[assignment.date] = (newCounts[assignment.date] || 0) + 1;
           }
-          return newCount;
+          return newCounts;
         });
       } else if (action === 'remove') {
-        // Simply decrement the count for the date, or reset to 0 if it becomes negative
         setScheduledEmployees(prev => {
-          const newCount = {...prev};
-          if (customEvent.detail.countAsScheduled === false) {
-            // If we know it was not counted, don't change the count
-            return newCount;
+          // Make a copy to avoid mutating previous state
+          const newCounts = {...prev};
+          
+          // If we have a flag indicating this was a work shift, decrement
+          if (countAsScheduled) {
+            // Safely decrement, ensuring we don't go below 0
+            const currentCount = newCounts[assignment.date] || 0;
+            newCounts[assignment.date] = Math.max(0, currentCount - 1);
           }
           
-          // Otherwise assume it might have been counted and do a full refresh
-          return refreshScheduledCounts();
+          return newCounts;
         });
       }
     };
@@ -75,7 +81,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     };
   }, [weekDays]);
   
-  // Function to refresh the counts (simplified version)
+  // Function to refresh the counts when needed (e.g., when changing weeks)
   const refreshScheduledCounts = () => {
     const initialScheduled: Record<string, number> = {};
     weekDays.forEach(day => {

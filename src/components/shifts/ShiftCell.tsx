@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ShiftType, dispatchShiftEvent, getBackgroundColorClass } from "./utils/shift-utils";
 import UnavailableCell from "./UnavailableCell";
@@ -46,23 +46,23 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       return;
     }
     
-    // Apply the shift change immediately (for non-Termin shifts)
+    // First update the local state
     setShift(shiftType);
     
-    // Create and dispatch events for shifts
-    const action = shiftType ? 'add' : 'remove';
+    // Then dispatch events
+    const action = shiftType !== null ? 'add' : 'remove';
     dispatchShiftEvent(employeeId, date, shiftType, action);
   };
   
   const handleRemoveDialogConfirm = () => {
-    // Close dialog first before making any changes
+    // Close dialog first
     setShowRemoveDialog(false);
     
-    // Update the shift state
+    // Update the shift state with the pending change
     setShift(pendingShiftChange);
     
-    // Create and dispatch the event for a confirmed Termin change
-    const action = pendingShiftChange ? 'add' : 'remove';
+    // Then dispatch the event - if pending is null, it's a removal
+    const action = pendingShiftChange !== null ? 'add' : 'remove';
     dispatchShiftEvent(employeeId, date, pendingShiftChange, action);
     
     // Reset pending shift change

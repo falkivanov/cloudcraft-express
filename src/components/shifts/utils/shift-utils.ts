@@ -27,15 +27,19 @@ export const dispatchShiftEvent = (
         }
       }));
     } else if (action === 'remove') {
-      // Dispatch remove event with the necessary information
+      // For remove actions, we need to pass relevant info about what was removed
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
+          // Send the complete assignment ID format that matches what we use for adding
           assignment: { 
             id: `${employeeId}-${date}`,
             employeeId, 
-            date 
+            date,
+            // Important: include the previous shift type if we're trying to track what was removed
+            shiftType: null 
           },
           action: 'remove',
+          // This indicates whether it should affect the scheduled count
           countAsScheduled: false
         }
       }));
