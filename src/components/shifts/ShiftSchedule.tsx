@@ -8,14 +8,32 @@ import { Button } from "@/components/ui/button";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Employee } from "@/types/employee";
 import ShiftCell from "./ShiftCell";
+import { Input } from "@/components/ui/input";
 
 const ShiftSchedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>(initialEmployees.filter(emp => emp.status === "Aktiv"));
   
-  // Generate days of the week starting from Monday
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(selectedWeek, i));
+  // Track required employees for each day (Mon-Sat)
+  const [requiredEmployees, setRequiredEmployees] = useState<Record<number, number>>({
+    0: 3, // Monday
+    1: 3, // Tuesday
+    2: 3, // Wednesday
+    3: 3, // Thursday
+    4: 3, // Friday
+    5: 2, // Saturday
+  });
+  
+  // Generate days of the week starting from Monday (6 days only, excluding Sunday)
+  const weekDays = Array.from({ length: 6 }, (_, i) => addDays(selectedWeek, i));
+  
+  // Calculate scheduled employees for each day
+  // In a real app, this would count actual assignments
+  const getScheduledEmployees = (dayIndex: number) => {
+    // Simulate some values for the demo
+    return Math.floor(Math.random() * 3) + 1;
+  };
   
   const previousWeek = () => {
     const prevWeek = addDays(selectedWeek, -7);
@@ -25,6 +43,14 @@ const ShiftSchedule = () => {
   const nextWeek = () => {
     const nextWeek = addDays(selectedWeek, 7);
     setSelectedWeek(nextWeek);
+  };
+  
+  const handleRequiredChange = (dayIndex: number, value: string) => {
+    const numValue = parseInt(value) || 0;
+    setRequiredEmployees(prev => ({
+      ...prev,
+      [dayIndex]: numValue
+    }));
   };
   
   return (
@@ -37,7 +63,7 @@ const ShiftSchedule = () => {
           <div className="flex items-center px-3 py-2 bg-muted rounded-md">
             <CalendarIcon className="mr-2 h-4 w-4" />
             <span>
-              {format(selectedWeek, "dd.MM.yyyy", { locale: de })} - {format(addDays(selectedWeek, 6), "dd.MM.yyyy", { locale: de })}
+              {format(selectedWeek, "dd.MM.yyyy", { locale: de })} - {format(addDays(selectedWeek, 5), "dd.MM.yyyy", { locale: de })}
             </span>
           </div>
           <Button variant="outline" size="icon" onClick={nextWeek}>
@@ -62,10 +88,28 @@ const ShiftSchedule = () => {
           <thead className="bg-muted">
             <tr>
               <th className="p-3 text-left min-w-[200px]">Mitarbeiter</th>
-              {weekDays.map((day) => (
+              {weekDays.map((day, index) => (
                 <th key={day.toString()} className="p-3 text-center border-l">
                   <div>{format(day, "EEEEEE", { locale: de })}</div>
                   <div className="text-sm">{format(day, "dd.MM.", { locale: de })}</div>
+                  <div className="mt-2 flex flex-col space-y-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span>Benötigt:</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={requiredEmployees[index]}
+                        onChange={(e) => handleRequiredChange(index, e.target.value)}
+                        className="w-12 h-6 text-center px-1"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span>Geplant:</span>
+                      <span className={`font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
+                        {getScheduledEmployees(index)}
+                      </span>
+                    </div>
+                  </div>
                 </th>
               ))}
             </tr>

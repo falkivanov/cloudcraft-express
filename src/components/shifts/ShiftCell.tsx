@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SunIcon, MoonIcon, Loader2Icon, PlusIcon, XCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ShiftAssignment } from "@/types/shift";
 
 interface ShiftCellProps {
   employeeId: string;
@@ -29,6 +30,31 @@ const ShiftCell: React.FC<ShiftCellProps> = ({ employeeId, date, preferredDays, 
     // Simulate API call
     setTimeout(() => {
       setShift(shiftType);
+      
+      // Create a custom event to notify parent components about shift changes
+      // This could be used to update the count of scheduled employees
+      if (shiftType) {
+        const assignment: ShiftAssignment = {
+          id: `${employeeId}-${date}`,
+          employeeId,
+          date,
+          shiftType: shiftType,
+          confirmed: false
+        };
+        const event = new CustomEvent('shiftAssigned', { 
+          detail: { assignment, action: 'add' }
+        });
+        document.dispatchEvent(event);
+      } else {
+        const event = new CustomEvent('shiftAssigned', { 
+          detail: { 
+            assignment: { employeeId, date },
+            action: 'remove' 
+          }
+        });
+        document.dispatchEvent(event);
+      }
+      
       setIsLoading(false);
     }, 300);
   };
