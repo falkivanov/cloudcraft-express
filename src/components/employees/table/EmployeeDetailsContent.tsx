@@ -103,6 +103,24 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           </div>
         </div>
         
+        <div className="flex items-start gap-2">
+          <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Bei Arbeitstagen flexibel</p>
+            <div className="mt-1">
+              {employee.isWorkingDaysFlexible !== false ? (
+                <span className="inline-flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-1" /> Ja
+                </span>
+              ) : (
+                <span className="inline-flex items-center text-red-600">
+                  <XCircle className="h-4 w-4 mr-1" /> Nein
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        
         {employee.workingDaysAWeek === 5 && (
           <div className="flex items-start gap-2">
             <Clock className="h-4 w-4 mt-1 text-muted-foreground" />

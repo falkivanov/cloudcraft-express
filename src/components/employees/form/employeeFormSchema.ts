@@ -15,6 +15,7 @@ export const employeeFormSchema = z.object({
   preferredVehicle: z.string().min(1, { message: "Bevorzugtes Fahrzeug muss angegeben werden" }),
   preferredWorkingDays: z.array(z.string()).optional().default([]),
   wantsToWorkSixDays: z.boolean().optional().default(false),
+  isWorkingDaysFlexible: z.boolean().optional().default(true),
 });
 
 export type EmployeeFormData = z.infer<typeof employeeFormSchema>;

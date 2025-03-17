@@ -6,6 +6,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FormDescription } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface PreferredWorkingDaysSectionProps {
   form: UseFormReturn<EmployeeFormData>;
@@ -24,6 +25,9 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
   // Berechne, ob der Mitarbeiter aktuell 5 Tage pro Woche arbeitet
   const workingDaysValue = form.watch("workingDaysAWeek");
   const isWorkingFiveDays = workingDaysValue === 5;
+  
+  // Watch the flexibility setting
+  const isFlexible = form.watch("isWorkingDaysFlexible");
 
   return (
     <>
@@ -58,6 +62,31 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
                 </ToggleGroup>
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="col-span-2">
+        <FormField
+          control={form.control}
+          name="isWorkingDaysFlexible"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Bei Arbeitstagen flexibel
+                </FormLabel>
+                <FormDescription>
+                  Wenn ausgeschaltet, kann der Mitarbeiter nur an den ausgewählten Tagen arbeiten.
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />

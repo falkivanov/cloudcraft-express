@@ -14,4 +14,5 @@ export interface Employee {
   preferredVehicle: string;
   preferredWorkingDays: string[];
   wantsToWorkSixDays: boolean;
+  isWorkingDaysFlexible: boolean; // New field for flexibility
 }

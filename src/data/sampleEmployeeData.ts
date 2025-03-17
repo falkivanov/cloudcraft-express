@@ -17,7 +17,8 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 5,
     preferredVehicle: "BMW X5",
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
-    wantsToWorkSixDays: false
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
   },
   {
     id: "2",
@@ -33,7 +34,8 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 5,
     preferredVehicle: "VW Golf",
     preferredWorkingDays: ["Mo", "Di", "Do", "Fr", "Sa"],
-    wantsToWorkSixDays: true
+    wantsToWorkSixDays: true,
+    isWorkingDaysFlexible: true
   },
   {
     id: "3",
@@ -49,7 +51,8 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 5,
     preferredVehicle: "Mercedes C-Klasse",
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
-    wantsToWorkSixDays: false
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
   },
   {
     id: "4",
@@ -65,7 +68,8 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 4,
     preferredVehicle: "Audi A4",
     preferredWorkingDays: ["Di", "Mi", "Do", "Fr"],
-    wantsToWorkSixDays: false
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
   },
   {
     id: "5",
@@ -81,7 +85,26 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 5,
     preferredVehicle: "Opel Astra",
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
-    wantsToWorkSixDays: true
+    wantsToWorkSixDays: true,
+    isWorkingDaysFlexible: true
+  },
+  // Minijobber, der nur Samstags arbeiten kann
+  {
+    id: "7",
+    name: "Julia Fischer",
+    email: "julia.fischer@beispiel.de",
+    phone: "+49 123 4567896",
+    status: "Aktiv",
+    transporterId: "TR-007",
+    startDate: "2022-03-01",
+    endDate: null,
+    address: "Schillerstraße 42, 10625 Berlin",
+    telegramUsername: "@juliafischer",
+    workingDaysAWeek: 1,
+    preferredVehicle: "Mini Cooper",
+    preferredWorkingDays: ["Sa"],
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: false
   },
   // Ehemalige Mitarbeiter
   {
@@ -98,6 +121,7 @@ export const initialEmployees: Employee[] = [
     workingDaysAWeek: 5,
     preferredVehicle: "BMW 3er",
     preferredWorkingDays: ["Mo", "Mi", "Do", "Fr", "Sa"],
-    wantsToWorkSixDays: false
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
   }
 ];

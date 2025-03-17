@@ -125,6 +125,11 @@ const ShiftSchedule = () => {
                   {employee.name}
                   <div className="text-xs text-muted-foreground">
                     {employee.preferredWorkingDays.join(', ')}
+                    {!employee.isWorkingDaysFlexible && (
+                      <span className="ml-1 text-red-500 font-medium">
+                        (nicht flexibel)
+                      </span>
+                    )}
                   </div>
                 </td>
                 {weekDays.map((day) => (
@@ -134,6 +139,7 @@ const ShiftSchedule = () => {
                       date={format(day, "yyyy-MM-dd")}
                       preferredDays={employee.preferredWorkingDays}
                       dayOfWeek={format(day, "EEEEEE", { locale: de })}
+                      isFlexible={employee.isWorkingDaysFlexible}
                     />
                   </td>
                 ))}

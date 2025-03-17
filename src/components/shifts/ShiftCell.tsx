@@ -6,26 +6,45 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { SunIcon, MoonIcon, Loader2Icon, PlusIcon, XCircleIcon } from "lucide-react";
+import { SunIcon, MoonIcon, Loader2Icon, PlusIcon, XCircleIcon, AlertTriangleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShiftAssignment } from "@/types/shift";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ShiftCellProps {
   employeeId: string;
   date: string;
   preferredDays: string[];
   dayOfWeek: string;
+  isFlexible?: boolean;
 }
 
 type ShiftType = "Früh" | "Spät" | "Nacht" | null;
 
-const ShiftCell: React.FC<ShiftCellProps> = ({ employeeId, date, preferredDays, dayOfWeek }) => {
+const ShiftCell: React.FC<ShiftCellProps> = ({ 
+  employeeId, 
+  date, 
+  preferredDays, 
+  dayOfWeek,
+  isFlexible = true 
+}) => {
   const [shift, setShift] = useState<ShiftType>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
   const handleShiftSelect = (shiftType: ShiftType) => {
+    // Prüfen ob Eintrag an nicht-präferierten Tagen erlaubt ist
+    if (shiftType !== null && !isPreferredDay && !isFlexible) {
+      toast({
+        title: "Nicht möglich",
+        description: "Dieser Mitarbeiter kann nur an den angegebenen Arbeitstagen arbeiten.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -75,6 +94,10 @@ const ShiftCell: React.FC<ShiftCellProps> = ({ employeeId, date, preferredDays, 
   };
   
   const getBackgroundColor = () => {
+    if (!isFlexible && !isPreferredDay) {
+      return "bg-gray-100"; // Grauer Hintergrund für nicht verfügbare Tage
+    }
+    
     switch (shift) {
       case "Früh":
         return "bg-yellow-50";
@@ -86,6 +109,22 @@ const ShiftCell: React.FC<ShiftCellProps> = ({ employeeId, date, preferredDays, 
         return isPreferredDay ? "bg-green-50" : "";
     }
   };
+  
+  // Wenn der Mitarbeiter nicht flexibel ist und es kein präferierter Tag ist,
+  // zeigen wir eine spezielle UI an
+  if (!isFlexible && !isPreferredDay) {
+    return (
+      <div 
+        className="w-full h-full min-h-[3.5rem] flex items-center justify-center bg-gray-100"
+        title="Mitarbeiter ist an diesem Tag nicht verfügbar"
+      >
+        <div className="flex flex-col items-center text-gray-400">
+          <AlertTriangleIcon className="h-4 w-4" />
+          <span className="text-xs mt-1">Nicht verfügbar</span>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <DropdownMenu>
