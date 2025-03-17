@@ -3,7 +3,6 @@ import React from "react";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
-import FinalizeDayButton from "./FinalizeDayButton";
 import NextDaySchedule from "./NextDaySchedule";
 
 interface ScheduleTableProps {
@@ -37,6 +36,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   getScheduledEmployeesForDay,
   setShowNextDaySchedule
 }) => {
+  // Find the next day that has scheduled employees
+  const nextWorkDayIndex = weekDays.findIndex(day => {
+    const dateKey = formatDateKey(day);
+    return (scheduledEmployees[dateKey] || 0) > 0;
+  });
+  
+  const nextWorkDay = nextWorkDayIndex !== -1 ? weekDays[nextWorkDayIndex] : null;
+  
   // Find the next day that has been finalized (to show the schedule for)
   const nextDayIndex = weekDays.findIndex(day => 
     finalizedDays.includes(formatDateKey(day))
@@ -56,6 +63,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             scheduledEmployees={scheduledEmployees}
             onRequiredChange={handleRequiredChange}
             formatDateKey={formatDateKey}
+            finalizedDays={finalizedDays}
+            onFinalizeDay={onFinalizeDay}
+            nextWorkDay={nextWorkDay}
           />
           <tbody>
             {filteredEmployees.map((employee) => (
@@ -70,23 +80,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             ))}
           </tbody>
         </table>
-      </div>
-      
-      <div className="grid grid-cols-6 gap-2">
-        {weekDays.map((day, index) => {
-          const dateKey = formatDateKey(day);
-          const isFinalized = finalizedDays.includes(dateKey);
-          
-          return (
-            <FinalizeDayButton
-              key={index}
-              date={day}
-              dateKey={dateKey}
-              onFinalize={onFinalizeDay}
-              isFinalized={isFinalized}
-            />
-          );
-        })}
       </div>
       
       {showNextDaySchedule && nextDay && (
