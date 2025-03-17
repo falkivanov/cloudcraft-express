@@ -136,8 +136,8 @@ const DailyVehicleAssignment: React.FC = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Fahrzeug</TableHead>
-            <TableHead>Fahrer {formattedToday}</TableHead>
-            <TableHead>Fahrer {formattedTomorrow}</TableHead>
+            <TableHead>{formattedToday}</TableHead>
+            <TableHead>{formattedTomorrow}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
