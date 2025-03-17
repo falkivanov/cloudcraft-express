@@ -1,3 +1,4 @@
+
 # Welcome to your Lovable project
 
 ## Project info
@@ -63,6 +64,22 @@ This project is built with .
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/31bf6325-da9f-4523-b1e4-aa8d48a5ccf6) and click on Share -> Publish.
+
+## Deploy to STACKIT
+
+Das Projekt kann auf der deutschen Cloud-Plattform STACKIT gehostet werden. Folgen Sie diesen Schritten:
+
+1. Erstellen Sie einen Account bei [STACKIT](https://www.stackit.de/)
+2. Installieren Sie die STACKIT CLI
+3. Bauen Sie das Projekt mit `npm run build`
+4. Verwenden Sie die Kubernetes- oder Container-PaaS-Dienste von STACKIT zum Deployen
+5. Alternativ können Sie auch den STACKIT Object Storage für statisches Hosting verwenden:
+   ```
+   # Beispiel für die Bereitstellung mit der STACKIT CLI (Details können abweichen)
+   stackit login
+   stackit storage bucket create my-app-bucket
+   stackit storage upload --source ./dist --destination my-app-bucket
+   ```
 
 ## I want to use a custom domain - is that possible?
 
