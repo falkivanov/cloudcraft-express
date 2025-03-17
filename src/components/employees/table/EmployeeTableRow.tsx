@@ -70,7 +70,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
       </TableCell>
       <TableCell>
         <span className="inline-flex items-center text-gray-600">
-          <Car className="h-4 w-4 mr-1" /> {employee.preferredVehicle.substring(0, 10)}{employee.preferredVehicle.length > 10 ? '...' : ''}
+          <Car className="h-4 w-4 mr-1" /> {employee.preferredVehicle}
         </span>
       </TableCell>
       <TableCell>
