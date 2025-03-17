@@ -1,8 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon, TruckIcon, CheckIcon } from "lucide-react";
+import { CalendarIcon, TruckIcon } from "lucide-react";
 
 interface ShiftPlanningHeaderProps {
   activeTab: string;
@@ -15,7 +14,6 @@ const ShiftPlanningHeader: React.FC<ShiftPlanningHeaderProps> = ({
   activeTab,
   setActiveTab,
   isScheduleFinalized,
-  onFinalizeSchedule,
 }) => {
   return (
     <div className="mb-6 flex justify-between items-center">
@@ -31,13 +29,6 @@ const ShiftPlanningHeader: React.FC<ShiftPlanningHeaderProps> = ({
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      
-      {activeTab === "schedule" && !isScheduleFinalized && (
-        <Button onClick={onFinalizeSchedule} className="bg-black hover:bg-gray-800">
-          <CheckIcon className="mr-2 h-4 w-4" />
-          Dienstplan abschließen
-        </Button>
-      )}
     </div>
   );
 };
