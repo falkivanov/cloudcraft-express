@@ -11,6 +11,10 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     initialEmployees.filter(emp => emp.status === "Aktiv")
   );
   
+  // Track finalized days
+  const [finalizedDays, setFinalizedDays] = useState<string[]>([]);
+  const [showNextDaySchedule, setShowNextDaySchedule] = useState(false);
+  
   // Combine our smaller hooks
   const weekNavigation = useWeekNavigation();
   const { weekDays, selectedWeek, previousWeek: prevWeek, nextWeek: nextWeekFn } = weekNavigation;
@@ -42,12 +46,38 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     prevWeek();
     resetFlexibility();
     clearShifts();
+    setFinalizedDays([]);
+    setShowNextDaySchedule(false);
   };
   
   const nextWeek = () => {
     nextWeekFn();
     resetFlexibility();
     clearShifts();
+    setFinalizedDays([]);
+    setShowNextDaySchedule(false);
+  };
+
+  const handleFinalizeDay = (dateKey: string) => {
+    if (!finalizedDays.includes(dateKey)) {
+      setFinalizedDays(prev => [...prev, dateKey]);
+    }
+    setShowNextDaySchedule(true);
+  };
+  
+  // Get employees scheduled for work on a specific day
+  const getScheduledEmployeesForDay = (date: string) => {
+    const scheduledEmpIds: string[] = [];
+    
+    // Scan through shiftsMap to find employees with "Arbeit" shifts on the given date
+    shiftsMap.forEach((shift, key) => {
+      if (shift.date === date && shift.shiftType === "Arbeit") {
+        scheduledEmpIds.push(shift.employeeId);
+      }
+    });
+    
+    // Return the full employee objects for the scheduled employees
+    return filteredEmployees.filter(emp => scheduledEmpIds.includes(emp.id));
   };
   
   return {
@@ -67,6 +97,11 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
     clearShifts,
-    shiftsMap
+    shiftsMap,
+    finalizedDays,
+    handleFinalizeDay,
+    showNextDaySchedule,
+    setShowNextDaySchedule,
+    getScheduledEmployeesForDay
   };
 };

@@ -25,7 +25,12 @@ const ShiftSchedule = () => {
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
     clearShifts,
-    shiftsMap
+    shiftsMap,
+    finalizedDays,
+    handleFinalizeDay,
+    showNextDaySchedule,
+    setShowNextDaySchedule,
+    getScheduledEmployeesForDay
   } = useShiftSchedule(initialEmployees);
   
   const {
@@ -68,6 +73,11 @@ const ShiftSchedule = () => {
         formatDateKey={formatDateKey}
         onFlexibilityOverride={handleFlexibilityOverride}
         isTemporarilyFlexible={isTemporarilyFlexible}
+        finalizedDays={finalizedDays}
+        onFinalizeDay={handleFinalizeDay}
+        showNextDaySchedule={showNextDaySchedule}
+        getScheduledEmployeesForDay={getScheduledEmployeesForDay}
+        setShowNextDaySchedule={setShowNextDaySchedule}
       />
 
       <FlexibilityOverrideDialog
