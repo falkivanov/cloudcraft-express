@@ -19,6 +19,7 @@ const ShiftScheduleContent: React.FC = () => {
     formatDateKey,
     finalizedDays,
     getScheduledEmployeesForDay,
+    shiftsMap,
   } = useShiftSchedule(initialEmployees);
   
   // Find tomorrow's date directly from the weekDays array
@@ -35,7 +36,7 @@ const ShiftScheduleContent: React.FC = () => {
   const isTomorrowFinalized = finalizedDays.includes(tomorrowKey);
   
   // Only get scheduled employees if tomorrow is finalized
-  const scheduledForTomorrow = isTomorrowFinalized && tomorrow ? getScheduledEmployeesForDay(tomorrowKey) : [];
+  const scheduledForTomorrow = tomorrow ? getScheduledEmployeesForDay(tomorrowKey) : [];
   console.log("Scheduled employees for tomorrow:", scheduledForTomorrow.length);
   
   // Format the date for display
@@ -47,25 +48,19 @@ const ShiftScheduleContent: React.FC = () => {
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
     
-    // If trying to switch to nextday tab but it's not finalized, prevent change
+    // Überprüfen Sie den Status der Finalisierung, bevor Sie den Tab wechseln
     if (value === "nextday" && !isTomorrowFinalized) {
       toast({
         title: "Dienstplan nicht finalisiert",
         description: "Der Dienstplan für morgen muss zuerst finalisiert werden.",
         variant: "destructive"
       });
-      return;
+      return; // Tab-Wechsel stoppen
     }
     
+    // Wenn der Tab-Wechsel erlaubt ist, den Tab aktualisieren
     setActiveTab(value);
   };
-
-  // Reset to weekplan tab when finalization status changes
-  useEffect(() => {
-    if (!isTomorrowFinalized && activeTab === "nextday") {
-      setActiveTab("weekplan");
-    }
-  }, [isTomorrowFinalized]);
 
   return (
     <Card>
