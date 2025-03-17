@@ -11,9 +11,8 @@ import { initialVehicles } from "@/data/sampleVehicleData";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Sample vehicles for demonstration from our data source
 const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
   id: vehicle.id,
   licensePlate: vehicle.licensePlate,
@@ -32,32 +31,25 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   const formattedToday = format(today, "dd.MM.yyyy", { locale: de });
   const formattedTomorrow = format(tomorrow, "dd.MM.yyyy", { locale: de });
   
-  // Today's assignments (which vehicles are assigned to which employees)
   const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
   
-  // Tomorrow's assignments (which will be empty until auto-assignment is made)
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   
-  // For testing: Override schedule finalized state
   const [overrideFinalized, setOverrideFinalized] = useState(false);
   
-  // Effective finalized state (either from props or override)
   const effectivelyFinalized = isScheduleFinalized || overrideFinalized;
   
-  // Load today's assignments (simulated)
   useEffect(() => {
-    // In a real application, this would fetch from an API
     const mockTodayAssignments: Record<string, string> = {
-      "1": "1", // Vehicle 1 is assigned to employee 1 (Max Mustermann)
-      "2": "3", // Vehicle 2 is assigned to employee 3 (Thomas Weber)
-      "3": "2", // Vehicle 3 is assigned to employee 2 (Anna Schmidt)
-      "6": "5", // Vehicle 6 is assigned to employee 5 (Michael Schulz)
-      "9": "7", // Vehicle 9 is assigned to employee 7 (Julia Fischer)
+      "1": "1",
+      "2": "3",
+      "3": "2",
+      "6": "5",
+      "9": "7",
     };
     setTodayAssignments(mockTodayAssignments);
   }, []);
   
-  // Automatic assignment for tomorrow
   const handleAutoAssign = () => {
     if (!effectivelyFinalized) {
       toast.error("Dienstplan nicht finalisiert", {
@@ -68,12 +60,9 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     
     const newAssignments: Record<string, string> = {};
     
-    // Get list of active employees
     const activeEmployees = initialEmployees.filter(emp => emp.status === "Aktiv");
     
-    // Simple algorithm: assign vehicles based on preferences if possible
     activeVehicles.forEach(vehicle => {
-      // First check if any employee prefers this vehicle
       const employeeWithPreference = activeEmployees.find(
         emp => emp.preferredVehicle === vehicle.licensePlate && 
               !Object.values(newAssignments).includes(emp.id)
@@ -82,7 +71,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
       if (employeeWithPreference) {
         newAssignments[vehicle.id] = employeeWithPreference.id;
       } else {
-        // If no preference, assign to any available employee
         const availableEmployee = activeEmployees.find(
           emp => !Object.values(newAssignments).includes(emp.id)
         );
@@ -100,7 +88,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     });
   };
   
-  // Save tomorrow's assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
     if (!effectivelyFinalized) {
       toast.error("Dienstplan nicht finalisiert", {
@@ -132,50 +119,39 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     });
     
     console.log("Saved assignments for tomorrow:", savedAssignments);
-    // Here would be the API call in a real app
-    
     toast.success(`Fahrzeugzuordnungen für ${formattedTomorrow} wurden gespeichert!`);
   };
   
-  // Helper function to get employee name by ID
   const getEmployeeName = (employeeId: string) => {
     const employee = initialEmployees.find(e => e.id === employeeId);
     return employee ? employee.name : "Nicht zugewiesen";
   };
   
-  // Helper function to check if an employee needs a key or exchange
   const needsKeyChange = (vehicleId: string, employeeId: string): "new" | "exchange" | null => {
-    // No employee assigned to this vehicle tomorrow
     if (!employeeId) return null;
     
-    // Find which vehicle (if any) the employee had today
     const todayVehicleId = Object.entries(todayAssignments).find(
       ([vId, eId]) => eId === employeeId
     )?.[0];
     
-    // If employee had no vehicle today, they need a new key
     if (!todayVehicleId) return "new";
     
-    // If employee had a different vehicle today, they need to exchange keys
     if (todayVehicleId !== vehicleId) return "exchange";
     
-    // Employee has the same vehicle, no key change needed
     return null;
   };
   
-  // Get background color based on key change status
   const getKeyChangeStyle = (status: "new" | "exchange" | null) => {
     switch (status) {
       case "new":
-        return "bg-blue-50"; // Soft blue background for new keys
+        return "bg-blue-50";
       case "exchange":
-        return "bg-amber-50"; // Soft amber background for key exchanges
+        return "bg-amber-50";
       default:
         return "";
     }
   };
   
-  // Check if employee is not assigned their preferred vehicle
   const notAssignedPreferredVehicle = (employeeId: string, vehicleId: string): boolean => {
     if (!employeeId) return false;
     
@@ -276,9 +252,16 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
                     <div className="flex items-center">
                       <div>{getEmployeeName(tomorrowEmployeeId)}</div>
                       {isNotPreferred && (
-                        <Tooltip content="Mitarbeiter erhält nicht das präferierte Fahrzeug">
-                          <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertTriangle className="h-4 w-4 text-amber-500 ml-2 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Mitarbeiter erhält nicht das präferierte Fahrzeug</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                   ) : (
