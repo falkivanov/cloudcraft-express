@@ -23,7 +23,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
         <TooltipTrigger asChild>
           <Button 
             variant={isFinalized ? "secondary" : "default"} 
-            className="w-full"
+            className={`w-full ${!isFinalized ? "animate-pulse bg-primary hover:bg-primary/90" : ""}`}
             onClick={() => onFinalize(dateKey)}
             disabled={isFinalized}
             size="sm"

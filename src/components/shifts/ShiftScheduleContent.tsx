@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,33 +38,13 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Finalize tomorrow handler with useCallback to prevent recreation on each render
-  const finalizeTomorrow = useCallback(() => {
-    if (tomorrow && tomorrowKey) {
-      handleFinalizeDay(tomorrowKey);
-      toast({
-        title: "Dienstplan finalisiert",
-        description: `Der Dienstplan für ${tomorrowDisplay} wurde erfolgreich finalisiert.`,
-        variant: "default"
-      });
-    }
-  }, [tomorrow, tomorrowKey, handleFinalizeDay, tomorrowDisplay]);
-
-  // Tab change handler with built-in finalization option
+  // Tab change handler that prevents access to nextday tab when not finalized
   const handleTabChange = (value: string) => {
-    // If trying to access nextday tab when not finalized, show toast with option to finalize
+    // If trying to access nextday tab when not finalized, show toast with helpful message
     if (value === "nextday" && !isTomorrowFinalized) {
       toast({
         title: "Dienstplan nicht finalisiert",
-        description: `Der Dienstplan für ${tomorrowDisplay} muss zuerst finalisiert werden. Klicken Sie auf 'Jetzt finalisieren'.`,
-        action: (
-          <button 
-            onClick={finalizeTomorrow}
-            className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs"
-          >
-            Jetzt finalisieren
-          </button>
-        ),
+        description: `Der Dienstplan für ${tomorrowDisplay} muss zuerst finalisiert werden. Bitte benutzen Sie den "Tag finalisieren" Button in der Tabelle.`,
         variant: "destructive"
       });
       return; // Prevent tab change
