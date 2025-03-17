@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
+import { de } from "date-fns/locale";
 import { Car, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,8 +19,11 @@ const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Akt
 }));
 
 const DailyVehicleAssignment: React.FC = () => {
-  const today = format(new Date(), "yyyy-MM-dd");
-  const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+  const today = new Date();
+  const tomorrow = addDays(today, 1);
+  
+  const formattedToday = format(today, "dd.MM.yyyy", { locale: de });
+  const formattedTomorrow = format(tomorrow, "dd.MM.yyyy", { locale: de });
   
   // Today's assignments (which vehicles are assigned to which employees)
   const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
@@ -71,7 +75,7 @@ const DailyVehicleAssignment: React.FC = () => {
     
     setTomorrowAssignments(newAssignments);
     
-    toast.success(`${Object.keys(newAssignments).length} Fahrzeuge für morgen automatisch zugewiesen`, {
+    toast.success(`${Object.keys(newAssignments).length} Fahrzeuge für ${formattedTomorrow} automatisch zugewiesen`, {
       description: "Überprüfen Sie die Zuordnungen und speichern Sie diese bei Bedarf."
     });
   };
@@ -82,12 +86,12 @@ const DailyVehicleAssignment: React.FC = () => {
       const vehicle = activeVehicles.find(v => v.id === vehicleId);
       const employee = initialEmployees.find(e => e.id === employeeId);
       return {
-        id: `${vehicleId}-${employeeId}-${tomorrow}`,
+        id: `${vehicleId}-${employeeId}-${format(tomorrow, "yyyy-MM-dd")}`,
         vehicleId,
         vehicleInfo: `${vehicle?.brand} ${vehicle?.model} (${vehicle?.licensePlate})`,
         employeeId,
         employeeName: employee?.name || "",
-        date: tomorrow,
+        date: format(tomorrow, "yyyy-MM-dd"),
         assignedAt: new Date().toISOString(),
         assignedBy: "Admin"
       };
@@ -96,7 +100,7 @@ const DailyVehicleAssignment: React.FC = () => {
     console.log("Saved assignments for tomorrow:", savedAssignments);
     // Here would be the API call in a real app
     
-    toast.success("Fahrzeugzuordnungen für morgen wurden gespeichert!");
+    toast.success(`Fahrzeugzuordnungen für ${formattedTomorrow} wurden gespeichert!`);
   };
   
   // Helper function to get employee name by ID
@@ -116,13 +120,13 @@ const DailyVehicleAssignment: React.FC = () => {
             className="gap-2"
           >
             <WandSparkles className="h-4 w-4" />
-            Auto-Zuordnung für morgen
+            Auto-Zuordnung für {formattedTomorrow}
           </Button>
           <Button 
             disabled={Object.keys(tomorrowAssignments).length === 0}
             onClick={handleSaveAssignments}
           >
-            <Car className="h-4 w-4" />
+            <Car className="h-4 w-4 mr-2" />
             Zuordnungen speichern
           </Button>
         </div>
@@ -132,8 +136,8 @@ const DailyVehicleAssignment: React.FC = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Fahrzeug</TableHead>
-            <TableHead>Fahrer heute</TableHead>
-            <TableHead>Fahrer morgen</TableHead>
+            <TableHead>Fahrer {formattedToday}</TableHead>
+            <TableHead>Fahrer {formattedTomorrow}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
