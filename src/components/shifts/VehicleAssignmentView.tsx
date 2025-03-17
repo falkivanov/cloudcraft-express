@@ -23,16 +23,6 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
   
   return (
     <div className="space-y-6">
-      {!isEnabled && (
-        <Alert variant="warning" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Hinweis</AlertTitle>
-          <AlertDescription>
-            Der Dienstplan wurde noch nicht finalisiert. Um alle Fahrzeugzuordnungen zu speichern, sollte der Dienstplan zuerst abgeschlossen werden.
-          </AlertDescription>
-        </Alert>
-      )}
-    
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "daily" | "history")}>
         <TabsList className="mb-4">
           <TabsTrigger value="daily" className="flex items-center gap-2">
@@ -46,7 +36,7 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
         </TabsList>
         
         <TabsContent value="daily" className="mt-0">
-          <DailyVehicleAssignment />
+          <DailyVehicleAssignment isScheduleFinalized={isEnabled} />
         </TabsContent>
         
         <TabsContent value="history" className="mt-0">

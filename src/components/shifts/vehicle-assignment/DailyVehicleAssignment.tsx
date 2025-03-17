@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { Car, WandSparkles } from "lucide-react";
+import { Car, WandSparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { toast } from "sonner";
 import { initialVehicles } from "@/data/sampleVehicleData";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Sample vehicles for demonstration from our data source
 const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
@@ -18,7 +19,11 @@ const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Akt
   model: vehicle.model
 }));
 
-const DailyVehicleAssignment: React.FC = () => {
+interface DailyVehicleAssignmentProps {
+  isScheduleFinalized: boolean;
+}
+
+const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isScheduleFinalized }) => {
   const today = new Date();
   const tomorrow = addDays(today, 1);
   
@@ -30,6 +35,9 @@ const DailyVehicleAssignment: React.FC = () => {
   
   // Tomorrow's assignments (which will be empty until auto-assignment is made)
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
+  
+  // State for showing the schedule not finalized warning
+  const [showWarning, setShowWarning] = useState(false);
   
   // Load today's assignments (simulated)
   useEffect(() => {
@@ -46,6 +54,14 @@ const DailyVehicleAssignment: React.FC = () => {
   
   // Automatic assignment for tomorrow
   const handleAutoAssign = () => {
+    if (!isScheduleFinalized) {
+      setShowWarning(true);
+      toast.error("Dienstplan nicht finalisiert", {
+        description: "Um Fahrzeuge zuzuordnen, muss der Dienstplan zuerst abgeschlossen werden."
+      });
+      return;
+    }
+    
     const newAssignments: Record<string, string> = {};
     
     // Get list of active employees
@@ -74,6 +90,7 @@ const DailyVehicleAssignment: React.FC = () => {
     });
     
     setTomorrowAssignments(newAssignments);
+    setShowWarning(false);
     
     toast.success(`${Object.keys(newAssignments).length} Fahrzeuge für ${formattedTomorrow} automatisch zugewiesen`, {
       description: "Überprüfen Sie die Zuordnungen und speichern Sie diese bei Bedarf."
@@ -82,6 +99,21 @@ const DailyVehicleAssignment: React.FC = () => {
   
   // Save tomorrow's assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
+    if (!isScheduleFinalized) {
+      setShowWarning(true);
+      toast.error("Dienstplan nicht finalisiert", {
+        description: "Um Fahrzeugzuordnungen zu speichern, muss der Dienstplan zuerst abgeschlossen werden."
+      });
+      return;
+    }
+    
+    if (Object.keys(tomorrowAssignments).length === 0) {
+      toast.warning("Keine Zuordnungen vorhanden", {
+        description: "Bitte führen Sie zuerst eine Auto-Zuordnung durch."
+      });
+      return;
+    }
+    
     const savedAssignments = Object.entries(tomorrowAssignments).map(([vehicleId, employeeId]) => {
       const vehicle = activeVehicles.find(v => v.id === vehicleId);
       const employee = initialEmployees.find(e => e.id === employeeId);
@@ -101,6 +133,7 @@ const DailyVehicleAssignment: React.FC = () => {
     // Here would be the API call in a real app
     
     toast.success(`Fahrzeugzuordnungen für ${formattedTomorrow} wurden gespeichert!`);
+    setShowWarning(false);
   };
   
   // Helper function to get employee name by ID
@@ -111,6 +144,16 @@ const DailyVehicleAssignment: React.FC = () => {
   
   return (
     <div className="space-y-6">
+      {showWarning && !isScheduleFinalized && (
+        <Alert variant="warning" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Hinweis</AlertTitle>
+          <AlertDescription>
+            Der Dienstplan wurde noch nicht finalisiert. Um alle Fahrzeugzuordnungen zu speichern, sollte der Dienstplan zuerst abgeschlossen werden.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold">Fahrzeugzuordnung</h2>
         <div className="flex gap-2">
