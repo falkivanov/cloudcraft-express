@@ -106,82 +106,76 @@ export const createAutomaticPlan = ({
     });
   });
   
-  // Second pass: Fill remaining positions with respect to preferred days
+  // Second pass: Fill remaining positions prioritizing preferred days for ALL employees
+  // First, assign employees to their preferred days
   weekDays.forEach((day, dayIndex) => {
-    // In maximum mode, try to assign everyone up to their capacity
-    // In forecast mode, only fill up to the required count
     const requiredCount = planningMode === "forecast" 
-      ? requiredEmployees[dayIndex] || 0
-      : Number.MAX_SAFE_INTEGER; // In maximum mode, try to assign as many as possible
+      ? requiredEmployees[dayIndex] || 0 
+      : Number.MAX_SAFE_INTEGER;
       
-    const remaining = requiredCount - filledPositions[dayIndex];
-    
-    // Skip if no more positions to fill
-    if (remaining <= 0) return;
+    if (requiredCount <= 0) return;
     
     const dayAbbr = getDayAbbreviation(day);
     
-    // First, try to assign flexible employees based on their preferred days
-    // This ensures that even flexible employees' preferences are considered
-    let eligibleEmployees = sortedEmployees.filter(employee => 
-      employeeAssignments[employee.id] < employee.workingDaysAWeek &&
-      (employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)) &&
-      employee.preferredWorkingDays.includes(dayAbbr)
-    );
-    
-    // Sort by number of assignments (prefer those with fewer assignments first)
-    eligibleEmployees.sort((a, b) => 
-      employeeAssignments[a.id] - employeeAssignments[b.id]
-    );
-    
-    // Assign preferred employees first
-    for (let i = 0; i < remaining && i < eligibleEmployees.length; i++) {
-      const employee = eligibleEmployees[i];
+    // For all employees, first try to assign on preferred days
+    // This ensures that even flexible employees get their preferred days first
+    sortedEmployees.forEach(employee => {
+      // Skip if already fully assigned
+      if (employeeAssignments[employee.id] >= employee.workingDaysAWeek) return;
       
-      plan.push({
-        employeeId: employee.id,
-        date: formatDateKey(day),
-        shiftType: "Arbeit"
-      });
+      // Skip if day is already fully staffed
+      if (filledPositions[dayIndex] >= requiredCount) return;
       
-      // Update tracking counter
-      employeeAssignments[employee.id]++;
-      filledPositions[dayIndex]++;
-    }
-    
-    // If still positions to fill and in maximum mode, add any flexible employees
-    // who haven't reached their max days, regardless of preference
-    if (planningMode === "maximum" && filledPositions[dayIndex] < requiredCount) {
-      const updatedRemaining = requiredCount - filledPositions[dayIndex];
+      // Skip non-flexible employees already handled in first pass
+      if (!employee.isWorkingDaysFlexible && !isTemporarilyFlexible(employee.id)) return;
       
-      // Only truly flexible employees can be assigned to non-preferred days
-      const remainingEligibleEmployees = sortedEmployees.filter(employee => 
-        employeeAssignments[employee.id] < employee.workingDaysAWeek &&
-        employee.isWorkingDaysFlexible &&
-        !employee.preferredWorkingDays.includes(dayAbbr) // Specifically on non-preferred days
-      );
-      
-      // Sort by number of assignments (prefer those with fewer assignments first)
-      remainingEligibleEmployees.sort((a, b) => 
-        employeeAssignments[a.id] - employeeAssignments[b.id]
-      );
-      
-      // Assign up to the required number or maximum possible in maximum mode
-      for (let i = 0; i < updatedRemaining && i < remainingEligibleEmployees.length; i++) {
-        const employee = remainingEligibleEmployees[i];
-        
+      // Only assign if it's a preferred day
+      if (employee.preferredWorkingDays.includes(dayAbbr)) {
         plan.push({
           employeeId: employee.id,
           date: formatDateKey(day),
           shiftType: "Arbeit"
         });
         
-        // Update tracking counter
+        // Update tracking counters
         employeeAssignments[employee.id]++;
         filledPositions[dayIndex]++;
       }
-    }
+    });
   });
+  
+  // Third pass: Only in maximum mode, assign flexible employees to non-preferred days
+  // to maximize schedules, but only after all preferred days have been assigned
+  if (planningMode === "maximum") {
+    weekDays.forEach((day, dayIndex) => {
+      const requiredCount = Number.MAX_SAFE_INTEGER; // Try to maximize in this mode
+      
+      if (filledPositions[dayIndex] >= requiredCount) return;
+      
+      const dayAbbr = getDayAbbreviation(day);
+      
+      // Only truly flexible employees can be assigned to non-preferred days
+      sortedEmployees.forEach(employee => {
+        // Skip if already fully assigned
+        if (employeeAssignments[employee.id] >= employee.workingDaysAWeek) return;
+        
+        // Only assign flexible employees to non-preferred days
+        if ((employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)) && 
+            !employee.preferredWorkingDays.includes(dayAbbr)) {
+          
+          plan.push({
+            employeeId: employee.id,
+            date: formatDateKey(day),
+            shiftType: "Arbeit"
+          });
+          
+          // Update tracking counters
+          employeeAssignments[employee.id]++;
+          filledPositions[dayIndex]++;
+        }
+      });
+    });
+  }
   
   // Return the complete assignment plan
   return plan;
