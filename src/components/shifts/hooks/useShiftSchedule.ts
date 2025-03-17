@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Employee } from "@/types/employee";
 import { useWeekNavigation } from "./useWeekNavigation";
 import { useEmployeeFlexibility } from "./useEmployeeFlexibility";
@@ -58,16 +58,43 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     setShowNextDaySchedule(false);
   };
 
-  const handleFinalizeDay = (dateKey: string) => {
-    if (!finalizedDays.includes(dateKey)) {
-      setFinalizedDays(prev => [...prev, dateKey]);
-      // Automatisch zum Einsatzplan-Tab wechseln würde hier passieren
-      // Dies wird aber jetzt über die Tab-Komponente gesteuert
-    }
-  };
+  // Memoize the finalize day function to prevent unnecessary rerenders
+  const handleFinalizeDay = useCallback((dateKey: string) => {
+    console.log(`Finalizing day: ${dateKey}`);
+    setFinalizedDays(prev => {
+      if (!prev.includes(dateKey)) {
+        return [...prev, dateKey];
+      }
+      return prev;
+    });
+  }, []);
+  
+  // Listen for day finalized events (from other components)
+  useEffect(() => {
+    const handleDayFinalized = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { dateKey } = customEvent.detail;
+      
+      if (dateKey && !finalizedDays.includes(dateKey)) {
+        console.log(`Day finalized event received: ${dateKey}`);
+        setFinalizedDays(prev => [...prev, dateKey]);
+      }
+    };
+    
+    window.addEventListener('dayFinalized', handleDayFinalized);
+    
+    return () => {
+      window.removeEventListener('dayFinalized', handleDayFinalized);
+    };
+  }, [finalizedDays]);
+
+  // Debug finalized days state whenever it changes
+  useEffect(() => {
+    console.log('Finalized days updated:', finalizedDays);
+  }, [finalizedDays]);
   
   // Get employees scheduled for work on a specific day
-  const getScheduledEmployeesForDay = (date: string) => {
+  const getScheduledEmployeesForDay = useCallback((date: string) => {
     const scheduledEmpIds: string[] = [];
     
     // Scan through shiftsMap to find employees with "Arbeit" shifts on the given date
@@ -79,7 +106,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     
     // Return the full employee objects for the scheduled employees
     return filteredEmployees.filter(emp => scheduledEmpIds.includes(emp.id));
-  };
+  }, [filteredEmployees, shiftsMap]);
   
   return {
     selectedWeek,

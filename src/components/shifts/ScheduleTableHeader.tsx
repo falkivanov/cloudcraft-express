@@ -47,6 +47,11 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
               <div className="text-sm font-normal">
                 {format(day, "dd.MM.", { locale: de })}
               </div>
+              {isFinalized && isTomorrowDate && (
+                <div className="text-xs text-green-600 font-medium mt-1 mb-2">
+                  ✓ Finalisiert
+                </div>
+              )}
               <RequiredEmployeesCell
                 requiredCount={requiredCount}
                 scheduledCount={scheduledCount}

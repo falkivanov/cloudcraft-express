@@ -38,15 +38,7 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Monitor finalization status and automatically switch tabs if needed
-  useEffect(() => {
-    if (isTomorrowFinalized && activeTab === "weekplan") {
-      // Don't automatically switch tabs, just allow it to be possible
-      // The user will click on the tab themselves when they want to view it
-    }
-  }, [isTomorrowFinalized, activeTab]);
-
-  // Custom finalize handler that also enables tab switching
+  // Custom finalize handler that shows confirmation toast and updates UI
   const handleFinalizeTomorrowDay = (dateKey: string) => {
     handleFinalizeDay(dateKey);
     

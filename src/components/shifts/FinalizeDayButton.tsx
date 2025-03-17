@@ -17,6 +17,13 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
   dateKey,
   isFinalized
 }) => {
+  // Handle the finalize button click
+  const handleClick = () => {
+    onFinalize(dateKey);
+    // Dispatch an event to make sure all components are aware of the change
+    window.dispatchEvent(new CustomEvent('dayFinalized', { detail: { dateKey } }));
+  };
+  
   return (
     <TooltipProvider>
       <Tooltip>
@@ -24,7 +31,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
           <Button 
             variant={isFinalized ? "secondary" : "default"} 
             className="w-full"
-            onClick={() => onFinalize(dateKey)}
+            onClick={handleClick}
             disabled={isFinalized}
             size="sm"
           >
