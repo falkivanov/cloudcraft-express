@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu, 
@@ -56,7 +57,9 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
   const handleShiftSelect = (shiftType: ShiftType) => {
-    if (shift !== null && shiftType !== shift) {
+    // Only show dialog when changing from "Termin" to something else
+    // or when removing a "Termin"
+    if (shift === "Termin" && shiftType !== shift) {
       setPendingShiftChange(shiftType);
       setShowRemoveDialog(true);
       return;
@@ -76,6 +79,8 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const applyShiftChange = (shiftType: ShiftType) => {
     setIsLoading(true);
+    
+    // Use a shorter timeout to prevent UI from hanging too long
     setTimeout(() => {
       setShift(shiftType);
       
@@ -106,7 +111,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       }
       
       setIsLoading(false);
-    }, 300);
+    }, 100); // Reduced timeout from 300ms to 100ms
   };
   
   const handleRemoveDialogConfirm = () => {
