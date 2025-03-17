@@ -46,11 +46,16 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     handleEmployeeWaveChangeBase(employeeId, waveId, waves);
   };
 
+  // Neuer Handler für das Hinzufügen einer Welle mit automatischer Verteilung
+  const handleAddWaveWithDistribution = () => {
+    handleAddWave(() => applyWaveDistribution(waves));
+  };
+
   return {
     waves,
     employeesPerWave,
     assignments,
-    handleAddWave,
+    handleAddWave: handleAddWaveWithDistribution,
     handleRemoveWave: handleWaveRemoveWithReassignment,
     handleWaveTimeChange: handleWaveTimeChangeWithAssignments,
     handleRequestedCountChange: (waveId: number, newCount: number) => 

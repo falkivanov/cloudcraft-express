@@ -29,13 +29,43 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
   };
 
   // Add a new wave
-  const handleAddWave = () => {
+  const handleAddWave = (redistributeEmployees: (waves: Wave[]) => void) => {
     if (waveState.waveCount < 3) {
       const newWaveId = waveState.waveCount + 1;
-      setWaveCount(newWaveId);
       
-      // Add new wave with default requested count of 0
-      setWaves([...waveState.waves, { id: newWaveId, time: "11:00", requestedCount: 0 }]);
+      // Berechne die Anfangsverteilung für die neue Welle
+      const currentTotalRequested = waveState.waves.reduce((sum, w) => sum + w.requestedCount, 0);
+      const remainingEmployees = Math.max(0, scheduledEmployees.length - currentTotalRequested);
+      
+      // Erstelle die neue Welle mit einer angemessenen Anfangsanzahl
+      const newWaveRequestedCount = Math.min(
+        Math.floor(remainingEmployees / 2), // Verteile verbleibende Mitarbeiter
+        Math.floor(scheduledEmployees.length / (newWaveId)) // Oder gleichmäßige Verteilung
+      );
+      
+      // Erstelle die neue Welle
+      const newWave = { 
+        id: newWaveId, 
+        time: "11:00", 
+        requestedCount: Math.max(newWaveRequestedCount, 1) // Mindestens 1
+      };
+      
+      // Aktualisiere die Wellen
+      const updatedWaves = [...waveState.waves, newWave];
+      
+      // Wenn die neue Welle Mitarbeiter benötigt, reduziere entsprechend die Anzahl bei der ersten Welle
+      if (newWave.requestedCount > 0 && updatedWaves[0].requestedCount > newWave.requestedCount) {
+        updatedWaves[0] = {
+          ...updatedWaves[0],
+          requestedCount: updatedWaves[0].requestedCount - newWave.requestedCount
+        };
+      }
+      
+      setWaveCount(newWaveId);
+      setWaves(updatedWaves);
+      
+      // Wende die neue Verteilung an
+      redistributeEmployees(updatedWaves);
     }
   };
 
