@@ -36,9 +36,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   // Tomorrow's assignments (which will be empty until auto-assignment is made)
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   
-  // State for showing the schedule not finalized warning
-  const [showWarning, setShowWarning] = useState(false);
-  
   // Load today's assignments (simulated)
   useEffect(() => {
     // In a real application, this would fetch from an API
@@ -55,7 +52,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   // Automatic assignment for tomorrow
   const handleAutoAssign = () => {
     if (!isScheduleFinalized) {
-      setShowWarning(true);
       toast.error("Dienstplan nicht finalisiert", {
         description: "Um Fahrzeuge zuzuordnen, muss der Dienstplan zuerst abgeschlossen werden."
       });
@@ -90,7 +86,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     });
     
     setTomorrowAssignments(newAssignments);
-    setShowWarning(false);
     
     toast.success(`${Object.keys(newAssignments).length} Fahrzeuge für ${formattedTomorrow} automatisch zugewiesen`, {
       description: "Überprüfen Sie die Zuordnungen und speichern Sie diese bei Bedarf."
@@ -100,7 +95,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   // Save tomorrow's assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
     if (!isScheduleFinalized) {
-      setShowWarning(true);
       toast.error("Dienstplan nicht finalisiert", {
         description: "Um Fahrzeugzuordnungen zu speichern, muss der Dienstplan zuerst abgeschlossen werden."
       });
@@ -133,7 +127,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     // Here would be the API call in a real app
     
     toast.success(`Fahrzeugzuordnungen für ${formattedTomorrow} wurden gespeichert!`);
-    setShowWarning(false);
   };
   
   // Helper function to get employee name by ID
@@ -144,16 +137,6 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   
   return (
     <div className="space-y-6">
-      {showWarning && !isScheduleFinalized && (
-        <Alert variant="warning" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Hinweis</AlertTitle>
-          <AlertDescription>
-            Der Dienstplan wurde noch nicht finalisiert. Um alle Fahrzeugzuordnungen zu speichern, sollte der Dienstplan zuerst abgeschlossen werden.
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold">Fahrzeugzuordnung</h2>
         <div className="flex gap-2">
@@ -187,8 +170,8 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
           {activeVehicles.map(vehicle => (
             <TableRow key={vehicle.id}>
               <TableCell>
-                <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
-                <div className="text-sm text-muted-foreground">{vehicle.licensePlate}</div>
+                <div className="font-medium">{vehicle.licensePlate}</div>
+                <div className="text-sm text-muted-foreground">{vehicle.brand} {vehicle.model}</div>
               </TableCell>
               <TableCell>
                 {todayAssignments[vehicle.id] ? (
