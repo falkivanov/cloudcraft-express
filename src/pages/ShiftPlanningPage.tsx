@@ -47,7 +47,37 @@ const ShiftPlanningPage = () => {
         )}
       </div>
       
-      <TabsContent value="schedule" className="mt-0">
+      <Tabs value={activeTab} className="hidden">
+        <TabsContent value="schedule" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Wochendienstplan</CardTitle>
+              <CardDescription>
+                Erstellen und bearbeiten Sie den Dienstplan für die kommende Woche.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ShiftSchedule />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="vehicles" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fahrzeugzuordnung</CardTitle>
+              <CardDescription>
+                Ordnen Sie den geplanten Mitarbeitern Fahrzeuge zu.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VehicleAssignmentView isEnabled={isScheduleFinalized} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {activeTab === "schedule" && (
         <Card>
           <CardHeader>
             <CardTitle>Wochendienstplan</CardTitle>
@@ -59,9 +89,9 @@ const ShiftPlanningPage = () => {
             <ShiftSchedule />
           </CardContent>
         </Card>
-      </TabsContent>
+      )}
       
-      <TabsContent value="vehicles" className="mt-0">
+      {activeTab === "vehicles" && (
         <Card>
           <CardHeader>
             <CardTitle>Fahrzeugzuordnung</CardTitle>
@@ -73,7 +103,7 @@ const ShiftPlanningPage = () => {
             <VehicleAssignmentView isEnabled={isScheduleFinalized} />
           </CardContent>
         </Card>
-      </TabsContent>
+      )}
     </div>
   );
 };
