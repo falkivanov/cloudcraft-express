@@ -1,199 +1,166 @@
 
 import React, { useState, useEffect } from "react";
-import { format, subDays } from "date-fns";
-import { de } from "date-fns/locale";
+import { format, addDays } from "date-fns";
 import { Car, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { toast } from "sonner";
 import { initialVehicles } from "@/data/sampleVehicleData";
-import { ShiftType } from "../utils/shift-utils";
 
 // Sample vehicles for demonstration from our data source
-const sampleVehicles = initialVehicles.map(vehicle => ({
+const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
   id: vehicle.id,
   licensePlate: vehicle.licensePlate,
   brand: vehicle.brand,
-  model: vehicle.model,
-  status: vehicle.status === "Aktiv" ? "Aktiv" : "In Werkstatt"
+  model: vehicle.model
 }));
-
-// Example of assigned shifts
-const assignedShifts = [
-  { employeeId: "1", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
-  { employeeId: "2", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
-  { employeeId: "3", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
-];
 
 const DailyVehicleAssignment: React.FC = () => {
   const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+  const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
   
-  // Filter employees with shifts today
-  const employeesWithShifts = initialEmployees.filter(emp => 
-    assignedShifts.some(shift => 
-      shift.employeeId === emp.id && shift.date === today
-    )
-  );
+  // Today's assignments (which vehicles are assigned to which employees)
+  const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
   
-  // Status of vehicle assignments per employee
-  const [assignments, setAssignments] = useState<Record<string, string>>({});
-  // Previous day's assignments
-  const [previousAssignments, setPreviousAssignments] = useState<Record<string, string>>({});
+  // Tomorrow's assignments (which will be empty until auto-assignment is made)
+  const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   
-  // Load previous day's assignments (simulated)
+  // Load today's assignments (simulated)
   useEffect(() => {
     // In a real application, this would fetch from an API
-    const mockPreviousAssignments: Record<string, string> = {
-      "1": "1", // Employee 1 had vehicle 1
-      "2": "3", // Employee 2 had vehicle 3
-      "3": "5", // Employee 3 had vehicle 5
+    const mockTodayAssignments: Record<string, string> = {
+      "1": "1", // Vehicle 1 is assigned to employee 1 (Max Mustermann)
+      "2": "3", // Vehicle 2 is assigned to employee 3 (Thomas Weber)
+      "3": "2", // Vehicle 3 is assigned to employee 2 (Anna Schmidt)
+      "6": "5", // Vehicle 6 is assigned to employee 5 (Michael Schulz)
+      "9": "7", // Vehicle 9 is assigned to employee 7 (Julia Fischer)
     };
-    setPreviousAssignments(mockPreviousAssignments);
+    setTodayAssignments(mockTodayAssignments);
   }, []);
   
-  // Automatic assignment based on employee preferences
+  // Automatic assignment for tomorrow
   const handleAutoAssign = () => {
     const newAssignments: Record<string, string> = {};
-    const availableVehicles = new Set(sampleVehicles
-      .filter(v => v.status === "Aktiv")
-      .map(v => v.id));
     
-    // First try to assign preferred vehicles
-    employeesWithShifts.forEach(employee => {
-      // Find the employee's preferred vehicle by license plate
-      const preferredVehicle = sampleVehicles.find(
-        v => v.licensePlate === employee.preferredVehicle && v.status === "Aktiv"
+    // Get list of active employees
+    const activeEmployees = initialEmployees.filter(emp => emp.status === "Aktiv");
+    
+    // Simple algorithm: assign vehicles based on preferences if possible
+    activeVehicles.forEach(vehicle => {
+      // First check if any employee prefers this vehicle
+      const employeeWithPreference = activeEmployees.find(
+        emp => emp.preferredVehicle === vehicle.licensePlate && 
+              !Object.values(newAssignments).includes(emp.id)
       );
       
-      if (preferredVehicle && availableVehicles.has(preferredVehicle.id)) {
-        newAssignments[employee.id] = preferredVehicle.id;
-        availableVehicles.delete(preferredVehicle.id);
+      if (employeeWithPreference) {
+        newAssignments[vehicle.id] = employeeWithPreference.id;
+      } else {
+        // If no preference, assign to any available employee
+        const availableEmployee = activeEmployees.find(
+          emp => !Object.values(newAssignments).includes(emp.id)
+        );
+        
+        if (availableEmployee) {
+          newAssignments[vehicle.id] = availableEmployee.id;
+        }
       }
     });
     
-    // Then assign remaining employees with available vehicles
-    employeesWithShifts.forEach(employee => {
-      if (!newAssignments[employee.id] && availableVehicles.size > 0) {
-        const nextVehicleId = Array.from(availableVehicles)[0];
-        newAssignments[employee.id] = nextVehicleId;
-        availableVehicles.delete(nextVehicleId);
-      }
-    });
+    setTomorrowAssignments(newAssignments);
     
-    setAssignments(newAssignments);
-    
-    // Show success message
-    toast.success(`Fahrzeuge automatisch zugewiesen: ${Object.keys(newAssignments).length} von ${employeesWithShifts.length} Mitarbeitern`, {
-      description: availableVehicles.size === 0 && Object.keys(newAssignments).length < employeesWithShifts.length 
-        ? "Nicht genügend Fahrzeuge für alle Mitarbeiter verfügbar." 
-        : undefined
+    toast.success(`${Object.keys(newAssignments).length} Fahrzeuge für morgen automatisch zugewiesen`, {
+      description: "Überprüfen Sie die Zuordnungen und speichern Sie diese bei Bedarf."
     });
   };
   
-  // Save assignments (in a real app this would be sent to an API)
+  // Save tomorrow's assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
-    const savedAssignments = Object.entries(assignments).map(([employeeId, vehicleId]) => {
+    const savedAssignments = Object.entries(tomorrowAssignments).map(([vehicleId, employeeId]) => {
+      const vehicle = activeVehicles.find(v => v.id === vehicleId);
       const employee = initialEmployees.find(e => e.id === employeeId);
-      const vehicle = sampleVehicles.find(v => v.id === vehicleId);
       return {
-        id: `${employeeId}-${vehicleId}-${today}`,
-        employeeId,
-        employeeName: employee?.name || "",
+        id: `${vehicleId}-${employeeId}-${tomorrow}`,
         vehicleId,
         vehicleInfo: `${vehicle?.brand} ${vehicle?.model} (${vehicle?.licensePlate})`,
-        date: today,
+        employeeId,
+        employeeName: employee?.name || "",
+        date: tomorrow,
         assignedAt: new Date().toISOString(),
         assignedBy: "Admin"
       };
     });
     
-    console.log("Saved assignments:", savedAssignments);
+    console.log("Saved assignments for tomorrow:", savedAssignments);
     // Here would be the API call in a real app
     
-    toast.success("Fahrzeugzuordnungen wurden gespeichert!");
+    toast.success("Fahrzeugzuordnungen für morgen wurden gespeichert!");
   };
   
-  // Helper function to get vehicle info by ID
-  const getVehicleInfo = (vehicleId: string) => {
-    const vehicle = sampleVehicles.find(v => v.id === vehicleId);
-    return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})` : "Nicht zugewiesen";
+  // Helper function to get employee name by ID
+  const getEmployeeName = (employeeId: string) => {
+    const employee = initialEmployees.find(e => e.id === employeeId);
+    return employee ? employee.name : "Nicht zugewiesen";
   };
   
   return (
     <div className="space-y-6">
       <div className="flex justify-between mb-6">
-        <h2 className="text-xl font-semibold">Fahrzeugzuordnung für heute</h2>
-        <Button 
-          variant="outline"
-          onClick={handleAutoAssign}
-          disabled={employeesWithShifts.length === 0}
-          className="gap-2"
-        >
-          <WandSparkles className="h-4 w-4" />
-          Auto-Zuordnung
-        </Button>
-      </div>
-      
-      {employeesWithShifts.length === 0 ? (
-        <div className="text-center p-8 text-muted-foreground">
-          <p>Keine geplanten Mitarbeiter für heute gefunden.</p>
+        <h2 className="text-xl font-semibold">Fahrzeugzuordnung</h2>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleAutoAssign}
+            className="gap-2"
+          >
+            <WandSparkles className="h-4 w-4" />
+            Auto-Zuordnung für morgen
+          </Button>
+          <Button 
+            disabled={Object.keys(tomorrowAssignments).length === 0}
+            onClick={handleSaveAssignments}
+          >
+            <Car className="h-4 w-4" />
+            Zuordnungen speichern
+          </Button>
         </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mitarbeiter</TableHead>
-              <TableHead>Vorherige Zuordnung</TableHead>
-              <TableHead>Neue Zuordnung</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {employeesWithShifts.map(employee => (
-              <TableRow key={employee.id}>
-                <TableCell>
-                  <div className="font-medium">{employee.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Präferenz: {employee.preferredVehicle || "Keine"}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {previousAssignments[employee.id] ? (
-                    getVehicleInfo(previousAssignments[employee.id])
-                  ) : (
-                    "Keine vorherige Zuordnung"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {assignments[employee.id] ? (
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-green-50">
-                        {getVehicleInfo(assignments[employee.id])}
-                      </Badge>
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground">Noch nicht zugewiesen</div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-      
-      <div className="pt-4 flex justify-end">
-        <Button 
-          disabled={employeesWithShifts.length === 0 || Object.keys(assignments).length === 0}
-          onClick={handleSaveAssignments}
-        >
-          <Car className="mr-2 h-4 w-4" />
-          Zuordnungen speichern
-        </Button>
       </div>
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Fahrzeug</TableHead>
+            <TableHead>Fahrer heute</TableHead>
+            <TableHead>Fahrer morgen</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {activeVehicles.map(vehicle => (
+            <TableRow key={vehicle.id}>
+              <TableCell>
+                <div className="font-medium">{vehicle.brand} {vehicle.model}</div>
+                <div className="text-sm text-muted-foreground">{vehicle.licensePlate}</div>
+              </TableCell>
+              <TableCell>
+                {todayAssignments[vehicle.id] ? (
+                  <div>{getEmployeeName(todayAssignments[vehicle.id])}</div>
+                ) : (
+                  <div className="text-muted-foreground">Nicht zugewiesen</div>
+                )}
+              </TableCell>
+              <TableCell>
+                {tomorrowAssignments[vehicle.id] ? (
+                  <div>{getEmployeeName(tomorrowAssignments[vehicle.id])}</div>
+                ) : (
+                  <div className="text-muted-foreground">Noch nicht zugewiesen</div>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
