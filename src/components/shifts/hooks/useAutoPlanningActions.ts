@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createAutomaticPlan } from "../utils/auto-planning-utils";
 import { dispatchShiftEvent } from "../utils/shift-utils";
 import { Employee } from "@/types/employee";
+import { ShiftAssignment } from "@/types/shift";
 
 type PlanningMode = "forecast" | "maximum";
 
@@ -14,6 +15,7 @@ interface UseAutoPlanningProps {
   isTemporarilyFlexible: (employeeId: string) => boolean;
   formatDateKey: (date: Date) => string;
   clearShifts: () => void;
+  shiftsMap: Map<string, ShiftAssignment>;
 }
 
 export const useAutoPlanningActions = ({
@@ -22,7 +24,8 @@ export const useAutoPlanningActions = ({
   requiredEmployees,
   isTemporarilyFlexible,
   formatDateKey,
-  clearShifts
+  clearShifts,
+  shiftsMap
 }: UseAutoPlanningProps) => {
   const { toast } = useToast();
   const [isAutoPlanningLoading, setIsAutoPlanningLoading] = useState(false);
@@ -54,9 +57,6 @@ export const useAutoPlanningActions = ({
     setIsPlanningOptionsOpen(false);
     setIsAutoPlanningLoading(true);
     
-    // Clear existing shifts before auto-planning
-    clearShifts();
-    
     try {
       // Generate the plan with the selected mode
       const plan = createAutomaticPlan({
@@ -65,12 +65,16 @@ export const useAutoPlanningActions = ({
         requiredEmployees,
         isTemporarilyFlexible,
         formatDateKey,
-        planningMode
+        planningMode,
+        existingShifts: shiftsMap // Pass the existing shifts
       });
       
-      // Small delay to allow clearing shifts to finish
+      // Small delay to allow UI to update
       setTimeout(() => {
         try {
+          // First clear shifts that can be overridden (not special types)
+          clearShifts();
+          
           // Apply the plan by dispatching events for each assignment
           plan.forEach(({ employeeId, date, shiftType }) => {
             dispatchShiftEvent(employeeId, date, shiftType, 'add');

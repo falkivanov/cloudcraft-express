@@ -24,7 +24,8 @@ const ShiftSchedule = () => {
     selectedEmployeeForFlexOverride,
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
-    clearShifts
+    clearShifts,
+    shiftsMap
   } = useShiftSchedule(initialEmployees);
   
   const {
@@ -40,7 +41,8 @@ const ShiftSchedule = () => {
     requiredEmployees,
     isTemporarilyFlexible,
     formatDateKey,
-    clearShifts
+    clearShifts,
+    shiftsMap
   });
   
   return (

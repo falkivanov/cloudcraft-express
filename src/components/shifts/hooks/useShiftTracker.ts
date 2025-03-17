@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { ShiftAssignment } from "@/types/shift";
+import { ShiftType } from "../utils/shift-utils";
 
 export const useShiftTracker = (weekDays: Date[]) => {
   // Get date string in yyyy-MM-dd format
@@ -13,9 +13,20 @@ export const useShiftTracker = (weekDays: Date[]) => {
   // Track scheduled employees (only those with shiftType "Arbeit")
   const [scheduledEmployees, setScheduledEmployees] = useState<Record<string, number>>({});
   
-  // Clear all shifts (used before auto-planning)
+  // Clear only regular shifts (preserves special shifts like Termin, Urlaub, Krank)
   const clearShifts = useCallback(() => {
-    setShiftsMap(new Map());
+    setShiftsMap(prevMap => {
+      const newMap = new Map<string, ShiftAssignment>();
+      
+      // Keep only special shifts
+      prevMap.forEach((shift, key) => {
+        if (shift.shiftType === "Termin" || shift.shiftType === "Urlaub" || shift.shiftType === "Krank") {
+          newMap.set(key, shift);
+        }
+      });
+      
+      return newMap;
+    });
     
     // Reset scheduled counts
     const initialScheduled: Record<string, number> = {};

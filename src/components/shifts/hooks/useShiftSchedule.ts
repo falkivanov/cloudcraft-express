@@ -33,7 +33,8 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     scheduledEmployees, 
     formatDateKey, 
     clearShifts,
-    refreshScheduledCounts 
+    refreshScheduledCounts,
+    shiftsMap 
   } = shiftTracker;
   
   // Custom previousWeek and nextWeek functions that reset flexibility and shifts
@@ -67,6 +68,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     selectedEmployeeForFlexOverride,
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
-    clearShifts
+    clearShifts,
+    shiftsMap
   };
 };
