@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ShiftType, dispatchShiftEvent, getBackgroundColorClass } from "./utils/shift-utils";
 import UnavailableCell from "./UnavailableCell";

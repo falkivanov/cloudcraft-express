@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/components/ui/use-toast";
+import { ShiftAssignment } from "@/types/shift";
 
 export const useShiftSchedule = (initialEmployees: Employee[]) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -31,6 +33,9 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   // Get date string in yyyy-MM-dd format
   const formatDateKey = (date: Date) => format(date, "yyyy-MM-dd");
   
+  // Initialize shifts map to track all current assignments
+  const [shiftsMap, setShiftsMap] = useState<Map<string, ShiftAssignment>>(new Map());
+  
   useEffect(() => {
     // Initialize scheduledEmployees with 0 counts for each day
     const initialScheduled: Record<string, number> = {};
@@ -42,31 +47,27 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     // Listen for shift assignments
     const handleShiftAssigned = (event: Event) => {
       const customEvent = event as CustomEvent;
-      const { assignment, action, countAsScheduled } = customEvent.detail;
+      const { assignment, action } = customEvent.detail;
       
       if (!assignment || !assignment.date) {
         console.error("Invalid assignment data:", customEvent.detail);
         return;
       }
       
-      // Use functional state updates to avoid race conditions
-      setScheduledEmployees(prev => {
-        const newCounts = {...prev};
+      console.log(`Shift event received:`, { assignment, action });
+      
+      // Update the shiftsMap first
+      setShiftsMap(prevMap => {
+        const newMap = new Map(prevMap);
+        const key = `${assignment.employeeId}-${assignment.date}`;
         
         if (action === 'add') {
-          // Only increment if the shift type is "Arbeit"
-          if (assignment.shiftType === "Arbeit") {
-            newCounts[assignment.date] = (newCounts[assignment.date] || 0) + 1;
-          }
+          newMap.set(key, assignment);
         } else if (action === 'remove') {
-          // Only decrement if the previous shift was "Arbeit"
-          if (assignment.shiftType === "Arbeit") {
-            const currentCount = newCounts[assignment.date] || 0;
-            newCounts[assignment.date] = Math.max(0, currentCount - 1);
-          }
+          newMap.delete(key);
         }
         
-        return newCounts;
+        return newMap;
       });
     };
     
@@ -76,6 +77,27 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       document.removeEventListener('shiftAssigned', handleShiftAssigned);
     };
   }, [weekDays]);
+  
+  // Effect to recalculate scheduled counts whenever shiftsMap changes
+  useEffect(() => {
+    const newScheduledCounts: Record<string, number> = {};
+    
+    // Initialize with 0 for all days
+    weekDays.forEach(day => {
+      newScheduledCounts[formatDateKey(day)] = 0;
+    });
+    
+    // Count all shifts of type "Arbeit" for each day
+    shiftsMap.forEach(shift => {
+      if (shift.shiftType === "Arbeit") {
+        const date = shift.date;
+        newScheduledCounts[date] = (newScheduledCounts[date] || 0) + 1;
+      }
+    });
+    
+    console.log("Updated scheduled counts:", newScheduledCounts);
+    setScheduledEmployees(newScheduledCounts);
+  }, [shiftsMap, weekDays]);
   
   // Function to refresh the counts when needed (e.g., when changing weeks)
   const refreshScheduledCounts = useCallback(() => {
@@ -92,6 +114,9 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     // Reset temporary flexibility overrides when changing weeks
     setTemporaryFlexibleEmployees([]);
     
+    // Reset shifts map when changing weeks
+    setShiftsMap(new Map());
+    
     // Reset scheduled counts for the new week
     setScheduledEmployees(refreshScheduledCounts());
   }, [selectedWeek, refreshScheduledCounts]);
@@ -101,6 +126,9 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     setSelectedWeek(nextWeek);
     // Reset temporary flexibility overrides when changing weeks
     setTemporaryFlexibleEmployees([]);
+    
+    // Reset shifts map when changing weeks
+    setShiftsMap(new Map());
     
     // Reset scheduled counts for the new week
     setScheduledEmployees(refreshScheduledCounts());

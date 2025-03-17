@@ -20,6 +20,13 @@ export const dispatchShiftEvent = (
         confirmed: false
       };
       
+      console.log(`Dispatching add shift event:`, {
+        employeeId,
+        date,
+        shiftType,
+        previousShiftType
+      });
+      
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
           assignment,
@@ -27,6 +34,12 @@ export const dispatchShiftEvent = (
         }
       }));
     } else if (action === 'remove') {
+      console.log(`Dispatching remove shift event:`, {
+        employeeId,
+        date,
+        previousShiftType
+      });
+      
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
           assignment: { 
