@@ -24,10 +24,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
       <tr>
         <th className="p-3 text-left min-w-[200px]">
           <div>Mitarbeiter</div>
-          <div className="mt-2 flex items-center justify-between rounded-md bg-background/80 px-2 py-1 text-xs shadow-sm">
-            <span className="font-medium text-muted-foreground">Forecast:</span>
-            <span className="font-medium text-muted-foreground ml-4">Geplant:</span>
-          </div>
+          {/* Removed the forecast/geplant text labels as requested */}
         </th>
         {weekDays.map((day, index) => {
           const dateKey = formatDateKey(day);

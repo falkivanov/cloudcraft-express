@@ -29,7 +29,7 @@ const RequiredEmployeesCell: React.FC<RequiredEmployeesCellProps> = ({
           min="0"
           value={requiredCount}
           onChange={(e) => onRequiredChange(e.target.value)}
-          className="w-10 h-6 text-center px-1 text-xs font-medium border-muted-foreground/20"
+          className="w-12 h-6 text-center px-1 text-xs font-medium border-muted-foreground/20"
         />
       </div>
       <div className="flex flex-col items-center">
