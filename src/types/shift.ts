@@ -3,7 +3,7 @@ export interface ShiftAssignment {
   id: string;
   employeeId: string;
   date: string;
-  shiftType: "Früh" | "Spät" | "Nacht";
+  shiftType: "Arbeit" | "Frei" | "Termin" | "Urlaub" | "Krank";
   confirmed: boolean;
 }
 

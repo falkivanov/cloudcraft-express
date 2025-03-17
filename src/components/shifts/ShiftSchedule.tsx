@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { de } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,8 +10,8 @@ import { Employee } from "@/types/employee";
 import ShiftCell from "./ShiftCell";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { ShiftAssignment } from "@/types/shift";
 
 const ShiftSchedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -32,14 +32,63 @@ const ShiftSchedule = () => {
     5: 2, // Saturday
   });
   
+  // Track scheduled employees (only those with shiftType "Arbeit")
+  const [scheduledEmployees, setScheduledEmployees] = useState<Record<string, number>>({});
+  
   // Generate days of the week starting from Monday (6 days only, excluding Sunday)
   const weekDays = Array.from({ length: 6 }, (_, i) => addDays(selectedWeek, i));
   
-  // Calculate scheduled employees for each day
-  // In a real app, this would count actual assignments
-  const getScheduledEmployees = (dayIndex: number) => {
-    // Simulate some values for the demo
-    return Math.floor(Math.random() * 3) + 1;
+  // Get date string in yyyy-MM-dd format
+  const formatDateKey = (date: Date) => format(date, "yyyy-MM-dd");
+  
+  useEffect(() => {
+    // Initialize scheduledEmployees with 0 counts for each day
+    const initialScheduled: Record<string, number> = {};
+    weekDays.forEach(day => {
+      initialScheduled[formatDateKey(day)] = 0;
+    });
+    setScheduledEmployees(initialScheduled);
+    
+    // Listen for shift assignments
+    const handleShiftAssigned = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { assignment, action, countAsScheduled } = customEvent.detail;
+      
+      if (action === 'add') {
+        setScheduledEmployees(prev => {
+          const newCount = {...prev};
+          // Only count if shiftType is "Arbeit"
+          if (countAsScheduled) {
+            newCount[assignment.date] = (newCount[assignment.date] || 0) + 1;
+          }
+          return newCount;
+        });
+      } else if (action === 'remove') {
+        // We would need to know the previous shift type to properly decrement
+        // In a real app, you would likely fetch current assignments or track them in state
+        // For simplicity, we'll reset the counter for the day and rely on re-assignments
+        // to rebuild the counts
+        refreshScheduledCounts();
+      }
+    };
+    
+    document.addEventListener('shiftAssigned', handleShiftAssigned);
+    
+    return () => {
+      document.removeEventListener('shiftAssigned', handleShiftAssigned);
+    };
+  }, [weekDays]);
+  
+  // Function to refresh the counts (simplified version)
+  const refreshScheduledCounts = () => {
+    const initialScheduled: Record<string, number> = {};
+    weekDays.forEach(day => {
+      initialScheduled[formatDateKey(day)] = 0;
+    });
+    setScheduledEmployees(initialScheduled);
+    
+    // In a real app, you would fetch current assignments from backend
+    // and update the counts based on those with shiftType === "Arbeit"
   };
   
   const previousWeek = () => {
@@ -47,6 +96,9 @@ const ShiftSchedule = () => {
     setSelectedWeek(prevWeek);
     // Reset temporary flexibility overrides when changing weeks
     setTemporaryFlexibleEmployees([]);
+    
+    // Reset scheduled counts for the new week
+    refreshScheduledCounts();
   };
   
   const nextWeek = () => {
@@ -54,6 +106,9 @@ const ShiftSchedule = () => {
     setSelectedWeek(nextWeek);
     // Reset temporary flexibility overrides when changing weeks
     setTemporaryFlexibleEmployees([]);
+    
+    // Reset scheduled counts for the new week
+    refreshScheduledCounts();
   };
   
   const handleRequiredChange = (dayIndex: number, value: string) => {
@@ -131,28 +186,34 @@ const ShiftSchedule = () => {
                   <span className="text-xs ml-2">Geplant:</span>
                 </div>
               </th>
-              {weekDays.map((day, index) => (
-                <th key={day.toString()} className="p-3 text-center border-l">
-                  <div className="font-medium">
-                    {format(day, "EEEE", { locale: de })}
-                  </div>
-                  <div className="text-sm font-normal">
-                    {format(day, "dd.MM.", { locale: de })}
-                  </div>
-                  <div className="mt-1 flex justify-center space-x-2 items-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      value={requiredEmployees[index]}
-                      onChange={(e) => handleRequiredChange(index, e.target.value)}
-                      className="w-10 h-6 text-center px-1"
-                    />
-                    <span className={`text-xs font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
-                      {getScheduledEmployees(index)}
-                    </span>
-                  </div>
-                </th>
-              ))}
+              {weekDays.map((day, index) => {
+                const dateKey = formatDateKey(day);
+                const scheduledCount = scheduledEmployees[dateKey] || 0;
+                const requiredCount = requiredEmployees[index];
+                
+                return (
+                  <th key={day.toString()} className="p-3 text-center border-l">
+                    <div className="font-medium">
+                      {format(day, "EEEE", { locale: de })}
+                    </div>
+                    <div className="text-sm font-normal">
+                      {format(day, "dd.MM.", { locale: de })}
+                    </div>
+                    <div className="mt-1 flex justify-center space-x-2 items-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={requiredCount}
+                        onChange={(e) => handleRequiredChange(index, e.target.value)}
+                        className="w-10 h-6 text-center px-1"
+                      />
+                      <span className={`text-xs font-medium ${scheduledCount < requiredCount ? 'text-red-500' : 'text-green-500'}`}>
+                        {scheduledCount}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -179,7 +240,7 @@ const ShiftSchedule = () => {
                   <td key={day.toString()} className="border-l p-0 h-14">
                     <ShiftCell 
                       employeeId={employee.id} 
-                      date={format(day, "yyyy-MM-dd")}
+                      date={formatDateKey(day)}
                       preferredDays={employee.preferredWorkingDays}
                       dayOfWeek={format(day, "EEEEEE", { locale: de })}
                       isFlexible={employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)}

@@ -6,7 +6,17 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { SunIcon, MoonIcon, Loader2Icon, PlusIcon, XCircleIcon, AlertTriangleIcon } from "lucide-react";
+import { 
+  BriefcaseIcon, 
+  SunIcon, 
+  CalendarIcon, 
+  UmbrellaIcon, 
+  ThermometerIcon, 
+  Loader2Icon, 
+  PlusIcon, 
+  XCircleIcon, 
+  AlertTriangleIcon 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShiftAssignment } from "@/types/shift";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,7 +29,7 @@ interface ShiftCellProps {
   isFlexible?: boolean;
 }
 
-type ShiftType = "Früh" | "Spät" | "Nacht" | null;
+type ShiftType = "Arbeit" | "Frei" | "Termin" | "Urlaub" | "Krank" | null;
 
 const ShiftCell: React.FC<ShiftCellProps> = ({ 
   employeeId, 
@@ -61,7 +71,12 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
           confirmed: false
         };
         const event = new CustomEvent('shiftAssigned', { 
-          detail: { assignment, action: 'add' }
+          detail: { 
+            assignment, 
+            action: 'add',
+            // Only count as "scheduled" if the shift type is "Arbeit"
+            countAsScheduled: shiftType === "Arbeit"
+          }
         });
         document.dispatchEvent(event);
       } else {
@@ -82,12 +97,16 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     if (isLoading) return <Loader2Icon className="h-4 w-4 animate-spin" />;
     
     switch (shift) {
-      case "Früh":
+      case "Arbeit":
+        return <BriefcaseIcon className="h-4 w-4 text-blue-600" />;
+      case "Frei":
         return <SunIcon className="h-4 w-4 text-yellow-500" />;
-      case "Spät":
-        return <MoonIcon className="h-4 w-4 text-blue-500" />;
-      case "Nacht":
-        return <MoonIcon className="h-4 w-4 text-indigo-800" />;
+      case "Termin":
+        return <CalendarIcon className="h-4 w-4 text-purple-500" />;
+      case "Urlaub":
+        return <UmbrellaIcon className="h-4 w-4 text-green-500" />;
+      case "Krank":
+        return <ThermometerIcon className="h-4 w-4 text-red-500" />;
       default:
         return <PlusIcon className="h-4 w-4" />;
     }
@@ -99,12 +118,16 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     }
     
     switch (shift) {
-      case "Früh":
-        return "bg-yellow-50";
-      case "Spät":
+      case "Arbeit":
         return "bg-blue-50";
-      case "Nacht":
-        return "bg-indigo-50";
+      case "Frei":
+        return "bg-yellow-50";
+      case "Termin":
+        return "bg-purple-50";
+      case "Urlaub":
+        return "bg-green-50";
+      case "Krank":
+        return "bg-red-50";
       default:
         return isPreferredDay ? "bg-green-50" : "";
     }
@@ -143,17 +166,25 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
-        <DropdownMenuItem onClick={() => handleShiftSelect("Früh")}>
+        <DropdownMenuItem onClick={() => handleShiftSelect("Arbeit")}>
+          <BriefcaseIcon className="h-4 w-4 text-blue-600 mr-2" />
+          Arbeit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleShiftSelect("Frei")}>
           <SunIcon className="h-4 w-4 text-yellow-500 mr-2" />
-          Frühschicht
+          Frei
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Spät")}>
-          <MoonIcon className="h-4 w-4 text-blue-500 mr-2" />
-          Spätschicht
+        <DropdownMenuItem onClick={() => handleShiftSelect("Termin")}>
+          <CalendarIcon className="h-4 w-4 text-purple-500 mr-2" />
+          Termin
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Nacht")}>
-          <MoonIcon className="h-4 w-4 text-indigo-800 mr-2" />
-          Nachtschicht
+        <DropdownMenuItem onClick={() => handleShiftSelect("Urlaub")}>
+          <UmbrellaIcon className="h-4 w-4 text-green-500 mr-2" />
+          Urlaub
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleShiftSelect("Krank")}>
+          <ThermometerIcon className="h-4 w-4 text-red-500 mr-2" />
+          Krank
         </DropdownMenuItem>
         {shift && (
           <DropdownMenuItem onClick={() => handleShiftSelect(null)}>
