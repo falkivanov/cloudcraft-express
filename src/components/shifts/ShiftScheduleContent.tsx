@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,9 @@ import { isTomorrow, format } from "date-fns";
 import { de } from "date-fns/locale";
 
 const ShiftScheduleContent: React.FC = () => {
+  // Default tab value
+  const [activeTab, setActiveTab] = useState<string>("weekplan");
+  
   const {
     weekDays,
     formatDateKey,
@@ -39,6 +42,12 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    console.log("Tab changed to:", value);
+    setActiveTab(value);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -48,13 +57,12 @@ const ShiftScheduleContent: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="weekplan" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-4 w-full">
             <TabsTrigger value="weekplan" className="flex-1">Wochendienstplan</TabsTrigger>
             <TabsTrigger 
               value="nextday" 
               className="flex-1" 
-              // Only disable if there's no tomorrow or if it's not finalized
               disabled={!tomorrow || !isTomorrowFinalized}
             >
               Einsatzplan für {tomorrowDisplay}
