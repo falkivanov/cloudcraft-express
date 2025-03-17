@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { useShiftSchedule } from "./hooks/useShiftSchedule";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { isTomorrow, format } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "@/components/ui/use-toast";
 
 const ShiftScheduleContent: React.FC = () => {
   // Default tab value
@@ -45,8 +46,26 @@ const ShiftScheduleContent: React.FC = () => {
   // Handle tab change
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
+    
+    // If trying to switch to nextday tab but it's not finalized, prevent change
+    if (value === "nextday" && !isTomorrowFinalized) {
+      toast({
+        title: "Dienstplan nicht finalisiert",
+        description: "Der Dienstplan für morgen muss zuerst finalisiert werden.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setActiveTab(value);
   };
+
+  // Reset to weekplan tab when finalization status changes
+  useEffect(() => {
+    if (!isTomorrowFinalized && activeTab === "nextday") {
+      setActiveTab("weekplan");
+    }
+  }, [isTomorrowFinalized]);
 
   return (
     <Card>
@@ -62,8 +81,7 @@ const ShiftScheduleContent: React.FC = () => {
             <TabsTrigger value="weekplan" className="flex-1">Wochendienstplan</TabsTrigger>
             <TabsTrigger 
               value="nextday" 
-              className="flex-1" 
-              disabled={!tomorrow || !isTomorrowFinalized}
+              className="flex-1"
             >
               Einsatzplan für {tomorrowDisplay}
               {!isTomorrowFinalized && tomorrow && (
