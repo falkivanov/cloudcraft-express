@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 
 /**
@@ -19,7 +18,8 @@ export const exportEmployeesToCSV = (employees: Employee[], filename: string) =>
     'Arbeitstage pro Woche',
     'Bevorzugtes Fahrzeug',
     'Bevorzugte Arbeitstage',
-    'Möchte 6 Tage arbeiten'
+    'Möchte 6 Tage arbeiten',
+    'Arbeitstage flexibel'
   ];
   
   // Transform the employee data to CSV rows
@@ -36,7 +36,8 @@ export const exportEmployeesToCSV = (employees: Employee[], filename: string) =>
     employee.workingDaysAWeek.toString(),
     employee.preferredVehicle,
     employee.preferredWorkingDays.join(','),
-    employee.wantsToWorkSixDays ? 'Ja' : 'Nein'
+    employee.wantsToWorkSixDays ? 'Ja' : 'Nein',
+    employee.isWorkingDaysFlexible !== false ? 'Ja' : 'Nein'
   ]);
   
   // Combine headers and rows
@@ -135,6 +136,7 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
           const preferredVehicleIndex = headers.findIndex(h => h.includes('Bevorzugtes Fahrzeug'));
           const preferredWorkingDaysIndex = headers.findIndex(h => h.includes('Bevorzugte Arbeitstage'));
           const wantsToWorkSixDaysIndex = headers.findIndex(h => h.includes('Möchte 6 Tage'));
+          const isFlexibleIndex = headers.findIndex(h => h.includes('Arbeitstage flexibel'));
           
           // Create employee object with required fields
           const employee: Employee = {
@@ -153,7 +155,8 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
             preferredWorkingDays: preferredWorkingDaysIndex >= 0 && rowData[preferredWorkingDaysIndex] 
               ? rowData[preferredWorkingDaysIndex].split(',') 
               : ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
-            wantsToWorkSixDays: wantsToWorkSixDaysIndex >= 0 ? rowData[wantsToWorkSixDaysIndex].includes('Ja') : false
+            wantsToWorkSixDays: wantsToWorkSixDaysIndex >= 0 ? rowData[wantsToWorkSixDaysIndex].includes('Ja') : false,
+            isWorkingDaysFlexible: isFlexibleIndex >= 0 ? rowData[isFlexibleIndex].includes('Ja') : true
           };
           
           employees.push(employee);
@@ -191,7 +194,8 @@ export const generateEmployeeSampleCSV = () => {
     workingDaysAWeek: '5',
     preferredVehicle: 'VW Golf',
     preferredWorkingDays: 'Mo,Di,Mi,Do,Fr',
-    wantsToWorkSixDays: 'Nein'
+    wantsToWorkSixDays: 'Nein',
+    isWorkingDaysFlexible: 'Ja'
   };
   
   // Define the headers
@@ -208,7 +212,8 @@ export const generateEmployeeSampleCSV = () => {
     'Arbeitstage pro Woche',
     'Bevorzugtes Fahrzeug',
     'Bevorzugte Arbeitstage',
-    'Möchte 6 Tage arbeiten'
+    'Möchte 6 Tage arbeiten',
+    'Arbeitstage flexibel'
   ];
   
   // Create a sample row
@@ -225,7 +230,8 @@ export const generateEmployeeSampleCSV = () => {
     sampleEmployee.workingDaysAWeek,
     sampleEmployee.preferredVehicle,
     sampleEmployee.preferredWorkingDays,
-    sampleEmployee.wantsToWorkSixDays
+    sampleEmployee.wantsToWorkSixDays,
+    sampleEmployee.isWorkingDaysFlexible
   ];
   
   // Combine headers and rows

@@ -36,7 +36,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
     workingDaysAWeek: 5,
     preferredVehicle: "",
     preferredWorkingDays: [],
-    wantsToWorkSixDays: false
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
   };
 
   return (
