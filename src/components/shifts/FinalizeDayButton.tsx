@@ -22,7 +22,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button 
-            variant={isFinalized ? "secondary" : "outline"} 
+            variant={isFinalized ? "secondary" : "default"} 
             className="w-full"
             onClick={() => onFinalize(dateKey)}
             disabled={isFinalized}

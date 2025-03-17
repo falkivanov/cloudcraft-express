@@ -13,7 +13,7 @@ interface ScheduleTableHeaderProps {
   formatDateKey: (date: Date) => string;
   finalizedDays: string[];
   onFinalizeDay: (dateKey: string) => void;
-  nextWorkDay: Date | null;
+  tomorrowDate: Date | null;
 }
 
 const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
@@ -24,7 +24,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   formatDateKey,
   finalizedDays,
   onFinalizeDay,
-  nextWorkDay
+  tomorrowDate
 }) => {
   return (
     <thead className="bg-muted">
@@ -36,9 +36,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const dateKey = formatDateKey(day);
           const scheduledCount = scheduledEmployees[dateKey] || 0;
           const requiredCount = requiredEmployees[index];
-          const isTomorrowDate = isTomorrow(day);
-          const isNextWorkDay = nextWorkDay ? dateKey === formatDateKey(nextWorkDay) : false;
-          const showFinalizeButton = isTomorrowDate && isNextWorkDay;
+          const isTomorrowDate = tomorrowDate ? dateKey === formatDateKey(tomorrowDate) : false;
           const isFinalized = finalizedDays.includes(dateKey);
           
           return (
@@ -55,8 +53,8 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 onRequiredChange={(value) => onRequiredChange(index, value)}
               />
               
-              {/* Only show finalize button for tomorrow if it's a work day */}
-              {showFinalizeButton && (
+              {/* Nur für morgigen Tag anzeigen */}
+              {isTomorrowDate && (
                 <div className="mt-2">
                   <FinalizeDayButton
                     date={day}

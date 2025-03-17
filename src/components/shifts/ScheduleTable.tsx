@@ -4,7 +4,7 @@ import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
 import NextDaySchedule from "./NextDaySchedule";
-import { isTomorrow } from "date-fns";
+import { isTomorrow, format } from "date-fns";
 
 interface ScheduleTableProps {
   weekDays: Date[];
@@ -37,13 +37,15 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   getScheduledEmployeesForDay,
   setShowNextDaySchedule
 }) => {
-  // Find the next day that has scheduled employees
-  const nextWorkDayIndex = weekDays.findIndex(day => {
-    const dateKey = formatDateKey(day);
-    return (scheduledEmployees[dateKey] || 0) > 0 && isTomorrow(day);
-  });
+  // Einfach den morgen Tag finden (ohne Überprüfung auf scheduled employees)
+  const tomorrowIndex = weekDays.findIndex(day => isTomorrow(day));
+  const tomorrow = tomorrowIndex !== -1 ? weekDays[tomorrowIndex] : null;
   
-  const nextWorkDay = nextWorkDayIndex !== -1 ? weekDays[nextWorkDayIndex] : null;
+  // Für Debug-Zwecke loggen wir alle relevanten Daten
+  console.log('Tomorrow date:', tomorrow ? format(tomorrow, 'yyyy-MM-dd') : 'None found');
+  console.log('All weekDays:', weekDays.map(d => format(d, 'yyyy-MM-dd')));
+  console.log('Today is:', format(new Date(), 'yyyy-MM-dd'));
+  console.log('Is tomorrow check:', weekDays.map(d => ({ date: format(d, 'yyyy-MM-dd'), isTomorrow: isTomorrow(d) })));
   
   // Find the next day that has been finalized (to show the schedule for)
   const nextDayIndex = weekDays.findIndex(day => 
@@ -66,7 +68,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             formatDateKey={formatDateKey}
             finalizedDays={finalizedDays}
             onFinalizeDay={onFinalizeDay}
-            nextWorkDay={nextWorkDay}
+            tomorrowDate={tomorrow}
           />
           <tbody>
             {filteredEmployees.map((employee) => (
