@@ -61,8 +61,9 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   const handleFinalizeDay = (dateKey: string) => {
     if (!finalizedDays.includes(dateKey)) {
       setFinalizedDays(prev => [...prev, dateKey]);
+      // Automatisch zum Einsatzplan-Tab wechseln würde hier passieren
+      // Dies wird aber jetzt über die Tab-Komponente gesteuert
     }
-    setShowNextDaySchedule(true);
   };
   
   // Get employees scheduled for work on a specific day

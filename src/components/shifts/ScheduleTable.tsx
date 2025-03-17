@@ -3,7 +3,6 @@ import React from "react";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
-import NextDaySchedule from "./NextDaySchedule";
 import { isTomorrow, format } from "date-fns";
 
 interface ScheduleTableProps {
@@ -46,52 +45,33 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   console.log('All weekDays:', weekDays.map(d => format(d, 'yyyy-MM-dd')));
   console.log('Today is:', format(new Date(), 'yyyy-MM-dd'));
   console.log('Is tomorrow check:', weekDays.map(d => ({ date: format(d, 'yyyy-MM-dd'), isTomorrow: isTomorrow(d) })));
-  
-  // Find the next day that has been finalized (to show the schedule for)
-  const nextDayIndex = weekDays.findIndex(day => 
-    finalizedDays.includes(formatDateKey(day)) && isTomorrow(day)
-  );
-  
-  const nextDay = nextDayIndex !== -1 ? weekDays[nextDayIndex] : null;
-  const nextDayKey = nextDay ? formatDateKey(nextDay) : '';
-  const scheduledForNextDay = nextDay ? getScheduledEmployeesForDay(nextDayKey) : [];
 
   return (
-    <div className="space-y-4">
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full border-collapse">
-          <ScheduleTableHeader 
-            weekDays={weekDays}
-            requiredEmployees={requiredEmployees}
-            scheduledEmployees={scheduledEmployees}
-            onRequiredChange={handleRequiredChange}
-            formatDateKey={formatDateKey}
-            finalizedDays={finalizedDays}
-            onFinalizeDay={onFinalizeDay}
-            tomorrowDate={tomorrow}
-          />
-          <tbody>
-            {filteredEmployees.map((employee) => (
-              <EmployeeRow
-                key={employee.id}
-                employee={employee}
-                weekDays={weekDays}
-                formatDateKey={formatDateKey}
-                onFlexibilityOverride={onFlexibilityOverride}
-                isTemporarilyFlexible={isTemporarilyFlexible}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      {showNextDaySchedule && nextDay && (
-        <NextDaySchedule
-          scheduledEmployees={scheduledForNextDay}
-          date={nextDay}
-          onClose={() => setShowNextDaySchedule(false)}
+    <div className="border rounded-lg overflow-hidden">
+      <table className="w-full border-collapse">
+        <ScheduleTableHeader 
+          weekDays={weekDays}
+          requiredEmployees={requiredEmployees}
+          scheduledEmployees={scheduledEmployees}
+          onRequiredChange={handleRequiredChange}
+          formatDateKey={formatDateKey}
+          finalizedDays={finalizedDays}
+          onFinalizeDay={onFinalizeDay}
+          tomorrowDate={tomorrow}
         />
-      )}
+        <tbody>
+          {filteredEmployees.map((employee) => (
+            <EmployeeRow
+              key={employee.id}
+              employee={employee}
+              weekDays={weekDays}
+              formatDateKey={formatDateKey}
+              onFlexibilityOverride={onFlexibilityOverride}
+              isTemporarilyFlexible={isTemporarilyFlexible}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
