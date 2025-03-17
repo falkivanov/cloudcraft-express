@@ -21,7 +21,7 @@ export const useAssignments = (scheduledEmployees: Employee[], initialWaves: Wav
     
     // First, distribute employees according to requested counts
     currentWaves.forEach(wave => {
-      // Exakt die angeforderte Anzahl an Mitarbeitern zuweisen, nicht mehr und nicht weniger
+      // Assign exactly the requested number of employees, no more and no less
       const waveEmployees = employeesToDistribute.splice(0, wave.requestedCount);
       
       waveEmployees.forEach(emp => {
@@ -33,11 +33,11 @@ export const useAssignments = (scheduledEmployees: Employee[], initialWaves: Wav
       });
     });
     
-    // Wenn noch Mitarbeiter übrig sind, werden sie gleichmäßig auf alle Wellen verteilt
+    // If there are remaining employees, distribute them evenly across all waves
     if (employeesToDistribute.length > 0) {
       const waveIds = currentWaves.map(w => w.id);
       employeesToDistribute.forEach((emp, index) => {
-        // Zyklisch auf die Wellen verteilen
+        // Cyclically distribute across waves
         const waveIndex = index % waveIds.length;
         const waveId = waveIds[waveIndex];
         const waveTime = currentWaves.find(w => w.id === waveId)?.time || "11:00";

@@ -30,9 +30,10 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
   const handleWaveRemoveWithReassignment = (waveId: number) => {
     // Before removing, reassign employees from this wave to the first wave
     if (waves.length > 1) {
-      reassignEmployeesFromWave(waveId, waves[0].id, waves);
+      const firstWaveId = waves.find(w => w.id !== waveId)?.id || waves[0].id;
+      reassignEmployeesFromWave(waveId, firstWaveId, waves);
     }
-    handleRemoveWave(waveId, applyWaveDistribution);
+    handleRemoveWave(waveId, () => applyWaveDistribution(waves));
   };
 
   // Modify wave time with assignment updates
@@ -53,9 +54,9 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     handleRemoveWave: handleWaveRemoveWithReassignment,
     handleWaveTimeChange: handleWaveTimeChangeWithAssignments,
     handleRequestedCountChange: (waveId: number, newCount: number) => 
-      handleRequestedCountChange(waveId, newCount, applyWaveDistribution),
+      handleRequestedCountChange(waveId, newCount, () => applyWaveDistribution(waves)),
     handleEmployeeWaveChange,
     getEmployeeWaveId,
-    applyWaveDistribution
+    applyWaveDistribution: () => applyWaveDistribution(waves)
   };
 };

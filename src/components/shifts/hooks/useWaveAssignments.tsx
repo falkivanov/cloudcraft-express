@@ -1,2 +1,4 @@
 
-export { useWaveAssignments } from './wave-assignments';
+import { useWaveAssignments } from './wave-assignments/useWaveAssignments';
+
+export { useWaveAssignments };
