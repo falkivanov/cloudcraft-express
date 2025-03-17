@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Clock, Waves } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Clock, Waves, X } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -39,6 +39,14 @@ const StartTimeWaves: React.FC<StartTimeWavesProps> = ({
       waveNumber: 1
     }))
   );
+
+  // Count employees per wave
+  const employeesPerWave = waves.map(wave => {
+    return {
+      waveId: wave.id,
+      count: assignments.filter(a => a.waveNumber === wave.id).length
+    };
+  });
 
   // Handle adding a new wave
   const handleAddWave = () => {
@@ -117,38 +125,43 @@ const StartTimeWaves: React.FC<StartTimeWavesProps> = ({
         </div>
         
         <div className="flex gap-3 mt-2">
-          {waves.map((wave) => (
-            <Card key={wave.id} className="flex-1">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-sm font-medium">
-                    Welle {wave.id}
-                  </CardTitle>
-                  {waveCount > 1 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleRemoveWave(wave.id)}
-                      className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
-                    >
-                      ×
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <Input
-                    type="time"
-                    value={wave.time}
-                    onChange={(e) => handleWaveTimeChange(wave.id, e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {waves.map((wave) => {
+            const employeeCount = employeesPerWave.find(w => w.waveId === wave.id)?.count || 0;
+            
+            return (
+              <Card key={wave.id} className="flex-1">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-sm font-medium flex items-center">
+                      Welle {wave.id}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleRemoveWave(wave.id)}
+                        className="h-6 w-6 p-0 ml-2 text-red-500 hover:text-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <Input
+                      type="time"
+                      value={wave.time}
+                      onChange={(e) => handleWaveTimeChange(wave.id, e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {employeeCount} Mitarbeiter zugeordnet
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
       
