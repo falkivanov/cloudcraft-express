@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,13 +38,33 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Simplified tab change handler
+  // Finalize tomorrow handler with useCallback to prevent recreation on each render
+  const finalizeTomorrow = useCallback(() => {
+    if (tomorrow && tomorrowKey) {
+      handleFinalizeDay(tomorrowKey);
+      toast({
+        title: "Dienstplan finalisiert",
+        description: `Der Dienstplan für ${tomorrowDisplay} wurde erfolgreich finalisiert.`,
+        variant: "default"
+      });
+    }
+  }, [tomorrow, tomorrowKey, handleFinalizeDay, tomorrowDisplay]);
+
+  // Tab change handler with built-in finalization option
   const handleTabChange = (value: string) => {
-    // Only block if trying to access nextday tab when not finalized
+    // If trying to access nextday tab when not finalized, show toast with option to finalize
     if (value === "nextday" && !isTomorrowFinalized) {
       toast({
         title: "Dienstplan nicht finalisiert",
-        description: "Der Dienstplan für morgen muss zuerst finalisiert werden.",
+        description: `Der Dienstplan für ${tomorrowDisplay} muss zuerst finalisiert werden. Klicken Sie auf 'Jetzt finalisieren'.`,
+        action: (
+          <button 
+            onClick={finalizeTomorrow}
+            className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs"
+          >
+            Jetzt finalisieren
+          </button>
+        ),
         variant: "destructive"
       });
       return; // Prevent tab change
@@ -52,13 +72,6 @@ const ShiftScheduleContent: React.FC = () => {
     
     // Allow tab change
     setActiveTab(value);
-  };
-
-  // For testing purposes - remove in production
-  const manuallyFinalizeTomorrow = () => {
-    if (tomorrow && tomorrowKey) {
-      handleFinalizeDay(tomorrowKey);
-    }
   };
 
   return (
@@ -70,16 +83,6 @@ const ShiftScheduleContent: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Debug button - can be removed once the issue is fixed */}
-        <div className="mb-4">
-          <button 
-            onClick={manuallyFinalizeTomorrow}
-            className="px-3 py-1 bg-amber-100 text-amber-800 rounded-md text-xs"
-          >
-            Debug: Force finalize tomorrow ({isTomorrowFinalized ? "✓" : "✗"})
-          </button>
-        </div>
-        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-4 w-full">
             <TabsTrigger value="weekplan" className="flex-1">Wochendienstplan</TabsTrigger>
