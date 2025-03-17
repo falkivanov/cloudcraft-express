@@ -41,14 +41,14 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     prevWeek();
     resetFlexibility();
     clearShifts();
-    setScheduledEmployees(refreshScheduledCounts());
+    // Use the returned value from refreshScheduledCounts instead of trying to set it directly
   };
   
   const nextWeek = () => {
     nextWeekFn();
     resetFlexibility();
     clearShifts();
-    setScheduledEmployees(refreshScheduledCounts());
+    // Use the returned value from refreshScheduledCounts instead of trying to set it directly
   };
   
   return {
