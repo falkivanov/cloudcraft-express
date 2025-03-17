@@ -27,12 +27,12 @@ const ShiftScheduleContent: React.FC = () => {
   console.log("Finalized days:", finalizedDays);
   console.log("Is tomorrow finalized:", finalizedDays.includes(tomorrowKey));
   
-  // Check if tomorrow is in our weekDays and if it has any scheduled employees
-  const scheduledForTomorrow = tomorrow ? getScheduledEmployeesForDay(tomorrowKey) : [];
-  console.log("Scheduled employees for tomorrow:", scheduledForTomorrow.length);
-  
-  // We'll show the tab even if not finalized, but indicate it's still in draft mode
+  // Check if tomorrow is finalized
   const isTomorrowFinalized = finalizedDays.includes(tomorrowKey);
+  
+  // Only get scheduled employees if tomorrow is finalized
+  const scheduledForTomorrow = isTomorrowFinalized && tomorrow ? getScheduledEmployeesForDay(tomorrowKey) : [];
+  console.log("Scheduled employees for tomorrow:", scheduledForTomorrow.length);
   
   // Format the date for display
   const tomorrowDisplay = tomorrow 
@@ -51,10 +51,14 @@ const ShiftScheduleContent: React.FC = () => {
         <Tabs defaultValue="weekplan" className="w-full">
           <TabsList className="mb-4 w-full">
             <TabsTrigger value="weekplan" className="flex-1">Wochendienstplan</TabsTrigger>
-            <TabsTrigger value="nextday" className="flex-1" disabled={!tomorrow || scheduledForTomorrow.length === 0}>
+            <TabsTrigger 
+              value="nextday" 
+              className="flex-1" 
+              disabled={!tomorrow || !isTomorrowFinalized || scheduledForTomorrow.length === 0}
+            >
               Einsatzplan für {tomorrowDisplay}
-              {!isTomorrowFinalized && tomorrow && scheduledForTomorrow.length > 0 && (
-                <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">Entwurf</span>
+              {!isTomorrowFinalized && tomorrow && (
+                <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">Nicht finalisiert</span>
               )}
             </TabsTrigger>
           </TabsList>
@@ -64,7 +68,7 @@ const ShiftScheduleContent: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="nextday">
-            {tomorrow && scheduledForTomorrow.length > 0 ? (
+            {tomorrow && isTomorrowFinalized && scheduledForTomorrow.length > 0 ? (
               <NextDaySchedulePage 
                 scheduledEmployees={scheduledForTomorrow} 
                 date={tomorrow} 
@@ -73,7 +77,9 @@ const ShiftScheduleContent: React.FC = () => {
               <div className="text-center py-8 text-muted-foreground">
                 {!tomorrow 
                   ? "Der morgige Tag ist nicht in der aktuellen Wochenansicht."
-                  : "Keine Mitarbeiter für morgen eingeplant."
+                  : !isTomorrowFinalized
+                    ? "Der Dienstplan für morgen wurde noch nicht finalisiert."
+                    : "Keine Mitarbeiter für morgen eingeplant."
                 }
               </div>
             )}
