@@ -58,7 +58,6 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const handleShiftSelect = (shiftType: ShiftType) => {
     // Only show dialog when changing from "Termin" to something else
-    // or when removing a "Termin"
     if (shift === "Termin" && shiftType !== shift) {
       setPendingShiftChange(shiftType);
       setShowRemoveDialog(true);
@@ -74,17 +73,10 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       return;
     }
     
-    applyShiftChange(shiftType);
-  };
-  
-  const applyShiftChange = (shiftType: ShiftType) => {
-    // Set loading state to true
-    setIsLoading(true);
-    
-    // Update the state immediately
+    // Apply the shift change immediately (for non-Termin shifts)
     setShift(shiftType);
     
-    // Create and dispatch events immediately
+    // Create and dispatch events for non-Termin shifts
     if (shiftType) {
       const assignment: ShiftAssignment = {
         id: `${employeeId}-${date}`,
@@ -93,31 +85,74 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
         shiftType: shiftType,
         confirmed: false
       };
-      const event = new CustomEvent('shiftAssigned', { 
-        detail: { 
-          assignment, 
-          action: 'add',
-          countAsScheduled: shiftType === "Arbeit"
-        }
-      });
-      document.dispatchEvent(event);
+      
+      try {
+        document.dispatchEvent(new CustomEvent('shiftAssigned', { 
+          detail: { 
+            assignment, 
+            action: 'add',
+            countAsScheduled: shiftType === "Arbeit"
+          }
+        }));
+      } catch (error) {
+        console.error("Error dispatching shiftAssigned event:", error);
+      }
     } else {
-      const event = new CustomEvent('shiftAssigned', { 
-        detail: { 
-          assignment: { employeeId, date },
-          action: 'remove' 
-        }
-      });
-      document.dispatchEvent(event);
+      try {
+        document.dispatchEvent(new CustomEvent('shiftAssigned', { 
+          detail: { 
+            assignment: { employeeId, date },
+            action: 'remove' 
+          }
+        }));
+      } catch (error) {
+        console.error("Error dispatching shiftAssigned event:", error);
+      }
     }
-    
-    // Set loading to false immediately after state updates
-    setIsLoading(false);
   };
   
   const handleRemoveDialogConfirm = () => {
-    applyShiftChange(pendingShiftChange);
+    // Close dialog first before making any changes
     setShowRemoveDialog(false);
+    
+    // Update the shift state
+    setShift(pendingShiftChange);
+    
+    // Create and dispatch the event for a confirmed Termin change
+    if (pendingShiftChange) {
+      const assignment: ShiftAssignment = {
+        id: `${employeeId}-${date}`,
+        employeeId,
+        date,
+        shiftType: pendingShiftChange,
+        confirmed: false
+      };
+      
+      try {
+        document.dispatchEvent(new CustomEvent('shiftAssigned', { 
+          detail: { 
+            assignment, 
+            action: 'add',
+            countAsScheduled: pendingShiftChange === "Arbeit"
+          }
+        }));
+      } catch (error) {
+        console.error("Error dispatching shiftAssigned event:", error);
+      }
+    } else {
+      try {
+        document.dispatchEvent(new CustomEvent('shiftAssigned', { 
+          detail: { 
+            assignment: { employeeId, date },
+            action: 'remove' 
+          }
+        }));
+      } catch (error) {
+        console.error("Error dispatching shiftAssigned event:", error);
+      }
+    }
+    
+    // Reset pending shift change
     setPendingShiftChange(null);
   };
   
@@ -189,7 +224,6 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
               "w-full h-full min-h-[3.5rem] flex items-center justify-center",
               getBackgroundColor()
             )}
-            disabled={isLoading}
           >
             <div className="flex flex-col items-center">
               {getShiftIcon()}
