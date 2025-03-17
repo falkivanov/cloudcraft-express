@@ -23,7 +23,7 @@ const ShiftPlanningHeader: React.FC<ShiftPlanningHeaderProps> = ({
             <CalendarIcon className="mr-2 h-4 w-4" />
             Dienstplan
           </TabsTrigger>
-          <TabsTrigger value="vehicles" disabled={!isScheduleFinalized}>
+          <TabsTrigger value="vehicles" disabled={false}>
             <TruckIcon className="mr-2 h-4 w-4" />
             Fahrzeugzuordnung
           </TabsTrigger>
