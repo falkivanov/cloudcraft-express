@@ -93,6 +93,10 @@ const NextDaySchedule: React.FC<NextDayScheduleProps> = ({
                   <div className="flex items-center gap-2 mb-3">
                     <Clock className="h-4 w-4 text-primary" />
                     <h3 className="font-medium">Alle Mitarbeiter starten um {sortedWaves[0]?.startTime} Uhr</h3>
+                    <div className="ml-auto bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center">
+                      <Users className="h-4 w-4 mr-1" />
+                      <span>{sortedWaves[0]?.employees.length} Mitarbeiter</span>
+                    </div>
                   </div>
                   <ul className="divide-y">
                     {sortedWaves[0]?.employees.map((employee) => (
@@ -119,8 +123,9 @@ const NextDaySchedule: React.FC<NextDayScheduleProps> = ({
                       <div className="flex items-center gap-2 mb-3">
                         <Clock className="h-4 w-4 text-primary" />
                         <h3 className="font-medium">Welle {wave.waveNumber}: Start um {wave.startTime} Uhr</h3>
-                        <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                          {wave.employees.length}
+                        <div className="ml-auto bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span>{wave.employees.length} Mitarbeiter</span>
                         </div>
                       </div>
                       <ul className="divide-y">

@@ -105,9 +105,9 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
                       <div className="flex items-center gap-2 mb-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <h3 className="font-medium">Welle {wave.waveNumber}: Start um {wave.startTime} Uhr</h3>
-                        <div className="ml-auto text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full flex items-center">
-                          <Users className="h-3 w-3 mr-1" />
-                          {wave.employees.length}
+                        <div className="ml-auto bg-primary/10 text-primary px-2 py-1 rounded-full flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span>{wave.employees.length} Mitarbeiter</span>
                         </div>
                       </div>
                       <ul className="space-y-1 pl-6">
