@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ShiftType, dispatchShiftEvent, getBackgroundColorClass } from "./utils/shift-utils";
 import UnavailableCell from "./UnavailableCell";
@@ -29,7 +29,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
-  const handleShiftSelect = (shiftType: ShiftType) => {
+  const handleShiftSelect = useCallback((shiftType: ShiftType) => {
     // Only show dialog when changing from "Termin" to something else
     if (shift === "Termin" && shiftType !== shift) {
       setPendingShiftChange(shiftType);
@@ -46,33 +46,39 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       return;
     }
     
-    // First update the local state
+    // Store the current shift before changing it
+    const previousShiftType = shift;
+    
+    // Update local state first
     setShift(shiftType);
     
     // Then dispatch events
     const action = shiftType !== null ? 'add' : 'remove';
-    dispatchShiftEvent(employeeId, date, shiftType, action);
-  };
+    dispatchShiftEvent(employeeId, date, shiftType, action, previousShiftType);
+  }, [shift, employeeId, date, isPreferredDay, isFlexible, toast]);
   
-  const handleRemoveDialogConfirm = () => {
+  const handleRemoveDialogConfirm = useCallback(() => {
     // Close dialog first
     setShowRemoveDialog(false);
+    
+    // Store the current shift before changing it
+    const previousShiftType = shift;
     
     // Update the shift state with the pending change
     setShift(pendingShiftChange);
     
     // Then dispatch the event - if pending is null, it's a removal
     const action = pendingShiftChange !== null ? 'add' : 'remove';
-    dispatchShiftEvent(employeeId, date, pendingShiftChange, action);
+    dispatchShiftEvent(employeeId, date, pendingShiftChange, action, previousShiftType);
     
     // Reset pending shift change
     setPendingShiftChange(null);
-  };
+  }, [shift, pendingShiftChange, employeeId, date]);
   
-  const handleRemoveDialogCancel = () => {
+  const handleRemoveDialogCancel = useCallback(() => {
     setShowRemoveDialog(false);
     setPendingShiftChange(null);
-  };
+  }, []);
   
   // If employee is not flexible and this day is not preferred, show unavailable cell
   if (!isFlexible && !isPreferredDay) {

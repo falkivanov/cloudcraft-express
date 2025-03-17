@@ -7,7 +7,8 @@ export const dispatchShiftEvent = (
   employeeId: string, 
   date: string, 
   shiftType: ShiftType, 
-  action: 'add' | 'remove'
+  action: 'add' | 'remove',
+  previousShiftType?: ShiftType
 ) => {
   try {
     if (action === 'add' && shiftType) {
@@ -27,20 +28,17 @@ export const dispatchShiftEvent = (
         }
       }));
     } else if (action === 'remove') {
-      // For remove actions, we need to pass relevant info about what was removed
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
-          // Send the complete assignment ID format that matches what we use for adding
           assignment: { 
             id: `${employeeId}-${date}`,
             employeeId, 
             date,
-            // Important: include the previous shift type if we're trying to track what was removed
-            shiftType: null 
+            shiftType: previousShiftType // Pass the previous shift type to know what was removed
           },
           action: 'remove',
-          // This indicates whether it should affect the scheduled count
-          countAsScheduled: false
+          // Only count as scheduled if the previous type was 'Arbeit'
+          countAsScheduled: previousShiftType === "Arbeit"
         }
       }));
     }

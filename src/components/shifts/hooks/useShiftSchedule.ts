@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/components/ui/use-toast";
@@ -46,32 +46,24 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       const { assignment, action, countAsScheduled } = customEvent.detail;
       
       // Use functional state updates to avoid race conditions
-      if (action === 'add') {
-        setScheduledEmployees(prev => {
-          // Make a copy to avoid mutating previous state
-          const newCounts = {...prev};
-          
-          // Only count if shiftType is "Arbeit"
+      setScheduledEmployees(prev => {
+        const newCounts = {...prev};
+        
+        if (action === 'add') {
+          // Only increment if the shift type is "Arbeit"
           if (countAsScheduled) {
             newCounts[assignment.date] = (newCounts[assignment.date] || 0) + 1;
           }
-          return newCounts;
-        });
-      } else if (action === 'remove') {
-        setScheduledEmployees(prev => {
-          // Make a copy to avoid mutating previous state
-          const newCounts = {...prev};
-          
-          // If we have a flag indicating this was a work shift, decrement
+        } else if (action === 'remove') {
+          // Only decrement if the previous shift was "Arbeit"
           if (countAsScheduled) {
-            // Safely decrement, ensuring we don't go below 0
             const currentCount = newCounts[assignment.date] || 0;
             newCounts[assignment.date] = Math.max(0, currentCount - 1);
           }
-          
-          return newCounts;
-        });
-      }
+        }
+        
+        return newCounts;
+      });
     };
     
     document.addEventListener('shiftAssigned', handleShiftAssigned);
@@ -82,15 +74,15 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   }, [weekDays]);
   
   // Function to refresh the counts when needed (e.g., when changing weeks)
-  const refreshScheduledCounts = () => {
+  const refreshScheduledCounts = useCallback(() => {
     const initialScheduled: Record<string, number> = {};
     weekDays.forEach(day => {
       initialScheduled[formatDateKey(day)] = 0;
     });
     return initialScheduled;
-  };
+  }, [weekDays, formatDateKey]);
   
-  const previousWeek = () => {
+  const previousWeek = useCallback(() => {
     const prevWeek = addDays(selectedWeek, -7);
     setSelectedWeek(prevWeek);
     // Reset temporary flexibility overrides when changing weeks
@@ -98,9 +90,9 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     
     // Reset scheduled counts for the new week
     setScheduledEmployees(refreshScheduledCounts());
-  };
+  }, [selectedWeek, refreshScheduledCounts]);
   
-  const nextWeek = () => {
+  const nextWeek = useCallback(() => {
     const nextWeek = addDays(selectedWeek, 7);
     setSelectedWeek(nextWeek);
     // Reset temporary flexibility overrides when changing weeks
@@ -108,22 +100,22 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     
     // Reset scheduled counts for the new week
     setScheduledEmployees(refreshScheduledCounts());
-  };
+  }, [selectedWeek, refreshScheduledCounts]);
   
-  const handleRequiredChange = (dayIndex: number, value: string) => {
+  const handleRequiredChange = useCallback((dayIndex: number, value: string) => {
     const numValue = parseInt(value) || 0;
     setRequiredEmployees(prev => ({
       ...prev,
       [dayIndex]: numValue
     }));
-  };
+  }, []);
   
-  const handleFlexibilityOverride = (employee: Employee) => {
+  const handleFlexibilityOverride = useCallback((employee: Employee) => {
     setSelectedEmployeeForFlexOverride(employee);
     setIsFlexOverrideDialogOpen(true);
-  };
+  }, []);
   
-  const confirmFlexibilityOverride = () => {
+  const confirmFlexibilityOverride = useCallback(() => {
     if (selectedEmployeeForFlexOverride) {
       // Add to temporary flexible employees list
       setTemporaryFlexibleEmployees(prev => [...prev, selectedEmployeeForFlexOverride.id]);
@@ -137,12 +129,12 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       setIsFlexOverrideDialogOpen(false);
       setSelectedEmployeeForFlexOverride(null);
     }
-  };
+  }, [selectedEmployeeForFlexOverride, toast]);
   
   // Check if an employee has temporarily overridden flexibility
-  const isTemporarilyFlexible = (employeeId: string) => {
+  const isTemporarilyFlexible = useCallback((employeeId: string) => {
     return temporaryFlexibleEmployees.includes(employeeId);
-  };
+  }, [temporaryFlexibleEmployees]);
 
   return {
     selectedWeek,
