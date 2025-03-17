@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, CalendarIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FinalizeDayButtonProps {
   date: Date;
@@ -17,22 +18,34 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
   isFinalized
 }) => {
   return (
-    <Button 
-      variant={isFinalized ? "secondary" : "outline"} 
-      className="w-full"
-      onClick={() => onFinalize(dateKey)}
-      disabled={isFinalized}
-      size="sm"
-    >
-      {isFinalized ? (
-        <>
-          <CheckIcon className="h-4 w-4 mr-1" />
-          Finalisiert
-        </>
-      ) : (
-        <>Tag finalisieren</>
-      )}
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant={isFinalized ? "secondary" : "outline"} 
+            className="w-full"
+            onClick={() => onFinalize(dateKey)}
+            disabled={isFinalized}
+            size="sm"
+          >
+            {isFinalized ? (
+              <>
+                <CheckIcon className="h-4 w-4 mr-1" />
+                Finalisiert
+              </>
+            ) : (
+              <>
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                Tag finalisieren
+              </>
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Dienplan für morgigen Tag finalisieren</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { format } from "date-fns";
+import { format, isToday, isTomorrow } from "date-fns";
 import { de } from "date-fns/locale";
 import RequiredEmployeesCell from "./RequiredEmployeesCell";
 import FinalizeDayButton from "./FinalizeDayButton";
@@ -36,7 +36,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const dateKey = formatDateKey(day);
           const scheduledCount = scheduledEmployees[dateKey] || 0;
           const requiredCount = requiredEmployees[index];
+          const isTomorrowDate = isTomorrow(day);
           const isNextWorkDay = nextWorkDay ? dateKey === formatDateKey(nextWorkDay) : false;
+          const showFinalizeButton = isTomorrowDate && isNextWorkDay;
           const isFinalized = finalizedDays.includes(dateKey);
           
           return (
@@ -53,8 +55,8 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 onRequiredChange={(value) => onRequiredChange(index, value)}
               />
               
-              {/* Only show finalize button for next work day */}
-              {isNextWorkDay && (
+              {/* Only show finalize button for tomorrow if it's a work day */}
+              {showFinalizeButton && (
                 <div className="mt-2">
                   <FinalizeDayButton
                     date={day}

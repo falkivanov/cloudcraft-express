@@ -4,6 +4,7 @@ import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
 import NextDaySchedule from "./NextDaySchedule";
+import { isTomorrow } from "date-fns";
 
 interface ScheduleTableProps {
   weekDays: Date[];
@@ -39,14 +40,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // Find the next day that has scheduled employees
   const nextWorkDayIndex = weekDays.findIndex(day => {
     const dateKey = formatDateKey(day);
-    return (scheduledEmployees[dateKey] || 0) > 0;
+    return (scheduledEmployees[dateKey] || 0) > 0 && isTomorrow(day);
   });
   
   const nextWorkDay = nextWorkDayIndex !== -1 ? weekDays[nextWorkDayIndex] : null;
   
   // Find the next day that has been finalized (to show the schedule for)
   const nextDayIndex = weekDays.findIndex(day => 
-    finalizedDays.includes(formatDateKey(day))
+    finalizedDays.includes(formatDateKey(day)) && isTomorrow(day)
   );
   
   const nextDay = nextDayIndex !== -1 ? weekDays[nextDayIndex] : null;
