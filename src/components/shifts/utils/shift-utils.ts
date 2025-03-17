@@ -1,4 +1,3 @@
-
 import { ShiftAssignment } from "@/types/shift";
 
 export type ShiftType = "Arbeit" | "Frei" | "Termin" | "Urlaub" | "Krank" | null;
@@ -34,10 +33,9 @@ export const dispatchShiftEvent = (
             id: `${employeeId}-${date}`,
             employeeId, 
             date,
-            shiftType: previousShiftType // Pass the previous shift type to know what was removed
+            shiftType: previousShiftType
           },
           action: 'remove',
-          // Only count as scheduled if the previous type was 'Arbeit'
           countAsScheduled: previousShiftType === "Arbeit"
         }
       }));
