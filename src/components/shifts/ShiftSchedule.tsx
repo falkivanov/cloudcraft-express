@@ -87,28 +87,32 @@ const ShiftSchedule = () => {
         <table className="w-full border-collapse">
           <thead className="bg-muted">
             <tr>
-              <th className="p-3 text-left min-w-[200px]">Mitarbeiter</th>
+              <th className="p-3 text-left min-w-[200px]">
+                <div>Mitarbeiter</div>
+                <div className="mt-2 text-xs">Forecast:</div>
+              </th>
               {weekDays.map((day, index) => (
                 <th key={day.toString()} className="p-3 text-center border-l">
-                  <div>{format(day, "EEEEEE", { locale: de })}</div>
-                  <div className="text-sm">{format(day, "dd.MM.", { locale: de })}</div>
-                  <div className="mt-2 flex flex-col space-y-1">
-                    <div className="flex justify-between items-center text-xs">
-                      <span>Benötigt:</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={requiredEmployees[index]}
-                        onChange={(e) => handleRequiredChange(index, e.target.value)}
-                        className="w-12 h-6 text-center px-1"
-                      />
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span>Geplant:</span>
-                      <span className={`font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
-                        {getScheduledEmployees(index)}
-                      </span>
-                    </div>
+                  <div className="font-medium">
+                    {format(day, "EEEE", { locale: de })}
+                  </div>
+                  <div className="text-sm font-normal">
+                    {format(day, "dd.MM.", { locale: de })}
+                  </div>
+                  <div className="mt-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={requiredEmployees[index]}
+                      onChange={(e) => handleRequiredChange(index, e.target.value)}
+                      className="w-12 h-6 text-center px-1 mx-auto"
+                    />
+                  </div>
+                  <div className="mt-1 text-xs">
+                    Geplant: 
+                    <span className={`ml-1 font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
+                      {getScheduledEmployees(index)}
+                    </span>
                   </div>
                 </th>
               ))}
