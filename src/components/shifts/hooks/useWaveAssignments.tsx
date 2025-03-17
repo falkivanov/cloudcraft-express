@@ -58,6 +58,7 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
         };
       }
       
+      // Apply the wave distribution
       applyWaveDistribution(filteredWaves);
     }
   };

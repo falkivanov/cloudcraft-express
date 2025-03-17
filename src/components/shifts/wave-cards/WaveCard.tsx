@@ -23,6 +23,10 @@ const WaveCard: React.FC<WaveCardProps> = ({
   onTimeChange,
   onRequestedCountChange,
 }) => {
+  // Calculate deviation from the requested count
+  const deviation = employeeCount - wave.requestedCount;
+  const hasDeviation = deviation !== 0;
+
   return (
     <Card className="flex-1">
       <CardHeader className="pb-2">
@@ -68,13 +72,15 @@ const WaveCard: React.FC<WaveCardProps> = ({
           </div>
         </div>
 
-        <div className="mt-2 text-sm text-muted-foreground">
-          {employeeCount} Mitarbeiter aktuell zugeordnet
-          {employeeCount !== wave.requestedCount && (
-            <span className="text-yellow-600 ml-1">
-              (Abweichung von Vorgabe: {wave.requestedCount})
-            </span>
-          )}
+        <div className="mt-2 text-sm">
+          <span className={hasDeviation ? "text-yellow-600 font-medium" : "text-muted-foreground"}>
+            {employeeCount} Mitarbeiter aktuell zugeordnet
+            {hasDeviation && (
+              <span className="ml-1">
+                ({deviation > 0 ? "+" : ""}{deviation} zur Vorgabe)
+              </span>
+            )}
+          </span>
         </div>
       </CardContent>
     </Card>
