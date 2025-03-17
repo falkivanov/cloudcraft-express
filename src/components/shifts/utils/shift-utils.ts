@@ -27,10 +27,16 @@ export const dispatchShiftEvent = (
         }
       }));
     } else if (action === 'remove') {
+      // Dispatch remove event with the necessary information
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
-          assignment: { employeeId, date },
-          action: 'remove' 
+          assignment: { 
+            id: `${employeeId}-${date}`,
+            employeeId, 
+            date 
+          },
+          action: 'remove',
+          countAsScheduled: false
         }
       }));
     }

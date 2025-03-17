@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Employee } from "@/types/employee";
@@ -55,9 +54,17 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
           return newCount;
         });
       } else if (action === 'remove') {
-        // We would need to know the previous shift type to properly decrement
-        // For simplicity, we'll reset the counter for the day and rely on re-assignments
-        refreshScheduledCounts();
+        // Simply decrement the count for the date, or reset to 0 if it becomes negative
+        setScheduledEmployees(prev => {
+          const newCount = {...prev};
+          if (customEvent.detail.countAsScheduled === false) {
+            // If we know it was not counted, don't change the count
+            return newCount;
+          }
+          
+          // Otherwise assume it might have been counted and do a full refresh
+          return refreshScheduledCounts();
+        });
       }
     };
     
@@ -74,7 +81,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     weekDays.forEach(day => {
       initialScheduled[formatDateKey(day)] = 0;
     });
-    setScheduledEmployees(initialScheduled);
+    return initialScheduled;
   };
   
   const previousWeek = () => {
@@ -84,7 +91,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     setTemporaryFlexibleEmployees([]);
     
     // Reset scheduled counts for the new week
-    refreshScheduledCounts();
+    setScheduledEmployees(refreshScheduledCounts());
   };
   
   const nextWeek = () => {
@@ -94,7 +101,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     setTemporaryFlexibleEmployees([]);
     
     // Reset scheduled counts for the new week
-    refreshScheduledCounts();
+    setScheduledEmployees(refreshScheduledCounts());
   };
   
   const handleRequiredChange = (dayIndex: number, value: string) => {

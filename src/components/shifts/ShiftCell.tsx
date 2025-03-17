@@ -49,7 +49,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     // Apply the shift change immediately (for non-Termin shifts)
     setShift(shiftType);
     
-    // Create and dispatch events for non-Termin shifts
+    // Create and dispatch events for shifts
     const action = shiftType ? 'add' : 'remove';
     dispatchShiftEvent(employeeId, date, shiftType, action);
   };
