@@ -29,19 +29,7 @@ const WaveEmployeeDisplay: React.FC<WaveEmployeeDisplayProps> = ({
           <ul className="space-y-2">
             {sortedWaves[0]?.employees.map((employee) => (
               <li key={employee.id} className="py-2 border-b last:border-b-0">
-                <div className="flex justify-between">
-                  <div>
-                    <span className="font-medium">{employee.name}</span>
-                    {employee.telegramUsername && (
-                      <div className="text-sm text-blue-500">
-                        @{employee.telegramUsername}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {employee.phone}
-                  </div>
-                </div>
+                <span className="font-medium">{employee.name}</span>
               </li>
             ))}
           </ul>
@@ -60,19 +48,7 @@ const WaveEmployeeDisplay: React.FC<WaveEmployeeDisplayProps> = ({
                 <ul className="space-y-1 pl-6">
                   {wave.employees.map((employee) => (
                     <li key={employee.id} className="py-1">
-                      <div className="flex justify-between">
-                        <div>
-                          <span className="font-medium">{employee.name}</span>
-                          {employee.telegramUsername && (
-                            <div className="text-sm text-blue-500">
-                              @{employee.telegramUsername}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {employee.phone}
-                        </div>
-                      </div>
+                      <span className="font-medium">{employee.name}</span>
                     </li>
                   ))}
                 </ul>

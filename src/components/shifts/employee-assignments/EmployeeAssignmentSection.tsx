@@ -42,11 +42,6 @@ const EmployeeAssignmentSection: React.FC<EmployeeAssignmentSectionProps> = ({
             <div key={employee.id} className="flex justify-between items-center p-2 border rounded-md hover:bg-muted/30">
               <div>
                 <span className="font-medium">{employee.name}</span>
-                {employee.telegramUsername && (
-                  <div className="text-xs text-blue-500">
-                    @{employee.telegramUsername}
-                  </div>
-                )}
               </div>
               <Select 
                 value={waveId.toString()} 
