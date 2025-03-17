@@ -10,6 +10,7 @@ interface PlanningParams {
   requiredEmployees: Record<number, number>;
   isTemporarilyFlexible: (employeeId: string) => boolean;
   formatDateKey: (date: Date) => string;
+  planningMode?: "forecast" | "maximum";
 }
 
 interface ShiftPlan {
@@ -41,7 +42,8 @@ export const createAutomaticPlan = ({
   weekDays,
   requiredEmployees,
   isTemporarilyFlexible,
-  formatDateKey
+  formatDateKey,
+  planningMode = "forecast"
 }: PlanningParams): ShiftPlan[] => {
   const plan: ShiftPlan[] = [];
   
@@ -73,16 +75,16 @@ export const createAutomaticPlan = ({
   weekDays.forEach((day, dayIndex) => {
     const requiredCount = requiredEmployees[dayIndex] || 0;
     
-    // Skip days with no requirements
-    if (requiredCount === 0) return;
+    // Skip days with no requirements if in forecast mode
+    if (planningMode === "forecast" && requiredCount === 0) return;
     
     // Assign non-flexible employees first
     sortedEmployees.forEach(employee => {
       // Skip if already fully assigned
       if (employeeAssignments[employee.id] >= employee.workingDaysAWeek) return;
       
-      // Skip if day is already fully staffed
-      if (filledPositions[dayIndex] >= requiredCount) return;
+      // Skip if day is already fully staffed (in forecast mode)
+      if (planningMode === "forecast" && filledPositions[dayIndex] >= requiredCount) return;
       
       const dayAbbr = getDayAbbreviation(day);
       
@@ -106,7 +108,12 @@ export const createAutomaticPlan = ({
   
   // Second pass: Fill remaining positions
   weekDays.forEach((day, dayIndex) => {
-    const requiredCount = requiredEmployees[dayIndex] || 0;
+    // In maximum mode, try to assign everyone up to their capacity
+    // In forecast mode, only fill up to the required count
+    const requiredCount = planningMode === "forecast" 
+      ? requiredEmployees[dayIndex] || 0
+      : Number.MAX_SAFE_INTEGER; // In maximum mode, try to assign as many as possible
+      
     const remaining = requiredCount - filledPositions[dayIndex];
     
     // Skip if no more positions to fill
@@ -123,7 +130,7 @@ export const createAutomaticPlan = ({
       employeeAssignments[a.id] - employeeAssignments[b.id]
     );
     
-    // Assign up to the required number
+    // Assign up to the required number or maximum possible in maximum mode
     for (let i = 0; i < remaining && i < eligibleEmployees.length; i++) {
       const employee = eligibleEmployees[i];
       
@@ -145,11 +152,7 @@ export const createAutomaticPlan = ({
 
 // Check if automatic planning is possible (all days have forecast values)
 export const canAutoPlan = (requiredEmployees: Record<number, number>, dayCount: number): boolean => {
-  // Check if all days have required employees set
-  for (let i = 0; i < dayCount; i++) {
-    if (!requiredEmployees[i] && requiredEmployees[i] !== 0) {
-      return false;
-    }
-  }
+  // Now we can auto-plan even if forecast isn't set
   return true;
 };
+

@@ -8,14 +8,21 @@ import EmployeeRow from "./EmployeeRow";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
 import { useShiftSchedule } from "./hooks/useShiftSchedule";
 import { Button } from "@/components/ui/button";
-import { ZapIcon, AlertCircleIcon } from "lucide-react";
+import { ZapIcon, AlertCircleIcon, CalendarIcon, CalendarPlusIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { createAutomaticPlan, canAutoPlan } from "./utils/auto-planning-utils";
 import { dispatchShiftEvent } from "./utils/shift-utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+type PlanningMode = "forecast" | "maximum";
 
 const ShiftSchedule = () => {
   const { toast } = useToast();
   const [isAutoPlanningLoading, setIsAutoPlanningLoading] = useState(false);
+  const [planningMode, setPlanningMode] = useState<PlanningMode>("forecast");
+  const [isPlanningOptionsOpen, setIsPlanningOptionsOpen] = useState(false);
   
   const {
     selectedWeek,
@@ -35,9 +42,6 @@ const ShiftSchedule = () => {
     setIsFlexOverrideDialogOpen,
     clearShifts
   } = useShiftSchedule(initialEmployees);
-  
-  // Check if auto-planning is possible (requires forecast for all days)
-  const canRunAutoPlanning = canAutoPlan(requiredEmployees, weekDays.length);
   
   // Effect to ensure loading state is cleared after a timeout
   useEffect(() => {
@@ -61,28 +65,21 @@ const ShiftSchedule = () => {
   }, [isAutoPlanningLoading, toast]);
   
   const handleAutomaticPlanning = () => {
-    if (!canRunAutoPlanning) {
-      toast({
-        title: "Planung nicht möglich",
-        description: "Bitte geben Sie den Forecast für jeden Tag ein.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    setIsPlanningOptionsOpen(false);
     setIsAutoPlanningLoading(true);
     
     // Clear existing shifts before auto-planning
     clearShifts();
     
     try {
-      // Generate the plan
+      // Generate the plan with the selected mode
       const plan = createAutomaticPlan({
         employees: filteredEmployees,
         weekDays,
         requiredEmployees,
         isTemporarilyFlexible,
-        formatDateKey
+        formatDateKey,
+        planningMode
       });
       
       // Small delay to allow clearing shifts to finish
@@ -129,23 +126,67 @@ const ShiftSchedule = () => {
         />
         
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleAutomaticPlanning}
-            disabled={!canRunAutoPlanning || isAutoPlanningLoading}
-            className="bg-black hover:bg-gray-800"
-          >
-            {isAutoPlanningLoading ? (
-              <>
-                <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                Plane...
-              </>
-            ) : (
-              <>
-                <ZapIcon className="mr-2 h-4 w-4" />
-                Automatisch planen
-              </>
-            )}
-          </Button>
+          <Popover open={isPlanningOptionsOpen} onOpenChange={setIsPlanningOptionsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                disabled={isAutoPlanningLoading}
+                className="bg-black hover:bg-gray-800"
+              >
+                {isAutoPlanningLoading ? (
+                  <>
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Plane...
+                  </>
+                ) : (
+                  <>
+                    <ZapIcon className="mr-2 h-4 w-4" />
+                    Automatisch planen
+                  </>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72">
+              <div className="space-y-4">
+                <h4 className="font-medium">Planungsmodus wählen</h4>
+                <RadioGroup 
+                  value={planningMode} 
+                  onValueChange={(value) => setPlanningMode(value as PlanningMode)}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="forecast" id="forecast" />
+                    <Label htmlFor="forecast" className="flex items-center gap-1.5">
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>Nach Forecast planen</span>
+                    </Label>
+                  </div>
+                  <div className="text-xs text-muted-foreground ml-6">
+                    Nur so viele Mitarbeiter einplanen, wie im Forecast benötigt
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="maximum" id="maximum" />
+                    <Label htmlFor="maximum" className="flex items-center gap-1.5">
+                      <CalendarPlusIcon className="h-4 w-4" />
+                      <span>Maximal planen</span>
+                    </Label>
+                  </div>
+                  <div className="text-xs text-muted-foreground ml-6">
+                    So viele Mitarbeiter wie möglich einplanen, unabhängig vom Forecast
+                  </div>
+                </RadioGroup>
+                
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleAutomaticPlanning}
+                    disabled={isAutoPlanningLoading}
+                  >
+                    Jetzt planen
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <EmployeeFilter onFilterChange={() => {}} />
         </div>
       </div>
