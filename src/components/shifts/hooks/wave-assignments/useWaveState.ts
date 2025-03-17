@@ -33,38 +33,43 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
     if (waveState.waveCount < 3) {
       const newWaveId = waveState.waveCount + 1;
       
-      // Berechne die Anfangsverteilung für die neue Welle
-      const currentTotalRequested = waveState.waves.reduce((sum, w) => sum + w.requestedCount, 0);
-      const remainingEmployees = Math.max(0, scheduledEmployees.length - currentTotalRequested);
+      // Calculate initial distribution for the new wave
+      const totalEmployees = scheduledEmployees.length;
+      const newTotalWaves = waveState.waveCount + 1;
       
-      // Erstelle die neue Welle mit einer angemessenen Anfangsanzahl
-      const newWaveRequestedCount = Math.min(
-        Math.floor(remainingEmployees / 2), // Verteile verbleibende Mitarbeiter
-        Math.floor(scheduledEmployees.length / (newWaveId)) // Oder gleichmäßige Verteilung
-      );
+      // Aim for even distribution between all waves
+      const targetPerWave = Math.floor(totalEmployees / newTotalWaves);
       
-      // Erstelle die neue Welle
+      // Calculate new distribution
+      const updatedWaves = [...waveState.waves];
+      let remainingEmployees = totalEmployees;
+      
+      // First, adjust existing waves to approximate an even distribution
+      for (let i = 0; i < updatedWaves.length; i++) {
+        // Don't reduce below 1, but aim for equal distribution
+        updatedWaves[i] = {
+          ...updatedWaves[i],
+          requestedCount: Math.max(1, targetPerWave)
+        };
+        remainingEmployees -= updatedWaves[i].requestedCount;
+      }
+      
+      // Then create the new wave
+      const newWaveRequestedCount = Math.max(1, Math.min(targetPerWave, remainingEmployees));
       const newWave = { 
         id: newWaveId, 
         time: "11:00", 
-        requestedCount: Math.max(newWaveRequestedCount, 1) // Mindestens 1
+        requestedCount: newWaveRequestedCount
       };
       
-      // Aktualisiere die Wellen
-      const updatedWaves = [...waveState.waves, newWave];
+      // Add the new wave to the list
+      updatedWaves.push(newWave);
       
-      // Wenn die neue Welle Mitarbeiter benötigt, reduziere entsprechend die Anzahl bei der ersten Welle
-      if (newWave.requestedCount > 0 && updatedWaves[0].requestedCount > newWave.requestedCount) {
-        updatedWaves[0] = {
-          ...updatedWaves[0],
-          requestedCount: updatedWaves[0].requestedCount - newWave.requestedCount
-        };
-      }
-      
+      // Update state
       setWaveCount(newWaveId);
       setWaves(updatedWaves);
       
-      // Wende die neue Verteilung an
+      // Apply the new distribution
       redistributeEmployees(updatedWaves);
     }
   };
