@@ -70,6 +70,11 @@ const WaveCard: React.FC<WaveCardProps> = ({
 
         <div className="mt-2 text-sm text-muted-foreground">
           {employeeCount} Mitarbeiter aktuell zugeordnet
+          {employeeCount !== wave.requestedCount && (
+            <span className="text-yellow-600 ml-1">
+              (Abweichung von Vorgabe: {wave.requestedCount})
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

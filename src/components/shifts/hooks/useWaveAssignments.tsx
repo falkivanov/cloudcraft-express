@@ -106,6 +106,9 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     }
     
     setWaves(updatedWaves);
+    
+    // Wichtig: Hier wird jetzt direkt nach der Änderung der Wellen-Zahlen
+    // die Verteilung der Mitarbeiter neu berechnet
     applyWaveDistribution(updatedWaves);
   };
 
@@ -117,6 +120,7 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     
     // First, distribute employees according to requested counts
     currentWaves.forEach(wave => {
+      // Exakt die angeforderte Anzahl an Mitarbeitern zuweisen, nicht mehr und nicht weniger
       const waveEmployees = employeesToDistribute.splice(0, wave.requestedCount);
       
       waveEmployees.forEach(emp => {
@@ -128,13 +132,19 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
       });
     });
     
-    // If there are any remaining employees, assign them to the first wave
+    // Wenn noch Mitarbeiter übrig sind, werden sie gleichmäßig auf alle Wellen verteilt
     if (employeesToDistribute.length > 0) {
-      employeesToDistribute.forEach(emp => {
+      const waveIds = currentWaves.map(w => w.id);
+      employeesToDistribute.forEach((emp, index) => {
+        // Zyklisch auf die Wellen verteilen
+        const waveIndex = index % waveIds.length;
+        const waveId = waveIds[waveIndex];
+        const waveTime = currentWaves.find(w => w.id === waveId)?.time || "11:00";
+        
         newAssignments.push({
           employeeId: emp.id,
-          startTime: currentWaves[0].time,
-          waveNumber: currentWaves[0].id
+          startTime: waveTime,
+          waveNumber: waveId
         });
       });
     }
@@ -160,24 +170,8 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     
     setAssignments(updatedAssignments);
     
-    // Update the wave requested counts to reflect this manual change
-    const updatedWaves = [...waves];
-    
-    // Decrement the count of the previous wave
-    if (currentWaveId) {
-      const prevWaveIndex = updatedWaves.findIndex(w => w.id === currentWaveId);
-      if (prevWaveIndex >= 0 && updatedWaves[prevWaveIndex].requestedCount > 0) {
-        updatedWaves[prevWaveIndex].requestedCount -= 1;
-      }
-    }
-    
-    // Increment the count of the new wave
-    const newWaveIndex = updatedWaves.findIndex(w => w.id === waveId);
-    if (newWaveIndex >= 0) {
-      updatedWaves[newWaveIndex].requestedCount += 1;
-    }
-    
-    setWaves(updatedWaves);
+    // Wir aktualisieren hier NICHT die requestedCount der Wellen,
+    // da diese als feste Vorgabe betrachtet werden
   };
 
   // Helper function to get the wave ID for an employee
@@ -224,6 +218,9 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
       if (waves.length === 1 && waves[0].requestedCount !== scheduledEmployees.length) {
         setWaves([{ ...waves[0], requestedCount: scheduledEmployees.length }]);
       }
+      
+      // Wichtig: Wir wenden nach allen Änderungen die Verteilung an
+      applyWaveDistribution(waves);
     }
   }, [scheduledEmployees]);
 
