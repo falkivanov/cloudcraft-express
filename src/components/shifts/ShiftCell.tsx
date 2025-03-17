@@ -26,6 +26,29 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
+  // Listen for external shift assignment changes (e.g., from auto-planning)
+  useEffect(() => {
+    const handleShiftAssigned = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { assignment, action } = customEvent.detail;
+      
+      // Only update this cell if the assignment matches this cell
+      if (assignment.employeeId === employeeId && assignment.date === date) {
+        if (action === 'add') {
+          setShift(assignment.shiftType);
+        } else if (action === 'remove') {
+          setShift(null);
+        }
+      }
+    };
+    
+    document.addEventListener('shiftAssigned', handleShiftAssigned);
+    
+    return () => {
+      document.removeEventListener('shiftAssigned', handleShiftAssigned);
+    };
+  }, [employeeId, date]);
+  
   const handleShiftSelect = useCallback((shiftType: ShiftType) => {
     if (shiftType !== null && !isPreferredDay && !isFlexible) {
       toast({

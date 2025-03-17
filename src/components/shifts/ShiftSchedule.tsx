@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import WeekNavigation from "./WeekNavigation";
 import EmployeeFilter from "./EmployeeFilter";
@@ -7,8 +7,16 @@ import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
 import { useShiftSchedule } from "./hooks/useShiftSchedule";
+import { Button } from "@/components/ui/button";
+import { ZapIcon } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { createAutomaticPlan, canAutoPlan } from "./utils/auto-planning-utils";
+import { dispatchShiftEvent } from "./utils/shift-utils";
 
 const ShiftSchedule = () => {
+  const { toast } = useToast();
+  const [isAutoPlanningLoading, setIsAutoPlanningLoading] = useState(false);
+  
   const {
     selectedWeek,
     weekDays,
@@ -24,8 +32,52 @@ const ShiftSchedule = () => {
     isTemporarilyFlexible,
     selectedEmployeeForFlexOverride,
     isFlexOverrideDialogOpen,
-    setIsFlexOverrideDialogOpen
+    setIsFlexOverrideDialogOpen,
+    clearShifts
   } = useShiftSchedule(initialEmployees);
+  
+  // Check if auto-planning is possible (requires forecast for all days)
+  const canRunAutoPlanning = canAutoPlan(requiredEmployees, weekDays.length);
+  
+  const handleAutomaticPlanning = () => {
+    if (!canRunAutoPlanning) {
+      toast({
+        title: "Planung nicht möglich",
+        description: "Bitte geben Sie den Forecast für jeden Tag ein.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsAutoPlanningLoading(true);
+    
+    // Clear existing shifts before auto-planning
+    clearShifts();
+    
+    // Generate the plan
+    const plan = createAutomaticPlan({
+      employees: filteredEmployees,
+      weekDays,
+      requiredEmployees,
+      isTemporarilyFlexible,
+      formatDateKey
+    });
+    
+    // Small delay to allow clearing shifts to finish
+    setTimeout(() => {
+      // Apply the plan by dispatching events for each assignment
+      plan.forEach(({ employeeId, date, shiftType }) => {
+        dispatchShiftEvent(employeeId, date, shiftType, 'add');
+      });
+      
+      setIsAutoPlanningLoading(false);
+      
+      toast({
+        title: "Automatische Planung abgeschlossen",
+        description: `${plan.length} Schichten wurden zugewiesen.`,
+      });
+    }, 200);
+  };
   
   return (
     <div className="space-y-4">
@@ -36,7 +88,17 @@ const ShiftSchedule = () => {
           onNextWeek={nextWeek}
         />
         
-        <EmployeeFilter onFilterChange={() => {}} />
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleAutomaticPlanning}
+            disabled={!canRunAutoPlanning || isAutoPlanningLoading}
+            className="bg-black hover:bg-gray-800"
+          >
+            <ZapIcon className="mr-2 h-4 w-4" />
+            {isAutoPlanningLoading ? "Plane..." : "Automatisch planen"}
+          </Button>
+          <EmployeeFilter onFilterChange={() => {}} />
+        </div>
       </div>
       
       <div className="border rounded-lg overflow-hidden">

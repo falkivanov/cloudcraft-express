@@ -36,6 +36,18 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   // Initialize shifts map to track all current assignments
   const [shiftsMap, setShiftsMap] = useState<Map<string, ShiftAssignment>>(new Map());
   
+  // Clear all shifts (used before auto-planning)
+  const clearShifts = useCallback(() => {
+    setShiftsMap(new Map());
+    
+    // Reset scheduled counts
+    const initialScheduled: Record<string, number> = {};
+    weekDays.forEach(day => {
+      initialScheduled[formatDateKey(day)] = 0;
+    });
+    setScheduledEmployees(initialScheduled);
+  }, [weekDays]);
+  
   useEffect(() => {
     // Initialize scheduledEmployees with 0 counts for each day
     const initialScheduled: Record<string, number> = {};
@@ -183,6 +195,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     isTemporarilyFlexible,
     selectedEmployeeForFlexOverride,
     isFlexOverrideDialogOpen,
-    setIsFlexOverrideDialogOpen
+    setIsFlexOverrideDialogOpen,
+    clearShifts
   };
 };
