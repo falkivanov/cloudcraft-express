@@ -2,7 +2,7 @@
 import React from "react";
 import { ShiftType } from "./utils/shift-utils";
 import { 
-  BriefcaseIcon, 
+  PackageIcon, 
   SunIcon, 
   CalendarIcon, 
   UmbrellaIcon, 
@@ -21,7 +21,7 @@ const ShiftIcon: React.FC<ShiftIconProps> = ({ shift, isLoading }) => {
   
   switch (shift) {
     case "Arbeit":
-      return <BriefcaseIcon className="h-4 w-4 text-blue-600" />;
+      return <PackageIcon className="h-4 w-4 text-blue-600" />;
     case "Frei":
       return <SunIcon className="h-4 w-4 text-yellow-500" />;
     case "Termin":

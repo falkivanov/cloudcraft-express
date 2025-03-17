@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { 
-  BriefcaseIcon, 
+  PackageIcon, 
   SunIcon, 
   CalendarIcon, 
   UmbrellaIcon, 
@@ -48,7 +48,7 @@ const ShiftSelectionMenu: React.FC<ShiftSelectionMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
         <DropdownMenuItem onClick={() => onShiftSelect("Arbeit")}>
-          <BriefcaseIcon className="h-4 w-4 text-blue-600 mr-2" />
+          <PackageIcon className="h-4 w-4 text-blue-600 mr-2" />
           Arbeit
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onShiftSelect("Frei")}>
