@@ -1,19 +1,19 @@
 
 import React, { useState, useEffect } from "react";
-import { format, addDays } from "date-fns";
+import { format, subDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { CalendarIcon, Car, WandSparkles } from "lucide-react";
+import { Car, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { toast } from "sonner";
 import { initialVehicles } from "@/data/sampleVehicleData";
 import { ShiftType } from "../utils/shift-utils";
 
-// Samplefahrzeuge für die Demonstration aus unserer Datenquelle
+// Sample vehicles for demonstration from our data source
 const sampleVehicles = initialVehicles.map(vehicle => ({
   id: vehicle.id,
   licensePlate: vehicle.licensePlate,
@@ -22,43 +22,50 @@ const sampleVehicles = initialVehicles.map(vehicle => ({
   status: vehicle.status === "Aktiv" ? "Aktiv" : "In Werkstatt"
 }));
 
-// Beispiel für zugewiesene Schichten
+// Example of assigned shifts
 const assignedShifts = [
   { employeeId: "1", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
   { employeeId: "2", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
-  { employeeId: "3", date: format(addDays(new Date(), 1), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
+  { employeeId: "3", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
 ];
 
 const DailyVehicleAssignment: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const today = format(new Date(), "yyyy-MM-dd");
+  const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
   
-  // Filtern Sie Mitarbeiter mit Schichten am ausgewählten Tag
+  // Filter employees with shifts today
   const employeesWithShifts = initialEmployees.filter(emp => 
     assignedShifts.some(shift => 
-      shift.employeeId === emp.id && shift.date === selectedDate
+      shift.employeeId === emp.id && shift.date === today
     )
   );
   
-  // Status der Fahrzeugzuweisung pro Mitarbeiter
+  // Status of vehicle assignments per employee
   const [assignments, setAssignments] = useState<Record<string, string>>({});
+  // Previous day's assignments
+  const [previousAssignments, setPreviousAssignments] = useState<Record<string, string>>({});
   
-  const handleAssignVehicle = (employeeId: string, vehicleId: string) => {
-    setAssignments(prev => ({
-      ...prev,
-      [employeeId]: vehicleId
-    }));
-  };
+  // Load previous day's assignments (simulated)
+  useEffect(() => {
+    // In a real application, this would fetch from an API
+    const mockPreviousAssignments: Record<string, string> = {
+      "1": "1", // Employee 1 had vehicle 1
+      "2": "3", // Employee 2 had vehicle 3
+      "3": "5", // Employee 3 had vehicle 5
+    };
+    setPreviousAssignments(mockPreviousAssignments);
+  }, []);
   
-  // Automatische Zuweisung basierend auf Mitarbeiterpräferenzen
+  // Automatic assignment based on employee preferences
   const handleAutoAssign = () => {
     const newAssignments: Record<string, string> = {};
     const availableVehicles = new Set(sampleVehicles
       .filter(v => v.status === "Aktiv")
       .map(v => v.id));
     
-    // Zuerst versuchen, die bevorzugten Fahrzeuge zuzuordnen
+    // First try to assign preferred vehicles
     employeesWithShifts.forEach(employee => {
-      // Finde das bevorzugte Fahrzeug des Mitarbeiters anhand des Kennzeichens
+      // Find the employee's preferred vehicle by license plate
       const preferredVehicle = sampleVehicles.find(
         v => v.licensePlate === employee.preferredVehicle && v.status === "Aktiv"
       );
@@ -69,7 +76,7 @@ const DailyVehicleAssignment: React.FC = () => {
       }
     });
     
-    // Dann die restlichen Mitarbeiter mit verfügbaren Fahrzeugen zuweisen
+    // Then assign remaining employees with available vehicles
     employeesWithShifts.forEach(employee => {
       if (!newAssignments[employee.id] && availableVehicles.size > 0) {
         const nextVehicleId = Array.from(availableVehicles)[0];
@@ -80,7 +87,7 @@ const DailyVehicleAssignment: React.FC = () => {
     
     setAssignments(newAssignments);
     
-    // Erfolgsmeldung anzeigen
+    // Show success message
     toast.success(`Fahrzeuge automatisch zugewiesen: ${Object.keys(newAssignments).length} von ${employeesWithShifts.length} Mitarbeitern`, {
       description: availableVehicles.size === 0 && Object.keys(newAssignments).length < employeesWithShifts.length 
         ? "Nicht genügend Fahrzeuge für alle Mitarbeiter verfügbar." 
@@ -88,51 +95,39 @@ const DailyVehicleAssignment: React.FC = () => {
     });
   };
   
-  // Speichern der Zuweisungen (in einer echten App würde dies an eine API gesendet)
+  // Save assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
     const savedAssignments = Object.entries(assignments).map(([employeeId, vehicleId]) => {
       const employee = initialEmployees.find(e => e.id === employeeId);
       const vehicle = sampleVehicles.find(v => v.id === vehicleId);
       return {
-        id: `${employeeId}-${vehicleId}-${selectedDate}`,
+        id: `${employeeId}-${vehicleId}-${today}`,
         employeeId,
         employeeName: employee?.name || "",
         vehicleId,
         vehicleInfo: `${vehicle?.brand} ${vehicle?.model} (${vehicle?.licensePlate})`,
-        date: selectedDate,
+        date: today,
         assignedAt: new Date().toISOString(),
         assignedBy: "Admin"
       };
     });
     
     console.log("Saved assignments:", savedAssignments);
-    // Hier würde in einer realen App der API-Call erfolgen
+    // Here would be the API call in a real app
     
     toast.success("Fahrzeugzuordnungen wurden gespeichert!");
   };
   
+  // Helper function to get vehicle info by ID
+  const getVehicleInfo = (vehicleId: string) => {
+    const vehicle = sampleVehicles.find(v => v.id === vehicleId);
+    return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})` : "Nicht zugewiesen";
+  };
+  
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-          <Select defaultValue={selectedDate} onValueChange={setSelectedDate}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue placeholder="Datum auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 7 }, (_, i) => {
-                const date = addDays(new Date(), i);
-                return (
-                  <SelectItem key={i} value={format(date, "yyyy-MM-dd")}>
-                    {format(date, "EEEE, dd.MM.yyyy", { locale: de })}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-        
+      <div className="flex justify-between mb-6">
+        <h2 className="text-xl font-semibold">Fahrzeugzuordnung für heute</h2>
         <Button 
           variant="outline"
           onClick={handleAutoAssign}
@@ -146,60 +141,48 @@ const DailyVehicleAssignment: React.FC = () => {
       
       {employeesWithShifts.length === 0 ? (
         <div className="text-center p-8 text-muted-foreground">
-          <p>Keine geplanten Mitarbeiter für diesen Tag gefunden.</p>
+          <p>Keine geplanten Mitarbeiter für heute gefunden.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {employeesWithShifts.map(employee => (
-            <Card key={employee.id} className={cn(
-              "overflow-hidden transition-all",
-              assignments[employee.id] && "border-green-500"
-            )}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold">{employee.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Bevorzugtes Fahrzeug: {employee.preferredVehicle || "Keine Präferenz"}
-                    </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Mitarbeiter</TableHead>
+              <TableHead>Vorherige Zuordnung</TableHead>
+              <TableHead>Neue Zuordnung</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employeesWithShifts.map(employee => (
+              <TableRow key={employee.id}>
+                <TableCell>
+                  <div className="font-medium">{employee.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Präferenz: {employee.preferredVehicle || "Keine"}
                   </div>
-                  {assignments[employee.id] && (
-                    <Badge variant="outline" className="bg-green-50">Zugewiesen</Badge>
+                </TableCell>
+                <TableCell>
+                  {previousAssignments[employee.id] ? (
+                    getVehicleInfo(previousAssignments[employee.id])
+                  ) : (
+                    "Keine vorherige Zuordnung"
                   )}
-                </div>
-                
-                <Select 
-                  value={assignments[employee.id]} 
-                  onValueChange={(value) => handleAssignVehicle(employee.id, value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Fahrzeug zuweisen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sampleVehicles
-                      .filter(v => v.status === "Aktiv")
-                      .map(vehicle => {
-                        const isPreferred = vehicle.licensePlate === employee.preferredVehicle;
-                        const isAssigned = Object.values(assignments).includes(vehicle.id);
-                        
-                        return (
-                          <SelectItem 
-                            key={vehicle.id} 
-                            value={vehicle.id}
-                            disabled={isAssigned && assignments[employee.id] !== vehicle.id}
-                            className={isPreferred ? "font-medium bg-green-50" : ""}
-                          >
-                            {isPreferred && "✓ "}{vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-                            {isAssigned && assignments[employee.id] !== vehicle.id && " - bereits zugewiesen"}
-                          </SelectItem>
-                        );
-                      })}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </TableCell>
+                <TableCell>
+                  {assignments[employee.id] ? (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="bg-green-50">
+                        {getVehicleInfo(assignments[employee.id])}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground">Noch nicht zugewiesen</div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
       
       <div className="pt-4 flex justify-end">
