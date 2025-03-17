@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
@@ -19,17 +20,18 @@ const ShiftScheduleContent: React.FC = () => {
     finalizedDays,
     getScheduledEmployeesForDay,
     shiftsMap,
+    handleFinalizeDay,
   } = useShiftSchedule(initialEmployees);
   
   // Find tomorrow's date directly from the weekDays array
   const tomorrow = weekDays.find(day => isTomorrow(day));
   const tomorrowKey = tomorrow ? formatDateKey(tomorrow) : '';
   
-  // For debugging
+  // More detailed logging for debugging
   console.log("Tomorrow's date:", tomorrow ? format(tomorrow, 'yyyy-MM-dd') : 'Not found');
   console.log("Tomorrow's key:", tomorrowKey);
-  console.log("Finalized days:", finalizedDays);
-  console.log("Is tomorrow finalized:", finalizedDays.includes(tomorrowKey));
+  console.log("All finalized days:", finalizedDays);
+  console.log("Is tomorrow finalized check:", finalizedDays.includes(tomorrowKey));
   
   // Check if tomorrow is finalized
   const isTomorrowFinalized = finalizedDays.includes(tomorrowKey);
@@ -43,13 +45,16 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Handle tab change - FIXED
+  // Simplified tab change handler
   const handleTabChange = (value: string) => {
-    console.log("Tab changed to:", value);
-    console.log("Is tomorrow finalized (in handler):", isTomorrowFinalized);
+    console.log("Tab change requested to:", value);
+    console.log("Is tomorrow finalized currently:", isTomorrowFinalized);
+    console.log("Finalized days:", finalizedDays);
+    console.log("Tomorrow key:", tomorrowKey);
     
-    // Only show warning if trying to access nextday tab when not finalized
+    // Only block if trying to access nextday tab when not finalized
     if (value === "nextday" && !isTomorrowFinalized) {
+      console.log("Blocking tab change because tomorrow is not finalized");
       toast({
         title: "Dienstplan nicht finalisiert",
         description: "Der Dienstplan für morgen muss zuerst finalisiert werden.",
@@ -58,8 +63,18 @@ const ShiftScheduleContent: React.FC = () => {
       return; // Prevent tab change
     }
     
-    // Otherwise allow tab change
+    // Allow tab change
+    console.log("Allowing tab change to:", value);
     setActiveTab(value);
+  };
+
+  // For testing purposes - remove in production
+  const manuallyFinalizeTomorrow = () => {
+    if (tomorrow && tomorrowKey) {
+      console.log("Manual finalization requested for:", tomorrowKey);
+      handleFinalizeDay(tomorrowKey);
+      console.log("After finalization, finalized days:", finalizedDays);
+    }
   };
 
   return (
@@ -71,6 +86,16 @@ const ShiftScheduleContent: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Debug button - remove in production */}
+        <div className="mb-4">
+          <button 
+            onClick={manuallyFinalizeTomorrow}
+            className="px-3 py-1 bg-amber-100 text-amber-800 rounded-md text-xs"
+          >
+            Debug: Force finalize tomorrow ({isTomorrowFinalized ? "✓" : "✗"})
+          </button>
+        </div>
+        
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-4 w-full">
             <TabsTrigger value="weekplan" className="flex-1">Wochendienstplan</TabsTrigger>
