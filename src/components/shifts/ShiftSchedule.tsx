@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import WeekNavigation from "./WeekNavigation";
 import EmployeeFilter from "./EmployeeFilter";
@@ -8,7 +8,7 @@ import EmployeeRow from "./EmployeeRow";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
 import { useShiftSchedule } from "./hooks/useShiftSchedule";
 import { Button } from "@/components/ui/button";
-import { ZapIcon } from "lucide-react";
+import { ZapIcon, AlertCircleIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { createAutomaticPlan, canAutoPlan } from "./utils/auto-planning-utils";
 import { dispatchShiftEvent } from "./utils/shift-utils";
@@ -39,6 +39,27 @@ const ShiftSchedule = () => {
   // Check if auto-planning is possible (requires forecast for all days)
   const canRunAutoPlanning = canAutoPlan(requiredEmployees, weekDays.length);
   
+  // Effect to ensure loading state is cleared after a timeout
+  useEffect(() => {
+    let timeout: number | undefined;
+    
+    if (isAutoPlanningLoading) {
+      // Force reset loading state after 15 seconds max
+      timeout = window.setTimeout(() => {
+        setIsAutoPlanningLoading(false);
+        toast({
+          title: "Planung unterbrochen",
+          description: "Die automatische Planung hat zu lange gedauert und wurde unterbrochen.",
+          variant: "destructive",
+        });
+      }, 15000);
+    }
+    
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [isAutoPlanningLoading, toast]);
+  
   const handleAutomaticPlanning = () => {
     if (!canRunAutoPlanning) {
       toast({
@@ -54,29 +75,48 @@ const ShiftSchedule = () => {
     // Clear existing shifts before auto-planning
     clearShifts();
     
-    // Generate the plan
-    const plan = createAutomaticPlan({
-      employees: filteredEmployees,
-      weekDays,
-      requiredEmployees,
-      isTemporarilyFlexible,
-      formatDateKey
-    });
-    
-    // Small delay to allow clearing shifts to finish
-    setTimeout(() => {
-      // Apply the plan by dispatching events for each assignment
-      plan.forEach(({ employeeId, date, shiftType }) => {
-        dispatchShiftEvent(employeeId, date, shiftType, 'add');
+    try {
+      // Generate the plan
+      const plan = createAutomaticPlan({
+        employees: filteredEmployees,
+        weekDays,
+        requiredEmployees,
+        isTemporarilyFlexible,
+        formatDateKey
       });
       
+      // Small delay to allow clearing shifts to finish
+      setTimeout(() => {
+        try {
+          // Apply the plan by dispatching events for each assignment
+          plan.forEach(({ employeeId, date, shiftType }) => {
+            dispatchShiftEvent(employeeId, date, shiftType, 'add');
+          });
+          
+          toast({
+            title: "Automatische Planung abgeschlossen",
+            description: `${plan.length} Schichten wurden zugewiesen.`,
+          });
+        } catch (error) {
+          console.error("Error applying plan:", error);
+          toast({
+            title: "Fehler bei der Planung",
+            description: "Es gab einen Fehler beim Zuweisen der Schichten.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsAutoPlanningLoading(false);
+        }
+      }, 200);
+    } catch (error) {
+      console.error("Error creating plan:", error);
       setIsAutoPlanningLoading(false);
-      
       toast({
-        title: "Automatische Planung abgeschlossen",
-        description: `${plan.length} Schichten wurden zugewiesen.`,
+        title: "Fehler bei der Planung",
+        description: "Es gab einen Fehler bei der automatischen Planung.",
+        variant: "destructive",
       });
-    }, 200);
+    }
   };
   
   return (
@@ -94,8 +134,17 @@ const ShiftSchedule = () => {
             disabled={!canRunAutoPlanning || isAutoPlanningLoading}
             className="bg-black hover:bg-gray-800"
           >
-            <ZapIcon className="mr-2 h-4 w-4" />
-            {isAutoPlanningLoading ? "Plane..." : "Automatisch planen"}
+            {isAutoPlanningLoading ? (
+              <>
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                Plane...
+              </>
+            ) : (
+              <>
+                <ZapIcon className="mr-2 h-4 w-4" />
+                Automatisch planen
+              </>
+            )}
           </Button>
           <EmployeeFilter onFilterChange={() => {}} />
         </div>

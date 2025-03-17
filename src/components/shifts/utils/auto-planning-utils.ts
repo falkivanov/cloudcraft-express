@@ -2,6 +2,7 @@
 import { ShiftType } from "./shift-utils";
 import { Employee } from "@/types/employee";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface PlanningParams {
   employees: Employee[];
@@ -19,7 +20,7 @@ interface ShiftPlan {
 
 // Returns day of week abbreviation (Mo, Di, etc.)
 const getDayAbbreviation = (date: Date): string => {
-  return format(date, "EEEEEE", { locale: require("date-fns/locale/de") });
+  return format(date, "EEEEEE", { locale: de });
 };
 
 // Determines if an employee can work on a specific day based on preferences and flexibility
