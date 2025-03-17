@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Employee } from "@/types/employee";
-import { WaveAssignment } from "@/types/shift";
+import { WaveAssignment } from "./types/wave-types";
 import { useWaveAssignments } from "./hooks/useWaveAssignments";
 import WaveControlsSection from "./wave-cards/WaveControlsSection";
 import EmployeeAssignmentSection from "./employee-assignments/EmployeeAssignmentSection";
