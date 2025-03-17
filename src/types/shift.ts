@@ -11,6 +11,8 @@ export interface VehicleAssignment {
   id: string;
   vehicleId: string;
   employeeId: string;
+  employeeName: string;
+  vehicleInfo: string;
   date: string;
   assignedBy: string;
   assignedAt: string;
