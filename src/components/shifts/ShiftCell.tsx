@@ -20,6 +20,16 @@ import {
 import { cn } from "@/lib/utils";
 import { ShiftAssignment } from "@/types/shift";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ShiftCellProps {
   employeeId: string;
@@ -40,11 +50,18 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
 }) => {
   const [shift, setShift] = useState<ShiftType>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const { toast } = useToast();
   
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
   const handleShiftSelect = (shiftType: ShiftType) => {
+    // If attempting to remove a shift, show confirmation dialog
+    if (shift !== null && shiftType === null) {
+      setShowRemoveDialog(true);
+      return;
+    }
+    
     // Prüfen ob Eintrag an nicht-präferierten Tagen erlaubt ist
     if (shiftType !== null && !isPreferredDay && !isFlexible) {
       toast({
@@ -55,6 +72,10 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       return;
     }
     
+    applyShiftChange(shiftType);
+  };
+  
+  const applyShiftChange = (shiftType: ShiftType) => {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -150,50 +171,69 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   }
   
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button 
-          className={cn(
-            "w-full h-full min-h-[3.5rem] flex items-center justify-center",
-            getBackgroundColor()
-          )}
-          disabled={isLoading}
-        >
-          <div className="flex flex-col items-center">
-            {getShiftIcon()}
-            {shift && <span className="text-xs mt-1">{shift}</span>}
-          </div>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
-        <DropdownMenuItem onClick={() => handleShiftSelect("Arbeit")}>
-          <BriefcaseIcon className="h-4 w-4 text-blue-600 mr-2" />
-          Arbeit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Frei")}>
-          <SunIcon className="h-4 w-4 text-yellow-500 mr-2" />
-          Frei
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Termin")}>
-          <CalendarIcon className="h-4 w-4 text-purple-500 mr-2" />
-          Termin
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Urlaub")}>
-          <UmbrellaIcon className="h-4 w-4 text-green-500 mr-2" />
-          Urlaub
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShiftSelect("Krank")}>
-          <ThermometerIcon className="h-4 w-4 text-red-500 mr-2" />
-          Krank
-        </DropdownMenuItem>
-        {shift && (
-          <DropdownMenuItem onClick={() => handleShiftSelect(null)}>
-            <XCircleIcon className="h-4 w-4 text-red-500 mr-2" />
-            Löschen
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button 
+            className={cn(
+              "w-full h-full min-h-[3.5rem] flex items-center justify-center",
+              getBackgroundColor()
+            )}
+            disabled={isLoading}
+          >
+            <div className="flex flex-col items-center">
+              {getShiftIcon()}
+              {shift && <span className="text-xs mt-1">{shift}</span>}
+            </div>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center">
+          <DropdownMenuItem onClick={() => handleShiftSelect("Arbeit")}>
+            <BriefcaseIcon className="h-4 w-4 text-blue-600 mr-2" />
+            Arbeit
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem onClick={() => handleShiftSelect("Frei")}>
+            <SunIcon className="h-4 w-4 text-yellow-500 mr-2" />
+            Frei
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShiftSelect("Termin")}>
+            <CalendarIcon className="h-4 w-4 text-purple-500 mr-2" />
+            Termin
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShiftSelect("Urlaub")}>
+            <UmbrellaIcon className="h-4 w-4 text-green-500 mr-2" />
+            Urlaub
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShiftSelect("Krank")}>
+            <ThermometerIcon className="h-4 w-4 text-red-500 mr-2" />
+            Krank
+          </DropdownMenuItem>
+          {shift && (
+            <DropdownMenuItem onClick={() => handleShiftSelect(null)}>
+              <XCircleIcon className="h-4 w-4 text-red-500 mr-2" />
+              Löschen
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Termin entfernen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sind Sie sicher, dass Sie diesen Termin entfernen möchten?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => applyShiftChange(null)}>
+              Ja, entfernen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
