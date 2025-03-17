@@ -78,40 +78,41 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   };
   
   const applyShiftChange = (shiftType: ShiftType) => {
+    // Set loading state to true
     setIsLoading(true);
     
-    // Use a shorter timeout to prevent UI from hanging too long
-    setTimeout(() => {
-      setShift(shiftType);
-      
-      if (shiftType) {
-        const assignment: ShiftAssignment = {
-          id: `${employeeId}-${date}`,
-          employeeId,
-          date,
-          shiftType: shiftType,
-          confirmed: false
-        };
-        const event = new CustomEvent('shiftAssigned', { 
-          detail: { 
-            assignment, 
-            action: 'add',
-            countAsScheduled: shiftType === "Arbeit"
-          }
-        });
-        document.dispatchEvent(event);
-      } else {
-        const event = new CustomEvent('shiftAssigned', { 
-          detail: { 
-            assignment: { employeeId, date },
-            action: 'remove' 
-          }
-        });
-        document.dispatchEvent(event);
-      }
-      
-      setIsLoading(false);
-    }, 100); // Reduced timeout from 300ms to 100ms
+    // Update the state immediately
+    setShift(shiftType);
+    
+    // Create and dispatch events immediately
+    if (shiftType) {
+      const assignment: ShiftAssignment = {
+        id: `${employeeId}-${date}`,
+        employeeId,
+        date,
+        shiftType: shiftType,
+        confirmed: false
+      };
+      const event = new CustomEvent('shiftAssigned', { 
+        detail: { 
+          assignment, 
+          action: 'add',
+          countAsScheduled: shiftType === "Arbeit"
+        }
+      });
+      document.dispatchEvent(event);
+    } else {
+      const event = new CustomEvent('shiftAssigned', { 
+        detail: { 
+          assignment: { employeeId, date },
+          action: 'remove' 
+        }
+      });
+      document.dispatchEvent(event);
+    }
+    
+    // Set loading to false immediately after state updates
+    setIsLoading(false);
   };
   
   const handleRemoveDialogConfirm = () => {
