@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +38,26 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Tab change handler that prevents access to nextday tab when not finalized
+  // Monitor finalization status and automatically switch tabs if needed
+  useEffect(() => {
+    if (isTomorrowFinalized && activeTab === "weekplan") {
+      // Don't automatically switch tabs, just allow it to be possible
+      // The user will click on the tab themselves when they want to view it
+    }
+  }, [isTomorrowFinalized, activeTab]);
+
+  // Custom finalize handler that also enables tab switching
+  const handleFinalizeTomorrowDay = (dateKey: string) => {
+    handleFinalizeDay(dateKey);
+    
+    // Show confirmation toast
+    toast({
+      title: "Dienstplan finalisiert",
+      description: `Der Dienstplan für ${tomorrowDisplay} wurde erfolgreich finalisiert.`,
+    });
+  };
+
+  // Tab change handler
   const handleTabChange = (value: string) => {
     // If trying to access nextday tab when not finalized, show toast with helpful message
     if (value === "nextday" && !isTomorrowFinalized) {
