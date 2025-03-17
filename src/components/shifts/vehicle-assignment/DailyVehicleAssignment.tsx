@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { toast } from "sonner";
 import { initialVehicles } from "@/data/sampleVehicleData";
+import { ShiftType } from "../utils/shift-utils";
 
 // Samplefahrzeuge für die Demonstration aus unserer Datenquelle
 const sampleVehicles = initialVehicles.map(vehicle => ({
@@ -21,11 +22,11 @@ const sampleVehicles = initialVehicles.map(vehicle => ({
   status: vehicle.status === "Aktiv" ? "Aktiv" : "In Werkstatt"
 }));
 
-// Beispiel für zugewiesene Schichten
+// Beispiel für zugewiesene Schichten, jetzt mit einfacheren Schichttypen
 const assignedShifts = [
-  { employeeId: "1", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Früh" },
-  { employeeId: "2", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Spät" },
-  { employeeId: "3", date: format(addDays(new Date(), 1), "yyyy-MM-dd"), shiftType: "Früh" },
+  { employeeId: "1", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
+  { employeeId: "2", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
+  { employeeId: "3", date: format(addDays(new Date(), 1), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
 ];
 
 const DailyVehicleAssignment: React.FC = () => {
@@ -160,12 +161,8 @@ const DailyVehicleAssignment: React.FC = () => {
                 "overflow-hidden transition-all",
                 assignments[employee.id] && "border-green-500"
               )}>
-                <div className={cn(
-                  "p-2 text-white",
-                  employeeShift?.shiftType === "Früh" ? "bg-yellow-500" :
-                  employeeShift?.shiftType === "Spät" ? "bg-blue-500" : "bg-indigo-800"
-                )}>
-                  {employeeShift?.shiftType}-Schicht
+                <div className="p-2 text-white bg-blue-500">
+                  Arbeit
                 </div>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-4">
@@ -229,4 +226,3 @@ const DailyVehicleAssignment: React.FC = () => {
 };
 
 export default DailyVehicleAssignment;
-
