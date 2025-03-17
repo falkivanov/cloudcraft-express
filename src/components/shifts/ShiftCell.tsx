@@ -111,7 +111,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   };
   
   // Wenn der Mitarbeiter nicht flexibel ist und es kein präferierter Tag ist,
-  // zeigen wir eine spezielle UI an
+  // und temporäre Flexibilität nicht aktiviert wurde, zeigen wir eine spezielle UI an
   if (!isFlexible && !isPreferredDay) {
     return (
       <div 

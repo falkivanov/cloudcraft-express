@@ -9,11 +9,18 @@ import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Employee } from "@/types/employee";
 import ShiftCell from "./ShiftCell";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 const ShiftSchedule = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>(initialEmployees.filter(emp => emp.status === "Aktiv"));
+  const [temporaryFlexibleEmployees, setTemporaryFlexibleEmployees] = useState<string[]>([]);
+  const [selectedEmployeeForFlexOverride, setSelectedEmployeeForFlexOverride] = useState<Employee | null>(null);
+  const [isFlexOverrideDialogOpen, setIsFlexOverrideDialogOpen] = useState(false);
+  const { toast } = useToast();
   
   // Track required employees for each day (Mon-Sat)
   const [requiredEmployees, setRequiredEmployees] = useState<Record<number, number>>({
@@ -38,11 +45,15 @@ const ShiftSchedule = () => {
   const previousWeek = () => {
     const prevWeek = addDays(selectedWeek, -7);
     setSelectedWeek(prevWeek);
+    // Reset temporary flexibility overrides when changing weeks
+    setTemporaryFlexibleEmployees([]);
   };
   
   const nextWeek = () => {
     const nextWeek = addDays(selectedWeek, 7);
     setSelectedWeek(nextWeek);
+    // Reset temporary flexibility overrides when changing weeks
+    setTemporaryFlexibleEmployees([]);
   };
   
   const handleRequiredChange = (dayIndex: number, value: string) => {
@@ -51,6 +62,32 @@ const ShiftSchedule = () => {
       ...prev,
       [dayIndex]: numValue
     }));
+  };
+  
+  const handleFlexibilityOverride = (employee: Employee) => {
+    setSelectedEmployeeForFlexOverride(employee);
+    setIsFlexOverrideDialogOpen(true);
+  };
+  
+  const confirmFlexibilityOverride = () => {
+    if (selectedEmployeeForFlexOverride) {
+      // Add to temporary flexible employees list
+      setTemporaryFlexibleEmployees(prev => [...prev, selectedEmployeeForFlexOverride.id]);
+      
+      // Show toast notification
+      toast({
+        title: "Flexibilität temporär aufgehoben",
+        description: `${selectedEmployeeForFlexOverride.name} kann in dieser Woche an allen Tagen eingeplant werden.`,
+      });
+      
+      setIsFlexOverrideDialogOpen(false);
+      setSelectedEmployeeForFlexOverride(null);
+    }
+  };
+  
+  // Check if an employee has temporarily overridden flexibility
+  const isTemporarilyFlexible = (employeeId: string) => {
+    return temporaryFlexibleEmployees.includes(employeeId);
   };
   
   return (
@@ -126,8 +163,14 @@ const ShiftSchedule = () => {
                   <div className="text-xs text-muted-foreground">
                     {employee.preferredWorkingDays.join(', ')}
                     {!employee.isWorkingDaysFlexible && (
-                      <span className="ml-1 text-red-500 font-medium">
-                        (nicht flexibel)
+                      <span 
+                        className="ml-1 text-red-500 font-medium cursor-pointer hover:underline"
+                        onClick={() => handleFlexibilityOverride(employee)}
+                        title="Klicken, um Flexibilität für diese Woche zu aktivieren"
+                      >
+                        {isTemporarilyFlexible(employee.id) 
+                          ? "(temporär flexibel)" 
+                          : "(nicht flexibel)"}
                       </span>
                     )}
                   </div>
@@ -139,7 +182,7 @@ const ShiftSchedule = () => {
                       date={format(day, "yyyy-MM-dd")}
                       preferredDays={employee.preferredWorkingDays}
                       dayOfWeek={format(day, "EEEEEE", { locale: de })}
-                      isFlexible={employee.isWorkingDaysFlexible}
+                      isFlexible={employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)}
                     />
                   </td>
                 ))}
@@ -148,6 +191,28 @@ const ShiftSchedule = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Alert Dialog for flexibility override confirmation */}
+      <AlertDialog 
+        open={isFlexOverrideDialogOpen} 
+        onOpenChange={setIsFlexOverrideDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Flexibilität vorübergehend aufheben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie die Arbeitstage-Einschränkung für {selectedEmployeeForFlexOverride?.name} für diese Woche aufheben?
+              Der Mitarbeiter kann dann für die aktuelle Woche an allen Tagen eingeplant werden, nicht nur an den bevorzugten Tagen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmFlexibilityOverride}>
+              Bestätigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
