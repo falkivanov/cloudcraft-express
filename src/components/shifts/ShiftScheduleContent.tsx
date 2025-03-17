@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShiftSchedule from "@/components/shifts/ShiftSchedule";
@@ -35,7 +34,7 @@ const ShiftScheduleContent: React.FC = () => {
   // Check if tomorrow is finalized
   const isTomorrowFinalized = finalizedDays.includes(tomorrowKey);
   
-  // Only get scheduled employees if tomorrow is finalized
+  // Get scheduled employees for tomorrow regardless of finalization status
   const scheduledForTomorrow = tomorrow ? getScheduledEmployeesForDay(tomorrowKey) : [];
   console.log("Scheduled employees for tomorrow:", scheduledForTomorrow.length);
   
@@ -44,21 +43,22 @@ const ShiftScheduleContent: React.FC = () => {
     ? format(tomorrow, "EEEE, dd.MM.yyyy", { locale: de })
     : 'Morgen';
 
-  // Handle tab change
+  // Handle tab change - FIXED
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
+    console.log("Is tomorrow finalized (in handler):", isTomorrowFinalized);
     
-    // Überprüfen Sie den Status der Finalisierung, bevor Sie den Tab wechseln
+    // Only show warning if trying to access nextday tab when not finalized
     if (value === "nextday" && !isTomorrowFinalized) {
       toast({
         title: "Dienstplan nicht finalisiert",
         description: "Der Dienstplan für morgen muss zuerst finalisiert werden.",
         variant: "destructive"
       });
-      return; // Tab-Wechsel stoppen
+      return; // Prevent tab change
     }
     
-    // Wenn der Tab-Wechsel erlaubt ist, den Tab aktualisieren
+    // Otherwise allow tab change
     setActiveTab(value);
   };
 
@@ -90,20 +90,11 @@ const ShiftScheduleContent: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="nextday">
-            {tomorrow && isTomorrowFinalized ? (
+            {tomorrow && (
               <NextDaySchedulePage 
                 scheduledEmployees={scheduledForTomorrow} 
                 date={tomorrow} 
               />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                {!tomorrow 
-                  ? "Der morgige Tag ist nicht in der aktuellen Wochenansicht."
-                  : !isTomorrowFinalized
-                    ? "Der Dienstplan für morgen wurde noch nicht finalisiert."
-                    : "Keine Mitarbeiter für morgen eingeplant."
-                }
-              </div>
             )}
           </TabsContent>
         </Tabs>
