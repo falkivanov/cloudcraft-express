@@ -15,3 +15,9 @@ export interface VehicleAssignment {
   assignedBy: string;
   assignedAt: string;
 }
+
+export interface WaveAssignment {
+  employeeId: string;
+  startTime: string;
+  waveNumber: number;
+}
