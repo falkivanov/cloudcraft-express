@@ -1,3 +1,4 @@
+
 import { ShiftAssignment } from "@/types/shift";
 
 export type ShiftType = "Arbeit" | "Frei" | "Termin" | "Urlaub" | "Krank" | null;
@@ -22,8 +23,7 @@ export const dispatchShiftEvent = (
       document.dispatchEvent(new CustomEvent('shiftAssigned', { 
         detail: { 
           assignment,
-          action: 'add',
-          countAsScheduled: shiftType === "Arbeit"
+          action: 'add'
         }
       }));
     } else if (action === 'remove') {
@@ -35,8 +35,7 @@ export const dispatchShiftEvent = (
             date,
             shiftType: previousShiftType
           },
-          action: 'remove',
-          countAsScheduled: previousShiftType === "Arbeit"
+          action: 'remove'
         }
       }));
     }

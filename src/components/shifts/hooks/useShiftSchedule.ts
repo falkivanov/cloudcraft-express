@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { Employee } from "@/types/employee";
@@ -45,18 +44,23 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       const customEvent = event as CustomEvent;
       const { assignment, action, countAsScheduled } = customEvent.detail;
       
+      if (!assignment || !assignment.date) {
+        console.error("Invalid assignment data:", customEvent.detail);
+        return;
+      }
+      
       // Use functional state updates to avoid race conditions
       setScheduledEmployees(prev => {
         const newCounts = {...prev};
         
         if (action === 'add') {
           // Only increment if the shift type is "Arbeit"
-          if (countAsScheduled) {
+          if (assignment.shiftType === "Arbeit") {
             newCounts[assignment.date] = (newCounts[assignment.date] || 0) + 1;
           }
         } else if (action === 'remove') {
           // Only decrement if the previous shift was "Arbeit"
-          if (countAsScheduled) {
+          if (assignment.shiftType === "Arbeit") {
             const currentCount = newCounts[assignment.date] || 0;
             newCounts[assignment.date] = Math.max(0, currentCount - 1);
           }
@@ -80,7 +84,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
       initialScheduled[formatDateKey(day)] = 0;
     });
     return initialScheduled;
-  }, [weekDays, formatDateKey]);
+  }, [weekDays]);
   
   const previousWeek = useCallback(() => {
     const prevWeek = addDays(selectedWeek, -7);
