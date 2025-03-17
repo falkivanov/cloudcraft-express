@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createAutomaticPlan } from "../utils/auto-planning-utils";
@@ -72,12 +71,22 @@ export const useAutoPlanningActions = ({
       // Small delay to allow UI to update
       setTimeout(() => {
         try {
-          // First clear shifts that can be overridden (not special types)
-          clearShifts();
+          // First identify shifts that can be overridden (only Frei)
+          // Instead of clearing all shifts, we'll selectively apply the new ones
+          // keeping Termin, Urlaub, and Krank intact
           
           // Apply the plan by dispatching events for each assignment
           plan.forEach(({ employeeId, date, shiftType }) => {
-            dispatchShiftEvent(employeeId, date, shiftType, 'add');
+            // Get the existing shift for this employee and date
+            const shiftKey = `${employeeId}-${date}`;
+            const existingShift = shiftsMap.get(shiftKey);
+            
+            // Only override if:
+            // 1. There's no existing shift, or
+            // 2. The existing shift is "Frei"
+            if (!existingShift || existingShift.shiftType === "Frei") {
+              dispatchShiftEvent(employeeId, date, shiftType, 'add');
+            }
           });
           
           toast({

@@ -18,7 +18,7 @@ export const useShiftTracker = (weekDays: Date[]) => {
     setShiftsMap(prevMap => {
       const newMap = new Map<string, ShiftAssignment>();
       
-      // Keep only special shifts
+      // Keep all special shifts and Frei shifts will be cleared
       prevMap.forEach((shift, key) => {
         if (shift.shiftType === "Termin" || shift.shiftType === "Urlaub" || shift.shiftType === "Krank") {
           newMap.set(key, shift);
