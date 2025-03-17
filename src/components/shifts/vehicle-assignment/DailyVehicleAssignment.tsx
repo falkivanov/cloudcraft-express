@@ -135,6 +135,38 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     return employee ? employee.name : "Nicht zugewiesen";
   };
   
+  // Helper function to check if an employee needs a key or exchange
+  const needsKeyChange = (vehicleId: string, employeeId: string): "new" | "exchange" | null => {
+    // No employee assigned to this vehicle tomorrow
+    if (!employeeId) return null;
+    
+    // Find which vehicle (if any) the employee had today
+    const todayVehicleId = Object.entries(todayAssignments).find(
+      ([vId, eId]) => eId === employeeId
+    )?.[0];
+    
+    // If employee had no vehicle today, they need a new key
+    if (!todayVehicleId) return "new";
+    
+    // If employee had a different vehicle today, they need to exchange keys
+    if (todayVehicleId !== vehicleId) return "exchange";
+    
+    // Employee has the same vehicle, no key change needed
+    return null;
+  };
+  
+  // Get background color based on key change status
+  const getKeyChangeStyle = (status: "new" | "exchange" | null) => {
+    switch (status) {
+      case "new":
+        return "bg-blue-50"; // Soft blue background for new keys
+      case "exchange":
+        return "bg-amber-50"; // Soft amber background for key exchanges
+      default:
+        return "";
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between mb-6">
@@ -158,6 +190,20 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
         </div>
       </div>
       
+      <div className="mb-4">
+        <div className="text-sm font-medium">Legende:</div>
+        <div className="flex gap-4 mt-1">
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-blue-50 mr-2 border border-blue-100"></div>
+            <span className="text-sm">Neuer Schlüssel benötigt</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-amber-50 mr-2 border border-amber-100"></div>
+            <span className="text-sm">Schlüsseltausch benötigt</span>
+          </div>
+        </div>
+      </div>
+      
       <Table>
         <TableHeader>
           <TableRow>
@@ -167,28 +213,34 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
           </TableRow>
         </TableHeader>
         <TableBody>
-          {activeVehicles.map(vehicle => (
-            <TableRow key={vehicle.id}>
-              <TableCell>
-                <div className="font-medium">{vehicle.licensePlate}</div>
-                <div className="text-sm text-muted-foreground">{vehicle.brand} {vehicle.model}</div>
-              </TableCell>
-              <TableCell>
-                {todayAssignments[vehicle.id] ? (
-                  <div>{getEmployeeName(todayAssignments[vehicle.id])}</div>
-                ) : (
-                  <div className="text-muted-foreground">Nicht zugewiesen</div>
-                )}
-              </TableCell>
-              <TableCell>
-                {tomorrowAssignments[vehicle.id] ? (
-                  <div>{getEmployeeName(tomorrowAssignments[vehicle.id])}</div>
-                ) : (
-                  <div className="text-muted-foreground">Noch nicht zugewiesen</div>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+          {activeVehicles.map(vehicle => {
+            const tomorrowEmployeeId = tomorrowAssignments[vehicle.id];
+            const keyChangeStatus = needsKeyChange(vehicle.id, tomorrowEmployeeId);
+            const cellStyle = getKeyChangeStyle(keyChangeStatus);
+            
+            return (
+              <TableRow key={vehicle.id}>
+                <TableCell>
+                  <div className="font-medium">{vehicle.licensePlate}</div>
+                  <div className="text-sm text-muted-foreground">{vehicle.brand} {vehicle.model}</div>
+                </TableCell>
+                <TableCell>
+                  {todayAssignments[vehicle.id] ? (
+                    <div>{getEmployeeName(todayAssignments[vehicle.id])}</div>
+                  ) : (
+                    <div className="text-muted-foreground">Nicht zugewiesen</div>
+                  )}
+                </TableCell>
+                <TableCell className={cellStyle}>
+                  {tomorrowEmployeeId ? (
+                    <div>{getEmployeeName(tomorrowEmployeeId)}</div>
+                  ) : (
+                    <div className="text-muted-foreground">Noch nicht zugewiesen</div>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
