@@ -15,7 +15,7 @@ export const initialEmployees: Employee[] = [
     address: "Hauptstraße 1, 10115 Berlin",
     telegramUsername: "@maxmuster",
     workingDaysAWeek: 5,
-    preferredVehicle: "BMW X5",
+    preferredVehicle: "B-AB 1234", // Changed from BMW X5 to license plate
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
     wantsToWorkSixDays: false,
     isWorkingDaysFlexible: true
@@ -32,7 +32,7 @@ export const initialEmployees: Employee[] = [
     address: "Lindenstraße 25, 10969 Berlin",
     telegramUsername: "@annaschmidt",
     workingDaysAWeek: 5,
-    preferredVehicle: "VW Golf",
+    preferredVehicle: "M-CD 5678", // Changed from VW Golf to license plate
     preferredWorkingDays: ["Mo", "Di", "Do", "Fr", "Sa"],
     wantsToWorkSixDays: true,
     isWorkingDaysFlexible: true
@@ -49,7 +49,7 @@ export const initialEmployees: Employee[] = [
     address: "Friedrichstraße 123, 10117 Berlin",
     telegramUsername: "",
     workingDaysAWeek: 5,
-    preferredVehicle: "Mercedes C-Klasse",
+    preferredVehicle: "K-EF 9012", // Changed from Mercedes C-Klasse to license plate
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
     wantsToWorkSixDays: false,
     isWorkingDaysFlexible: true
@@ -66,7 +66,7 @@ export const initialEmployees: Employee[] = [
     address: "Kurfürstendamm 234, 10719 Berlin",
     telegramUsername: "@lisabecker",
     workingDaysAWeek: 4,
-    preferredVehicle: "Audi A4",
+    preferredVehicle: "F-GH 3456", // Changed from Audi A4 to license plate
     preferredWorkingDays: ["Di", "Mi", "Do", "Fr"],
     wantsToWorkSixDays: false,
     isWorkingDaysFlexible: true
@@ -83,7 +83,7 @@ export const initialEmployees: Employee[] = [
     address: "Alexanderplatz 5, 10178 Berlin",
     telegramUsername: "@mschulz",
     workingDaysAWeek: 5,
-    preferredVehicle: "Opel Astra",
+    preferredVehicle: "HH-IJ 7890", // Changed from Opel Astra to license plate
     preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
     wantsToWorkSixDays: true,
     isWorkingDaysFlexible: true
@@ -101,7 +101,7 @@ export const initialEmployees: Employee[] = [
     address: "Schillerstraße 42, 10625 Berlin",
     telegramUsername: "@juliafischer",
     workingDaysAWeek: 1,
-    preferredVehicle: "Mini Cooper",
+    preferredVehicle: "B-MK 4321", // Changed from Mini Cooper to license plate
     preferredWorkingDays: ["Sa"],
     wantsToWorkSixDays: false,
     isWorkingDaysFlexible: false
@@ -119,7 +119,7 @@ export const initialEmployees: Employee[] = [
     address: "Musterstraße 42, 10115 Berlin",
     telegramUsername: "@sarahmeyer",
     workingDaysAWeek: 5,
-    preferredVehicle: "BMW 3er",
+    preferredVehicle: "F-BZ 3421", // Changed from BMW 3er to license plate
     preferredWorkingDays: ["Mo", "Mi", "Do", "Fr", "Sa"],
     wantsToWorkSixDays: false,
     isWorkingDaysFlexible: true

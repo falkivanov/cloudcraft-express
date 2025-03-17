@@ -15,7 +15,7 @@ export const generateEmployeeSampleCSV = () => {
     address: 'Musterstraße 123, 12345 Berlin',
     telegramUsername: '@maxmuster',
     workingDaysAWeek: '5',
-    preferredVehicle: 'VW Golf',
+    preferredVehicle: 'B-AB 1234', // Changed from "VW Golf" to a license plate
     preferredWorkingDays: 'Mo,Di,Mi,Do,Fr',
     wantsToWorkSixDays: 'Nein',
     isWorkingDaysFlexible: 'Ja'
@@ -33,7 +33,7 @@ export const generateEmployeeSampleCSV = () => {
     'Adresse',
     'Telegram Username',
     'Arbeitstage pro Woche',
-    'Bevorzugtes Fahrzeug',
+    'Bevorzugtes Fahrzeug (Kennzeichen)', // Updated label to clarify it's a license plate
     'Bevorzugte Arbeitstage',
     'Möchte 6 Tage arbeiten',
     'Arbeitstage flexibel'

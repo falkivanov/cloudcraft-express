@@ -17,7 +17,7 @@ export const exportEmployeesToCSV = (employees: Employee[], filename: string) =>
     'Adresse',
     'Telegram Username',
     'Arbeitstage pro Woche',
-    'Bevorzugtes Fahrzeug',
+    'Bevorzugtes Fahrzeug (Kennzeichen)', // Updated label to clarify it's a license plate
     'Bevorzugte Arbeitstage',
     'Möchte 6 Tage arbeiten',
     'Arbeitstage flexibel'
