@@ -1,7 +1,6 @@
 
 import React from "react";
 import WeekNavigation from "./WeekNavigation";
-import EmployeeFilter from "./EmployeeFilter";
 import PlanningOptionsPopover from "./PlanningOptionsPopover";
 
 type PlanningMode = "forecast" | "maximum";
@@ -46,7 +45,6 @@ const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
           isPlanningOptionsOpen={isPlanningOptionsOpen}
           setIsPlanningOptionsOpen={setIsPlanningOptionsOpen}
         />
-        <EmployeeFilter onFilterChange={() => {}} />
       </div>
     </div>
   );
