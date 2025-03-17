@@ -10,6 +10,8 @@ import { initialEmployees } from "@/data/sampleEmployeeData";
 import { toast } from "sonner";
 import { initialVehicles } from "@/data/sampleVehicleData";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Sample vehicles for demonstration from our data source
 const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
@@ -36,6 +38,12 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   // Tomorrow's assignments (which will be empty until auto-assignment is made)
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   
+  // For testing: Override schedule finalized state
+  const [overrideFinalized, setOverrideFinalized] = useState(false);
+  
+  // Effective finalized state (either from props or override)
+  const effectivelyFinalized = isScheduleFinalized || overrideFinalized;
+  
   // Load today's assignments (simulated)
   useEffect(() => {
     // In a real application, this would fetch from an API
@@ -51,7 +59,7 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   
   // Automatic assignment for tomorrow
   const handleAutoAssign = () => {
-    if (!isScheduleFinalized) {
+    if (!effectivelyFinalized) {
       toast.error("Dienstplan nicht finalisiert", {
         description: "Um Fahrzeuge zuzuordnen, muss der Dienstplan zuerst abgeschlossen werden."
       });
@@ -94,7 +102,7 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   
   // Save tomorrow's assignments (in a real app this would be sent to an API)
   const handleSaveAssignments = () => {
-    if (!isScheduleFinalized) {
+    if (!effectivelyFinalized) {
       toast.error("Dienstplan nicht finalisiert", {
         description: "Um Fahrzeugzuordnungen zu speichern, muss der Dienstplan zuerst abgeschlossen werden."
       });
@@ -189,6 +197,20 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
           </Button>
         </div>
       </div>
+      
+      {!isScheduleFinalized && (
+        <div className="flex items-center space-x-2 bg-muted p-4 rounded-md mb-4">
+          <Switch
+            id="override-finalized"
+            checked={overrideFinalized}
+            onCheckedChange={setOverrideFinalized}
+          />
+          <Label htmlFor="override-finalized">Test-Modus: Finalisierung überschreiben</Label>
+          <div className="text-xs text-muted-foreground ml-2">
+            (Nur zu Testzwecken, deaktiviert die Dienstplan-Finalisierungsprüfung)
+          </div>
+        </div>
+      )}
       
       <div className="mb-4">
         <div className="text-sm font-medium">Legende:</div>
