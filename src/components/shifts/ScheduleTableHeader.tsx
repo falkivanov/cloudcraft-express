@@ -24,9 +24,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
       <tr>
         <th className="p-3 text-left min-w-[200px]">
           <div>Mitarbeiter</div>
-          <div className="mt-2 text-xs flex justify-between items-center">
-            <span>Forecast:</span>
-            <span className="text-xs ml-2">Geplant:</span>
+          <div className="mt-2 flex items-center justify-between rounded-md bg-background/80 px-2 py-1 text-xs shadow-sm">
+            <span className="font-medium text-muted-foreground">Forecast:</span>
+            <span className="font-medium text-muted-foreground ml-4">Geplant:</span>
           </div>
         </th>
         {weekDays.map((day, index) => {
