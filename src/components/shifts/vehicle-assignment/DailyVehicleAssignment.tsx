@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { de } from "date-fns/locale";
@@ -12,6 +11,7 @@ import { initialVehicles } from "@/data/sampleVehicleData";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tooltip } from "@/components/ui/tooltip";
 
 // Sample vehicles for demonstration from our data source
 const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
@@ -175,6 +175,19 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     }
   };
   
+  // Check if employee is not assigned their preferred vehicle
+  const notAssignedPreferredVehicle = (employeeId: string, vehicleId: string): boolean => {
+    if (!employeeId) return false;
+    
+    const employee = initialEmployees.find(e => e.id === employeeId);
+    if (!employee || !employee.preferredVehicle) return false;
+    
+    const vehicle = activeVehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return false;
+    
+    return employee.preferredVehicle !== vehicle.licensePlate;
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between mb-6">
@@ -223,6 +236,10 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
             <div className="w-3 h-3 bg-amber-50 mr-2 border border-amber-100"></div>
             <span className="text-sm">Schlüsseltausch benötigt</span>
           </div>
+          <div className="flex items-center">
+            <AlertTriangle className="h-4 w-4 text-amber-500 mr-1" />
+            <span className="text-sm">Nicht das präferierte Fahrzeug</span>
+          </div>
         </div>
       </div>
       
@@ -239,6 +256,7 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
             const tomorrowEmployeeId = tomorrowAssignments[vehicle.id];
             const keyChangeStatus = needsKeyChange(vehicle.id, tomorrowEmployeeId);
             const cellStyle = getKeyChangeStyle(keyChangeStatus);
+            const isNotPreferred = notAssignedPreferredVehicle(tomorrowEmployeeId, vehicle.id);
             
             return (
               <TableRow key={vehicle.id}>
@@ -255,7 +273,14 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
                 </TableCell>
                 <TableCell className={cellStyle}>
                   {tomorrowEmployeeId ? (
-                    <div>{getEmployeeName(tomorrowEmployeeId)}</div>
+                    <div className="flex items-center">
+                      <div>{getEmployeeName(tomorrowEmployeeId)}</div>
+                      {isNotPreferred && (
+                        <Tooltip content="Mitarbeiter erhält nicht das präferierte Fahrzeug">
+                          <AlertTriangle className="h-4 w-4 text-amber-500 ml-2" />
+                        </Tooltip>
+                      )}
+                    </div>
                   ) : (
                     <div className="text-muted-foreground">Noch nicht zugewiesen</div>
                   )}
