@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu, 
@@ -51,18 +50,18 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   const [shift, setShift] = useState<ShiftType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [pendingShiftChange, setPendingShiftChange] = useState<ShiftType>(null);
   const { toast } = useToast();
   
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
   const handleShiftSelect = (shiftType: ShiftType) => {
-    // If attempting to remove a shift, show confirmation dialog
-    if (shift !== null && shiftType === null) {
+    if (shift !== null && shiftType !== shift) {
+      setPendingShiftChange(shiftType);
       setShowRemoveDialog(true);
       return;
     }
     
-    // Prüfen ob Eintrag an nicht-präferierten Tagen erlaubt ist
     if (shiftType !== null && !isPreferredDay && !isFlexible) {
       toast({
         title: "Nicht möglich",
@@ -77,12 +76,9 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const applyShiftChange = (shiftType: ShiftType) => {
     setIsLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setShift(shiftType);
       
-      // Create a custom event to notify parent components about shift changes
-      // This could be used to update the count of scheduled employees
       if (shiftType) {
         const assignment: ShiftAssignment = {
           id: `${employeeId}-${date}`,
@@ -95,7 +91,6 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
           detail: { 
             assignment, 
             action: 'add',
-            // Only count as "scheduled" if the shift type is "Arbeit"
             countAsScheduled: shiftType === "Arbeit"
           }
         });
@@ -114,6 +109,17 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     }, 300);
   };
   
+  const handleRemoveDialogConfirm = () => {
+    applyShiftChange(pendingShiftChange);
+    setShowRemoveDialog(false);
+    setPendingShiftChange(null);
+  };
+  
+  const handleRemoveDialogCancel = () => {
+    setShowRemoveDialog(false);
+    setPendingShiftChange(null);
+  };
+
   const getShiftIcon = () => {
     if (isLoading) return <Loader2Icon className="h-4 w-4 animate-spin" />;
     
@@ -135,7 +141,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const getBackgroundColor = () => {
     if (!isFlexible && !isPreferredDay) {
-      return "bg-gray-100"; // Grauer Hintergrund für nicht verfügbare Tage
+      return "bg-gray-100";
     }
     
     switch (shift) {
@@ -154,8 +160,6 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     }
   };
   
-  // Wenn der Mitarbeiter nicht flexibel ist und es kein präferierter Tag ist,
-  // und temporäre Flexibilität nicht aktiviert wurde, zeigen wir eine spezielle UI an
   if (!isFlexible && !isPreferredDay) {
     return (
       <div 
@@ -220,15 +224,15 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Termin entfernen</AlertDialogTitle>
+            <AlertDialogTitle>Termin ändern</AlertDialogTitle>
             <AlertDialogDescription>
-              Sind Sie sicher, dass Sie diesen Termin entfernen möchten?
+              Sind Sie sicher, dass Sie diesen Termin ändern möchten?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={() => applyShiftChange(null)}>
-              Ja, entfernen
+            <AlertDialogCancel onClick={handleRemoveDialogCancel}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveDialogConfirm}>
+              Ja, ändern
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
