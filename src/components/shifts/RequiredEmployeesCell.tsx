@@ -20,6 +20,9 @@ const RequiredEmployeesCell: React.FC<RequiredEmployeesCellProps> = ({
       ? 'text-amber-500 bg-amber-50'
       : 'text-green-500 bg-green-50';
 
+  // Convert 0 to empty string for display purposes
+  const displayValue = requiredCount === 0 ? "" : requiredCount;
+
   return (
     <div className="mt-2 flex justify-center items-center space-x-3 rounded-md bg-background/70 p-1.5 shadow-sm">
       <div className="flex flex-col items-center">
@@ -27,7 +30,7 @@ const RequiredEmployeesCell: React.FC<RequiredEmployeesCellProps> = ({
         <Input
           type="number"
           min="0"
-          value={requiredCount}
+          value={displayValue}
           onChange={(e) => onRequiredChange(e.target.value)}
           className="w-12 h-6 text-center px-1 text-xs font-medium border-muted-foreground/20"
         />
