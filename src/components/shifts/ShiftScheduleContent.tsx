@@ -54,7 +54,8 @@ const ShiftScheduleContent: React.FC = () => {
             <TabsTrigger 
               value="nextday" 
               className="flex-1" 
-              disabled={!tomorrow || !isTomorrowFinalized || scheduledForTomorrow.length === 0}
+              // Only disable if there's no tomorrow or if it's not finalized
+              disabled={!tomorrow || !isTomorrowFinalized}
             >
               Einsatzplan für {tomorrowDisplay}
               {!isTomorrowFinalized && tomorrow && (
@@ -68,7 +69,7 @@ const ShiftScheduleContent: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="nextday">
-            {tomorrow && isTomorrowFinalized && scheduledForTomorrow.length > 0 ? (
+            {tomorrow && isTomorrowFinalized ? (
               <NextDaySchedulePage 
                 scheduledEmployees={scheduledForTomorrow} 
                 date={tomorrow} 

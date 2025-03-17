@@ -40,7 +40,7 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
             <ul className="space-y-2">
               {scheduledEmployees.map((employee) => (
                 <li key={employee.id} className="py-2 border-b last:border-b-0">
-                  <span className="font-medium">{employee.name}</span>
+                  {employee.name}
                 </li>
               ))}
             </ul>
