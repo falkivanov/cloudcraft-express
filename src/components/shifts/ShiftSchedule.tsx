@@ -89,7 +89,10 @@ const ShiftSchedule = () => {
             <tr>
               <th className="p-3 text-left min-w-[200px]">
                 <div>Mitarbeiter</div>
-                <div className="mt-2 text-xs">Forecast:</div>
+                <div className="mt-2 text-xs flex justify-between items-center">
+                  <span>Forecast:</span>
+                  <span className="text-xs ml-2">Geplant:</span>
+                </div>
               </th>
               {weekDays.map((day, index) => (
                 <th key={day.toString()} className="p-3 text-center border-l">
@@ -99,18 +102,15 @@ const ShiftSchedule = () => {
                   <div className="text-sm font-normal">
                     {format(day, "dd.MM.", { locale: de })}
                   </div>
-                  <div className="mt-1">
+                  <div className="mt-1 flex justify-center space-x-2 items-center">
                     <Input
                       type="number"
                       min="0"
                       value={requiredEmployees[index]}
                       onChange={(e) => handleRequiredChange(index, e.target.value)}
-                      className="w-12 h-6 text-center px-1 mx-auto"
+                      className="w-10 h-6 text-center px-1"
                     />
-                  </div>
-                  <div className="mt-1 text-xs">
-                    Geplant: 
-                    <span className={`ml-1 font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
+                    <span className={`text-xs font-medium ${getScheduledEmployees(index) < requiredEmployees[index] ? 'text-red-500' : 'text-green-500'}`}>
                       {getScheduledEmployees(index)}
                     </span>
                   </div>
