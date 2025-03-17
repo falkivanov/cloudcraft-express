@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { CalendarIcon, UserIcon, Car, WandSparkles } from "lucide-react";
+import { CalendarIcon, Car, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ const sampleVehicles = initialVehicles.map(vehicle => ({
   status: vehicle.status === "Aktiv" ? "Aktiv" : "In Werkstatt"
 }));
 
-// Beispiel für zugewiesene Schichten, jetzt mit einfacheren Schichttypen
+// Beispiel für zugewiesene Schichten
 const assignedShifts = [
   { employeeId: "1", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
   { employeeId: "2", date: format(new Date(), "yyyy-MM-dd"), shiftType: "Arbeit" as ShiftType },
@@ -146,69 +146,59 @@ const DailyVehicleAssignment: React.FC = () => {
       
       {employeesWithShifts.length === 0 ? (
         <div className="text-center p-8 text-muted-foreground">
-          <UserIcon className="mx-auto h-16 w-16 mb-4 opacity-20" />
           <p>Keine geplanten Mitarbeiter für diesen Tag gefunden.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {employeesWithShifts.map(employee => {
-            const employeeShift = assignedShifts.find(shift => 
-              shift.employeeId === employee.id && shift.date === selectedDate
-            );
-            
-            return (
-              <Card key={employee.id} className={cn(
-                "overflow-hidden transition-all",
-                assignments[employee.id] && "border-green-500"
-              )}>
-                <div className="p-2 text-white bg-blue-500">
-                  Arbeit
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">{employee.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Bevorzugtes Fahrzeug: {employee.preferredVehicle || "Keine Präferenz"}
-                      </p>
-                    </div>
-                    {assignments[employee.id] && (
-                      <Badge variant="outline" className="bg-green-50">Zugewiesen</Badge>
-                    )}
+          {employeesWithShifts.map(employee => (
+            <Card key={employee.id} className={cn(
+              "overflow-hidden transition-all",
+              assignments[employee.id] && "border-green-500"
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold">{employee.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Bevorzugtes Fahrzeug: {employee.preferredVehicle || "Keine Präferenz"}
+                    </p>
                   </div>
-                  
-                  <Select 
-                    value={assignments[employee.id]} 
-                    onValueChange={(value) => handleAssignVehicle(employee.id, value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Fahrzeug zuweisen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sampleVehicles
-                        .filter(v => v.status === "Aktiv")
-                        .map(vehicle => {
-                          const isPreferred = vehicle.licensePlate === employee.preferredVehicle;
-                          const isAssigned = Object.values(assignments).includes(vehicle.id);
-                          
-                          return (
-                            <SelectItem 
-                              key={vehicle.id} 
-                              value={vehicle.id}
-                              disabled={isAssigned && assignments[employee.id] !== vehicle.id}
-                              className={isPreferred ? "font-medium bg-green-50" : ""}
-                            >
-                              {isPreferred && "✓ "}{vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
-                              {isAssigned && assignments[employee.id] !== vehicle.id && " - bereits zugewiesen"}
-                            </SelectItem>
-                          );
-                        })}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  {assignments[employee.id] && (
+                    <Badge variant="outline" className="bg-green-50">Zugewiesen</Badge>
+                  )}
+                </div>
+                
+                <Select 
+                  value={assignments[employee.id]} 
+                  onValueChange={(value) => handleAssignVehicle(employee.id, value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Fahrzeug zuweisen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sampleVehicles
+                      .filter(v => v.status === "Aktiv")
+                      .map(vehicle => {
+                        const isPreferred = vehicle.licensePlate === employee.preferredVehicle;
+                        const isAssigned = Object.values(assignments).includes(vehicle.id);
+                        
+                        return (
+                          <SelectItem 
+                            key={vehicle.id} 
+                            value={vehicle.id}
+                            disabled={isAssigned && assignments[employee.id] !== vehicle.id}
+                            className={isPreferred ? "font-medium bg-green-50" : ""}
+                          >
+                            {isPreferred && "✓ "}{vehicle.brand} {vehicle.model} ({vehicle.licensePlate})
+                            {isAssigned && assignments[employee.id] !== vehicle.id && " - bereits zugewiesen"}
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
       
