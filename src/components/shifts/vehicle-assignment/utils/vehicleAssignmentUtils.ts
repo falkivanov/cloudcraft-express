@@ -51,11 +51,14 @@ export const notAssignedPreferredVehicle = (employeeId: string, vehicleId: strin
   return employee.preferredVehicle !== vehicle.licensePlate;
 };
 
+// Verbesserte Funktion zur Generierung von Fahrzeugzuweisungen
+// Versucht, Mitarbeiter mit ihren bevorzugten Fahrzeugen zu verbinden
 export const generateAssignments = () => {
   const newAssignments: Record<string, string> = {};
   
   const activeEmployees = initialEmployees.filter(emp => emp.status === "Aktiv");
   
+  // Zuerst zuweisen: Mitarbeiter, die ein bestimmtes Fahrzeug bevorzugen
   activeVehicles.forEach(vehicle => {
     const employeeWithPreference = activeEmployees.find(
       emp => emp.preferredVehicle === vehicle.licensePlate && 
@@ -64,7 +67,12 @@ export const generateAssignments = () => {
     
     if (employeeWithPreference) {
       newAssignments[vehicle.id] = employeeWithPreference.id;
-    } else {
+    }
+  });
+  
+  // Dann: Verbleibende Fahrzeuge den verbleibenden Mitarbeitern zuweisen
+  activeVehicles.forEach(vehicle => {
+    if (!newAssignments[vehicle.id]) {
       const availableEmployee = activeEmployees.find(
         emp => !Object.values(newAssignments).includes(emp.id)
       );
