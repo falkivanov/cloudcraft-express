@@ -1,3 +1,4 @@
+
 import { Employee } from "@/types/employee";
 
 // Beispieldaten für Mitarbeiter
@@ -708,3 +709,67 @@ export const initialEmployees: Employee[] = [
     name: "Paul Neumann",
     email: "paul.neumann@beispiel.de",
     phone: "+49 123 4568031",
+    status: "Aktiv",
+    transporterId: "TR-042",
+    startDate: "2021-07-01",
+    endDate: null,
+    address: "Rosenthaler Platz 5, 10119 Berlin",
+    telegramUsername: "@pauln",
+    workingDaysAWeek: 5,
+    preferredVehicle: "B-KL 6543",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
+  },
+  {
+    id: "43",
+    name: "Emma Schneider",
+    email: "emma.schneider@beispiel.de",
+    phone: "+49 123 4568032",
+    status: "Aktiv",
+    transporterId: "TR-043",
+    startDate: "2022-04-15",
+    endDate: null,
+    address: "Leopoldstraße 78, 80802 München",
+    telegramUsername: "@emmas",
+    workingDaysAWeek: 5,
+    preferredVehicle: "M-FH 8976",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
+  },
+  {
+    id: "44",
+    name: "Oliver Braun",
+    email: "oliver.braun@beispiel.de",
+    phone: "+49 123 4568033",
+    status: "Aktiv",
+    transporterId: "TR-044",
+    startDate: "2019-03-01",
+    endDate: null,
+    address: "Sophienstraße 22, 10178 Berlin",
+    telegramUsername: "@oliverb",
+    workingDaysAWeek: 5,
+    preferredVehicle: "B-OB 1212",
+    preferredWorkingDays: ["Mo", "Di", "Mi", "Do", "Fr"],
+    wantsToWorkSixDays: true,
+    isWorkingDaysFlexible: true
+  },
+  {
+    id: "45",
+    name: "Hannah König",
+    email: "hannah.koenig@beispiel.de",
+    phone: "+49 123 4568034",
+    status: "Aktiv",
+    transporterId: "TR-045",
+    startDate: "2020-10-15",
+    endDate: null,
+    address: "Marienplatz 8, 80331 München",
+    telegramUsername: "@hannahk",
+    workingDaysAWeek: 4,
+    preferredVehicle: "M-HK 9090",
+    preferredWorkingDays: ["Mo", "Di", "Do", "Fr"],
+    wantsToWorkSixDays: false,
+    isWorkingDaysFlexible: true
+  }
+];
