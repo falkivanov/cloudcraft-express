@@ -25,45 +25,45 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
   };
 
   return (
-    <div className="mt-6 mb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="mt-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Overall Score */}
-        <div className="bg-white rounded-lg border p-4 flex flex-col items-center">
-          <div className="flex items-center mb-2">
-            <LineChart className="h-5 w-5 mr-2 text-primary" />
-            <h3 className="text-md font-medium">Overall Score</h3>
+        <div className="bg-white rounded-lg border p-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <LineChart className="h-4 w-4 mr-2 text-primary" />
+            <h3 className="text-sm font-medium">Overall Score</h3>
           </div>
           <div className="flex items-baseline">
-            <span className="text-3xl font-bold">{data.overallScore.toFixed(2)}</span>
-            <span className={`ml-2 text-lg ${getStatusColorClass(data.overallStatus)}`}>
+            <span className="text-xl font-bold">{data.overallScore.toFixed(2)}</span>
+            <span className={`ml-2 text-sm ${getStatusColorClass(data.overallStatus)}`}>
               {data.overallStatus}
             </span>
           </div>
         </div>
 
         {/* Rank */}
-        <div className="bg-white rounded-lg border p-4 flex flex-col items-center">
-          <div className="flex items-center mb-2">
-            <Award className="h-5 w-5 mr-2 text-primary" />
-            <h3 className="text-md font-medium">Rank at DSU1</h3>
+        <div className="bg-white rounded-lg border p-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <Award className="h-4 w-4 mr-2 text-primary" />
+            <h3 className="text-sm font-medium">Rank at DSU1</h3>
           </div>
           <div className="flex items-baseline">
-            <span className="text-3xl font-bold">{data.rank}</span>
+            <span className="text-xl font-bold">{data.rank}</span>
             {data.rankNote && (
-              <span className="ml-2 text-sm text-gray-500">({data.rankNote})</span>
+              <span className="ml-2 text-xs text-gray-500">({data.rankNote})</span>
             )}
           </div>
         </div>
 
         {/* Focus Areas */}
-        <div className="bg-white rounded-lg border p-4 flex flex-col">
-          <div className="flex items-center mb-2">
-            <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
-            <h3 className="text-md font-medium">Focus Areas</h3>
+        <div className="bg-white rounded-lg border p-3">
+          <div className="flex items-center mb-1">
+            <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
+            <h3 className="text-sm font-medium">Focus Areas</h3>
           </div>
-          <ul className="text-sm space-y-1 list-inside list-decimal">
+          <ul className="text-xs space-y-0.5 list-inside list-disc">
             {data.recommendedFocusAreas.map((area, index) => (
-              <li key={index} className="text-gray-700">{area}</li>
+              <li key={index} className="text-gray-700 truncate">{area}</li>
             ))}
           </ul>
         </div>
