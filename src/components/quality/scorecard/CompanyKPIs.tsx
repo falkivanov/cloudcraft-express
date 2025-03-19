@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,15 +87,19 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex justify-between items-center">
                   <span>{kpi.name}</span>
-                  <Badge className={getKPIStatusStyle(kpi.value, kpi.target, kpi.trend, kpi.status)}>
-                    {formatKPIValue(kpi)}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <span>{formatKPIValue(kpi)}</span>
+                    {kpi.status && (
+                      <Badge className={getKPIStatusStyle(kpi.value, kpi.target, kpi.trend, kpi.status)}>
+                        {kpi.status}
+                      </Badge>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-sm text-muted-foreground flex justify-between">
+                <div className="text-sm text-muted-foreground">
                   <span>Ziel: {kpi.target}{kpi.unit}</span>
-                  {kpi.status && <span className="capitalize">{kpi.status}</span>}
                 </div>
               </CardContent>
             </Card>
