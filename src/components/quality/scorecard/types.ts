@@ -5,6 +5,7 @@ export interface ScorecardKPI {
   target: number;
   unit: string;
   trend: "up" | "down" | "neutral";
+  status?: "fantastic" | "great" | "fair" | "poor";
 }
 
 export interface DriverKPI {
@@ -14,5 +15,19 @@ export interface DriverKPI {
     name: string;
     value: number;
     target: number;
+    unit?: string;
+    status?: "fantastic" | "great" | "fair" | "poor";
   }[];
+}
+
+export interface ScoreCardData {
+  week: number;
+  year: number;
+  location: string;
+  overallScore: number;
+  overallStatus: string;
+  rank: number;
+  companyKPIs: ScorecardKPI[];
+  driverKPIs: DriverKPI[];
+  recommendedFocusAreas: string[];
 }
