@@ -45,7 +45,8 @@ export const createAutomaticPlan = ({
     existingShifts, workShifts, planningMode
   );
   
-  // Im Forecast-Modus, versuche die Mitarbeiterverteilung auszugleichen
+  // In Forecast mode, try to balance employee distribution to better match requirements
+  // and ensure all employees are assigned their full working days
   if (planningMode === "forecast") {
     runBalanceForecastPass(
       sortedEmployees, weekDays, filledPositions, employeeAssignments,
