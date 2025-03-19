@@ -49,11 +49,11 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
     
     const change = parseInt(match[1], 10);
     
-    if (change > 0) {
-      // Positive change means rank worsened (e.g., +2 means went from rank 3 to rank 5)
+    if (change < 0) {
+      // Negative change means rank worsened (e.g., -2 means went from rank 3 to rank 5)
       return { icon: <ArrowDown className="h-3 w-3 text-red-500" />, color: "text-red-500" };
-    } else if (change < 0) {
-      // Negative change means rank improved (e.g., -2 means went from rank 5 to rank 3)
+    } else if (change > 0) {
+      // Positive change means rank improved (e.g., +2 means went from rank 5 to rank 3)
       return { icon: <ArrowUp className="h-3 w-3 text-green-500" />, color: "text-green-500" };
     }
     
