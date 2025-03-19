@@ -2,21 +2,7 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverKPIsProps } from "./types";
-import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import DriverTable from "./driver/DriverTable";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs, 
@@ -24,151 +10,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   setDriverStatusTab,
   previousWeekData
 }) => {
-  // Function to get status badge styling
-  const getStatusClass = (status: string | undefined) => {
-    if (!status) return "bg-gray-100 text-gray-500";
-    
-    switch (status.toLowerCase()) {
-      case "fantastic":
-        return "bg-blue-100 text-blue-600";
-      case "great":
-        return "bg-yellow-100 text-yellow-600";
-      case "fair":
-        return "bg-orange-100 text-orange-600";
-      case "poor":
-        return "bg-red-100 text-red-600";
-      case "none":
-        return "bg-blue-100 text-blue-600"; // Treat none as fantastic for consistency
-      default:
-        return "bg-gray-100 text-gray-500";
-    }
-  };
-
   // Filter drivers by status
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
   const formerDrivers = driverKPIs.filter(driver => driver.status === "former");
-  
-  // Find previous week's data for a driver
-  const getPreviousDriverData = (driverName: string) => {
-    if (!previousWeekData) return null;
-    return previousWeekData.driverKPIs.find(d => d.name === driverName) || null;
-  };
-  
-  // Get previous metric data
-  const getPreviousMetricData = (driverName: string, metricName: string) => {
-    const prevDriver = getPreviousDriverData(driverName);
-    if (!prevDriver) return null;
-    
-    return prevDriver.metrics.find(m => m.name === metricName) || null;
-  };
-  
-  // Format value based on metric name
-  const formatValue = (value: number, unit: string) => {
-    return value;
-  };
-  
-  // Function to calculate and format the change from previous week
-  const getChangeDisplay = (current: number, previousValue: number | null) => {
-    if (previousValue === null) return null;
-    
-    const difference = current - previousValue;
-    const isPositive = difference > 0;
-    
-    return {
-      difference,
-      display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
-      isPositive
-    };
-  };
-
-  // Render a table for drivers with their metrics
-  const renderDriverTable = (drivers: any[]) => {
-    if (drivers.length === 0) {
-      return (
-        <div className="py-8 text-center text-gray-500">
-          {driverStatusTab === "active" ? "Keine aktiven Fahrer vorhanden" : "Keine ehemaligen Fahrer vorhanden"}
-        </div>
-      );
-    }
-
-    return (
-      <div className="overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="py-1 px-3 text-xs text-gray-500">Fahrer</TableHead>
-              {drivers[0].metrics.map((metric: any) => (
-                <TableHead key={metric.name} className="py-1 px-3 text-center text-xs text-gray-500">{metric.name}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {drivers.map((driver) => (
-              <TableRow key={driver.name} className="border-b border-gray-100 hover:bg-gray-50">
-                <TableCell className="py-2 px-3 text-sm font-medium">{driver.name}</TableCell>
-                
-                {driver.metrics.map((metric: any) => {
-                  const prevMetric = getPreviousMetricData(driver.name, metric.name);
-                  const prevValue = prevMetric ? prevMetric.value : null;
-                  const change = getChangeDisplay(metric.value, prevValue);
-                  
-                  // Check if the metric value meets its target (if available)
-                  const isAtOrBetterThanTarget = metric.target ? 
-                    (metric.name === "DNR DPMO" ? metric.value <= metric.target : metric.value >= metric.target) : 
-                    false;
-                  
-                  // Determine if change is positive or negative based on metric direction
-                  const isGoodChange = change && (
-                    (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0) ||
-                    (change.difference === 0 && isAtOrBetterThanTarget)
-                  );
-                  
-                  // Convert "none" to "fantastic" for display
-                  const displayStatus = metric.status === "none" ? "fantastic" : metric.status;
-                  
-                  return (
-                    <TableCell key={metric.name} className="py-2 px-3 text-center">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
-                          
-                          {change && prevMetric && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className={`text-xs flex items-center ${isGoodChange ? "text-green-500" : "text-red-500"} cursor-help`}>
-                                    {isGoodChange ? (
-                                      <ArrowUp className="h-3 w-3 mr-0.5" />
-                                    ) : (
-                                      <ArrowDown className="h-3 w-3 mr-0.5" />
-                                    )}
-                                    {change.display}{metric.unit}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">Vorwoche: {prevMetric.value}{metric.unit}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                        
-                        {metric.status && (
-                          <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
-                            {displayStatus}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-4">
@@ -188,11 +32,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         </TabsList>
         
         <TabsContent value="active">
-          {renderDriverTable(activeDrivers)}
+          <DriverTable drivers={activeDrivers} previousWeekData={previousWeekData} />
         </TabsContent>
         
         <TabsContent value="former">
-          {renderDriverTable(formerDrivers)}
+          <DriverTable drivers={formerDrivers} previousWeekData={previousWeekData} />
         </TabsContent>
       </Tabs>
     </div>
