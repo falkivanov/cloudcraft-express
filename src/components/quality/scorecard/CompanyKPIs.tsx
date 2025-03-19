@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,17 +12,17 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "fantastic":
-        return "bg-green-100 text-green-800";
-      case "great":
         return "bg-blue-100 text-blue-800";
-      case "fair":
+      case "great":
         return "bg-yellow-100 text-yellow-800";
+      case "fair":
+        return "bg-orange-100 text-orange-800";
       case "poor":
         return "bg-red-100 text-red-800";
       case "none":
         return "bg-gray-100 text-gray-800";
       case "in compliance":
-        return "bg-green-100 text-green-800";
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -36,9 +35,9 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
     }
     
     if (trend === "up") {
-      return value >= target ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+      return value >= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
     } else if (trend === "down") {
-      return value <= target ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+      return value <= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
     }
     return "bg-gray-100 text-gray-800";
   };

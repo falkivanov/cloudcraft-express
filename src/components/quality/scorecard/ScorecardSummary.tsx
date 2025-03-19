@@ -12,11 +12,11 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
   const getStatusColorClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "fantastic":
-        return "text-green-600";
-      case "great":
         return "text-blue-600";
-      case "fair":
+      case "great":
         return "text-yellow-600";
+      case "fair":
+        return "text-orange-600";
       case "poor":
         return "text-red-600";
       default:

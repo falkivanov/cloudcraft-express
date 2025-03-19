@@ -24,9 +24,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     }
     
     if (metric === "DNR DPMO") {
-      return value <= target ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+      return value <= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
     } else if (metric === "DCR" || metric === "POD" || metric === "Contact Compliance") {
-      return value >= target ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+      return value >= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
     } else {
       return "bg-gray-100 text-gray-800";
     }
@@ -36,11 +36,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "fantastic":
-        return "bg-green-100 text-green-800";
-      case "great":
         return "bg-blue-100 text-blue-800";
-      case "fair":
+      case "great":
         return "bg-yellow-100 text-yellow-800";
+      case "fair":
+        return "bg-orange-100 text-orange-800";
       case "poor":
         return "bg-red-100 text-red-800";
       default:
