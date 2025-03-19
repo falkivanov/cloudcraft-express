@@ -35,8 +35,44 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
     }
   }, [scorecardData]);
 
+  // Check if selected week is below KW6 (where we don't have data)
+  const isUnavailableWeek = () => {
+    const weekMatch = selectedWeek.match(/week-(\d+)-(\d+)/);
+    if (weekMatch) {
+      const weekNum = parseInt(weekMatch[1], 10);
+      const year = parseInt(weekMatch[2], 10);
+      
+      // We only have data for week 6 and above in 2025
+      return (year === 2025 && weekNum < 6);
+    }
+    return false;
+  };
+
   if (!data) {
     return <NoDataMessage category="Scorecard" />;
+  }
+
+  if (isUnavailableWeek()) {
+    return (
+      <div className="p-4 border rounded-lg bg-background">
+        <div className="flex flex-col space-y-6">
+          {/* Week Selector */}
+          <div className="flex justify-end">
+            <ScorecardWeekSelector
+              selectedWeek={selectedWeek}
+              setSelectedWeek={setSelectedWeek}
+            />
+          </div>
+          
+          <div className="mt-6 p-6 border rounded-lg bg-gray-50 text-center">
+            <p className="text-lg font-medium mb-3">Keine Daten verfügbar</p>
+            <p className="text-muted-foreground">
+              Zu dieser Woche wurden keine Daten hochgeladen. Bitte wählen Sie KW6 oder höher.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
