@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +7,7 @@ import { ScoreCardData } from "./types";
 import NoDataMessage from "../NoDataMessage";
 import ScorecardWeekSelector from "./ScorecardWeekSelector";
 import ScorecardSummary from "./ScorecardSummary";
-import { getScorecardData, getPreviousWeekData } from "./ScorecardDataProvider";
+import { getScorecardData, getPreviousWeekData } from "./data";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;

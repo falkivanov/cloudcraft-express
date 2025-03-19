@@ -1,4 +1,5 @@
-import { ScoreCardData } from "./types";
+
+import { ScoreCardData } from "../types";
 
 // Get data for KW 6 2025
 export const getWeek6Data = (): ScoreCardData => {
@@ -349,53 +350,4 @@ export const getDummyScoreCardData = (): ScoreCardData => {
     },
     currentWeekTips: "Coming Soon"
   };
-};
-
-// Helper function to get the data based on selected week
-export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWeek?: string): ScoreCardData => {
-  if (scorecardData) {
-    return scorecardData;
-  }
-  
-  if (selectedWeek) {
-    const weekMatch = selectedWeek.match(/week-(\d+)-(\d+)/);
-    if (weekMatch) {
-      const weekNum = parseInt(weekMatch[1], 10);
-      const year = parseInt(weekMatch[2], 10);
-      
-      switch (weekNum) {
-        case 6:
-          return getWeek6Data();
-        case 7:
-          return getWeek7Data();
-        case 8:
-          return getWeek8Data();
-        case 9:
-          return getWeek9Data();
-        case 10:
-          return getDummyScoreCardData();
-        default:
-          return getDummyScoreCardData();
-      }
-    }
-  }
-  
-  return getDummyScoreCardData();
-};
-
-// Get the previous week's data for comparison
-export const getPreviousWeekData = (currentWeek: string): ScoreCardData | null => {
-  const weekMatch = currentWeek.match(/week-(\d+)-(\d+)/);
-  if (!weekMatch) return null;
-  
-  const weekNum = parseInt(weekMatch[1], 10);
-  const year = parseInt(weekMatch[2], 10);
-  
-  if (year === 2025 && weekNum <= 6) return null;
-  
-  const prevWeekNum = weekNum - 1;
-  const prevYear = year;
-  const prevWeekId = `week-${prevWeekNum}-${prevYear}`;
-  
-  return getScorecardData(null, prevWeekId);
 };
