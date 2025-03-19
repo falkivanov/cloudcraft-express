@@ -5,7 +5,7 @@ export interface ScorecardKPI {
   target: number;
   unit: string;
   trend: "up" | "down" | "neutral";
-  status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance";
+  status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
 }
 
 export interface DriverKPI {
@@ -16,7 +16,7 @@ export interface DriverKPI {
     value: number;
     target: number;
     unit?: string;
-    status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance";
+    status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
   }[];
 }
 

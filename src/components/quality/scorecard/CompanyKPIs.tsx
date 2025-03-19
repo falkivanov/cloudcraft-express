@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,9 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
       case "poor":
         return "bg-red-100 text-red-800";
       case "none":
-        return "bg-gray-100 text-gray-800";
+        return "bg-blue-100 text-blue-800";
+      case "not in compliance":
+        return "bg-red-100 text-red-800";
       case "in compliance":
         return "bg-blue-100 text-blue-800";
       default:
@@ -45,8 +46,21 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
   
   // Format KPI value display
   const formatKPIValue = (kpi: ScorecardKPI) => {
+    if (kpi.name === "Breach of Contract (BOC)") {
+      return kpi.status === "none" ? "None" : "Not in compliance";
+    }
+    
     if (kpi.status === "none") return "None";
     return `${kpi.value}${kpi.unit}`;
+  };
+  
+  // Get display status for BOC
+  const getDisplayStatus = (kpi: ScorecardKPI) => {
+    if (kpi.name === "Breach of Contract (BOC)") {
+      return kpi.status === "none" ? "fantastic" : "poor";
+    }
+    
+    return kpi.status;
   };
   
   // Group KPIs by category
@@ -92,7 +106,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
                     <span>{formatKPIValue(kpi)}</span>
                     {kpi.status && (
                       <Badge className={getKPIStatusStyle(kpi.value, kpi.target, kpi.trend, kpi.status)}>
-                        {kpi.status}
+                        {getDisplayStatus(kpi)}
                       </Badge>
                     )}
                   </div>

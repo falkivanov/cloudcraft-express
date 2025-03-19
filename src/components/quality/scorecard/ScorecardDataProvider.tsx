@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from "./types";
 
 // Dummy data based on the PDF content
@@ -20,6 +19,7 @@ export const getDummyScoreCardData = (): ScoreCardData => {
       { name: "Mentor Adoption Rate", value: 85.64, target: 80, unit: "%", trend: "up", status: "fantastic" },
       
       // Compliance KPIs
+      // BOC has only 2 states: "none" (fantastic) or "not in compliance" (poor)
       { name: "Breach of Contract (BOC)", value: 0, target: 0, unit: "", trend: "down", status: "none" },
       { name: "Working Hours Compliance (WHC)", value: 100, target: 100, unit: "%", trend: "up", status: "fantastic" },
       { name: "Comprehensive Audit Score (CAS)", value: 100, target: 100, unit: "%", trend: "up", status: "in compliance" },
