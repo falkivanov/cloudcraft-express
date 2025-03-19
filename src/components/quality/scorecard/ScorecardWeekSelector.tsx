@@ -18,36 +18,66 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
   selectedWeek,
   setSelectedWeek
 }) => {
-  // Generate available weeks (last 10 weeks)
-  const currentDate = new Date();
-  const availableWeeks = Array.from({ length: 10 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (i * 7));
-    const weekNum = Math.ceil((((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / 86400000) + 1) / 7);
-    
-    // For test data, we ensure KW10 shows as the current week
-    const isKW10 = (i === 0 && selectedWeek === "week-10-2025") || weekNum === 10;
-    
-    return {
-      id: isKW10 ? "week-10-2025" : `week-${weekNum}-${date.getFullYear()}`,
-      label: isKW10 ? `KW 10 (aktuell)` : `KW ${weekNum}`,
-      weekNum: isKW10 ? 10 : weekNum,
-      year: isKW10 ? 2025 : date.getFullYear(),
-      date
-    };
-  });
-
-  // Add the specific test data week (KW10 2025) if it's not already in the list
-  const hasKW10 = availableWeeks.some(week => week.id === "week-10-2025");
-  if (!hasKW10) {
-    availableWeeks.unshift({
+  // Define the available weeks based on our uploaded data
+  // Starting with KW10 2025 as the most recent since that's what we have
+  const availableWeeks = [
+    {
       id: "week-10-2025",
       label: "KW 10 (aktuell)",
       weekNum: 10,
       year: 2025,
-      date: new Date(2025, 2, 3) // Approximate date for week 10 in 2025
-    });
-  }
+      date: new Date(2025, 2, 3) // March 3, 2025 (approximate date for week 10)
+    },
+    {
+      id: "week-9-2025",
+      label: "KW 9",
+      weekNum: 9,
+      year: 2025,
+      date: new Date(2025, 1, 26) // Feb 26, 2025
+    },
+    {
+      id: "week-8-2025",
+      label: "KW 8",
+      weekNum: 8,
+      year: 2025,
+      date: new Date(2025, 1, 19) // Feb 19, 2025
+    },
+    {
+      id: "week-7-2025",
+      label: "KW 7",
+      weekNum: 7,
+      year: 2025,
+      date: new Date(2025, 1, 12) // Feb 12, 2025
+    },
+    {
+      id: "week-6-2025",
+      label: "KW 6",
+      weekNum: 6,
+      year: 2025,
+      date: new Date(2025, 1, 5) // Feb 5, 2025
+    },
+    {
+      id: "week-5-2025",
+      label: "KW 5",
+      weekNum: 5,
+      year: 2025,
+      date: new Date(2025, 0, 29) // Jan 29, 2025
+    },
+    {
+      id: "week-4-2025",
+      label: "KW 4",
+      weekNum: 4,
+      year: 2025,
+      date: new Date(2025, 0, 22) // Jan 22, 2025
+    },
+    {
+      id: "week-3-2025",
+      label: "KW 3",
+      weekNum: 3,
+      year: 2025,
+      date: new Date(2025, 0, 15) // Jan 15, 2025
+    },
+  ];
 
   return (
     <div className="flex items-center space-x-2">
