@@ -1,79 +1,77 @@
+
 import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScorecardKPI } from "./types";
+import { ScorecardKPI, CompanyKPIsProps } from "./types";
+import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
 
-interface CompanyKPIsProps {
-  companyKPIs: ScorecardKPI[];
-}
-
-const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
-  // Get KPI status color based on status
-  const getStatusColor = (status?: string) => {
-    switch (status) {
+const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
+  // Function to get the status badge class
+  const getStatusClass = (status: string | undefined) => {
+    if (!status) return "bg-gray-100 text-gray-500";
+    
+    switch (status.toLowerCase()) {
       case "fantastic":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-600";
       case "great":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-600";
       case "fair":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-600";
       case "poor":
-        return "bg-red-100 text-red-800";
-      case "none":
-        return "bg-blue-100 text-blue-800";
-      case "not in compliance":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-600";
       case "in compliance":
-        return "bg-blue-100 text-blue-800";
+        return "bg-green-100 text-green-600";
+      case "not in compliance":
+        return "bg-red-100 text-red-600";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-500";
     }
   };
   
-  // Get KPI status style 
-  const getKPIStatusStyle = (value: number, target: number, trend: "up" | "down" | "neutral", status?: string) => {
-    if (status) {
-      return getStatusColor(status);
+  // Function to get trend icon
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "up":
+        return <ArrowUp className="h-3 w-3" />;
+      case "down":
+        return <ArrowDown className="h-3 w-3" />;
+      default:
+        return <CircleDot className="h-3 w-3" />;
     }
+  };
+
+  // Get previous week KPI by name
+  const getPreviousWeekKPI = (name: string) => {
+    if (!previousWeekData) return null;
+    return previousWeekData.companyKPIs.find(kpi => kpi.name === name) || null;
+  };
+
+  // Function to calculate and format the change from previous week
+  const getChangeDisplay = (current: number, previousKPI: ScorecardKPI | null) => {
+    if (!previousKPI) return null;
     
-    if (trend === "up") {
-      return value >= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
-    } else if (trend === "down") {
-      return value <= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
-    }
-    return "bg-gray-100 text-gray-800";
-  };
-  
-  // Format KPI value display
-  const formatKPIValue = (kpi: ScorecardKPI) => {
-    if (kpi.name === "Breach of Contract (BOC)") {
-      return kpi.status === "none" ? "None" : "Not in compliance";
-    }
+    const previous = previousKPI.value;
+    const difference = current - previous;
+    const isPositive = difference > 0;
+    const color = isPositive ? "text-green-500" : difference < 0 ? "text-red-500" : "text-gray-500";
     
-    if (kpi.status === "none") return "None";
-    return `${kpi.value}${kpi.unit}`;
+    return {
+      difference,
+      display: `${isPositive ? "+" : ""}${difference.toFixed(2)}`,
+      color
+    };
   };
-  
-  // Get display status for BOC
-  const getDisplayStatus = (kpi: ScorecardKPI) => {
-    if (kpi.name === "Breach of Contract (BOC)") {
-      return kpi.status === "none" ? "fantastic" : "poor";
-    }
-    
-    return kpi.status;
-  };
-  
-  // Group KPIs by category
+
+  // Group the KPIs by category
   const safetyKPIs = companyKPIs.filter(kpi => 
     ["Vehicle Audit (VSA) Compliance", "Safe Driving Metric (FICO)", "DVIC Compliance", 
      "Speeding Event Rate (Per 100 Trips)", "Mentor Adoption Rate"].includes(kpi.name)
   );
   
   const complianceKPIs = companyKPIs.filter(kpi => 
-    ["Breach of Contract (BOC)", "Working Hours Compliance (WHC)", "Comprehensive Audit Score (CAS)"].includes(kpi.name)
+    ["Breach of Contract (BOC)", "Working Hours Compliance (WHC)", 
+     "Comprehensive Audit Score (CAS)"].includes(kpi.name)
   );
   
-  const customerExperienceKPIs = companyKPIs.filter(kpi => 
+  const customerKPIs = companyKPIs.filter(kpi => 
     ["Customer escalation DPMO", "Customer Delivery Feedback"].includes(kpi.name)
   );
   
@@ -81,7 +79,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
     ["Delivery Completion Rate (DCR)", "Delivered Not Received (DNR DPMO)"].includes(kpi.name)
   );
   
-  const standardWorkComplianceKPIs = companyKPIs.filter(kpi => 
+  const standardWorkKPIs = companyKPIs.filter(kpi => 
     ["Photo-On-Delivery", "Contact Compliance"].includes(kpi.name)
   );
   
@@ -89,49 +87,92 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
     ["Capacity Reliability"].includes(kpi.name)
   );
 
-  // Render a section of KPIs
-  const renderKPISection = (title: string, kpis: ScorecardKPI[]) => {
-    if (kpis.length === 0) return null;
+  // Render a KPI row with comparison
+  const renderKPIRow = (kpi: ScorecardKPI) => {
+    const previousKPI = getPreviousWeekKPI(kpi.name);
+    const change = getChangeDisplay(kpi.value, previousKPI);
     
+    // Determine if the change is good or bad based on the KPI's trend direction
+    const isPositiveChange = change && ((kpi.trend === "up" && change.difference > 0) || 
+                                        (kpi.trend === "down" && change.difference < 0));
+    const changeColor = change ? 
+      (isPositiveChange ? "text-green-500" : change.difference === 0 ? "text-gray-500" : "text-red-500") : 
+      "";
+
     return (
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4">{title}</h3>
-        <div className="grid grid-cols-1 gap-4">
-          {kpis.map((kpi, index) => (
-            <Card key={index} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex justify-between items-center">
-                  <span>{kpi.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span>{formatKPIValue(kpi)}</span>
-                    {kpi.status && (
-                      <Badge className={getKPIStatusStyle(kpi.value, kpi.target, kpi.trend, kpi.status)}>
-                        {getDisplayStatus(kpi)}
-                      </Badge>
-                    )}
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <div className="text-sm text-muted-foreground text-right">
-                  <span>Ziel: {kpi.target}{kpi.unit}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <tr key={kpi.name} className="border-b border-gray-100 hover:bg-gray-50">
+        <td className="py-2 px-3 text-sm">{kpi.name}</td>
+        <td className="py-2 px-3 text-right whitespace-nowrap">
+          <div className="flex items-center justify-end gap-2">
+            <span className="font-medium">{kpi.value.toFixed(2)}{kpi.unit}</span>
+            {change && (
+              <span className={`text-xs flex items-center ${changeColor}`}>
+                {isPositiveChange ? (
+                  <ArrowUp className="h-3 w-3 mr-0.5" />
+                ) : change.difference === 0 ? (
+                  <CircleDot className="h-3 w-3 mr-0.5" />
+                ) : (
+                  <ArrowDown className="h-3 w-3 mr-0.5" />
+                )}
+                {change.display}{kpi.unit}
+              </span>
+            )}
+            {previousKPI && !change && (
+              <span className="text-xs text-gray-500">
+                (Vorwoche: {previousKPI.value.toFixed(2)}{kpi.unit})
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-2 px-3 text-right text-sm">{kpi.target}{kpi.unit}</td>
+        <td className="py-2 px-3 text-right">
+          <div className="flex justify-end">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(kpi.status)}`}>
+              {kpi.status || "N/A"}
+            </span>
+          </div>
+        </td>
+      </tr>
     );
   };
 
+  // Render a category of KPIs
+  const renderKPICategory = (title: string, kpis: ScorecardKPI[]) => (
+    <div className="mb-6">
+      <h3 className="text-sm font-medium border-b pb-2 mb-2">{title}</h3>
+      <table className="w-full">
+        <thead>
+          <tr className="text-left text-xs text-gray-500">
+            <th className="py-1 px-3">Metric</th>
+            <th className="py-1 px-3 text-right">Value</th>
+            <th className="py-1 px-3 text-right">Target</th>
+            <th className="py-1 px-3 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {kpis.map(renderKPIRow)}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      {renderKPISection("Safety", safetyKPIs)}
-      {renderKPISection("Compliance", complianceKPIs)}
-      {renderKPISection("Customer Delivery Experience", customerExperienceKPIs)}
-      {renderKPISection("Quality", qualityKPIs)}
-      {renderKPISection("Standard Work Compliance", standardWorkComplianceKPIs)}
-      {renderKPISection("Capacity", capacityKPIs)}
+      {/* Section header with period and summary */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-medium">Unternehmenskennzahlen</h2>
+        {previousWeekData && (
+          <span className="text-xs text-gray-500 italic">Vergleich: KW{previousWeekData.week}/{previousWeekData.year}</span>
+        )}
+      </div>
+      
+      {/* Render each KPI category */}
+      {renderKPICategory("Sicherheit", safetyKPIs)}
+      {renderKPICategory("Compliance", complianceKPIs)}
+      {renderKPICategory("Kundenerfahrung", customerKPIs)}
+      {renderKPICategory("Qualität", qualityKPIs)}
+      {renderKPICategory("Standard Work", standardWorkKPIs)}
+      {renderKPICategory("Kapazität", capacityKPIs)}
     </div>
   );
 };

@@ -1,174 +1,179 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { DriverKPI } from "./types";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-
-interface DriverKPIsProps {
-  driverKPIs: DriverKPI[];
-  driverStatusTab: string;
-  setDriverStatusTab: (value: string) => void;
-}
+import { DriverKPIsProps } from "./types";
+import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs, 
   driverStatusTab, 
-  setDriverStatusTab 
+  setDriverStatusTab,
+  previousWeekData
 }) => {
-  // Get driver KPI status style based on value, target, and metric name
-  const getDriverKPIStyle = (value: number, target: number, metric: string, status?: string) => {
-    if (status) {
-      return getStatusColor(status);
-    }
+  // Function to get status badge styling
+  const getStatusClass = (status: string | undefined) => {
+    if (!status) return "bg-gray-100 text-gray-500";
     
-    if (metric === "DNR DPMO") {
-      return value <= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
-    } else if (metric === "DCR" || metric === "POD" || metric === "Contact Compliance") {
-      return value >= target ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800";
-    } else {
-      return "bg-gray-100 text-gray-800";
-    }
-  };
-  
-  // Get status color based on status string
-  const getStatusColor = (status?: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "fantastic":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-600";
       case "great":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-600";
       case "fair":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-600";
       case "poor":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-600";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-500";
     }
   };
+
+  // Filter drivers by status
+  const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
+  const formerDrivers = driverKPIs.filter(driver => driver.status === "former");
   
-  // Filter drivers by status (active or former)
-  const filteredDriverKPIs = driverKPIs.filter(driver => 
-    driverStatusTab === "active" ? driver.status === "active" : driver.status === "former"
-  );
+  // Find previous week's data for a driver
+  const getPreviousDriverData = (driverName: string) => {
+    if (!previousWeekData) return null;
+    return previousWeekData.driverKPIs.find(d => d.name === driverName) || null;
+  };
+  
+  // Get previous metric data
+  const getPreviousMetricData = (driverName: string, metricName: string) => {
+    const prevDriver = getPreviousDriverData(driverName);
+    if (!prevDriver) return null;
+    
+    return prevDriver.metrics.find(m => m.name === metricName) || null;
+  };
+  
+  // Function to calculate and format the change from previous week
+  const getChangeDisplay = (current: number, previousValue: number | null) => {
+    if (previousValue === null) return null;
+    
+    const difference = current - previousValue;
+    const isPositive = difference > 0;
+    
+    return {
+      difference,
+      display: `${isPositive ? "+" : ""}${difference.toFixed(2)}`,
+      isPositive
+    };
+  };
+
+  // Render a table row for a driver with metrics
+  const renderDriverRow = (driver: any) => {
+    return (
+      <tr key={driver.name} className="border-b border-gray-100 hover:bg-gray-50">
+        <td className="py-2 px-3 text-sm font-medium">{driver.name}</td>
+        
+        {driver.metrics.map((metric: any) => {
+          const prevMetric = getPreviousMetricData(driver.name, metric.name);
+          const prevValue = prevMetric ? prevMetric.value : null;
+          const change = getChangeDisplay(metric.value, prevValue);
+          
+          // Determine if change is positive or negative based on metric type
+          // For most metrics, higher is better, except for DNR DPMO where lower is better
+          const isGoodChange = change && (
+            (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0)
+          );
+          
+          const changeColor = change ? 
+            (isGoodChange ? "text-green-500" : change.difference === 0 ? "text-gray-500" : "text-red-500") : 
+            "";
+          
+          return (
+            <td key={metric.name} className="py-2 px-3 text-right">
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1">
+                  <span>{metric.value}{metric.unit}</span>
+                  
+                  {change && (
+                    <span className={`text-xs flex items-center ${changeColor}`}>
+                      {isGoodChange ? (
+                        <ArrowUp className="h-3 w-3 mr-0.5" />
+                      ) : change.difference === 0 ? (
+                        <CircleDot className="h-3 w-3 mr-0.5" />
+                      ) : (
+                        <ArrowDown className="h-3 w-3 mr-0.5" />
+                      )}
+                      {change.display}
+                    </span>
+                  )}
+                </div>
+                
+                {metric.status && (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
+                    {metric.status}
+                  </span>
+                )}
+              </div>
+            </td>
+          );
+        })}
+      </tr>
+    );
+  };
 
   return (
-    <div className="w-full">
-      <Tabs value={driverStatusTab} onValueChange={setDriverStatusTab} className="w-full">
+    <div className="space-y-4">
+      {/* Section header with period */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
+        {previousWeekData && (
+          <span className="text-xs text-gray-500 italic">Vergleich: KW{previousWeekData.week}/{previousWeekData.year}</span>
+        )}
+      </div>
+      
+      {/* Tabs for active/former drivers */}
+      <Tabs value={driverStatusTab} onValueChange={setDriverStatusTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="active">Aktive Fahrer</TabsTrigger>
-          <TabsTrigger value="former">Ehemalige Fahrer</TabsTrigger>
+          <TabsTrigger value="active">Aktive Fahrer ({activeDrivers.length})</TabsTrigger>
+          <TabsTrigger value="former">Ehemalige Fahrer ({formerDrivers.length})</TabsTrigger>
         </TabsList>
         
-        <div className="space-y-6">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">Fahrer ID</TableHead>
-                  <TableHead className="whitespace-nowrap">Delivered</TableHead>
-                  <TableHead className="whitespace-nowrap">DCR</TableHead>
-                  <TableHead className="whitespace-nowrap">DNR DPMO</TableHead>
-                  <TableHead className="whitespace-nowrap">POD</TableHead>
-                  <TableHead className="whitespace-nowrap">Contact Compliance</TableHead>
-                  <TableHead className="whitespace-nowrap">Focus Area</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDriverKPIs.length > 0 ? (
-                  filteredDriverKPIs.map((driver, index) => {
-                    // Find metrics by name
-                    const delivered = driver.metrics.find(m => m.name === "Delivered");
-                    const dcr = driver.metrics.find(m => m.name === "DCR");
-                    const dnrDpmo = driver.metrics.find(m => m.name === "DNR DPMO");
-                    const pod = driver.metrics.find(m => m.name === "POD");
-                    const contactCompliance = driver.metrics.find(m => m.name === "Contact Compliance");
-                    
-                    // Determine focus area (choosing worst performing metric)
-                    const focusArea = "DNR DPMO"; // Default for this example
-                    
-                    return (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{driver.name}</TableCell>
-                        <TableCell>{delivered?.value || "N/A"}</TableCell>
-                        <TableCell>
-                          {dcr && (
-                            <Badge className={getDriverKPIStyle(dcr.value, dcr.target, dcr.name, dcr.status)}>
-                              {dcr.value}{dcr.unit || "%"}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {dnrDpmo && (
-                            <Badge className={getDriverKPIStyle(dnrDpmo.value, dnrDpmo.target, dnrDpmo.name, dnrDpmo.status)}>
-                              {dnrDpmo.value}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {pod && (
-                            <Badge className={getDriverKPIStyle(pod.value, pod.target, pod.name, pod.status)}>
-                              {pod.value}{pod.unit || "%"}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {contactCompliance && (
-                            <Badge className={getDriverKPIStyle(contactCompliance.value, contactCompliance.target, contactCompliance.name, contactCompliance.status)}>
-                              {contactCompliance.value}{contactCompliance.unit || "%"}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{focusArea}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Keine Fahrer in dieser Kategorie
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="mt-6 space-y-6">
-            <h3 className="text-lg font-medium">Fahrer Details</h3>
-            {filteredDriverKPIs.length > 0 ? (
-              filteredDriverKPIs.map((driver, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{driver.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {driver.metrics.map((metric, metricIndex) => (
-                        <div key={metricIndex} className="p-3 border rounded-md">
-                          <div className="text-sm font-medium mb-1">{metric.name}</div>
-                          <div className="flex justify-between items-center">
-                            <Badge className={getDriverKPIStyle(metric.value, metric.target, metric.name, metric.status)}>
-                              {metric.value}{metric.unit || ""}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              Ziel: {metric.target}{metric.unit || ""}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center p-8 border rounded-lg bg-gray-50">
-                <p className="text-muted-foreground">Keine Fahrer in dieser Kategorie</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <TabsContent value="active">
+          {activeDrivers.length > 0 ? (
+            <div className="overflow-auto">
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b">
+                    <th className="py-1 px-3">Fahrer</th>
+                    {activeDrivers[0].metrics.map((metric: any) => (
+                      <th key={metric.name} className="py-1 px-3 text-right">{metric.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeDrivers.map(renderDriverRow)}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-500">Keine aktiven Fahrer vorhanden</div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="former">
+          {formerDrivers.length > 0 ? (
+            <div className="overflow-auto">
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b">
+                    <th className="py-1 px-3">Fahrer</th>
+                    {formerDrivers[0].metrics.map((metric: any) => (
+                      <th key={metric.name} className="py-1 px-3 text-right">{metric.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {formerDrivers.map(renderDriverRow)}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-500">Keine ehemaligen Fahrer vorhanden</div>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );

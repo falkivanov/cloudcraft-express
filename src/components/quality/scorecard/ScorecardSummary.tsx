@@ -1,14 +1,15 @@
 
 import React from "react";
-import { AlertTriangle, Award, LineChart, ArrowUp, ArrowDown } from "lucide-react";
+import { AlertTriangle, Award, LineChart, ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { ScoreCardData } from "./types";
 import { Badge } from "@/components/ui/badge";
 
 interface ScorecardSummaryProps {
   data: ScoreCardData;
+  previousWeekData: ScoreCardData | null;
 }
 
-const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
+const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekData }) => {
   // Function to get the color class based on status
   const getStatusColorClass = (status: string) => {
     switch (status.toLowerCase()) {
@@ -61,13 +62,30 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
     return null;
   };
 
+  // Calculate changes from previous week
+  const getMetricChange = (current: number, previous: number | undefined) => {
+    if (previous === undefined) return null;
+    
+    const difference = current - previous;
+    const percentChange = previous !== 0 ? (difference / previous) * 100 : 0;
+    
+    return {
+      difference,
+      percentChange,
+      isPositive: difference > 0
+    };
+  };
+
+  // Calculate changes for KPIs
+  const scoreChange = previousWeekData ? getMetricChange(data.overallScore, previousWeekData.overallScore) : null;
+
   const rankChangeInfo = getRankChangeInfo();
 
   return (
     <div className="mt-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Overall Score */}
-        <div className="bg-white rounded-lg border p-3 flex items-center justify-between">
+        <div className="bg-white rounded-lg border p-3 flex items-center justify-between relative">
           <div className="flex items-center">
             <LineChart className="h-4 w-4 mr-2 text-primary" />
             <h3 className="text-sm font-medium">Overall Score</h3>
@@ -77,11 +95,33 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
             <span className={`ml-2 text-sm ${getStatusColorClass(data.overallStatus)}`}>
               {data.overallStatus}
             </span>
+            
+            {scoreChange && (
+              <div className="flex items-center ml-2 text-xs">
+                {scoreChange.isPositive ? (
+                  <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-0.5" />
+                )}
+                <span className={scoreChange.isPositive ? "text-green-500" : "text-red-500"}>
+                  {scoreChange.difference > 0 ? "+" : ""}
+                  {scoreChange.difference.toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
+          
+          {previousWeekData && (
+            <div className="absolute -top-2 -right-2">
+              <Badge variant="outline" className="text-[9px] bg-gray-50 font-normal">
+                Vorwoche: {previousWeekData.overallScore.toFixed(2)}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Rank */}
-        <div className="bg-white rounded-lg border p-3 flex items-center justify-between">
+        <div className="bg-white rounded-lg border p-3 flex items-center justify-between relative">
           <div className="flex items-center">
             <Award className="h-4 w-4 mr-2 text-primary" />
             <h3 className="text-sm font-medium">Rank at DSU1</h3>
@@ -97,6 +137,14 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
               </span>
             )}
           </div>
+          
+          {previousWeekData && (
+            <div className="absolute -top-2 -right-2">
+              <Badge variant="outline" className="text-[9px] bg-gray-50 font-normal">
+                Vorwoche: {previousWeekData.rank}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Focus Areas */}
@@ -107,7 +155,19 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
           </div>
           <ul className="text-xs space-y-0.5 list-inside list-disc">
             {data.recommendedFocusAreas.map((area, index) => (
-              <li key={index} className="text-gray-700 truncate">{area}</li>
+              <li 
+                key={index} 
+                className={`text-gray-700 truncate ${
+                  previousWeekData?.recommendedFocusAreas.includes(area) 
+                    ? "font-medium text-amber-700" 
+                    : ""
+                }`}
+              >
+                {area}
+                {previousWeekData?.recommendedFocusAreas.includes(area) && 
+                  <span className="ml-1 text-[9px] text-gray-500">(wiederholt)</span>
+                }
+              </li>
             ))}
           </ul>
         </div>

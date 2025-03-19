@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +8,7 @@ import { ScoreCardData } from "./types";
 import NoDataMessage from "../NoDataMessage";
 import ScorecardWeekSelector from "./ScorecardWeekSelector";
 import ScorecardSummary from "./ScorecardSummary";
-import { getScorecardData } from "./ScorecardDataProvider";
+import { getScorecardData, getPreviousWeekData } from "./ScorecardDataProvider";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
@@ -23,6 +24,9 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   
   // Get data (either actual or dummy)
   const data = getScorecardData(scorecardData, selectedWeek);
+  
+  // Get previous week's data for comparison
+  const previousWeekData = getPreviousWeekData(selectedWeek);
 
   // Try to extract week number from data if it exists
   useEffect(() => {
@@ -99,12 +103,12 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           </TabsList>
           
           {/* Header with summary information */}
-          <ScorecardSummary data={data} />
+          <ScorecardSummary data={data} previousWeekData={previousWeekData} />
           
           {/* Content sections */}
           <TabsContent value="company" className="w-full">
             <div className="max-w-4xl mx-auto">
-              <CompanyKPIs companyKPIs={data.companyKPIs} />
+              <CompanyKPIs companyKPIs={data.companyKPIs} previousWeekData={previousWeekData} />
             </div>
           </TabsContent>
           
@@ -113,6 +117,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
               driverKPIs={data.driverKPIs}
               driverStatusTab={driverStatusTab}
               setDriverStatusTab={setDriverStatusTab}
+              previousWeekData={previousWeekData}
             />
           </TabsContent>
         </Tabs>

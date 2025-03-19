@@ -353,19 +353,16 @@ export const getDummyScoreCardData = (): ScoreCardData => {
 
 // Helper function to get the data based on selected week
 export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWeek?: string): ScoreCardData => {
-  // If we have real data from an upload, use it
   if (scorecardData) {
     return scorecardData;
   }
   
-  // Otherwise use our week-specific dummy data based on the selected week
   if (selectedWeek) {
     const weekMatch = selectedWeek.match(/week-(\d+)-(\d+)/);
     if (weekMatch) {
       const weekNum = parseInt(weekMatch[1], 10);
       const year = parseInt(weekMatch[2], 10);
       
-      // Return data for the specific week
       switch (weekNum) {
         case 6:
           return getWeek6Data();
@@ -383,6 +380,22 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
     }
   }
   
-  // Default to week 10 if no specific week is selected
   return getDummyScoreCardData();
+};
+
+// Get the previous week's data for comparison
+export const getPreviousWeekData = (currentWeek: string): ScoreCardData | null => {
+  const weekMatch = currentWeek.match(/week-(\d+)-(\d+)/);
+  if (!weekMatch) return null;
+  
+  const weekNum = parseInt(weekMatch[1], 10);
+  const year = parseInt(weekMatch[2], 10);
+  
+  if (year === 2025 && weekNum <= 6) return null;
+  
+  const prevWeekNum = weekNum - 1;
+  const prevYear = year;
+  const prevWeekId = `week-${prevWeekNum}-${prevYear}`;
+  
+  return getScorecardData(null, prevWeekId);
 };

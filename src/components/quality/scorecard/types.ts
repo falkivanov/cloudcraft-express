@@ -38,3 +38,15 @@ export interface ScoreCardData {
   };
   currentWeekTips?: string;
 }
+
+export interface CompanyKPIsProps {
+  companyKPIs: ScorecardKPI[];
+  previousWeekData?: ScoreCardData | null;
+}
+
+export interface DriverKPIsProps {
+  driverKPIs: DriverKPI[];
+  driverStatusTab: string;
+  setDriverStatusTab: (value: string) => void;
+  previousWeekData?: ScoreCardData | null;
+}
