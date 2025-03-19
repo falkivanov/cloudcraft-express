@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverKPIsProps } from "./types";
@@ -55,7 +54,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   const getChangeDisplay = (current: number, previousValue: number | null) => {
     if (previousValue === null) return null;
     
-    const difference = current - previous;
+    const difference = current - previousValue;
     const isPositive = difference > 0;
     
     return {
