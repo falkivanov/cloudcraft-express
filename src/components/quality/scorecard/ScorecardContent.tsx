@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,7 +66,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           <div className="mt-6 p-6 border rounded-lg bg-gray-50 text-center">
             <p className="text-lg font-medium mb-3">Keine Daten verfügbar</p>
             <p className="text-muted-foreground">
-              Zu dieser Woche wurden keine Daten hochgeladen. Bitte wählen Sie KW6 oder höher.
+              Bitte lade die Scorecard für diese Woche hoch oder wechsel die Woche.
             </p>
           </div>
         </div>
