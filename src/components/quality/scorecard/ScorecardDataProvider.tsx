@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from "./types";
 
 // Dummy data based on the PDF content
@@ -17,7 +16,7 @@ export const getDummyScoreCardData = (): ScoreCardData => {
       { name: "Safe Driving Metric (FICO)", value: 795, target: 800, unit: "", trend: "up", status: "great" },
       { name: "DVIC Compliance", value: 100, target: 95, unit: "%", trend: "up", status: "fantastic" },
       { name: "Speeding Event Rate (Per 100 Trips)", value: 8, target: 10, unit: "", trend: "down", status: "fantastic" },
-      { name: "Mentor Adoption Rate", value: 85.64, target: 95, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Mentor Adoption Rate", value: 85.64, target: 80, unit: "%", trend: "up", status: "fantastic" },
       
       // Compliance KPIs
       { name: "Breach of Contract (BOC)", value: 0, target: 0, unit: "", trend: "down", status: "none" },
