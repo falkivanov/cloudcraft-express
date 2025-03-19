@@ -6,7 +6,8 @@ import {
   runNonFlexibleEmployeesPass, 
   runPreferredDaysPass, 
   runMaximumModePass, 
-  setFreeStatusForAvailableEmployees 
+  setFreeStatusForAvailableEmployees,
+  runBalanceForecastPass
 } from "./passes";
 
 // Auto-assigns shifts based on employee preferences and requirements
@@ -43,6 +44,15 @@ export const createAutomaticPlan = ({
     requiredEmployees, formatDateKey, isTemporarilyFlexible, assignedWorkDays, 
     existingShifts, workShifts, planningMode
   );
+  
+  // Im Forecast-Modus, versuche die Mitarbeiterverteilung auszugleichen
+  if (planningMode === "forecast") {
+    runBalanceForecastPass(
+      sortedEmployees, weekDays, filledPositions, employeeAssignments,
+      requiredEmployees, formatDateKey, isTemporarilyFlexible, assignedWorkDays,
+      existingShifts, workShifts, freeShifts
+    );
+  }
   
   // Only in maximum mode, assign flexible employees to non-preferred days
   if (planningMode === "maximum") {
