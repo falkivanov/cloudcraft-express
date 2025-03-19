@@ -55,7 +55,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   const getChangeDisplay = (current: number, previousValue: number | null) => {
     if (previousValue === null) return null;
     
-    const difference = current - previousValue;
+    const difference = current - previous;
     const isPositive = difference > 0;
     
     return {
@@ -76,14 +76,20 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
           const prevValue = prevMetric ? prevMetric.value : null;
           const change = getChangeDisplay(metric.value, prevValue);
           
-          // Determine if change is positive or negative based on metric type
-          // For most metrics, higher is better, except for DNR DPMO where lower is better
+          // Check if the metric value meets its target (if available)
+          const isAtOrBetterThanTarget = metric.target ? 
+            (metric.name === "DNR DPMO" ? metric.value <= metric.target : metric.value >= metric.target) : 
+            false;
+          
+          // Determine if change is positive or negative
           const isGoodChange = change && (
-            (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0)
+            (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0) ||
+            // Add condition: if change is 0 but we meet the target, consider it positive
+            (change.difference === 0 && isAtOrBetterThanTarget)
           );
           
           const changeColor = change ? 
-            (isGoodChange ? "text-green-500" : change.difference === 0 ? "text-gray-500" : "text-red-500") : 
+            (isGoodChange ? "text-green-500" : "text-red-500") : 
             "";
           
           return (
@@ -96,8 +102,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                     <span className={`text-xs flex items-center ${changeColor}`}>
                       {isGoodChange ? (
                         <ArrowUp className="h-3 w-3 mr-0.5" />
-                      ) : change.difference === 0 ? (
-                        <CircleDot className="h-3 w-3 mr-0.5" />
                       ) : (
                         <ArrowDown className="h-3 w-3 mr-0.5" />
                       )}

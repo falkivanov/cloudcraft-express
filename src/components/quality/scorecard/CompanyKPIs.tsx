@@ -62,7 +62,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
 
   // Format KPI value based on whether it's a percentage or not
   const formatKPIValue = (value: number, unit: string) => {
-    return unit === "%" ? Math.round(value) : Math.round(value);
+    return Math.round(value);
   };
 
   // Group the KPIs by category
@@ -98,10 +98,20 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
     const change = getChangeDisplay(kpi.value, previousKPI);
     
     // Determine if the change is good or bad based on the KPI's trend direction
-    const isPositiveChange = change && ((kpi.trend === "up" && change.difference > 0) || 
-                                        (kpi.trend === "down" && change.difference < 0));
+    // and also check if the current value meets the target
+    const isAtOrBetterThanTarget = 
+      (kpi.trend === "up" && kpi.value >= kpi.target) || 
+      (kpi.trend === "down" && kpi.value <= kpi.target);
+    
+    const isPositiveChange = change && (
+      (kpi.trend === "up" && change.difference > 0) || 
+      (kpi.trend === "down" && change.difference < 0) ||
+      // Add condition: if change is 0 but we meet the target, consider it positive
+      (change.difference === 0 && isAtOrBetterThanTarget)
+    );
+    
     const changeColor = change ? 
-      (isPositiveChange ? "text-green-500" : change.difference === 0 ? "text-gray-500" : "text-red-500") : 
+      (isPositiveChange ? "text-green-500" : "text-red-500") : 
       "";
 
     return (
@@ -114,8 +124,6 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
               <span className={`text-xs flex items-center ${changeColor}`}>
                 {isPositiveChange ? (
                   <ArrowUp className="h-3 w-3 mr-0.5" />
-                ) : change.difference === 0 ? (
-                  <CircleDot className="h-3 w-3 mr-0.5" />
                 ) : (
                   <ArrowDown className="h-3 w-3 mr-0.5" />
                 )}
