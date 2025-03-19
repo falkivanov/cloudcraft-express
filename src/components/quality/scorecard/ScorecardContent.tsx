@@ -73,7 +73,9 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           
           {/* Content sections */}
           <TabsContent value="company" className="w-full">
-            <CompanyKPIs companyKPIs={data.companyKPIs} />
+            <div className="max-w-4xl mx-auto">
+              <CompanyKPIs companyKPIs={data.companyKPIs} />
+            </div>
           </TabsContent>
           
           <TabsContent value="driver" className="w-full">

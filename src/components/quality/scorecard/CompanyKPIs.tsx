@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,9 +80,9 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
     if (kpis.length === 0) return null;
     
     return (
-      <div>
+      <div className="mb-8">
         <h3 className="text-lg font-medium mb-4">{title}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 gap-4">
           {kpis.map((kpi, index) => (
             <Card key={index} className="overflow-hidden">
               <CardHeader className="pb-2">
@@ -106,19 +107,13 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          {renderKPISection("Safety", safetyKPIs)}
-          {renderKPISection("Compliance", complianceKPIs)}
-        </div>
-        <div>
-          {renderKPISection("Customer Delivery Experience", customerExperienceKPIs)}
-          {renderKPISection("Quality", qualityKPIs)}
-          {renderKPISection("Standard Work Compliance", standardWorkComplianceKPIs)}
-          {renderKPISection("Capacity", capacityKPIs)}
-        </div>
-      </div>
+    <div className="space-y-6">
+      {renderKPISection("Safety", safetyKPIs)}
+      {renderKPISection("Compliance", complianceKPIs)}
+      {renderKPISection("Customer Delivery Experience", customerExperienceKPIs)}
+      {renderKPISection("Quality", qualityKPIs)}
+      {renderKPISection("Standard Work Compliance", standardWorkComplianceKPIs)}
+      {renderKPISection("Capacity", capacityKPIs)}
     </div>
   );
 };
