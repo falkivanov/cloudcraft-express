@@ -21,6 +21,11 @@ interface ShiftPlan {
   shiftType: ShiftType;
 }
 
+interface PlanningResult {
+  workShifts: ShiftPlan[];
+  freeShifts: ShiftPlan[];
+}
+
 // Returns day of week abbreviation (Mo, Di, etc.)
 const getDayAbbreviation = (date: Date): string => {
   return format(date, "EEEEEE", { locale: de });
@@ -65,18 +70,31 @@ export const createAutomaticPlan = ({
   formatDateKey,
   planningMode = "forecast",
   existingShifts
-}: PlanningParams): ShiftPlan[] => {
-  const plan: ShiftPlan[] = [];
+}: PlanningParams): PlanningResult => {
+  const workShifts: ShiftPlan[] = [];
+  const freeShifts: ShiftPlan[] = [];
+  
+  // Create a map to track which employees are assigned to work on which days
+  const assignedWorkDays = new Map<string, Set<string>>();
+  weekDays.forEach(day => {
+    assignedWorkDays.set(formatDateKey(day), new Set<string>());
+  });
   
   // First, preserve all special shifts (Termin, Urlaub, Krank)
   if (existingShifts) {
     existingShifts.forEach((shift, key) => {
       if (shift.shiftType === "Termin" || shift.shiftType === "Urlaub" || shift.shiftType === "Krank") {
-        plan.push({
+        workShifts.push({
           employeeId: shift.employeeId,
           date: shift.date,
           shiftType: shift.shiftType
         });
+        
+        // Mark this employee as assigned for this day
+        const dateEmployees = assignedWorkDays.get(shift.date);
+        if (dateEmployees) {
+          dateEmployees.add(shift.employeeId);
+        }
       }
     });
   }
@@ -158,7 +176,7 @@ export const createAutomaticPlan = ({
           !isTemporarilyFlexible(employee.id) && 
           employee.preferredWorkingDays.includes(dayAbbr)) {
         
-        plan.push({
+        workShifts.push({
           employeeId: employee.id,
           date: dateKey,
           shiftType: "Arbeit"
@@ -167,6 +185,12 @@ export const createAutomaticPlan = ({
         // Update tracking counters
         employeeAssignments[employee.id]++;
         filledPositions[dayIndex]++;
+        
+        // Mark this employee as assigned for this day
+        const dateEmployees = assignedWorkDays.get(dateKey);
+        if (dateEmployees) {
+          dateEmployees.add(employee.id);
+        }
       }
     });
   });
@@ -205,7 +229,7 @@ export const createAutomaticPlan = ({
       
       // Only assign if it's a preferred day
       if (employee.preferredWorkingDays.includes(dayAbbr)) {
-        plan.push({
+        workShifts.push({
           employeeId: employee.id,
           date: dateKey,
           shiftType: "Arbeit"
@@ -214,6 +238,12 @@ export const createAutomaticPlan = ({
         // Update tracking counters
         employeeAssignments[employee.id]++;
         filledPositions[dayIndex]++;
+        
+        // Mark this employee as assigned for this day
+        const dateEmployees = assignedWorkDays.get(dateKey);
+        if (dateEmployees) {
+          dateEmployees.add(employee.id);
+        }
       }
     });
   });
@@ -245,7 +275,7 @@ export const createAutomaticPlan = ({
         if ((employee.isWorkingDaysFlexible || isTemporarilyFlexible(employee.id)) && 
             !employee.preferredWorkingDays.includes(dayAbbr)) {
           
-          plan.push({
+          workShifts.push({
             employeeId: employee.id,
             date: dateKey,
             shiftType: "Arbeit"
@@ -254,13 +284,51 @@ export const createAutomaticPlan = ({
           // Update tracking counters
           employeeAssignments[employee.id]++;
           filledPositions[dayIndex]++;
+          
+          // Mark this employee as assigned for this day
+          const dateEmployees = assignedWorkDays.get(dateKey);
+          if (dateEmployees) {
+            dateEmployees.add(employee.id);
+          }
         }
       });
     });
   }
   
-  // Return the complete assignment plan
-  return plan;
+  // Fourth pass: Set "Frei" status for all available employees who weren't assigned to work
+  weekDays.forEach((day) => {
+    const dateKey = formatDateKey(day);
+    const dayAbbr = getDayAbbreviation(day);
+    const assignedEmployees = assignedWorkDays.get(dateKey) || new Set<string>();
+    
+    // For each employee, check if they're available but not assigned
+    sortedEmployees.forEach(employee => {
+      // Skip if the employee is already assigned for this day
+      if (assignedEmployees.has(employee.id)) return;
+      
+      // Skip if employee has a special shift on this day
+      const specialShift = hasSpecialShift(employee.id, dateKey, existingShifts);
+      if (specialShift) return;
+      
+      // Check if the employee can work on this day (is available)
+      const canWork = canEmployeeWorkOnDay(employee, day, isTemporarilyFlexible);
+      
+      // If they can work but aren't assigned, mark as "Frei"
+      if (canWork) {
+        freeShifts.push({
+          employeeId: employee.id,
+          date: dateKey,
+          shiftType: "Frei"
+        });
+      }
+    });
+  });
+  
+  // Return both work shifts and free shifts
+  return {
+    workShifts,
+    freeShifts
+  };
 };
 
 // Check if automatic planning is possible (all days have forecast values)

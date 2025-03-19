@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createAutomaticPlan } from "../utils/auto-planning-utils";
@@ -58,25 +59,21 @@ export const useAutoPlanningActions = ({
     
     try {
       // Generate the plan with the selected mode
-      const plan = createAutomaticPlan({
+      const { workShifts, freeShifts } = createAutomaticPlan({
         employees: filteredEmployees,
         weekDays,
         requiredEmployees,
         isTemporarilyFlexible,
         formatDateKey,
         planningMode,
-        existingShifts: shiftsMap // Pass the existing shifts
+        existingShifts: shiftsMap
       });
       
       // Small delay to allow UI to update
       setTimeout(() => {
         try {
-          // First identify shifts that can be overridden (only Frei)
-          // Instead of clearing all shifts, we'll selectively apply the new ones
-          // keeping Termin, Urlaub, and Krank intact
-          
           // Apply the plan by dispatching events for each assignment
-          plan.forEach(({ employeeId, date, shiftType }) => {
+          workShifts.forEach(({ employeeId, date, shiftType }) => {
             // Get the existing shift for this employee and date
             const shiftKey = `${employeeId}-${date}`;
             const existingShift = shiftsMap.get(shiftKey);
@@ -89,9 +86,24 @@ export const useAutoPlanningActions = ({
             }
           });
           
+          // Set all unassigned but available employees to "Frei"
+          freeShifts.forEach(({ employeeId, date }) => {
+            const shiftKey = `${employeeId}-${date}`;
+            const existingShift = shiftsMap.get(shiftKey);
+            
+            // Only set to "Frei" if there's no existing shift
+            // or if the existing shift is not a special type (Termin, Urlaub, Krank)
+            if (!existingShift || 
+               (existingShift.shiftType !== "Termin" && 
+                existingShift.shiftType !== "Urlaub" && 
+                existingShift.shiftType !== "Krank")) {
+              dispatchShiftEvent(employeeId, date, "Frei", 'add');
+            }
+          });
+          
           toast({
             title: "Automatische Planung abgeschlossen",
-            description: `${plan.length} Schichten wurden zugewiesen.`,
+            description: `${workShifts.length} Arbeit-Schichten und ${freeShifts.length} Frei-Schichten wurden zugewiesen.`,
           });
         } catch (error) {
           console.error("Error applying plan:", error);
