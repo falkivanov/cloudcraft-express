@@ -89,7 +89,7 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
         <SelectContent className="bg-popover">
           {availableWeeks.map((week) => (
             <SelectItem key={week.id} value={week.id}>
-              {week.label} ({formatDate(week.date.toISOString())})
+              {week.label}
             </SelectItem>
           ))}
         </SelectContent>
