@@ -105,8 +105,8 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
             {scoreChange && (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center ml-2 text-xs cursor-help">
+                  <TooltipTrigger>
+                    <div className="flex items-center ml-2 text-xs">
                       {scoreChange.isPositive ? (
                         <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
                       ) : (
@@ -148,8 +148,8 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
             {data.rankNote && (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={`ml-2 text-xs flex items-center ${rankChangeInfo?.color || 'text-gray-500'} cursor-help`}>
+                  <TooltipTrigger>
+                    <span className={`ml-2 text-xs flex items-center ${rankChangeInfo?.color || 'text-gray-500'}`}>
                       {rankChangeInfo?.icon}
                       <span className="ml-0.5">({data.rankNote})</span>
                     </span>
