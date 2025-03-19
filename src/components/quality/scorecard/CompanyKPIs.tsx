@@ -55,9 +55,14 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
     
     return {
       difference,
-      display: `${isPositive ? "+" : ""}${difference.toFixed(2)}`,
+      display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
       color
     };
+  };
+
+  // Format KPI value based on whether it's a percentage or not
+  const formatKPIValue = (value: number, unit: string) => {
+    return unit === "%" ? Math.round(value) : Math.round(value);
   };
 
   // Group the KPIs by category
@@ -104,7 +109,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
         <td className="py-2 px-3 text-sm">{kpi.name}</td>
         <td className="py-2 px-3 text-right whitespace-nowrap">
           <div className="flex items-center justify-end gap-2">
-            <span className="font-medium">{kpi.value.toFixed(2)}{kpi.unit}</span>
+            <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{kpi.unit}</span>
             {change && (
               <span className={`text-xs flex items-center ${changeColor}`}>
                 {isPositiveChange ? (
@@ -119,12 +124,12 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
             )}
             {previousKPI && !change && (
               <span className="text-xs text-gray-500">
-                (Vorwoche: {previousKPI.value.toFixed(2)}{kpi.unit})
+                (Vorwoche: {formatKPIValue(previousKPI.value, kpi.unit)}{kpi.unit})
               </span>
             )}
           </div>
         </td>
-        <td className="py-2 px-3 text-right text-sm">{kpi.target}{kpi.unit}</td>
+        <td className="py-2 px-3 text-right text-sm">{formatKPIValue(kpi.target, kpi.unit)}{kpi.unit}</td>
         <td className="py-2 px-3 text-right">
           <div className="flex justify-end">
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(kpi.status)}`}>

@@ -46,6 +46,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     return prevDriver.metrics.find(m => m.name === metricName) || null;
   };
   
+  // Format value based on metric name
+  const formatValue = (value: number, unit: string) => {
+    return Math.round(value);
+  };
+  
   // Function to calculate and format the change from previous week
   const getChangeDisplay = (current: number, previousValue: number | null) => {
     if (previousValue === null) return null;
@@ -55,7 +60,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     
     return {
       difference,
-      display: `${isPositive ? "+" : ""}${difference.toFixed(2)}`,
+      display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
       isPositive
     };
   };
@@ -85,7 +90,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
             <td key={metric.name} className="py-2 px-3 text-right">
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1">
-                  <span>{metric.value}{metric.unit}</span>
+                  <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
                   
                   {change && (
                     <span className={`text-xs flex items-center ${changeColor}`}>

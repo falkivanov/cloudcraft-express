@@ -91,7 +91,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
             <h3 className="text-sm font-medium">Overall Score</h3>
           </div>
           <div className="flex items-baseline">
-            <span className="text-xl font-bold">{data.overallScore.toFixed(2)}</span>
+            <span className="text-xl font-bold">{Math.round(data.overallScore)}</span>
             <span className={`ml-2 text-sm ${getStatusColorClass(data.overallStatus)}`}>
               {data.overallStatus}
             </span>
@@ -105,7 +105,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
                 )}
                 <span className={scoreChange.isPositive ? "text-green-500" : "text-red-500"}>
                   {scoreChange.difference > 0 ? "+" : ""}
-                  {scoreChange.difference.toFixed(2)}
+                  {Math.round(scoreChange.difference)}
                 </span>
               </div>
             )}
@@ -114,7 +114,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
           {previousWeekData && (
             <div className="absolute -top-2 -right-2">
               <Badge variant="outline" className="text-[9px] bg-gray-50 font-normal">
-                Vorwoche: {previousWeekData.overallScore.toFixed(2)}
+                Vorwoche: {Math.round(previousWeekData.overallScore)}
               </Badge>
             </div>
           )}
