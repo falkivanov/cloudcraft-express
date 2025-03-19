@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,8 +98,8 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pb-4">
-                <div className="text-sm text-muted-foreground">
+              <CardContent className="pb-2">
+                <div className="text-sm text-muted-foreground text-right">
                   <span>Ziel: {kpi.target}{kpi.unit}</span>
                 </div>
               </CardContent>
