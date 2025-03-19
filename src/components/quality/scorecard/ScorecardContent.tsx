@@ -91,6 +91,23 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background">
       <div className="flex flex-col space-y-6">
+        {/* Tabs moved above the header */}
+        <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="w-full">
+          <TabsList className="mb-4 w-full justify-start">
+            <TabsTrigger value="company" className="flex items-center gap-2">
+              <BarChart className="h-4 w-4" />
+              Firmen KPIs
+            </TabsTrigger>
+            <TabsTrigger value="driver" className="flex items-center gap-2">
+              <UsersRound className="h-4 w-4" />
+              Fahrer KPIs
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        {/* Time frame selector */}
+        <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
+        
         {/* Header with summary information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard 
@@ -116,32 +133,18 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           </Card>
         </div>
         
-        <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
+        {/* Content sections moved below */}
+        <TabsContent value="company" className="w-full">
+          <CompanyKPIs companyKPIs={data.companyKPIs} />
+        </TabsContent>
         
-        <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="w-full">
-          <TabsList className="mb-4 w-full justify-start">
-            <TabsTrigger value="company" className="flex items-center gap-2">
-              <BarChart className="h-4 w-4" />
-              Firmen KPIs
-            </TabsTrigger>
-            <TabsTrigger value="driver" className="flex items-center gap-2">
-              <UsersRound className="h-4 w-4" />
-              Fahrer KPIs
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="company" className="w-full">
-            <CompanyKPIs companyKPIs={data.companyKPIs} />
-          </TabsContent>
-          
-          <TabsContent value="driver" className="w-full">
-            <DriverKPIs 
-              driverKPIs={data.driverKPIs}
-              driverStatusTab={driverStatusTab}
-              setDriverStatusTab={setDriverStatusTab}
-            />
-          </TabsContent>
-        </Tabs>
+        <TabsContent value="driver" className="w-full">
+          <DriverKPIs 
+            driverKPIs={data.driverKPIs}
+            driverStatusTab={driverStatusTab}
+            setDriverStatusTab={setDriverStatusTab}
+          />
+        </TabsContent>
       </div>
     </div>
   );
