@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
   // Function to get the status badge class
@@ -136,14 +142,23 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
                   <div className="flex items-center justify-center">
                     <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{kpi.unit}</span>
                     {change && (
-                      <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"}`}>
-                        {change.isPositive ? (
-                          <ArrowUp className="h-3 w-3 mr-0.5" />
-                        ) : (
-                          <ArrowDown className="h-3 w-3 mr-0.5" />
-                        )}
-                        {change.display}{kpi.unit}
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"} cursor-help`}>
+                              {change.isPositive ? (
+                                <ArrowUp className="h-3 w-3 mr-0.5" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3 mr-0.5" />
+                              )}
+                              {change.display}{kpi.unit}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">Vorwoche: {previousKPI?.value}{kpi.unit}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </TableCell>

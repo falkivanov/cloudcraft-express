@@ -1,7 +1,14 @@
+
 import React from "react";
 import { AlertTriangle, Award, LineChart, ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { ScoreCardData } from "./types";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ScorecardSummaryProps {
   data: ScoreCardData;
@@ -96,17 +103,26 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
             </span>
             
             {scoreChange && (
-              <div className="flex items-center ml-2 text-xs">
-                {scoreChange.isPositive ? (
-                  <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 text-red-500 mr-0.5" />
-                )}
-                <span className={scoreChange.isPositive ? "text-green-500" : "text-red-500"}>
-                  {scoreChange.difference > 0 ? "+" : ""}
-                  {Math.round(scoreChange.difference)}
-                </span>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center ml-2 text-xs cursor-help">
+                      {scoreChange.isPositive ? (
+                        <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-red-500 mr-0.5" />
+                      )}
+                      <span className={scoreChange.isPositive ? "text-green-500" : "text-red-500"}>
+                        {scoreChange.difference > 0 ? "+" : ""}
+                        {Math.round(scoreChange.difference)}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Vorwoche: {previousWeekData?.overallScore}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           
@@ -130,10 +146,19 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
               {data.rank}
             </span>
             {data.rankNote && (
-              <span className={`ml-2 text-xs flex items-center ${rankChangeInfo?.color || 'text-gray-500'}`}>
-                {rankChangeInfo?.icon}
-                <span className="ml-0.5">({data.rankNote})</span>
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`ml-2 text-xs flex items-center ${rankChangeInfo?.color || 'text-gray-500'} cursor-help`}>
+                      {rankChangeInfo?.icon}
+                      <span className="ml-0.5">({data.rankNote})</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Vorwoche: Rank {previousWeekData?.rank}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           

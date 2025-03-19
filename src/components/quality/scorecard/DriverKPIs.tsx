@@ -11,6 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs, 
@@ -126,15 +132,24 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                         <div className="flex items-center justify-center gap-1">
                           <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
                           
-                          {change && (
-                            <span className={`text-xs flex items-center ${isGoodChange ? "text-green-500" : "text-red-500"}`}>
-                              {isGoodChange ? (
-                                <ArrowUp className="h-3 w-3 mr-0.5" />
-                              ) : (
-                                <ArrowDown className="h-3 w-3 mr-0.5" />
-                              )}
-                              {change.display}{metric.unit}
-                            </span>
+                          {change && prevMetric && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className={`text-xs flex items-center ${isGoodChange ? "text-green-500" : "text-red-500"} cursor-help`}>
+                                    {isGoodChange ? (
+                                      <ArrowUp className="h-3 w-3 mr-0.5" />
+                                    ) : (
+                                      <ArrowDown className="h-3 w-3 mr-0.5" />
+                                    )}
+                                    {change.display}{metric.unit}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Vorwoche: {prevMetric.value}{metric.unit}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                         
