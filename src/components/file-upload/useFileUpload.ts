@@ -32,7 +32,20 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
     
     if (isValid) {
       setFile(selectedFile);
-      toast.success(`Datei "${selectedFile.name}" ausgewählt`);
+      
+      // Extract KW information from filename if it's a scorecard
+      if (categoryInfo.id === "scorecard") {
+        const weekMatch = selectedFile.name.match(/KW[_\s]*(\d+)/i);
+        if (weekMatch && weekMatch[1]) {
+          const extractedWeek = parseInt(weekMatch[1], 10);
+          console.log(`Detected KW ${extractedWeek} in filename`);
+          toast.success(`Datei "${selectedFile.name}" ausgewählt (KW ${extractedWeek})`);
+        } else {
+          toast.success(`Datei "${selectedFile.name}" ausgewählt`);
+        }
+      } else {
+        toast.success(`Datei "${selectedFile.name}" ausgewählt`);
+      }
     } else {
       toast.error(`Ungültiger Dateityp für ${categoryInfo.name}. Erwartet wird: ${categoryInfo.expectedType.toUpperCase()}`);
     }
@@ -51,7 +64,22 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
       const categoryInfo = getCategoryInfo(selectedCategory);
       if (categoryInfo) {
         onFileUpload?.(file, categoryInfo.expectedType, selectedCategory);
-        toast.success(`Datei "${file.name}" erfolgreich als ${categoryInfo.name} hochgeladen`);
+        
+        // Show different toast messages based on category
+        if (categoryInfo.id === "scorecard") {
+          const weekMatch = file.name.match(/KW[_\s]*(\d+)/i);
+          if (weekMatch && weekMatch[1]) {
+            const extractedWeek = parseInt(weekMatch[1], 10);
+            toast.success(`Scorecard für KW ${extractedWeek} erfolgreich hochgeladen`, {
+              description: "Die Woche wurde automatisch erkannt und zugeordnet."
+            });
+          } else {
+            toast.success(`Datei "${file.name}" erfolgreich als ${categoryInfo.name} hochgeladen`);
+          }
+        } else {
+          toast.success(`Datei "${file.name}" erfolgreich als ${categoryInfo.name} hochgeladen`);
+        }
+        
         setFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";

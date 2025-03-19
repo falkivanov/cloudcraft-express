@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScorecardTimeFrame from "./ScorecardTimeFrame";
@@ -25,6 +25,31 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Get data (either actual or dummy)
   const data = getScorecardData(scorecardData);
 
+  // Try to extract week number from PDF data if it exists
+  useEffect(() => {
+    if (scorecardData) {
+      const storedData = localStorage.getItem("scorecardData");
+      if (storedData) {
+        try {
+          const parsedData = JSON.parse(storedData);
+          if (parsedData.fileName) {
+            // Try to extract from filename first (e.g., "Scorecard_KW_23_2023.pdf")
+            const weekMatch = parsedData.fileName.match(/KW[_\s]*(\d+)/i);
+            if (weekMatch && weekMatch[1]) {
+              const extractedWeek = parseInt(weekMatch[1], 10);
+              const currentYear = new Date().getFullYear();
+              const weekId = `week-${extractedWeek}-${currentYear}`;
+              setSelectedWeek(weekId);
+              console.log(`Extracted week ${extractedWeek} from filename`);
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing scorecard data for week extraction:", error);
+        }
+      }
+    }
+  }, [scorecardData]);
+
   if (!data) {
     return <NoDataMessage category="Scorecard" />;
   }
@@ -32,49 +57,47 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background">
       <div className="flex flex-col space-y-6">
-        {/* Header with tabs and week selector */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          {/* Tabs for company/driver KPIs */}
-          <div className="flex-1">
-            <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
-              <TabsList className="w-full justify-start">
-                <TabsTrigger value="company" className="flex items-center gap-2">
-                  <BarChart className="h-4 w-4" />
-                  Firmen KPIs
-                </TabsTrigger>
-                <TabsTrigger value="driver" className="flex items-center gap-2">
-                  <UsersRound className="h-4 w-4" />
-                  Fahrer KPIs
-                </TabsTrigger>
-              </TabsList>
-            
-              {/* Time frame selector */}
-              <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
-              
-              {/* Header with summary information */}
-              <ScorecardSummary data={data} />
-              
-              {/* Content sections */}
-              <TabsContent value="company" className="w-full">
-                <CompanyKPIs companyKPIs={data.companyKPIs} />
-              </TabsContent>
-              
-              <TabsContent value="driver" className="w-full">
-                <DriverKPIs 
-                  driverKPIs={data.driverKPIs}
-                  driverStatusTab={driverStatusTab}
-                  setDriverStatusTab={setDriverStatusTab}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-          
-          {/* Week selector dropdown */}
+        {/* Header with title and week selector side by side */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Scorecard</h2>
           <ScorecardWeekSelector 
             selectedWeek={selectedWeek} 
             setSelectedWeek={setSelectedWeek} 
           />
         </div>
+
+        {/* Tabs for company/driver KPIs */}
+        <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="company" className="flex items-center gap-2">
+              <BarChart className="h-4 w-4" />
+              Firmen KPIs
+            </TabsTrigger>
+            <TabsTrigger value="driver" className="flex items-center gap-2">
+              <UsersRound className="h-4 w-4" />
+              Fahrer KPIs
+            </TabsTrigger>
+          </TabsList>
+        
+          {/* Time frame selector */}
+          <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
+          
+          {/* Header with summary information */}
+          <ScorecardSummary data={data} />
+          
+          {/* Content sections */}
+          <TabsContent value="company" className="w-full">
+            <CompanyKPIs companyKPIs={data.companyKPIs} />
+          </TabsContent>
+          
+          <TabsContent value="driver" className="w-full">
+            <DriverKPIs 
+              driverKPIs={data.driverKPIs}
+              driverStatusTab={driverStatusTab}
+              setDriverStatusTab={setDriverStatusTab}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

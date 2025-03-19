@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { FileType, Check } from "lucide-react";
+import { FileType, Check, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getFileTypeInfo, getFileIcon } from "./fileTypes";
 
@@ -46,6 +46,12 @@ const DropZone: React.FC<DropZoneProps> = ({
   };
 
   const iconColorClass = getFileIcon(selectedFileType);
+  
+  // Check if the file name contains KW information (for Scorecard PDFs)
+  const weekInfo = file && selectedFileType === "pdf" ? 
+    file.name.match(/KW[_\s]*(\d+)/i) : null;
+  
+  const weekNumber = weekInfo && weekInfo[1] ? parseInt(weekInfo[1], 10) : null;
 
   return (
     <div
@@ -63,6 +69,11 @@ const DropZone: React.FC<DropZoneProps> = ({
           <p className="font-medium">{file.name}</p>
           <p className="text-sm text-muted-foreground">
             {(file.size / 1024 / 1024).toFixed(2)} MB
+            {weekNumber && (
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                KW {weekNumber}
+              </span>
+            )}
           </p>
         </div>
       ) : (
