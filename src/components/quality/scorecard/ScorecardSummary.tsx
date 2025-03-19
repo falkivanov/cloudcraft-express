@@ -1,7 +1,8 @@
 
 import React from "react";
-import { AlertTriangle, Award, LineChart } from "lucide-react";
+import { AlertTriangle, Award, LineChart, ArrowUp, ArrowDown } from "lucide-react";
 import { ScoreCardData } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface ScorecardSummaryProps {
   data: ScoreCardData;
@@ -23,6 +24,44 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
         return "text-gray-600";
     }
   };
+
+  // Function to get rank color
+  const getRankColorClass = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return "text-amber-500"; // Gold
+      case 2:
+        return "text-gray-400"; // Silver
+      case 3:
+        return "text-amber-700"; // Bronze
+      default:
+        return "text-gray-900"; // Black for ranks > 3
+    }
+  };
+
+  // Function to determine if rank changed from previous week
+  const getRankChangeInfo = () => {
+    if (!data.rankNote) return null;
+    
+    // Extract the numerical value from rankNote (e.g., "+2 WoW", "-1 WoW", "0 WoW")
+    const match = data.rankNote.match(/([+-]?\d+)\s+WoW/);
+    if (!match) return null;
+    
+    const change = parseInt(match[1], 10);
+    
+    if (change < 0) {
+      // Negative change means rank improved (e.g., went from 5 to 3)
+      return { icon: <ArrowUp className="h-3 w-3 text-green-500" />, color: "text-green-500" };
+    } else if (change > 0) {
+      // Positive change means rank worsened (e.g., went from 3 to 5)
+      return { icon: <ArrowDown className="h-3 w-3 text-red-500" />, color: "text-red-500" };
+    }
+    
+    // No change
+    return null;
+  };
+
+  const rankChangeInfo = getRankChangeInfo();
 
   return (
     <div className="mt-4 mb-6">
@@ -48,9 +87,14 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data }) => {
             <h3 className="text-sm font-medium">Rank at DSU1</h3>
           </div>
           <div className="flex items-baseline">
-            <span className="text-xl font-bold">{data.rank}</span>
+            <span className={`text-xl font-bold ${getRankColorClass(data.rank)}`}>
+              {data.rank}
+            </span>
             {data.rankNote && (
-              <span className="ml-2 text-xs text-gray-500">({data.rankNote})</span>
+              <span className={`ml-2 text-xs flex items-center ${rankChangeInfo?.color || 'text-gray-500'}`}>
+                {rankChangeInfo?.icon}
+                <span className="ml-0.5">({data.rankNote})</span>
+              </span>
             )}
           </div>
         </div>
