@@ -7,7 +7,12 @@ import { ScoreCardData } from "./types";
 import NoDataMessage from "../NoDataMessage";
 import ScorecardWeekSelector from "./ScorecardWeekSelector";
 import ScorecardSummary from "./ScorecardSummary";
-import { getScorecardData, getPreviousWeekData } from "./data";
+import { 
+  getScorecardData, 
+  getPreviousWeekData, 
+  isDataAvailableForWeek, 
+  parseWeekIdentifier 
+} from "./data";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
@@ -37,17 +42,13 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
     }
   }, [scorecardData]);
 
-  // Check if selected week is below KW6 (where we don't have data)
+  // Check if selected week has available data
   const isUnavailableWeek = () => {
-    const weekMatch = selectedWeek.match(/week-(\d+)-(\d+)/);
-    if (weekMatch) {
-      const weekNum = parseInt(weekMatch[1], 10);
-      const year = parseInt(weekMatch[2], 10);
-      
-      // We only have data for week 6 and above in 2025
-      return (year === 2025 && weekNum < 6);
-    }
-    return false;
+    const parsedWeek = parseWeekIdentifier(selectedWeek);
+    if (!parsedWeek) return true;
+    
+    const { weekNum, year } = parsedWeek;
+    return !isDataAvailableForWeek(weekNum, year);
   };
 
   if (!data) {
