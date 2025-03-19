@@ -1,3 +1,4 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
@@ -23,9 +24,15 @@ export function runBalanceForecastPass(
   const overfilledDays: { dayIndex: number, excess: number }[] = [];
   const underfilledDays: { dayIndex: number, shortage: number }[] = [];
   
+  // Calculate total required and filled positions to determine if we're globally understaffed
+  let totalRequired = 0;
+  let totalPossibleAssignments = 0;
+  
   weekDays.forEach((_, dayIndex) => {
     const required = requiredEmployees[dayIndex] || 0;
     const filled = filledPositions[dayIndex];
+    
+    totalRequired += required;
     
     if (filled > required && required > 0) {
       overfilledDays.push({ dayIndex, excess: filled - required });
@@ -34,11 +41,25 @@ export function runBalanceForecastPass(
     }
   });
   
+  // Calculate total possible assignments based on employee working days
+  sortedEmployees.forEach(employee => {
+    totalPossibleAssignments += employee.workingDaysAWeek;
+    
+    // Add potential extra day for employees who want to work 6 days
+    if (employee.workingDaysAWeek === 5 && employee.wantsToWorkSixDays) {
+      totalPossibleAssignments += 1;
+    }
+  });
+  
+  // Log staffing situation for debugging
+  console.log(`Total required: ${totalRequired}, Total possible: ${totalPossibleAssignments}`);
+  console.log(`Overfilled days: ${overfilledDays.length}, Underfilled days: ${underfilledDays.length}`);
+  
   // Sort by most overfilled/underfilled first
   overfilledDays.sort((a, b) => b.excess - a.excess);
   underfilledDays.sort((a, b) => b.shortage - a.shortage);
   
-  // PHASE 2: Aggressively balance forecast by moving employees from overfilled to underfilled days
+  // PHASE 2: Balance employee distribution by moving employees from overfilled to underfilled days
   if (underfilledDays.length > 0 && overfilledDays.length > 0) {
     balanceEmployeeDistribution(
       sortedEmployees, weekDays, filledPositions, requiredEmployees,
@@ -95,4 +116,16 @@ export function runBalanceForecastPass(
       );
     }
   }
+  
+  // Final verification: log how many employees are scheduled for more than their normal days
+  let overScheduledCount = 0;
+  sortedEmployees.forEach(employee => {
+    const assigned = employeeAssignments[employee.id] || 0;
+    if (assigned > employee.workingDaysAWeek) {
+      overScheduledCount++;
+      console.log(`Employee ${employee.name} is scheduled for ${assigned} days (normal: ${employee.workingDaysAWeek})`);
+    }
+  });
+  
+  console.log(`Total employees scheduled for extra days: ${overScheduledCount}`);
 }
