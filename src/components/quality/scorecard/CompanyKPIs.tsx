@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ScorecardKPI, CompanyKPIsProps } from "./types";
 import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
@@ -62,7 +61,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
 
   // Format KPI value based on whether it's a percentage or not
   const formatKPIValue = (value: number, unit: string) => {
-    return Math.round(value);
+    return value;
   };
 
   // Group the KPIs by category

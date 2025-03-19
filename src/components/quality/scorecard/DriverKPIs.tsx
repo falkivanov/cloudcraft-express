@@ -47,7 +47,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   
   // Format value based on metric name
   const formatValue = (value: number, unit: string) => {
-    return Math.round(value);
+    return value;
   };
   
   // Function to calculate and format the change from previous week

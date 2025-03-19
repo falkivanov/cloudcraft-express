@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AlertTriangle, Award, LineChart, ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
 import { ScoreCardData } from "./types";
@@ -91,7 +90,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
             <h3 className="text-sm font-medium">Overall Score</h3>
           </div>
           <div className="flex items-baseline">
-            <span className="text-xl font-bold">{Math.round(data.overallScore)}</span>
+            <span className="text-xl font-bold">{data.overallScore}</span>
             <span className={`ml-2 text-sm ${getStatusColorClass(data.overallStatus)}`}>
               {data.overallStatus}
             </span>
@@ -114,7 +113,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
           {previousWeekData && (
             <div className="absolute -top-2 -right-2">
               <Badge variant="outline" className="text-[9px] bg-gray-50 font-normal">
-                Vorwoche: {Math.round(previousWeekData.overallScore)}
+                Vorwoche: {previousWeekData.overallScore}
               </Badge>
             </div>
           )}
