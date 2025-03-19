@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { BarChart, UsersRound } from "lucide-react";
+import { BarChart, UsersRound, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScorecardTimeFrame from "./ScorecardTimeFrame";
 import CompanyKPIs from "./CompanyKPIs";
@@ -10,6 +10,20 @@ import NoDataMessage from "../NoDataMessage";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import StatCard from "@/components/employees/dashboard/StatCard";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatDate } from "@/utils/dateUtils";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
@@ -20,6 +34,22 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   const [scorecardTab, setScorecardTab] = useState<string>("company");
   const [driverStatusTab, setDriverStatusTab] = useState<string>("active");
   const [timeframe, setTimeframe] = useState<string>("week");
+  const [selectedWeek, setSelectedWeek] = useState<string>("current");
+  
+  // Generate available weeks (last 10 weeks)
+  const currentDate = new Date();
+  const availableWeeks = Array.from({ length: 10 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (i * 7));
+    const weekNum = Math.ceil((((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / 86400000) + 1) / 7);
+    return {
+      id: i === 0 ? "current" : `week-${weekNum}-${date.getFullYear()}`,
+      label: i === 0 ? `KW ${weekNum} (aktuell)` : `KW ${weekNum}`,
+      weekNum,
+      year: date.getFullYear(),
+      date
+    };
+  });
   
   // Dummy data based on the PDF content
   const dummyData: ScoreCardData = {
@@ -91,19 +121,38 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background">
       <div className="flex flex-col space-y-6">
-        {/* Tabs moved above the header */}
-        <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="w-full">
-          <TabsList className="mb-4 w-full justify-start">
-            <TabsTrigger value="company" className="flex items-center gap-2">
-              <BarChart className="h-4 w-4" />
-              Firmen KPIs
-            </TabsTrigger>
-            <TabsTrigger value="driver" className="flex items-center gap-2">
-              <UsersRound className="h-4 w-4" />
-              Fahrer KPIs
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Header with tabs and week selector */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          {/* Tabs for company/driver KPIs */}
+          <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="flex-1">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="company" className="flex items-center gap-2">
+                <BarChart className="h-4 w-4" />
+                Firmen KPIs
+              </TabsTrigger>
+              <TabsTrigger value="driver" className="flex items-center gap-2">
+                <UsersRound className="h-4 w-4" />
+                Fahrer KPIs
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {/* Week selector dropdown */}
+          <div className="flex items-center">
+            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+              <SelectTrigger className="w-[180px] bg-white">
+                <SelectValue placeholder="Woche auswählen" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {availableWeeks.map((week) => (
+                  <SelectItem key={week.id} value={week.id}>
+                    {week.label} ({formatDate(week.date.toISOString())})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
         {/* Time frame selector */}
         <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
