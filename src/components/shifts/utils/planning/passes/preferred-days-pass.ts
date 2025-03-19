@@ -2,7 +2,8 @@
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { PlanningParams, ShiftPlan } from "../types";
-import { getDayAbbreviation, hasSpecialShift } from "../helper-functions";
+import { getDayAbbreviation } from "../date-utils";
+import { hasSpecialShift } from "../shift-status";
 
 // Assigns all employees to their preferred working days
 export function runPreferredDaysPass(
