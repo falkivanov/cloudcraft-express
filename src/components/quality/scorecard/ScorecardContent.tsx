@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { BarChart, UsersRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ScorecardTimeFrame from "./ScorecardTimeFrame";
 import CompanyKPIs from "./CompanyKPIs";
 import DriverKPIs from "./DriverKPIs";
 import { ScoreCardData } from "./types";
@@ -19,7 +18,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Scorecard specific states
   const [scorecardTab, setScorecardTab] = useState<string>("company");
   const [driverStatusTab, setDriverStatusTab] = useState<string>("active");
-  const [timeframe, setTimeframe] = useState<string>("week");
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
   
   // Get data (either actual or dummy)
@@ -57,15 +55,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background">
       <div className="flex flex-col space-y-6">
-        {/* Header with title and week selector side by side */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Scorecard</h2>
-          <ScorecardWeekSelector 
-            selectedWeek={selectedWeek} 
-            setSelectedWeek={setSelectedWeek} 
-          />
-        </div>
-
         {/* Tabs for company/driver KPIs */}
         <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
           <TabsList className="w-full justify-start">
@@ -78,9 +67,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
               Fahrer KPIs
             </TabsTrigger>
           </TabsList>
-        
-          {/* Time frame selector */}
-          <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
           
           {/* Header with summary information */}
           <ScorecardSummary data={data} />

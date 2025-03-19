@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/CustomerContactContent";
 import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
+import ScorecardWeekSelector from "@/components/quality/scorecard/ScorecardWeekSelector";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 
 interface DriverComplianceData {
@@ -23,14 +23,13 @@ const QualityPage = () => {
   const [podData, setPodData] = useState<any>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState<string>("current");
   
-  // Load data from localStorage based on the current path
   useEffect(() => {
     if (pathname.includes("/quality/customer-contact")) {
       const data = localStorage.getItem("customerContactData");
       setCustomerContactData(data);
       
-      // Parse HTML to extract driver compliance data
       if (data) {
         const parsedData = parseCustomerContactData(data);
         setDriversData(parsedData);
@@ -65,13 +64,17 @@ const QualityPage = () => {
     }
   }, [pathname]);
   
-  // Determine which quality section to display based on the current path
   const renderContent = () => {
     if (pathname.includes("/quality/scorecard")) {
       return (
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Scorecard</h2>
-          <p className="mb-4">Hier finden Sie detaillierte Leistungskennzahlen und KPIs.</p>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Scorecard</h2>
+            <ScorecardWeekSelector 
+              selectedWeek={selectedWeek} 
+              setSelectedWeek={setSelectedWeek} 
+            />
+          </div>
           <ScorecardContent scorecardData={scorecardData} />
         </div>
       );
@@ -106,7 +109,6 @@ const QualityPage = () => {
       );
     }
     
-    // Default fallback (should not happen due to routing)
     return (
       <div className="p-4 border rounded-lg bg-background">
         <h2 className="text-2xl font-bold mb-4">Qualitätsmanagement</h2>
