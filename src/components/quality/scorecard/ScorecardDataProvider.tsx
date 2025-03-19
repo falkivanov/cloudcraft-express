@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from "./types";
 
 // Dummy data based on the PDF content
@@ -20,12 +21,12 @@ export const getDummyScoreCardData = (): ScoreCardData => {
       
       // Compliance KPIs
       { name: "Breach of Contract (BOC)", value: 0, target: 0, unit: "", trend: "down", status: "none" },
-      { name: "Working Hours Compliance (WHC)", value: 100, target: 98, unit: "%", trend: "up", status: "fantastic" },
-      { name: "Comprehensive Audit Score (CAS)", value: 100, target: 95, unit: "%", trend: "up", status: "in compliance" },
+      { name: "Working Hours Compliance (WHC)", value: 100, target: 100, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Comprehensive Audit Score (CAS)", value: 100, target: 100, unit: "%", trend: "up", status: "in compliance" },
       
       // Customer Experience KPIs
-      { name: "Customer escalation DPMO", value: 40, target: 1000, unit: "", trend: "down", status: "great" },
-      { name: "Customer Delivery Feedback", value: 94.82, target: 4.5, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Customer escalation DPMO", value: 40, target: 0, unit: "", trend: "down", status: "great" },
+      { name: "Customer Delivery Feedback", value: 94.82, target: 85, unit: "%", trend: "up", status: "fantastic" },
       
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.32, target: 99, unit: "%", trend: "up", status: "fair" },
@@ -36,7 +37,7 @@ export const getDummyScoreCardData = (): ScoreCardData => {
       { name: "Contact Compliance", value: 91.61, target: 98, unit: "%", trend: "up", status: "fair" },
       
       // Capacity KPIs
-      { name: "Capacity Reliability", value: 100.51, target: 90, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Capacity Reliability", value: 100.51, target: 100, unit: "%", trend: "up", status: "fantastic" },
     ],
     driverKPIs: [
       { 
