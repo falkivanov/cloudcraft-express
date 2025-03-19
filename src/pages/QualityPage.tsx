@@ -6,7 +6,7 @@ import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
-import { getScorecardData } from "@/components/quality/scorecard/ScorecardDataProvider";
+import { getScorecardData } from "@/components/quality/scorecard/data";
 
 interface DriverComplianceData {
   name: string;
