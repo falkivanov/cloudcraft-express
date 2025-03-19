@@ -124,18 +124,61 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
         {/* Header with tabs and week selector */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           {/* Tabs for company/driver KPIs */}
-          <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="flex-1">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="company" className="flex items-center gap-2">
-                <BarChart className="h-4 w-4" />
-                Firmen KPIs
-              </TabsTrigger>
-              <TabsTrigger value="driver" className="flex items-center gap-2">
-                <UsersRound className="h-4 w-4" />
-                Fahrer KPIs
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex-1">
+            <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="company" className="flex items-center gap-2">
+                  <BarChart className="h-4 w-4" />
+                  Firmen KPIs
+                </TabsTrigger>
+                <TabsTrigger value="driver" className="flex items-center gap-2">
+                  <UsersRound className="h-4 w-4" />
+                  Fahrer KPIs
+                </TabsTrigger>
+              </TabsList>
+            
+              {/* Time frame selector */}
+              <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
+              
+              {/* Header with summary information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+                <StatCard 
+                  title="Overall Score" 
+                  value={`${data.overallScore} | ${data.overallStatus}`} 
+                  icon={BarChart}
+                  description={`Woche ${data.week} - ${data.year}, ${data.location}`}
+                  colorClass="bg-green-100 text-green-800"
+                />
+                <StatCard 
+                  title="Rank at DSU1" 
+                  value={`${data.rank}`} 
+                  icon={BarChart}
+                  colorClass="bg-blue-100 text-blue-800"
+                />
+                <Card className="p-4">
+                  <h3 className="font-medium mb-2">Recommended Focus Areas</h3>
+                  <ul className="list-disc list-inside text-sm">
+                    {data.recommendedFocusAreas.map((area, index) => (
+                      <li key={index} className="text-muted-foreground">{area}</li>
+                    ))}
+                  </ul>
+                </Card>
+              </div>
+              
+              {/* Content sections moved below */}
+              <TabsContent value="company" className="w-full">
+                <CompanyKPIs companyKPIs={data.companyKPIs} />
+              </TabsContent>
+              
+              <TabsContent value="driver" className="w-full">
+                <DriverKPIs 
+                  driverKPIs={data.driverKPIs}
+                  driverStatusTab={driverStatusTab}
+                  setDriverStatusTab={setDriverStatusTab}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
           
           {/* Week selector dropdown */}
           <div className="flex items-center">
@@ -153,47 +196,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
             </Select>
           </div>
         </div>
-        
-        {/* Time frame selector */}
-        <ScorecardTimeFrame timeframe={timeframe} setTimeframe={setTimeframe} />
-        
-        {/* Header with summary information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard 
-            title="Overall Score" 
-            value={`${data.overallScore} | ${data.overallStatus}`} 
-            icon={BarChart}
-            description={`Woche ${data.week} - ${data.year}, ${data.location}`}
-            colorClass="bg-green-100 text-green-800"
-          />
-          <StatCard 
-            title="Rank at DSU1" 
-            value={`${data.rank}`} 
-            icon={BarChart}
-            colorClass="bg-blue-100 text-blue-800"
-          />
-          <Card className="p-4">
-            <h3 className="font-medium mb-2">Recommended Focus Areas</h3>
-            <ul className="list-disc list-inside text-sm">
-              {data.recommendedFocusAreas.map((area, index) => (
-                <li key={index} className="text-muted-foreground">{area}</li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-        
-        {/* Content sections moved below */}
-        <TabsContent value="company" className="w-full">
-          <CompanyKPIs companyKPIs={data.companyKPIs} />
-        </TabsContent>
-        
-        <TabsContent value="driver" className="w-full">
-          <DriverKPIs 
-            driverKPIs={data.driverKPIs}
-            driverStatusTab={driverStatusTab}
-            setDriverStatusTab={setDriverStatusTab}
-          />
-        </TabsContent>
       </div>
     </div>
   );
