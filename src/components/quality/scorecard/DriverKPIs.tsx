@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverKPIsProps } from "./types";
@@ -22,6 +23,8 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         return "bg-orange-100 text-orange-600";
       case "poor":
         return "bg-red-100 text-red-600";
+      case "none":
+        return "bg-blue-100 text-blue-600"; // Treat none as fantastic for consistency
       default:
         return "bg-gray-100 text-gray-500";
     }
@@ -90,10 +93,13 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
           const changeColor = change ? 
             (isGoodChange ? "text-green-500" : "text-red-500") : 
             "";
+
+          // Convert "none" to "fantastic" for display
+          const displayStatus = metric.status === "none" ? "fantastic" : metric.status;
           
           return (
-            <td key={metric.name} className="py-2 px-3 text-right">
-              <div className="flex flex-col items-end">
+            <td key={metric.name} className="py-2 px-3 text-center">
+              <div className="flex flex-col items-center">
                 <div className="flex items-center gap-1">
                   <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
                   
@@ -111,7 +117,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                 
                 {metric.status && (
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
-                    {metric.status}
+                    {displayStatus}
                   </span>
                 )}
               </div>
@@ -147,7 +153,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                   <tr className="text-left text-xs text-gray-500 border-b">
                     <th className="py-1 px-3">Fahrer</th>
                     {activeDrivers[0].metrics.map((metric: any) => (
-                      <th key={metric.name} className="py-1 px-3 text-right">{metric.name}</th>
+                      <th key={metric.name} className="py-1 px-3 text-center">{metric.name}</th>
                     ))}
                   </tr>
                 </thead>
@@ -169,7 +175,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                   <tr className="text-left text-xs text-gray-500 border-b">
                     <th className="py-1 px-3">Fahrer</th>
                     {formerDrivers[0].metrics.map((metric: any) => (
-                      <th key={metric.name} className="py-1 px-3 text-right">{metric.name}</th>
+                      <th key={metric.name} className="py-1 px-3 text-center">{metric.name}</th>
                     ))}
                   </tr>
                 </thead>

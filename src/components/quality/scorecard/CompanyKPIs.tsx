@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ScorecardKPI, CompanyKPIsProps } from "./types";
 import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
@@ -20,6 +21,8 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
         return "bg-green-100 text-green-600";
       case "not in compliance":
         return "bg-red-100 text-red-600";
+      case "none":
+        return "bg-blue-100 text-blue-600"; // Changed to blue for "none" to display as "fantastic"
       default:
         return "bg-gray-100 text-gray-500";
     }
@@ -113,11 +116,14 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
       (isPositiveChange ? "text-green-500" : "text-red-500") : 
       "";
 
+    // Treat "none" status as "fantastic" for BOC
+    const displayStatus = kpi.name === "Breach of Contract (BOC)" && kpi.status === "none" ? "fantastic" : kpi.status;
+
     return (
       <tr key={kpi.name} className="border-b border-gray-100 hover:bg-gray-50">
         <td className="py-2 px-3 text-sm">{kpi.name}</td>
-        <td className="py-2 px-3 text-right whitespace-nowrap">
-          <div className="flex items-center justify-end gap-2">
+        <td className="py-2 px-3 text-center">
+          <div className="flex items-center justify-center gap-2">
             <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{kpi.unit}</span>
             {change && (
               <span className={`text-xs flex items-center ${changeColor}`}>
@@ -136,11 +142,11 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
             )}
           </div>
         </td>
-        <td className="py-2 px-3 text-right text-sm">{formatKPIValue(kpi.target, kpi.unit)}{kpi.unit}</td>
-        <td className="py-2 px-3 text-right">
-          <div className="flex justify-end">
+        <td className="py-2 px-3 text-center">{formatKPIValue(kpi.target, kpi.unit)}{kpi.unit}</td>
+        <td className="py-2 px-3 text-center">
+          <div className="flex justify-center">
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(kpi.status)}`}>
-              {kpi.status || "N/A"}
+              {displayStatus || "N/A"}
             </span>
           </div>
         </td>
@@ -156,9 +162,9 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
         <thead>
           <tr className="text-left text-xs text-gray-500">
             <th className="py-1 px-3">Metric</th>
-            <th className="py-1 px-3 text-right">Value</th>
-            <th className="py-1 px-3 text-right">Target</th>
-            <th className="py-1 px-3 text-right">Status</th>
+            <th className="py-1 px-3 text-center">Value</th>
+            <th className="py-1 px-3 text-center">Target</th>
+            <th className="py-1 px-3 text-center">Status</th>
           </tr>
         </thead>
         <tbody>
