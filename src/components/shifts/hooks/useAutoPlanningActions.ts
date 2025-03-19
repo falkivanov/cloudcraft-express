@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { createAutomaticPlan } from "../utils/auto-planning-utils";
+import { createAutomaticPlan } from "../utils/planning";
 import { dispatchShiftEvent } from "../utils/shift-utils";
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
