@@ -10,31 +10,34 @@ export const getDummyScoreCardData = (): ScoreCardData => {
     overallScore: 75.01,
     overallStatus: "Great",
     rank: 6,
+    rankNote: "0 WoW",
     companyKPIs: [
       // Safety KPIs
-      { name: "Vehicle Audit (VSA)", value: 97.92, target: 98, unit: "%", trend: "up", status: "great" },
-      { name: "Safe Driving (FICO)", value: 795, target: 800, unit: "", trend: "up", status: "great" },
+      { name: "Vehicle Audit (VSA) Compliance", value: 97.92, target: 98, unit: "%", trend: "up", status: "great" },
+      { name: "Safe Driving Metric (FICO)", value: 795, target: 800, unit: "", trend: "up", status: "great" },
       { name: "DVIC Compliance", value: 100, target: 95, unit: "%", trend: "up", status: "fantastic" },
-      { name: "Speeding Event Rate", value: 8, target: 10, unit: "", trend: "down", status: "fantastic" },
-      { name: "Mentor Adoption Rate", value: 98.5, target: 95, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Speeding Event Rate (Per 100 Trips)", value: 8, target: 10, unit: "", trend: "down", status: "fantastic" },
+      { name: "Mentor Adoption Rate", value: 85.64, target: 95, unit: "%", trend: "up", status: "fantastic" },
       
       // Compliance KPIs
-      { name: "Breach of Contract (BOC)", value: 0, target: 0, unit: "", trend: "down", status: "fantastic" },
-      { name: "Working Hours Compliance (WHC)", value: 99.2, target: 98, unit: "%", trend: "up", status: "fantastic" },
-      { name: "Comprehensive Audit Score (CAS)", value: 94.3, target: 95, unit: "%", trend: "up", status: "fair" },
+      { name: "Breach of Contract (BOC)", value: 0, target: 0, unit: "", trend: "down", status: "none" },
+      { name: "Working Hours Compliance (WHC)", value: 100, target: 98, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Comprehensive Audit Score (CAS)", value: 100, target: 95, unit: "%", trend: "up", status: "in compliance" },
       
       // Customer Experience KPIs
-      { name: "Customer escalation DPMO", value: 850, target: 1000, unit: "", trend: "down", status: "great" },
-      { name: "Customer Delivery Feedback", value: 4.8, target: 4.5, unit: "", trend: "up", status: "fantastic" },
+      { name: "Customer escalation DPMO", value: 40, target: 1000, unit: "", trend: "down", status: "great" },
+      { name: "Customer Delivery Feedback", value: 94.82, target: 4.5, unit: "%", trend: "up", status: "fantastic" },
       
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.32, target: 99, unit: "%", trend: "up", status: "fair" },
       { name: "Delivered Not Received (DNR DPMO)", value: 1939, target: 1100, unit: "", trend: "down", status: "poor" },
-      { name: "Photo On Delivery", value: 98.35, target: 97, unit: "%", trend: "up", status: "fantastic" },
+      
+      // Standard Work Compliance
+      { name: "Photo-On-Delivery", value: 98.35, target: 97, unit: "%", trend: "up", status: "fantastic" },
       { name: "Contact Compliance", value: 91.61, target: 98, unit: "%", trend: "up", status: "fair" },
       
       // Capacity KPIs
-      { name: "Capacity", value: 92.5, target: 90, unit: "%", trend: "up", status: "great" },
+      { name: "Capacity Reliability", value: 100.51, target: 90, unit: "%", trend: "up", status: "fantastic" },
     ],
     driverKPIs: [
       { 
@@ -75,7 +78,13 @@ export const getDummyScoreCardData = (): ScoreCardData => {
       "Delivered Not Received (DNR DPMO)",
       "Delivery Completion Rate (DCR)",
       "Contact Compliance"
-    ]
+    ],
+    sectionRatings: {
+      complianceAndSafety: "Fantastic",
+      qualityAndSWC: "Fair",
+      capacity: "Fantastic"
+    },
+    currentWeekTips: "Coming Soon"
   };
 };
 

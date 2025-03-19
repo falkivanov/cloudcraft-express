@@ -5,7 +5,7 @@ export interface ScorecardKPI {
   target: number;
   unit: string;
   trend: "up" | "down" | "neutral";
-  status?: "fantastic" | "great" | "fair" | "poor";
+  status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance";
 }
 
 export interface DriverKPI {
@@ -16,7 +16,7 @@ export interface DriverKPI {
     value: number;
     target: number;
     unit?: string;
-    status?: "fantastic" | "great" | "fair" | "poor";
+    status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance";
   }[];
 }
 
@@ -27,7 +27,14 @@ export interface ScoreCardData {
   overallScore: number;
   overallStatus: string;
   rank: number;
+  rankNote?: string;
   companyKPIs: ScorecardKPI[];
   driverKPIs: DriverKPI[];
   recommendedFocusAreas: string[];
+  sectionRatings?: {
+    complianceAndSafety: string;
+    qualityAndSWC: string;
+    capacity: string;
+  };
+  currentWeekTips?: string;
 }

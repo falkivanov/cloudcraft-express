@@ -20,6 +20,10 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
         return "bg-yellow-100 text-yellow-800";
       case "poor":
         return "bg-red-100 text-red-800";
+      case "none":
+        return "bg-gray-100 text-gray-800";
+      case "in compliance":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -39,9 +43,16 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
     return "bg-gray-100 text-gray-800";
   };
   
+  // Format KPI value display
+  const formatKPIValue = (kpi: ScorecardKPI) => {
+    if (kpi.status === "none") return "None";
+    return `${kpi.value}${kpi.unit}`;
+  };
+  
   // Group KPIs by category
   const safetyKPIs = companyKPIs.filter(kpi => 
-    ["Vehicle Audit (VSA)", "Safe Driving (FICO)", "DVIC Compliance", "Speeding Event Rate", "Mentor Adoption Rate"].includes(kpi.name)
+    ["Vehicle Audit (VSA) Compliance", "Safe Driving Metric (FICO)", "DVIC Compliance", 
+     "Speeding Event Rate (Per 100 Trips)", "Mentor Adoption Rate"].includes(kpi.name)
   );
   
   const complianceKPIs = companyKPIs.filter(kpi => 
@@ -53,11 +64,15 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
   );
   
   const qualityKPIs = companyKPIs.filter(kpi => 
-    ["Delivery Completion Rate (DCR)", "Delivered Not Received (DNR DPMO)", "Photo On Delivery", "Contact Compliance"].includes(kpi.name)
+    ["Delivery Completion Rate (DCR)", "Delivered Not Received (DNR DPMO)"].includes(kpi.name)
+  );
+  
+  const standardWorkComplianceKPIs = companyKPIs.filter(kpi => 
+    ["Photo-On-Delivery", "Contact Compliance"].includes(kpi.name)
   );
   
   const capacityKPIs = companyKPIs.filter(kpi => 
-    ["Capacity"].includes(kpi.name)
+    ["Capacity Reliability"].includes(kpi.name)
   );
 
   // Render a section of KPIs
@@ -74,7 +89,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
                 <CardTitle className="text-lg flex justify-between items-center">
                   <span>{kpi.name}</span>
                   <Badge className={getKPIStatusStyle(kpi.value, kpi.target, kpi.trend, kpi.status)}>
-                    {kpi.value}{kpi.unit}
+                    {formatKPIValue(kpi)}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -93,11 +108,18 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs }) => {
 
   return (
     <div className="space-y-8">
-      {renderKPISection("Safety", safetyKPIs)}
-      {renderKPISection("Compliance", complianceKPIs)}
-      {renderKPISection("Customer Delivery Experience", customerExperienceKPIs)}
-      {renderKPISection("Quality", qualityKPIs)}
-      {renderKPISection("Capacity", capacityKPIs)}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          {renderKPISection("Safety", safetyKPIs)}
+          {renderKPISection("Compliance", complianceKPIs)}
+        </div>
+        <div>
+          {renderKPISection("Customer Delivery Experience", customerExperienceKPIs)}
+          {renderKPISection("Quality", qualityKPIs)}
+          {renderKPISection("Standard Work Compliance", standardWorkComplianceKPIs)}
+          {renderKPISection("Capacity", capacityKPIs)}
+        </div>
+      </div>
     </div>
   );
 };
