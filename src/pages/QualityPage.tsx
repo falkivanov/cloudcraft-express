@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/CustomerContactContent";
 import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
-import ScorecardWeekSelector from "@/components/quality/scorecard/ScorecardWeekSelector";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getScorecardData } from "@/components/quality/scorecard/ScorecardDataProvider";
 
@@ -25,8 +25,6 @@ const QualityPage = () => {
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   
-  const [selectedWeek, setSelectedWeek] = useState<string>("week-10-2025");
-  
   useEffect(() => {
     if (pathname.includes("/quality/customer-contact")) {
       const data = localStorage.getItem("customerContactData");
@@ -42,12 +40,6 @@ const QualityPage = () => {
         if (data) {
           const parsedScorecard = JSON.parse(data);
           setScoreCardData(parsedScorecard);
-          
-          const dummyData = getScorecardData(parsedScorecard);
-          if (dummyData) {
-            const weekId = `week-${dummyData.week}-${dummyData.year}`;
-            setSelectedWeek(weekId);
-          }
         }
       } catch (error) {
         console.error("Error parsing scorecard data:", error);
@@ -77,13 +69,7 @@ const QualityPage = () => {
     if (pathname.includes("/quality/scorecard")) {
       return (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Scorecard</h2>
-            <ScorecardWeekSelector 
-              selectedWeek={selectedWeek} 
-              setSelectedWeek={setSelectedWeek} 
-            />
-          </div>
+          <h2 className="text-2xl font-bold">Scorecard</h2>
           <ScorecardContent scorecardData={scorecardData} />
         </div>
       );

@@ -23,17 +23,17 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   const [selectedWeek, setSelectedWeek] = useState<string>("week-10-2025");
   
   // Get data (either actual or dummy)
-  const data = getScorecardData(scorecardData);
+  const data = getScorecardData(scorecardData, selectedWeek);
 
   // Try to extract week number from data if it exists
   useEffect(() => {
-    if (data) {
+    if (scorecardData) {
       // Set the week from our data
-      const weekId = `week-${data.week}-${data.year}`;
+      const weekId = `week-${scorecardData.week}-${scorecardData.year}`;
       setSelectedWeek(weekId);
-      console.log(`Using week ${data.week} from scorecard data`);
+      console.log(`Using week ${scorecardData.week} from scorecard data`);
     }
-  }, [data]);
+  }, [scorecardData]);
 
   if (!data) {
     return <NoDataMessage category="Scorecard" />;
@@ -42,6 +42,14 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background">
       <div className="flex flex-col space-y-6">
+        {/* Week Selector */}
+        <div className="flex justify-end">
+          <ScorecardWeekSelector
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+          />
+        </div>
+
         {/* Tabs for company/driver KPIs */}
         <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
           <TabsList className="w-full justify-start">
