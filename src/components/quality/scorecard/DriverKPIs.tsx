@@ -3,6 +3,14 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverKPIsProps } from "./types";
 import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs, 
@@ -67,64 +75,83 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     };
   };
 
-  // Render a table row for a driver with metrics
-  const renderDriverRow = (driver: any) => {
-    return (
-      <tr key={driver.name} className="border-b border-gray-100 hover:bg-gray-50">
-        <td className="py-2 px-3 text-sm font-medium">{driver.name}</td>
-        
-        {driver.metrics.map((metric: any) => {
-          const prevMetric = getPreviousMetricData(driver.name, metric.name);
-          const prevValue = prevMetric ? prevMetric.value : null;
-          const change = getChangeDisplay(metric.value, prevValue);
-          
-          // Check if the metric value meets its target (if available)
-          const isAtOrBetterThanTarget = metric.target ? 
-            (metric.name === "DNR DPMO" ? metric.value <= metric.target : metric.value >= metric.target) : 
-            false;
-          
-          // Determine if change is positive or negative
-          const isGoodChange = change && (
-            (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0) ||
-            // Add condition: if change is 0 but we meet the target, consider it positive
-            (change.difference === 0 && isAtOrBetterThanTarget)
-          );
-          
-          const changeColor = change ? 
-            (isGoodChange ? "text-green-500" : "text-red-500") : 
-            "";
+  // Render a table for drivers with their metrics
+  const renderDriverTable = (drivers: any[]) => {
+    if (drivers.length === 0) {
+      return (
+        <div className="py-8 text-center text-gray-500">
+          {driverStatusTab === "active" ? "Keine aktiven Fahrer vorhanden" : "Keine ehemaligen Fahrer vorhanden"}
+        </div>
+      );
+    }
 
-          // Convert "none" to "fantastic" for display
-          const displayStatus = metric.status === "none" ? "fantastic" : metric.status;
-          
-          return (
-            <td key={metric.name} className="py-2 px-3 text-center">
-              <div className="flex flex-col items-center">
-                <div className="flex items-center gap-1">
-                  <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
-                  
-                  {change && (
-                    <span className={`text-xs flex items-center ${changeColor}`}>
-                      {isGoodChange ? (
-                        <ArrowUp className="h-3 w-3 mr-0.5" />
-                      ) : (
-                        <ArrowDown className="h-3 w-3 mr-0.5" />
-                      )}
-                      {change.display}
-                    </span>
-                  )}
-                </div>
+    return (
+      <div className="overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="py-1 px-3 text-xs text-gray-500">Fahrer</TableHead>
+              {drivers[0].metrics.map((metric: any) => (
+                <TableHead key={metric.name} className="py-1 px-3 text-center text-xs text-gray-500">{metric.name}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {drivers.map((driver) => (
+              <TableRow key={driver.name} className="border-b border-gray-100 hover:bg-gray-50">
+                <TableCell className="py-2 px-3 text-sm font-medium">{driver.name}</TableCell>
                 
-                {metric.status && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
-                    {displayStatus}
-                  </span>
-                )}
-              </div>
-            </td>
-          );
-        })}
-      </tr>
+                {driver.metrics.map((metric: any) => {
+                  const prevMetric = getPreviousMetricData(driver.name, metric.name);
+                  const prevValue = prevMetric ? prevMetric.value : null;
+                  const change = getChangeDisplay(metric.value, prevValue);
+                  
+                  // Check if the metric value meets its target (if available)
+                  const isAtOrBetterThanTarget = metric.target ? 
+                    (metric.name === "DNR DPMO" ? metric.value <= metric.target : metric.value >= metric.target) : 
+                    false;
+                  
+                  // Determine if change is positive or negative based on metric direction
+                  const isGoodChange = change && (
+                    (metric.name === "DNR DPMO" ? change.difference < 0 : change.difference > 0) ||
+                    (change.difference === 0 && isAtOrBetterThanTarget)
+                  );
+                  
+                  // Convert "none" to "fantastic" for display
+                  const displayStatus = metric.status === "none" ? "fantastic" : metric.status;
+                  
+                  return (
+                    <TableCell key={metric.name} className="py-2 px-3 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <span>{formatValue(metric.value, metric.unit)}{metric.unit}</span>
+                          
+                          {change && (
+                            <span className={`text-xs flex items-center ${isGoodChange ? "text-green-500" : "text-red-500"}`}>
+                              {isGoodChange ? (
+                                <ArrowUp className="h-3 w-3 mr-0.5" />
+                              ) : (
+                                <ArrowDown className="h-3 w-3 mr-0.5" />
+                              )}
+                              {change.display}{metric.unit}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {metric.status && (
+                          <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
+                            {displayStatus}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 
@@ -146,47 +173,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         </TabsList>
         
         <TabsContent value="active">
-          {activeDrivers.length > 0 ? (
-            <div className="overflow-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="text-left text-xs text-gray-500 border-b">
-                    <th className="py-1 px-3">Fahrer</th>
-                    {activeDrivers[0].metrics.map((metric: any) => (
-                      <th key={metric.name} className="py-1 px-3 text-center">{metric.name}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeDrivers.map(renderDriverRow)}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-gray-500">Keine aktiven Fahrer vorhanden</div>
-          )}
+          {renderDriverTable(activeDrivers)}
         </TabsContent>
         
         <TabsContent value="former">
-          {formerDrivers.length > 0 ? (
-            <div className="overflow-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="text-left text-xs text-gray-500 border-b">
-                    <th className="py-1 px-3">Fahrer</th>
-                    {formerDrivers[0].metrics.map((metric: any) => (
-                      <th key={metric.name} className="py-1 px-3 text-center">{metric.name}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {formerDrivers.map(renderDriverRow)}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-gray-500">Keine ehemaligen Fahrer vorhanden</div>
-          )}
+          {renderDriverTable(formerDrivers)}
         </TabsContent>
       </Tabs>
     </div>

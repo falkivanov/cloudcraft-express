@@ -2,6 +2,14 @@
 import React from "react";
 import { ScorecardKPI, CompanyKPIsProps } from "./types";
 import { ArrowUp, ArrowDown, CircleDot } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
   // Function to get the status badge class
@@ -22,7 +30,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
       case "not in compliance":
         return "bg-red-100 text-red-600";
       case "none":
-        return "bg-blue-100 text-blue-600"; // Changed to blue for "none" to display as "fantastic"
+        return "bg-blue-100 text-blue-600"; // Blue for "none" to display as "fantastic"
       default:
         return "bg-gray-100 text-gray-500";
     }
@@ -58,7 +66,8 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
     return {
       difference,
       display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
-      color
+      color,
+      isPositive
     };
   };
 
@@ -94,83 +103,61 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
     ["Capacity Reliability"].includes(kpi.name)
   );
 
-  // Render a KPI row with comparison
-  const renderKPIRow = (kpi: ScorecardKPI) => {
-    const previousKPI = getPreviousWeekKPI(kpi.name);
-    const change = getChangeDisplay(kpi.value, previousKPI);
-    
-    // Determine if the change is good or bad based on the KPI's trend direction
-    // and also check if the current value meets the target
-    const isAtOrBetterThanTarget = 
-      (kpi.trend === "up" && kpi.value >= kpi.target) || 
-      (kpi.trend === "down" && kpi.value <= kpi.target);
-    
-    const isPositiveChange = change && (
-      (kpi.trend === "up" && change.difference > 0) || 
-      (kpi.trend === "down" && change.difference < 0) ||
-      // Add condition: if change is 0 but we meet the target, consider it positive
-      (change.difference === 0 && isAtOrBetterThanTarget)
-    );
-    
-    const changeColor = change ? 
-      (isPositiveChange ? "text-green-500" : "text-red-500") : 
-      "";
-
-    // Treat "none" status as "fantastic" for BOC
-    const displayStatus = kpi.name === "Breach of Contract (BOC)" && kpi.status === "none" ? "fantastic" : kpi.status;
-
-    return (
-      <tr key={kpi.name} className="border-b border-gray-100 hover:bg-gray-50">
-        <td className="py-2 px-3 text-sm">{kpi.name}</td>
-        <td className="py-2 px-3 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{kpi.unit}</span>
-            {change && (
-              <span className={`text-xs flex items-center ${changeColor}`}>
-                {isPositiveChange ? (
-                  <ArrowUp className="h-3 w-3 mr-0.5" />
-                ) : (
-                  <ArrowDown className="h-3 w-3 mr-0.5" />
-                )}
-                {change.display}{kpi.unit}
-              </span>
-            )}
-            {previousKPI && !change && (
-              <span className="text-xs text-gray-500">
-                (Vorwoche: {formatKPIValue(previousKPI.value, kpi.unit)}{kpi.unit})
-              </span>
-            )}
-          </div>
-        </td>
-        <td className="py-2 px-3 text-center">{formatKPIValue(kpi.target, kpi.unit)}{kpi.unit}</td>
-        <td className="py-2 px-3 text-center">
-          <div className="flex justify-center">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(kpi.status)}`}>
-              {displayStatus || "N/A"}
-            </span>
-          </div>
-        </td>
-      </tr>
-    );
-  };
-
   // Render a category of KPIs
   const renderKPICategory = (title: string, kpis: ScorecardKPI[]) => (
     <div className="mb-6">
       <h3 className="text-sm font-medium border-b pb-2 mb-2">{title}</h3>
-      <table className="w-full">
-        <thead>
-          <tr className="text-left text-xs text-gray-500">
-            <th className="py-1 px-3">Metric</th>
-            <th className="py-1 px-3 text-center">Value</th>
-            <th className="py-1 px-3 text-center">Target</th>
-            <th className="py-1 px-3 text-center">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {kpis.map(renderKPIRow)}
-        </tbody>
-      </table>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40%] py-1 px-3 text-xs text-gray-500">Metric</TableHead>
+            <TableHead className="w-[20%] py-1 px-3 text-center text-xs text-gray-500">Value</TableHead>
+            <TableHead className="w-[20%] py-1 px-3 text-center text-xs text-gray-500">Target</TableHead>
+            <TableHead className="w-[20%] py-1 px-3 text-center text-xs text-gray-500">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {kpis.map((kpi) => {
+            const previousKPI = getPreviousWeekKPI(kpi.name);
+            const change = getChangeDisplay(kpi.value, previousKPI);
+            
+            // Determine if the change is good or bad based on the KPI's trend direction
+            const isAtOrBetterThanTarget = 
+              (kpi.trend === "up" && kpi.value >= kpi.target) || 
+              (kpi.trend === "down" && kpi.value <= kpi.target);
+            
+            // Treat "none" status as "fantastic" for BOC
+            const displayStatus = kpi.name === "Breach of Contract (BOC)" && kpi.status === "none" ? "fantastic" : kpi.status;
+
+            return (
+              <TableRow key={kpi.name} className="border-b border-gray-100 hover:bg-gray-50">
+                <TableCell className="py-2 px-3 text-sm">{kpi.name}</TableCell>
+                <TableCell className="py-2 px-3 text-center">
+                  <div className="flex items-center justify-center">
+                    <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{kpi.unit}</span>
+                    {change && (
+                      <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"}`}>
+                        {change.isPositive ? (
+                          <ArrowUp className="h-3 w-3 mr-0.5" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 mr-0.5" />
+                        )}
+                        {change.display}{kpi.unit}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="py-2 px-3 text-center">{formatKPIValue(kpi.target, kpi.unit)}{kpi.unit}</TableCell>
+                <TableCell className="py-2 px-3 text-center">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(displayStatus)}`}>
+                    {displayStatus || "N/A"}
+                  </span>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 
