@@ -6,6 +6,7 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import ScorecardWeekSelector from "@/components/quality/scorecard/ScorecardWeekSelector";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
+import { getScorecardData } from "@/components/quality/scorecard/ScorecardDataProvider";
 
 interface DriverComplianceData {
   name: string;
@@ -23,7 +24,8 @@ const QualityPage = () => {
   const [podData, setPodData] = useState<any>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
-  const [selectedWeek, setSelectedWeek] = useState<string>("current");
+  
+  const [selectedWeek, setSelectedWeek] = useState<string>("week-10-2025");
   
   useEffect(() => {
     if (pathname.includes("/quality/customer-contact")) {
@@ -38,7 +40,14 @@ const QualityPage = () => {
       try {
         const data = localStorage.getItem("scorecardData");
         if (data) {
-          setScoreCardData(JSON.parse(data));
+          const parsedScorecard = JSON.parse(data);
+          setScoreCardData(parsedScorecard);
+          
+          const dummyData = getScorecardData(parsedScorecard);
+          if (dummyData) {
+            const weekId = `week-${dummyData.week}-${dummyData.year}`;
+            setSelectedWeek(weekId);
+          }
         }
       } catch (error) {
         console.error("Error parsing scorecard data:", error);

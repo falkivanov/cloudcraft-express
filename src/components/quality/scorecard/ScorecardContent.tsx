@@ -18,35 +18,22 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Scorecard specific states
   const [scorecardTab, setScorecardTab] = useState<string>("company");
   const [driverStatusTab, setDriverStatusTab] = useState<string>("active");
-  const [selectedWeek, setSelectedWeek] = useState<string>("current");
+  
+  // Initialize with week 10 as default since our test data is from KW10
+  const [selectedWeek, setSelectedWeek] = useState<string>("week-10-2025");
   
   // Get data (either actual or dummy)
   const data = getScorecardData(scorecardData);
 
-  // Try to extract week number from PDF data if it exists
+  // Try to extract week number from data if it exists
   useEffect(() => {
-    if (scorecardData) {
-      const storedData = localStorage.getItem("scorecardData");
-      if (storedData) {
-        try {
-          const parsedData = JSON.parse(storedData);
-          if (parsedData.fileName) {
-            // Try to extract from filename first (e.g., "Scorecard_KW_23_2023.pdf")
-            const weekMatch = parsedData.fileName.match(/KW[_\s]*(\d+)/i);
-            if (weekMatch && weekMatch[1]) {
-              const extractedWeek = parseInt(weekMatch[1], 10);
-              const currentYear = new Date().getFullYear();
-              const weekId = `week-${extractedWeek}-${currentYear}`;
-              setSelectedWeek(weekId);
-              console.log(`Extracted week ${extractedWeek} from filename`);
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing scorecard data for week extraction:", error);
-        }
-      }
+    if (data) {
+      // Set the week from our data
+      const weekId = `week-${data.week}-${data.year}`;
+      setSelectedWeek(weekId);
+      console.log(`Using week ${data.week} from scorecard data`);
     }
-  }, [scorecardData]);
+  }, [data]);
 
   if (!data) {
     return <NoDataMessage category="Scorecard" />;
