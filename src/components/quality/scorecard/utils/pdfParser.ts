@@ -24,24 +24,44 @@ export const parseScorecardPDF = async (
     const loadingTask = pdfjs.getDocument({ data: pdfData });
     const pdf = await loadingTask.promise;
     
-    console.log(`PDF loaded with ${pdf.numPages} pages`);
+    console.log(`PDF loaded with ${pdf.numPages} pages, focusing on pages 2 and 3 only`);
     
-    // Extract text from all pages
+    // Extract text only from pages 2 and 3
     const textContent: string[] = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items
+    
+    // Get page 2 (company KPIs)
+    if (pdf.numPages >= 2) {
+      const companyKPIsPage = await pdf.getPage(2);
+      const companyContent = await companyKPIsPage.getTextContent();
+      const companyText = companyContent.items
         .map((item: any) => item.str)
         .join(' ');
-      textContent.push(pageText);
+      textContent.push(companyText);
+      console.log("Extracted company KPIs from page 2");
+    } else {
+      console.warn("PDF doesn't have a page 2 for company KPIs");
     }
     
-    const fullText = textContent.join(' ');
-    console.log("PDF content extracted, starting to parse data");
+    // Get page 3 (driver KPIs)
+    if (pdf.numPages >= 3) {
+      const driverKPIsPage = await pdf.getPage(3);
+      const driverContent = await driverKPIsPage.getTextContent();
+      const driverText = driverContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      textContent.push(driverText);
+      console.log("Extracted driver KPIs from page 3");
+    } else {
+      console.warn("PDF doesn't have a page 3 for driver KPIs");
+    }
+    
+    const companyKPIsText = textContent[0] || '';
+    const driverKPIsText = textContent[1] || '';
+    
+    console.log("PDF content extracted from specific pages, starting to parse data");
     
     // Parse key metrics from the text
-    const parsedData = extractScorecardData(fullText, weekNum);
+    const parsedData = extractScorecardData(companyKPIsText, driverKPIsText, weekNum);
     
     return parsedData;
   } catch (error) {
@@ -53,19 +73,19 @@ export const parseScorecardPDF = async (
 /**
  * Extract structured data from the raw text content
  */
-const extractScorecardData = (textContent: string, weekNum: number): ScoreCardData => {
+const extractScorecardData = (companyText: string, driverText: string, weekNum: number): ScoreCardData => {
   // Default template with empty values
   const data: ScoreCardData = {
     week: weekNum,
     year: new Date().getFullYear(),
-    location: extractLocation(textContent) || 'DSU1',
-    overallScore: extractOverallScore(textContent) || 85,
-    overallStatus: extractOverallStatus(textContent) || 'Great',
-    rank: extractRank(textContent) || 5,
-    rankNote: extractRankChange(textContent) || 'Up 2 places from last week',
-    companyKPIs: extractCompanyKPIs(textContent),
-    driverKPIs: extractDriverKPIs(textContent),
-    recommendedFocusAreas: extractFocusAreas(textContent),
+    location: extractLocation(companyText) || 'DSU1',
+    overallScore: extractOverallScore(companyText) || 85,
+    overallStatus: extractOverallStatus(companyText) || 'Great',
+    rank: extractRank(companyText) || 5,
+    rankNote: extractRankChange(companyText) || 'Up 2 places from last week',
+    companyKPIs: extractCompanyKPIs(companyText),
+    driverKPIs: extractDriverKPIs(driverText),
+    recommendedFocusAreas: extractFocusAreas(companyText),
   };
   
   return data;
@@ -165,10 +185,13 @@ const extractCompanyKPIs = (text: string): any[] => {
     { name: "Capacity Reliability", pattern: /Capacity\s+Reliability[:\s]+(\d+(?:\.\d+)?)\s*%/i },
   ];
   
+  console.log("Extracting company KPIs from page 2");
+  
   // Check each pattern against the text
   kpiPatterns.forEach(({ name, pattern }) => {
     const match = text.match(pattern);
     if (match) {
+      console.log(`Found KPI: ${name} = ${match[1]}`);
       const value = parseFloat(match[1]);
       kpis.push({
         name,
@@ -183,6 +206,7 @@ const extractCompanyKPIs = (text: string): any[] => {
   
   // If we didn't find any KPIs, return a default set
   if (kpis.length === 0) {
+    console.warn("No company KPIs found on page 2, using default values");
     return [
       {
         name: "Delivery Completion Rate (DCR)",
@@ -218,6 +242,7 @@ const extractCompanyKPIs = (text: string): any[] => {
  * Extract driver KPIs from text content
  */
 const extractDriverKPIs = (text: string): any[] => {
+  console.log("Extracting driver KPIs from page 3");
   const drivers: any[] = [];
   
   // Regular expression to find driver sections - looking for patterns like:
@@ -226,6 +251,7 @@ const extractDriverKPIs = (text: string): any[] => {
   const driverMatches = text.match(driverPattern);
   
   if (!driverMatches || driverMatches.length === 0) {
+    console.warn("No driver KPIs found on page 3, using sample data");
     // Return sample data if no drivers found
     return generateSampleDrivers();
   }
@@ -237,6 +263,7 @@ const extractDriverKPIs = (text: string): any[] => {
     if (!nameMatch) return;
     
     const driverName = nameMatch[1];
+    console.log(`Found driver: ${driverName}`);
     
     // Extract numerical metrics that follow the name
     const metricMatches = match.match(/(\d+(?:[.,]\d+)?)/g);
