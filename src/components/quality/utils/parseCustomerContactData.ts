@@ -45,3 +45,43 @@ export const parseCustomerContactData = (htmlContent: string): DriverComplianceD
     return [];
   }
 };
+
+// Helper function to calculate statistic summaries
+export const calculateComplianceStatistics = (drivers: DriverComplianceData[]) => {
+  if (drivers.length === 0) {
+    return {
+      averageCompliance: 0,
+      totalDrivers: 0,
+      criticalDrivers: 0,
+      improvementDrivers: 0,
+      goodDrivers: 0,
+      totalContacts: 0,
+      missedContacts: 0
+    };
+  }
+
+  const totalDrivers = drivers.length;
+  const sumCompliance = drivers.reduce((sum, driver) => sum + driver.compliancePercentage, 0);
+  const averageCompliance = sumCompliance / totalDrivers;
+  
+  const criticalDrivers = drivers.filter(driver => driver.compliancePercentage < 85).length;
+  const improvementDrivers = drivers.filter(driver => 
+    driver.compliancePercentage >= 85 && driver.compliancePercentage < 98
+  ).length;
+  const goodDrivers = drivers.filter(driver => driver.compliancePercentage >= 98).length;
+  
+  const totalAddresses = drivers.reduce((sum, driver) => sum + driver.totalAddresses, 0);
+  const totalContacts = drivers.reduce((sum, driver) => sum + driver.totalContacts, 0);
+  const missedContacts = totalAddresses - totalContacts;
+  
+  return {
+    averageCompliance,
+    totalDrivers,
+    criticalDrivers,
+    improvementDrivers,
+    goodDrivers,
+    totalAddresses,
+    totalContacts,
+    missedContacts
+  };
+};

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/CustomerContactContent";
@@ -6,6 +7,7 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getScorecardData } from "@/components/quality/scorecard/data";
+import QualityTabs from "@/components/quality/QualityTabs";
 
 interface DriverComplianceData {
   name: string;
@@ -120,6 +122,7 @@ const QualityPage = () => {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Qualitätsmanagement</h1>
+      <QualityTabs />
       {renderContent()}
     </div>
   );
