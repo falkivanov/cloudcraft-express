@@ -34,11 +34,11 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      {/* Header with summary information */}
-      <ScorecardSummary data={data} previousWeekData={previousWeekData} />
-      
       {/* Content sections */}
       <TabsContent value="company" className="w-full">
+        {/* Header with summary information - only shown in Company tab */}
+        <ScorecardSummary data={data} previousWeekData={previousWeekData} />
+        
         <div className="max-w-4xl mx-auto">
           <CompanyKPIs companyKPIs={data.companyKPIs} previousWeekData={previousWeekData} />
         </div>
