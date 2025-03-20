@@ -53,9 +53,9 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
           
           // If scores are equal, use delivered packages as a tiebreaker
           if (scoreA === scoreB) {
-            // Look for "delivered" or similar metric - adjust based on your actual data structure
-            const deliveredA = a.metrics.find(m => m.name === 'POD')?.value || 0;
-            const deliveredB = b.metrics.find(m => m.name === 'POD')?.value || 0;
+            // Look for "Delivered" metric value
+            const deliveredA = a.metrics.find(m => m.name === 'Delivered')?.value || 0;
+            const deliveredB = b.metrics.find(m => m.name === 'Delivered')?.value || 0;
             return sortConfig.direction === 'ascending' 
               ? deliveredA - deliveredB 
               : deliveredB - deliveredA;
