@@ -3,29 +3,10 @@ import React, { useState } from "react";
 import { FilterIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
-
-interface DriverComplianceData {
-  name: string;
-  firstName: string;
-  totalAddresses: number;
-  totalContacts: number;
-  compliancePercentage: number;
-}
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { DriverComplianceData } from "./types";
+import { getComplianceStyle, getProgressColor } from "./utils";
 
 interface DriversTableProps {
   driversData: DriverComplianceData[];
@@ -33,20 +14,7 @@ interface DriversTableProps {
 
 const DriversTable: React.FC<DriversTableProps> = ({ driversData }) => {
   const [filterValue, setFilterValue] = useState<string>("all");
-
-  // Style for compliance values
-  const getComplianceStyle = (percentage: number) => {
-    if (percentage < 85) return "bg-red-100 text-red-800 font-semibold";
-    if (percentage < 98) return "bg-amber-100 text-amber-800 font-semibold";
-    return "bg-green-100 text-green-800 font-semibold";
-  };
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage < 85) return "bg-red-500";
-    if (percentage < 98) return "bg-amber-500";
-    return "bg-green-500";
-  };
-
+  
   // Filter drivers based on compliance
   const getFilteredDrivers = () => {
     if (filterValue === "low") {

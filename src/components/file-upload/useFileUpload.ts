@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { getCategoryInfo } from "./fileCategories";
@@ -70,6 +69,20 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
           // Process different file types
           if (categoryInfo.id === "scorecard" && categoryInfo.expectedType === "pdf") {
             await processScorecardPDF(file);
+          } else if (categoryInfo.id === "customerContact" && categoryInfo.expectedType === "html") {
+            // Process HTML customer contact files
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const htmlContent = e.target?.result as string;
+              if (htmlContent) {
+                localStorage.setItem("customerContactData", htmlContent);
+                toast.success(`Customer Contact Daten erfolgreich hochgeladen`, {
+                  description: "Die Daten können jetzt in der Customer Contact Ansicht angezeigt werden."
+                });
+                onFileUpload?.(file, categoryInfo.expectedType, categoryInfo.id);
+              }
+            };
+            reader.readAsText(file);
           } else {
             // Default processing for other file types
             onFileUpload?.(file, categoryInfo.expectedType, selectedCategory);
