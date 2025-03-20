@@ -6,6 +6,7 @@ import CompanyKPIs from "../CompanyKPIs";
 import DriverKPIs from "../DriverKPIs";
 import ScorecardSummary from "../ScorecardSummary";
 import { ScoreCardData } from "../types";
+import DriverPerformanceDashboard from "../driver/DriverPerformanceDashboard";
 
 interface ScorecardTabsContentProps {
   data: ScoreCardData;
@@ -44,6 +45,14 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
       </TabsContent>
       
       <TabsContent value="driver" className="w-full">
+        {/* Driver Performance Dashboard - Only show when previous week data is available */}
+        {previousWeekData && (
+          <DriverPerformanceDashboard 
+            currentWeekData={data} 
+            previousWeekData={previousWeekData} 
+          />
+        )}
+        
         <DriverKPIs 
           driverKPIs={data.driverKPIs}
           previousWeekData={previousWeekData}
