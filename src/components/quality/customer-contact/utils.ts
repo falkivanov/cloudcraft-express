@@ -53,7 +53,26 @@ export const getKW11TestData = (): DriverComplianceData[] => {
     { name: "Andreas Schmitt (AW3332YL5B5OX)", firstName: "Andreas", totalAddresses: 54, totalContacts: 53, compliancePercentage: 98.15 },
     { name: "Laura Krause (A3DIG631DG25QY)", firstName: "Laura", totalAddresses: 304, totalContacts: 300, compliancePercentage: 98.68 },
     { name: "Marc Hartmann (A2V82R55OSFX13)", firstName: "Marc", totalAddresses: 78, totalContacts: 77, compliancePercentage: 98.72 },
-    { name: "Christine Maier (A10PTSFT1G664)", firstName: "Christine", totalAddresses: 97, totalContacts: 96, compliancePercentage: 98.97 }
+    { name: "Christine Maier (A10PTSFT1G664)", firstName: "Christine", totalAddresses: 97, totalContacts: 96, compliancePercentage: 98.97 },
+    // Adding the additional drivers from the image
+    { name: "Jana Fischer (AKLXATMRADBNI)", firstName: "Jana", totalAddresses: 128, totalContacts: 127, compliancePercentage: 99.22 },
+    { name: "Philipp Lehmann (A35YAZ4QX53UUC)", firstName: "Philipp", totalAddresses: 133, totalContacts: 132, compliancePercentage: 99.25 },
+    { name: "Sarah Berger (A2NPJR1DNCQSWT)", firstName: "Sarah", totalAddresses: 149, totalContacts: 148, compliancePercentage: 99.33 },
+    { name: "David Hofmann (A3NRSY7GUNAC6L)", firstName: "David", totalAddresses: 256, totalContacts: 255, compliancePercentage: 99.61 },
+    { name: "Kathrin Weber (A81RBHQXDC55B)", firstName: "Kathrin", totalAddresses: 64, totalContacts: 64, compliancePercentage: 100.00 },
+    { name: "Alexander Klein (A1ON8E0ODQHBPK)", firstName: "Alexander", totalAddresses: 37, totalContacts: 37, compliancePercentage: 100.00 },
+    { name: "Lara Schneider (A2QQ7SAZ5YNVFY)", firstName: "Lara", totalAddresses: 31, totalContacts: 31, compliancePercentage: 100.00 },
+    { name: "Max Schulz (A2B3B877JZLM2I)", firstName: "Max", totalAddresses: 29, totalContacts: 29, compliancePercentage: 100.00 },
+    { name: "Jessica Wagner (ACYZ1MJ3N1Y6L)", firstName: "Jessica", totalAddresses: 14, totalContacts: 14, compliancePercentage: 100.00 },
+    { name: "Oliver Becker (AAO22YO3XQ7BF)", firstName: "Oliver", totalAddresses: 7, totalContacts: 7, compliancePercentage: 100.00 },
+    { name: "Hannah Zimmermann (A168GH5BNAWMY8)", firstName: "Hannah", totalAddresses: 6, totalContacts: 6, compliancePercentage: 100.00 },
+    { name: "Paul Meyer (AV72WGD6AIFOU)", firstName: "Paul", totalAddresses: 5, totalContacts: 5, compliancePercentage: 100.00 },
+    { name: "Nora Fischer (A2QS2RD55A4L9M)", firstName: "Nora", totalAddresses: 4, totalContacts: 4, compliancePercentage: 100.00 },
+    { name: "Benjamin Wolf (A26S2JB0S0PWL1)", firstName: "Benjamin", totalAddresses: 3, totalContacts: 3, compliancePercentage: 100.00 },
+    { name: "Sophia Lang (A3SL76UAGX66QM)", firstName: "Sophia", totalAddresses: 3, totalContacts: 3, compliancePercentage: 100.00 },
+    { name: "Leo König (AU9F0IXDRQIY3)", firstName: "Leo", totalAddresses: 3, totalContacts: 3, compliancePercentage: 100.00 },
+    { name: "Elena Huber (A1OLZ0WWQQNSXV)", firstName: "Elena", totalAddresses: 1, totalContacts: 1, compliancePercentage: 100.00 },
+    { name: "Jonas Schmidt (A3GC57M6CUHDOR)", firstName: "Jonas", totalAddresses: 1, totalContacts: 1, compliancePercentage: 100.00 }
   ];
 };
 
@@ -256,8 +275,117 @@ export const getKW11TestHTMLData = (): string => {
           <td>96</td>
           <td>98.97%</td>
         </tr>
+        <tr>
+          <td>AKLXATMRADBNI</td>
+          <td>128</td>
+          <td>127</td>
+          <td>99.22%</td>
+        </tr>
+        <tr>
+          <td>A35YAZ4QX53UUC</td>
+          <td>133</td>
+          <td>132</td>
+          <td>99.25%</td>
+        </tr>
+        <tr>
+          <td>A2NPJR1DNCQSWT</td>
+          <td>149</td>
+          <td>148</td>
+          <td>99.33%</td>
+        </tr>
+        <tr>
+          <td>A3NRSY7GUNAC6L</td>
+          <td>256</td>
+          <td>255</td>
+          <td>99.61%</td>
+        </tr>
+        <tr>
+          <td>A81RBHQXDC55B</td>
+          <td>64</td>
+          <td>64</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A1ON8E0ODQHBPK</td>
+          <td>37</td>
+          <td>37</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A2QQ7SAZ5YNVFY</td>
+          <td>31</td>
+          <td>31</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A2B3B877JZLM2I</td>
+          <td>29</td>
+          <td>29</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>ACYZ1MJ3N1Y6L</td>
+          <td>14</td>
+          <td>14</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>AAO22YO3XQ7BF</td>
+          <td>7</td>
+          <td>7</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A168GH5BNAWMY8</td>
+          <td>6</td>
+          <td>6</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>AV72WGD6AIFOU</td>
+          <td>5</td>
+          <td>5</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A2QS2RD55A4L9M</td>
+          <td>4</td>
+          <td>4</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A26S2JB0S0PWL1</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A3SL76UAGX66QM</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>AU9F0IXDRQIY3</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A1OLZ0WWQQNSXV</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.00%</td>
+        </tr>
+        <tr>
+          <td>A3GC57M6CUHDOR</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.00%</td>
+        </tr>
       </table>
     </div>
   `;
   return html;
 };
+
