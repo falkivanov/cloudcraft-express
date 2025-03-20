@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +11,7 @@ import {
 import { DriverKPI } from "../types";
 import DriverTableRow from "./DriverTableRow";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 
 interface DriverTableProps {
   drivers: DriverKPI[];
@@ -21,8 +23,44 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
     key: string;
     direction: 'ascending' | 'descending';
   }>({ key: 'score', direction: 'descending' });
+  
+  // Create a state for processed drivers with translated names
+  const [processedDrivers, setProcessedDrivers] = useState<DriverKPI[]>([]);
+  
+  // Map transporterIds to full employee names
+  useEffect(() => {
+    // Function to replace transporter IDs with actual employee names
+    const mapTransporterIdsToNames = (driverList: DriverKPI[]): DriverKPI[] => {
+      // Create a map of transporterId to employee name
+      const transporterIdToName = new Map();
+      initialEmployees.forEach(employee => {
+        transporterIdToName.set(employee.transporterId, employee.name);
+      });
+      
+      // Map drivers using the lookup
+      return driverList.map(driver => {
+        // Check if the driver name looks like a transporter ID (e.g., TR-001)
+        const transporterIdMatch = driver.name.match(/^TR-\d+$/i);
+        
+        if (transporterIdMatch && transporterIdToName.has(driver.name)) {
+          // Replace transporter ID with the actual employee name
+          return {
+            ...driver,
+            name: transporterIdToName.get(driver.name),
+            originalId: driver.name // Keep original ID for reference if needed
+          };
+        }
+        
+        return driver;
+      });
+    };
+    
+    // Process and update drivers list
+    const transformedDrivers = mapTransporterIdsToNames(drivers);
+    setProcessedDrivers(transformedDrivers);
+  }, [drivers]);
 
-  if (drivers.length === 0) {
+  if (processedDrivers.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
         Keine Fahrer in dieser Kategorie vorhanden
@@ -32,7 +70,7 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
 
   // Create a sorted copy of the drivers array
   const sortedDrivers = React.useMemo(() => {
-    let sortableDrivers = [...drivers];
+    let sortableDrivers = [...processedDrivers];
     if (sortConfig !== null) {
       sortableDrivers.sort((a, b) => {
         // Sort by driver name
@@ -83,7 +121,7 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
       });
     }
     return sortableDrivers;
-  }, [drivers, sortConfig]);
+  }, [processedDrivers, sortConfig]);
 
   const requestSort = (key: string) => {
     let direction: 'ascending' | 'descending' = 'ascending';
