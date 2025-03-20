@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import CustomerContactContent from "@/components/quality/CustomerContactContent";
+import CustomerContactContent from "@/components/quality/customer-contact/CustomerContactContent";
 import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
@@ -94,7 +94,6 @@ const QualityPage = () => {
     );
   };
 
-  // Get current page title
   const getPageTitle = () => {
     if (pathname.includes("/quality/scorecard")) {
       return "Scorecard";
