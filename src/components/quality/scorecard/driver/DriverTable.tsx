@@ -68,8 +68,8 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
     );
   }
 
-  // Create a sorted copy of the drivers array
-  const sortedDrivers = React.useMemo(() => {
+  // Create a sorted copy of the drivers array - but as a regular const, not in a useMemo
+  const sortedDrivers = (() => {
     let sortableDrivers = [...processedDrivers];
     if (sortConfig !== null) {
       sortableDrivers.sort((a, b) => {
@@ -121,7 +121,7 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
       });
     }
     return sortableDrivers;
-  }, [processedDrivers, sortConfig]);
+  })();
 
   const requestSort = (key: string) => {
     let direction: 'ascending' | 'descending' = 'ascending';

@@ -44,7 +44,7 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
         </div>
       </TabsContent>
       
-      <TabsContent value="driver" className="w-full">
+      <TabsContent value="driver" className="w-full bg-background">
         {/* Driver Performance Dashboard - Show when previous week data is available */}
         {previousWeekData && (
           <DriverPerformanceDashboard 
