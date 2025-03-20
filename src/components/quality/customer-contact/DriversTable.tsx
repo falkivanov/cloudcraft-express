@@ -54,7 +54,7 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData, activeFilter }
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Adressen</TableHead>
-              <TableHead>Kontakte</TableHead>
+              <TableHead>davon kontaktiert</TableHead>
               <TableHead>Compliance</TableHead>
             </TableRow>
           </TableHeader>
