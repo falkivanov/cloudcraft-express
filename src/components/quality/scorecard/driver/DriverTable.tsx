@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -17,10 +16,11 @@ interface DriverTableProps {
 }
 
 const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
+  // Initialize with sorting by score in descending order (best on top)
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: 'ascending' | 'descending';
-  } | null>(null);
+  }>({ key: 'score', direction: 'descending' });
 
   if (drivers.length === 0) {
     return (
