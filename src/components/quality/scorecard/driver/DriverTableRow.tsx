@@ -3,7 +3,6 @@ import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { DriverKPI } from "../types";
 import MetricCell from "./MetricCell";
-import { Shield } from "lucide-react";
 
 interface DriverTableRowProps {
   driver: DriverKPI;
@@ -19,12 +18,7 @@ const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
         {driver.score && (
           <div className="flex flex-col items-center">
             <div className={`font-bold text-sm ${driver.score.color}`}>
-              {driver.score.total}%
-            </div>
-            <div className="text-xs">
-              <span className={`inline-flex items-center ${driver.score.color}`}>
-                {driver.score.rating}
-              </span>
+              {driver.score.total}
             </div>
           </div>
         )}
