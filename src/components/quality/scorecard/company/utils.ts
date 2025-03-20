@@ -1,4 +1,3 @@
-
 import { ScorecardKPI } from "../types";
 
 // Function to get the status badge class
@@ -37,12 +36,21 @@ export const getChangeDisplay = (current: number, previousKPI: ScorecardKPI | nu
   
   const previous = previousKPI.value;
   const difference = current - previous;
-  const isPositive = difference > 0;
-  const color = isPositive ? "text-green-500" : difference < 0 ? "text-red-500" : "text-gray-500";
+  
+  // For metrics where a decrease is better (like DNR DPMO)
+  const isMetricWhereDecreaseIsBetter = previousKPI.name.includes("DNR DPMO") || 
+                                        previousKPI.name.includes("Speeding Event Rate") ||
+                                        previousKPI.name.includes("Customer escalation");
+  
+  // For regular metrics: positive change is good, for inverse metrics: negative change is good
+  const isPositive = isMetricWhereDecreaseIsBetter ? difference < 0 : difference > 0;
+  
+  // Color coding should match if the change is positive or negative in terms of performance
+  const color = isPositive ? "text-green-500" : difference === 0 ? "text-gray-500" : "text-red-500";
   
   return {
     difference,
-    display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
+    display: `${difference > 0 ? "+" : ""}${Math.round(difference)}`,
     color,
     isPositive
   };
