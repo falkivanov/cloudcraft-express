@@ -52,7 +52,6 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
           driverKPIs={data.driverKPIs}
           driverStatusTab={driverStatusTab}
           setDriverStatusTab={setDriverStatusTab}
-          previousWeekData={previousWeekData}
         />
       </TabsContent>
     </Tabs>

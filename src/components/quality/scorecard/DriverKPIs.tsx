@@ -7,8 +7,7 @@ import DriverTable from "./driver/DriverTable";
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs, 
   driverStatusTab, 
-  setDriverStatusTab,
-  previousWeekData
+  setDriverStatusTab
 }) => {
   // Filter drivers by status
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
@@ -16,12 +15,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Section header with period */}
+      {/* Section header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
-        {previousWeekData && (
-          <span className="text-xs text-gray-500 italic">Vergleich: KW{previousWeekData.week}/{previousWeekData.year}</span>
-        )}
       </div>
       
       {/* Tabs for active/former drivers */}
@@ -32,11 +28,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         </TabsList>
         
         <TabsContent value="active">
-          <DriverTable drivers={activeDrivers} previousWeekData={previousWeekData} />
+          <DriverTable drivers={activeDrivers} />
         </TabsContent>
         
         <TabsContent value="former">
-          <DriverTable drivers={formerDrivers} previousWeekData={previousWeekData} />
+          <DriverTable drivers={formerDrivers} />
         </TabsContent>
       </Tabs>
     </div>

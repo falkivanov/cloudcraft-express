@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,13 +10,18 @@ import {
 } from "@/components/ui/table";
 import { DriverKPI } from "../types";
 import DriverTableRow from "./DriverTableRow";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface DriverTableProps {
   drivers: DriverKPI[];
-  previousWeekData: any;
 }
 
-const DriverTable: React.FC<DriverTableProps> = ({ drivers, previousWeekData }) => {
+const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: 'ascending' | 'descending';
+  } | null>(null);
+
   if (drivers.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
@@ -25,23 +30,91 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers, previousWeekData }) 
     );
   }
 
+  // Create a sorted copy of the drivers array
+  const sortedDrivers = React.useMemo(() => {
+    let sortableDrivers = [...drivers];
+    if (sortConfig !== null) {
+      sortableDrivers.sort((a, b) => {
+        // Sort by driver name
+        if (sortConfig.key === 'name') {
+          if (a.name < b.name) {
+            return sortConfig.direction === 'ascending' ? -1 : 1;
+          }
+          if (a.name > b.name) {
+            return sortConfig.direction === 'ascending' ? 1 : -1;
+          }
+          return 0;
+        }
+        
+        // Sort by metric values
+        const metricA = a.metrics.find(m => m.name === sortConfig.key)?.value || 0;
+        const metricB = b.metrics.find(m => m.name === sortConfig.key)?.value || 0;
+        
+        // For DNR DPMO, lower is better so we reverse the sorting
+        if (sortConfig.key === 'DNR DPMO') {
+          return sortConfig.direction === 'ascending' 
+            ? metricA - metricB 
+            : metricB - metricA;
+        }
+        
+        return sortConfig.direction === 'ascending' 
+          ? metricB - metricA 
+          : metricA - metricB;
+      });
+    }
+    return sortableDrivers;
+  }, [drivers, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortDirection = (name: string) => {
+    if (!sortConfig || sortConfig.key !== name) {
+      return null;
+    }
+    return sortConfig.direction;
+  };
+
   return (
     <div className="overflow-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="py-1 px-3 text-xs text-gray-500">Fahrer</TableHead>
-            {drivers[0].metrics.map((metric: any) => (
-              <TableHead key={metric.name} className="py-1 px-3 text-center text-xs text-gray-500">{metric.name}</TableHead>
+            <TableHead 
+              className="py-1 px-3 text-xs text-gray-500 cursor-pointer"
+              onClick={() => requestSort('name')}
+            >
+              <div className="flex items-center gap-1">
+                Fahrer
+                {getSortDirection('name') === 'ascending' && <ArrowUp className="h-3 w-3" />}
+                {getSortDirection('name') === 'descending' && <ArrowDown className="h-3 w-3" />}
+              </div>
+            </TableHead>
+            {drivers[0].metrics.map((metric) => (
+              <TableHead 
+                key={metric.name} 
+                className="py-1 px-3 text-center text-xs text-gray-500 cursor-pointer"
+                onClick={() => requestSort(metric.name)}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  {metric.name}
+                  {getSortDirection(metric.name) === 'ascending' && <ArrowUp className="h-3 w-3" />}
+                  {getSortDirection(metric.name) === 'descending' && <ArrowDown className="h-3 w-3" />}
+                </div>
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {drivers.map((driver) => (
+          {sortedDrivers.map((driver) => (
             <DriverTableRow 
               key={driver.name} 
               driver={driver} 
-              previousWeekData={previousWeekData} 
             />
           ))}
         </TableBody>
