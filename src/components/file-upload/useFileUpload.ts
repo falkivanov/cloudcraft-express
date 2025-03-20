@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { getCategoryInfo } from "./fileCategories";
-import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
+import { parseScorecardPDF, PDFParseError } from "@/components/quality/scorecard/utils/pdfParser";
 
 export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
@@ -96,7 +96,29 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
           }
         } catch (error) {
           console.error("Error processing file:", error);
-          toast.error(`Fehler beim Verarbeiten der Datei: ${(error as Error).message || 'Unbekannter Fehler'}`);
+          let errorMessage = 'Unbekannter Fehler';
+          
+          if (error instanceof PDFParseError) {
+            errorMessage = error.message;
+            
+            // Add additional info based on error code
+            switch (error.code) {
+              case 'PASSWORD_PROTECTED':
+                errorMessage += ' Bitte entfernen Sie das Passwort und versuchen Sie es erneut.';
+                break;
+              case 'INSUFFICIENT_PAGES':
+                errorMessage += ' Die Scorecard enthält normalerweise mindestens 2 Seiten.';
+                break;
+              case 'INSUFFICIENT_CONTENT':
+              case 'NO_KPIS_FOUND':
+                errorMessage += ' Stellen Sie sicher, dass es sich um eine gültige Scorecard handelt.';
+                break;
+            }
+          } else if (error instanceof Error) {
+            errorMessage = `Fehler beim Verarbeiten der Datei: ${error.message}`;
+          }
+          
+          toast.error(errorMessage);
         } finally {
           setProcessing(false);
         }
@@ -148,7 +170,16 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
     } catch (error) {
       console.error("Error processing PDF:", error);
       toast.dismiss(loadingToast);
-      toast.error(`Fehler beim Verarbeiten der PDF: ${(error as Error).message || 'Unbekannter Fehler'}`);
+      
+      if (error instanceof PDFParseError) {
+        toast.error(`Fehler beim Verarbeiten der PDF: ${error.message}`, {
+          description: "Bitte überprüfen Sie das PDF-Format und versuchen Sie es erneut."
+        });
+      } else {
+        toast.error(`Fehler beim Verarbeiten der PDF: ${(error as Error).message || 'Unbekannter Fehler'}`, {
+          description: "Ein unerwarteter Fehler ist aufgetreten."
+        });
+      }
     }
   };
 

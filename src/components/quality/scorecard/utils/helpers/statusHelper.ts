@@ -1,5 +1,10 @@
 
 /**
+ * KPI status type to ensure we use only valid status values
+ */
+export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
+/**
  * Get the default target value for a KPI
  */
 export const getDefaultTargetForKPI = (kpiName: string): number => {
@@ -21,7 +26,7 @@ export const getDefaultTargetForKPI = (kpiName: string): number => {
 /**
  * Determine the status of a KPI based on its value
  */
-export const determineStatus = (kpiName: string, value: number): string => {
+export const determineStatus = (kpiName: string, value: number): KPIStatus => {
   // For DPMO metrics, lower is better
   if (kpiName.includes("DPMO")) {
     if (value < 2000) return "fantastic";

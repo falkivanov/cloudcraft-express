@@ -1,6 +1,6 @@
 
 import { ScorecardKPI } from "../../types";
-import { determineStatus, getDefaultTargetForKPI } from '../helpers/statusHelper';
+import { determineStatus, getDefaultTargetForKPI, KPIStatus } from '../helpers/statusHelper';
 
 /**
  * Extract company KPIs from text content
