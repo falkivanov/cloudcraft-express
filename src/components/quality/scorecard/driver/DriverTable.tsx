@@ -46,18 +46,19 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
           return 0;
         }
         
-        // Sort by score with DCR tiebreaker
+        // Sort by score with delivered packages tiebreaker
         if (sortConfig.key === 'score') {
           const scoreA = a.score?.total || 0;
           const scoreB = b.score?.total || 0;
           
-          // If scores are equal, use DCR as a tiebreaker
+          // If scores are equal, use delivered packages as a tiebreaker
           if (scoreA === scoreB) {
-            const dcrA = a.metrics.find(m => m.name === 'DCR')?.value || 0;
-            const dcrB = b.metrics.find(m => m.name === 'DCR')?.value || 0;
+            // Look for "delivered" or similar metric - adjust based on your actual data structure
+            const deliveredA = a.metrics.find(m => m.name === 'POD')?.value || 0;
+            const deliveredB = b.metrics.find(m => m.name === 'POD')?.value || 0;
             return sortConfig.direction === 'ascending' 
-              ? dcrA - dcrB 
-              : dcrB - dcrA;
+              ? deliveredA - deliveredB 
+              : deliveredB - deliveredA;
           }
           
           return sortConfig.direction === 'ascending' 
