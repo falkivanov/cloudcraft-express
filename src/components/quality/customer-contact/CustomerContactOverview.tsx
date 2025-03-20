@@ -7,9 +7,13 @@ import { getComplianceStyle } from "./utils";
 
 interface CustomerContactOverviewProps {
   driversData: DriverComplianceData[];
+  onFilterChange: (filter: string) => void;
 }
 
-const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ driversData }) => {
+const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ 
+  driversData, 
+  onFilterChange 
+}) => {
   const stats = calculateComplianceStatistics(driversData);
 
   const getTextColorByCompliance = (percentage: number) => {
@@ -21,7 +25,10 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ drive
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow" 
+          onClick={() => onFilterChange("all")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Durchschnittliche Compliance</CardTitle>
           </CardHeader>
@@ -32,7 +39,10 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ drive
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow" 
+          onClick={() => onFilterChange("high")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Hohe Compliance</CardTitle>
             <div className="text-xs text-muted-foreground">≥ 98%</div>
@@ -43,7 +53,10 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ drive
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow" 
+          onClick={() => onFilterChange("medium")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Mittlere Compliance</CardTitle>
             <div className="text-xs text-muted-foreground">85% - 97%</div>
@@ -54,7 +67,10 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ drive
           </CardContent>
         </Card>
         
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow" 
+          onClick={() => onFilterChange("low")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Niedrige Compliance</CardTitle>
             <div className="text-xs text-muted-foreground">&lt; 85%</div>

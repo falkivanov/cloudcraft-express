@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FilterIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
@@ -8,10 +8,18 @@ import { getComplianceStyle, getProgressColor } from "./utils";
 
 interface DriversTableProps {
   driversData: DriverComplianceData[];
+  activeFilter?: string;
 }
 
-const DriversTable: React.FC<DriversTableProps> = ({ driversData }) => {
+const DriversTable: React.FC<DriversTableProps> = ({ driversData, activeFilter }) => {
   const [filterValue, setFilterValue] = useState<string>("all");
+  
+  // Update the filter value when activeFilter changes
+  useEffect(() => {
+    if (activeFilter) {
+      setFilterValue(activeFilter);
+    }
+  }, [activeFilter]);
   
   // Filter drivers based on compliance
   const getFilteredDrivers = () => {
