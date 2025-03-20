@@ -9,9 +9,12 @@ interface DriverTableRowProps {
 }
 
 const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
+  // Extract just the name part without any ID in parentheses if present
+  const displayName = driver.name.includes(" (") ? driver.name.split(" (")[0] : driver.name;
+  
   return (
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">
-      <TableCell className="py-2 px-3 text-sm font-medium">{driver.name}</TableCell>
+      <TableCell className="py-2 px-3 text-sm font-medium">{displayName}</TableCell>
       
       {/* Score cell */}
       <TableCell className="py-2 px-3 text-center">

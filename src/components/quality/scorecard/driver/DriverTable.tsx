@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -43,11 +42,10 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
         const transporterIdMatch = driver.name.match(/^TR-\d+$/i);
         
         if (transporterIdMatch && transporterIdToName.has(driver.name)) {
-          // Replace transporter ID with the actual employee name
+          // Replace transporter ID with the actual employee name without keeping the original ID
           return {
             ...driver,
-            name: transporterIdToName.get(driver.name),
-            originalId: driver.name // Keep original ID for reference if needed
+            name: transporterIdToName.get(driver.name)
           };
         }
         

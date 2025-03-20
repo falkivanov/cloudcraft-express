@@ -59,18 +59,23 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData, activeFilter }
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredDrivers.map((driver, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{driver.name}</TableCell>
-                <TableCell>{driver.totalAddresses}</TableCell>
-                <TableCell>{driver.totalContacts}</TableCell>
-                <TableCell>
-                  <span className={getComplianceTextColor(driver.compliancePercentage)}>
-                    {driver.compliancePercentage}%
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredDrivers.map((driver, index) => {
+              // Extract just the name part without the transporter ID in parentheses
+              const displayName = driver.name.split(" (")[0];
+              
+              return (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">{displayName}</TableCell>
+                  <TableCell>{driver.totalAddresses}</TableCell>
+                  <TableCell>{driver.totalContacts}</TableCell>
+                  <TableCell>
+                    <span className={getComplianceTextColor(driver.compliancePercentage)}>
+                      {driver.compliancePercentage}%
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

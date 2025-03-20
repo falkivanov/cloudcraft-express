@@ -1,3 +1,4 @@
+
 import { DriverComplianceData } from "../customer-contact/types";
 import { getKW11TestData } from "../customer-contact/data/testData";
 
@@ -88,7 +89,7 @@ export const parseCustomerContactData = (htmlContent: string): DriverComplianceD
         const compliancePercentage = parseFloat(complianceText.replace("%", ""));
         
         extractedData.push({
-          name: `${fullName} (${transporterId})`,
+          name: fullName,
           firstName,
           totalAddresses,
           totalContacts,
