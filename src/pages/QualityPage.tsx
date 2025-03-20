@@ -7,6 +7,7 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getScorecardData } from "@/components/quality/scorecard/data";
+import { getKW11TestHTMLData } from "@/components/quality/customer-contact/utils";
 
 interface DriverComplianceData {
   name: string;
@@ -27,7 +28,8 @@ const QualityPage = () => {
   
   useEffect(() => {
     if (pathname.includes("/quality/customer-contact")) {
-      const data = localStorage.getItem("customerContactData");
+      // Get data from localStorage or use test data
+      const data = localStorage.getItem("customerContactData") || getKW11TestHTMLData();
       setCustomerContactData(data);
       
       if (data) {
