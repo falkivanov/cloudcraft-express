@@ -20,6 +20,17 @@ const FileUploadPage = () => {
   const handleFileUpload = (file: File, type: string, category: string) => {
     console.log(`Processing ${category} file:`, file);
     
+    // Add to upload history first so user gets immediate feedback
+    setUploadHistory(prev => [
+      {
+        name: file.name,
+        type: type,
+        timestamp: new Date(),
+        category: category
+      },
+      ...prev
+    ]);
+    
     // File Reader zum Verarbeiten der Datei
     const reader = new FileReader();
     
@@ -32,18 +43,6 @@ const FileUploadPage = () => {
             `Customer Contact Datei erfolgreich verarbeitet: ${file.name}`,
             {
               description: `Wochendaten wurden aktualisiert`,
-            }
-          );
-        } else if (category === "scorecard") {
-          localStorage.setItem("scorecardData", JSON.stringify({
-            content: e.target.result,
-            type: type,
-            fileName: file.name
-          }));
-          toast.success(
-            `Scorecard Datei erfolgreich verarbeitet: ${file.name}`,
-            {
-              description: `Scorecard-Daten wurden aktualisiert`,
             }
           );
         } else if (category === "pod") {
@@ -70,25 +69,9 @@ const FileUploadPage = () => {
               description: `Concessions-Daten wurden aktualisiert`,
             }
           );
-        } else {
-          toast.success(
-            `Datei erfolgreich verarbeitet: ${file.name}`,
-            {
-              description: `Dateityp: ${type.toUpperCase()}, Kategorie: ${category}`,
-            }
-          );
         }
         
-        // Zum Upload-Verlauf hinzufügen
-        setUploadHistory(prev => [
-          {
-            name: file.name,
-            type: type,
-            timestamp: new Date(),
-            category: category
-          },
-          ...prev
-        ]);
+        // Note: scorecard processing is fully handled by useFileUpload hook
       }
     };
     
@@ -96,11 +79,14 @@ const FileUploadPage = () => {
       toast.error(`Fehler beim Lesen der Datei: ${file.name}`);
     };
     
-    if (type === "pdf" || type === "excel") {
+    if ((type === "excel" || category === "concessions") && file.type.includes('excel')) {
       reader.readAsArrayBuffer(file);
-    } else {
+    } else if (type === "html" || category === "customerContact") {
       reader.readAsText(file);
+    } else if (type === "pdf" && category === "pod") {
+      reader.readAsArrayBuffer(file);
     }
+    // Skip reading Scorecard here since it's handled by useFileUpload
   };
 
   const getCategoryDisplayName = (categoryId: string) => {

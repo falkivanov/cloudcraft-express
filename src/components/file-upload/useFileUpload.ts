@@ -113,6 +113,9 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
               case 'NO_KPIS_FOUND':
                 errorMessage += ' Stellen Sie sicher, dass es sich um eine gültige Scorecard handelt.';
                 break;
+              case 'DATA_EXTRACTION_ERROR':
+                errorMessage += ' Das Format der Scorecard konnte nicht korrekt erkannt werden.';
+                break;
             }
           } else if (error instanceof Error) {
             errorMessage = `Fehler beim Verarbeiten der Datei: ${error.message}`;
@@ -139,7 +142,7 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
       // Read file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
       
-      // Parse the PDF
+      // Parse the PDF with the refactored parser
       const parsedData = await parseScorecardPDF(arrayBuffer, file.name);
       
       if (parsedData) {
@@ -159,7 +162,7 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
         // Close loading toast and show success
         toast.dismiss(loadingToast);
         toast.success(`Scorecard für KW ${parsedData.week} erfolgreich verarbeitet`, {
-          description: "Die Daten wurden aus dem PDF extrahiert und können jetzt angezeigt werden."
+          description: `Die Daten für ${parsedData.location} wurden extrahiert und können jetzt angezeigt werden.`
         });
         
         // Also call the parent handler
