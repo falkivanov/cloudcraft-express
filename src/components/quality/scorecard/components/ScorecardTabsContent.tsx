@@ -12,8 +12,6 @@ interface ScorecardTabsContentProps {
   previousWeekData: ScoreCardData | null;
   scorecardTab: string;
   setScorecardTab: (value: string) => void;
-  driverStatusTab: string;
-  setDriverStatusTab: (value: string) => void;
 }
 
 const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
@@ -21,8 +19,6 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
   previousWeekData,
   scorecardTab,
   setScorecardTab,
-  driverStatusTab,
-  setDriverStatusTab,
 }) => {
   return (
     <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
@@ -50,8 +46,6 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
       <TabsContent value="driver" className="w-full">
         <DriverKPIs 
           driverKPIs={data.driverKPIs}
-          driverStatusTab={driverStatusTab}
-          setDriverStatusTab={setDriverStatusTab}
         />
       </TabsContent>
     </Tabs>

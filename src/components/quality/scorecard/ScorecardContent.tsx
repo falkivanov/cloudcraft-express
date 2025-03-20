@@ -15,7 +15,6 @@ interface ScorecardContentProps {
 const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) => {
   // Scorecard specific states
   const [scorecardTab, setScorecardTab] = useState<string>("company");
-  const [driverStatusTab, setDriverStatusTab] = useState<string>("active");
   
   // Handle week selection with custom hook
   const { selectedWeek, setSelectedWeek, isUnavailableWeek } = useScorecardWeek(scorecardData);
@@ -56,8 +55,6 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           previousWeekData={previousWeekData}
           scorecardTab={scorecardTab}
           setScorecardTab={setScorecardTab}
-          driverStatusTab={driverStatusTab}
-          setDriverStatusTab={setDriverStatusTab}
         />
       </div>
     </div>

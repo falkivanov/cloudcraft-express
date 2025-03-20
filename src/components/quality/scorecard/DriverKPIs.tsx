@@ -1,17 +1,13 @@
 
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverKPIsProps } from "./types";
 import DriverTable from "./driver/DriverTable";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
-  driverKPIs, 
-  driverStatusTab, 
-  setDriverStatusTab
+  driverKPIs
 }) => {
-  // Filter drivers by status
+  // Filter only active drivers
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
-  const formerDrivers = driverKPIs.filter(driver => driver.status === "former");
 
   return (
     <div className="space-y-4">
@@ -20,21 +16,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
       </div>
       
-      {/* Tabs for active/former drivers */}
-      <Tabs value={driverStatusTab} onValueChange={setDriverStatusTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">Aktive Fahrer ({activeDrivers.length})</TabsTrigger>
-          <TabsTrigger value="former">Ehemalige Fahrer ({formerDrivers.length})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="active">
-          <DriverTable drivers={activeDrivers} />
-        </TabsContent>
-        
-        <TabsContent value="former">
-          <DriverTable drivers={formerDrivers} />
-        </TabsContent>
-      </Tabs>
+      <DriverTable drivers={activeDrivers} />
     </div>
   );
 };
