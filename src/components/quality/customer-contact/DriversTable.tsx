@@ -1,8 +1,6 @@
 
 import React, { useState } from "react";
 import { FilterIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { DriverComplianceData } from "./types";
@@ -28,6 +26,12 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData }) => {
   };
 
   const filteredDrivers = getFilteredDrivers();
+
+  const getComplianceTextColor = (percentage: number) => {
+    if (percentage < 85) return "text-red-600 font-semibold";
+    if (percentage < 98) return "text-amber-600 font-semibold";
+    return "text-green-600 font-semibold";
+  };
 
   return (
     <Card>
@@ -60,7 +64,6 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData }) => {
               <TableHead>Adressen</TableHead>
               <TableHead>Kontakte</TableHead>
               <TableHead>Compliance</TableHead>
-              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,19 +73,9 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData }) => {
                 <TableCell>{driver.totalAddresses}</TableCell>
                 <TableCell>{driver.totalContacts}</TableCell>
                 <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <span>{driver.compliancePercentage}%</span>
-                    <Progress 
-                      value={driver.compliancePercentage} 
-                      className={`w-20 h-2 ${getProgressColor(driver.compliancePercentage)}`} 
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getComplianceStyle(driver.compliancePercentage)}>
-                    {driver.compliancePercentage < 85 ? "Kritisch" : 
-                     driver.compliancePercentage < 98 ? "Verbesserungsbedarf" : "Gut"}
-                  </Badge>
+                  <span className={getComplianceTextColor(driver.compliancePercentage)}>
+                    {driver.compliancePercentage}%
+                  </span>
                 </TableCell>
               </TableRow>
             ))}

@@ -1,11 +1,9 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DriverComplianceData } from "./types";
 import { calculateComplianceStatistics } from "@/components/quality/utils/parseCustomerContactData";
-import { getComplianceStyle, getProgressColor } from "./utils";
+import { getComplianceStyle } from "./utils";
 
 interface CustomerContactOverviewProps {
   driversData: DriverComplianceData[];
@@ -13,6 +11,12 @@ interface CustomerContactOverviewProps {
 
 const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ driversData }) => {
   const stats = calculateComplianceStatistics(driversData);
+
+  const getTextColorByCompliance = (percentage: number) => {
+    if (percentage < 85) return "text-red-600";
+    if (percentage < 98) return "text-amber-600";
+    return "text-green-600";
+  };
 
   return (
     <div className="space-y-6">
@@ -22,11 +26,9 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ drive
             <CardTitle className="text-sm font-medium">Durchschnittliche Compliance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageCompliance.toFixed(1)}%</div>
-            <Progress 
-              value={stats.averageCompliance} 
-              className={`mt-2 h-2 ${getProgressColor(stats.averageCompliance)}`} 
-            />
+            <div className={`text-2xl font-bold ${getTextColorByCompliance(stats.averageCompliance)}`}>
+              {stats.averageCompliance.toFixed(1)}%
+            </div>
           </CardContent>
         </Card>
         
