@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/customer-contact/CustomerContactContent";
@@ -5,7 +6,6 @@ import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
-import { getScorecardData } from "@/components/quality/scorecard/data";
 import { getKW11TestHTMLData } from "@/components/quality/customer-contact/data/testData";
 
 interface DriverComplianceData {
