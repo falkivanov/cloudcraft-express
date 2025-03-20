@@ -74,41 +74,18 @@ const QualityPage = () => {
   
   const renderContent = () => {
     if (pathname.includes("/quality/scorecard")) {
-      return (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Scorecard</h2>
-          <ScorecardContent scorecardData={scorecardData} />
-        </div>
-      );
+      return <ScorecardContent scorecardData={scorecardData} />;
     } else if (pathname.includes("/quality/customer-contact")) {
       return (
-        <div className="space-y-6">
-          <div className="p-4 border rounded-lg bg-background">
-            <h2 className="text-2xl font-bold mb-4">Customer Contact</h2>
-            <p className="mb-4">Kundenkontaktberichte und Kommunikationsanalysen.</p>
-            <CustomerContactContent 
-              customerContactData={customerContactData} 
-              driversData={driversData} 
-            />
-          </div>
-        </div>
+        <CustomerContactContent 
+          customerContactData={customerContactData} 
+          driversData={driversData} 
+        />
       );
     } else if (pathname.includes("/quality/pod")) {
-      return (
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">POD (Proof of Delivery)</h2>
-          <p className="mb-4">Liefernachweise und Zustellungsdokumentation.</p>
-          <PodContent podData={podData} />
-        </div>
-      );
+      return <PodContent podData={podData} />;
     } else if (pathname.includes("/quality/concessions")) {
-      return (
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Concessions</h2>
-          <p className="mb-4">Übersicht zu Zugeständnissen und Ausnahmeregelungen.</p>
-          <ConcessionsContent concessionsData={concessionsData} />
-        </div>
-      );
+      return <ConcessionsContent concessionsData={concessionsData} />;
     }
     
     return (
@@ -123,7 +100,9 @@ const QualityPage = () => {
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Qualitätsmanagement</h1>
       <QualityTabs />
-      {renderContent()}
+      <div className="mt-6">
+        {renderContent()}
+      </div>
     </div>
   );
 };
