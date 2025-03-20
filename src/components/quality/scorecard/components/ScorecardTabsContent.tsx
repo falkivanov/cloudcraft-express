@@ -45,7 +45,7 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
       </TabsContent>
       
       <TabsContent value="driver" className="w-full">
-        {/* Driver Performance Dashboard - Only show when previous week data is available */}
+        {/* Driver Performance Dashboard - Show when previous week data is available */}
         {previousWeekData && (
           <DriverPerformanceDashboard 
             currentWeekData={data} 
@@ -53,6 +53,7 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
           />
         )}
         
+        {/* Driver KPIs table */}
         <DriverKPIs 
           driverKPIs={data.driverKPIs}
           previousWeekData={previousWeekData}

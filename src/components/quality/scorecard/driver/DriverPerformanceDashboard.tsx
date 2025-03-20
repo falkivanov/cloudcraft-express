@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { DriverKPI, ScoreCardData } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Trophy, AlertTriangle } from "lucide-react";
 import { calculateDriverScore } from "./utils";
 
 interface DriverPerformanceDashboardProps {
@@ -21,12 +21,13 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
   currentWeekData,
   previousWeekData
 }) => {
-  const { improved, worsened } = useMemo(() => {
+  const { improved, worsened, highPerformers } = useMemo(() => {
     if (!previousWeekData) {
-      return { improved: [], worsened: [] };
+      return { improved: [], worsened: [], highPerformers: [] };
     }
 
     const driverChanges: DriverChange[] = [];
+    const topPerformers: DriverKPI[] = [];
 
     // Process all active drivers from current week
     currentWeekData.driverKPIs
@@ -42,6 +43,11 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
           const currentScore = calculateDriverScore(currentDriver).total;
           const previousScore = calculateDriverScore(previousDriver).total;
           const change = currentScore - previousScore;
+
+          // Check for high performers (score 100 in both weeks)
+          if (currentScore === 100 && previousScore === 100) {
+            topPerformers.push(currentDriver);
+          }
 
           // Add to changes array if there's any change
           if (change !== 0) {
@@ -67,7 +73,7 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
       .sort((a, b) => a.change - b.change)
       .slice(0, 3);
 
-    return { improved, worsened };
+    return { improved, worsened, highPerformers: topPerformers };
   }, [currentWeekData, previousWeekData]);
 
   if (!previousWeekData) {
@@ -84,7 +90,7 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Most Improved Drivers */}
       <Card>
         <CardHeader className="pb-2">
@@ -150,6 +156,39 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
               Keine Verschlechterungen in dieser Woche
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* High Performers */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-yellow-500" />
+            <span>100% Score Performers</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {highPerformers.length > 0 ? (
+            <div className="space-y-4">
+              {highPerformers.map((driver) => (
+                <div key={driver.name} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{driver.name}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>Perfekter Score in beiden Wochen</span>
+                    </div>
+                  </div>
+                  <div className="bg-yellow-100 text-yellow-700 font-medium text-sm px-2 py-1 rounded">
+                    100
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Keine perfekten Performer in beiden Wochen
             </p>
           )}
         </CardContent>

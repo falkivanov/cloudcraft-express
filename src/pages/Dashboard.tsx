@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileUpIcon, TrendingUp, TrendingDown, Truck } from "lucide-react";
+import { FileUpIcon, TrendingUp, TrendingDown, Truck, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateDriverScore } from "@/components/quality/scorecard/driver/utils";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
@@ -22,12 +22,13 @@ const Dashboard = () => {
     setPreviousWeekData(prevData);
   }, []);
   
-  const { improved, worsened } = React.useMemo(() => {
+  const { improved, worsened, highPerformers } = React.useMemo(() => {
     if (!currentWeekData || !previousWeekData) {
-      return { improved: [], worsened: [] };
+      return { improved: [], worsened: [], highPerformers: [] };
     }
 
     const driverChanges = [];
+    const topPerformers = [];
 
     // Process all active drivers from current week
     currentWeekData.driverKPIs
@@ -43,6 +44,11 @@ const Dashboard = () => {
           const currentScore = calculateDriverScore(currentDriver).total;
           const previousScore = calculateDriverScore(previousDriver).total;
           const change = currentScore - previousScore;
+
+          // Check for high performers (score 100 in both weeks)
+          if (currentScore === 100 && previousScore === 100) {
+            topPerformers.push(currentDriver);
+          }
 
           // Add to changes array if there's any change
           if (change !== 0) {
@@ -68,14 +74,14 @@ const Dashboard = () => {
       .sort((a, b) => a.change - b.change)
       .slice(0, 3);
 
-    return { improved, worsened };
+    return { improved, worsened, highPerformers: topPerformers };
   }, [currentWeekData, previousWeekData]);
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Most Improved Drivers */}
         <Card>
           <CardHeader className="pb-2">
@@ -141,6 +147,39 @@ const Dashboard = () => {
             ) : (
               <p className="text-muted-foreground text-center py-4">
                 Keine Daten verfügbar
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* High Performers */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              <span>100% Score Performers</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {highPerformers.length > 0 ? (
+              <div className="space-y-4">
+                {highPerformers.map((driver) => (
+                  <div key={driver.name} className="flex items-center justify-between border-b pb-2">
+                    <div className="flex-1">
+                      <p className="font-medium">{driver.name}</p>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <span>Perfekter Score in beiden Wochen</span>
+                      </div>
+                    </div>
+                    <div className="bg-yellow-100 text-yellow-700 font-medium px-3 py-1 rounded-full">
+                      100
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                Keine perfekten Performer in beiden Wochen
               </p>
             )}
           </CardContent>
