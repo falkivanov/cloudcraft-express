@@ -46,12 +46,12 @@ export const getWeek9Data = (): ScoreCardData => {
         status: "active",
         metrics: [
           { name: "Delivered", value: 1010, target: 0, unit: "" },
-          { name: "DCR", value: 98.16, target: 99, unit: "%", status: "fair" },
-          { name: "DNR DPMO", value: 2220, target: 1100, unit: "", status: "poor" },
-          { name: "POD", value: 98.17, target: 97, unit: "%", status: "fantastic" },
-          { name: "Contact Compliance", value: 86.95, target: 98, unit: "%", status: "poor" },
-          { name: "CE", value: 61, target: 0, unit: "", status: "great" },
-          { name: "DEX", value: 95.04, target: 85, unit: "%", status: "fantastic" }
+          { name: "DCR", value: 98.16, target: 99, unit: "%" },
+          { name: "DNR DPMO", value: 2220, target: 1100, unit: "" },
+          { name: "POD", value: 98.17, target: 97, unit: "%" },
+          { name: "Contact Compliance", value: 86.95, target: 98, unit: "%" },
+          { name: "CE", value: 61, target: 0, unit: "" },
+          { name: "DEX", value: 95.04, target: 85, unit: "%" }
         ]
       },
     ],

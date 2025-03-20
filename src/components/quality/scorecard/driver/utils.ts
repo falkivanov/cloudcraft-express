@@ -21,6 +21,42 @@ export const getStatusClass = (status: string | undefined) => {
   }
 };
 
+// Get the appropriate color class based on metric name and value
+export const getMetricColorClass = (metricName: string, value: number): string => {
+  switch (metricName) {
+    case "DCR":
+      if (value >= 99.5) return "text-blue-600 font-semibold";
+      if (value >= 98) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "DNR DPMO":
+      if (value <= 1000) return "text-blue-600 font-semibold";
+      if (value <= 1600) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "POD":
+      if (value >= 99) return "text-blue-600 font-semibold";
+      if (value >= 97) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "Contact Compliance":
+      if (value >= 99) return "text-blue-600 font-semibold";
+      if (value >= 94) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "CE":
+      return value === 0 ? "text-blue-600 font-semibold" : "text-red-500 font-semibold";
+      
+    case "DEX":
+      if (value >= 95) return "text-blue-600 font-semibold";
+      if (value >= 90) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    default:
+      return "text-gray-700"; // Default color for other metrics
+  }
+};
+
 // Find previous week's data for a driver
 export const getPreviousDriverData = (driverName: string, previousWeekData: any) => {
   if (!previousWeekData) return null;

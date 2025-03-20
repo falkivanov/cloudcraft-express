@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getStatusClass, getPreviousMetricData, getChangeDisplay, formatValue } from "./utils";
+import { getPreviousMetricData, getChangeDisplay, formatValue, getMetricColorClass } from "./utils";
 
 interface MetricCellProps {
   metric: {
@@ -42,14 +42,14 @@ const MetricCell: React.FC<MetricCellProps> = ({
     (change.difference === 0 && isAtOrBetterThanTarget)
   );
   
-  // Convert "none" to "fantastic" for display
-  const displayStatus = metric.status === "none" ? "fantastic" : metric.status;
+  // Get the appropriate color class based on the metric name and value
+  const colorClass = getMetricColorClass(metric.name, metric.value);
   
   return (
     <TableCell className="py-2 px-3 text-center">
       <div className="flex flex-col items-center">
         <div className="flex items-center justify-center gap-1">
-          <span>{formatValue(metric.value, metric.unit || "")}{metric.unit}</span>
+          <span className={colorClass}>{formatValue(metric.value, metric.unit || "")}{metric.unit}</span>
           
           {change && prevMetric && (
             <TooltipProvider>
@@ -71,12 +71,6 @@ const MetricCell: React.FC<MetricCellProps> = ({
             </TooltipProvider>
           )}
         </div>
-        
-        {metric.status && (
-          <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(metric.status)}`}>
-            {displayStatus}
-          </span>
-        )}
       </div>
     </TableCell>
   );
