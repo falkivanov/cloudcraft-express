@@ -142,7 +142,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Niedrige Compliance</CardTitle>
-                <CardDescription>< 85%</CardDescription>
+                <CardDescription>&lt; 85%</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{stats.low}</div>
