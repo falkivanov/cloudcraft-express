@@ -1,6 +1,5 @@
-
 import { DriverComplianceData } from "../customer-contact/types";
-import { getKW11TestData } from "../customer-contact/utils";
+import { getKW11TestData } from "../customer-contact/data/testData";
 
 export const parseCustomerContactData = (htmlContent: string): DriverComplianceData[] => {
   try {

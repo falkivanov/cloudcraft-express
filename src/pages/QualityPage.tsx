@@ -7,7 +7,7 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getScorecardData } from "@/components/quality/scorecard/data";
-import { getKW11TestHTMLData } from "@/components/quality/customer-contact/utils";
+import { getKW11TestHTMLData } from "@/components/quality/customer-contact/data/testData";
 
 interface DriverComplianceData {
   name: string;
