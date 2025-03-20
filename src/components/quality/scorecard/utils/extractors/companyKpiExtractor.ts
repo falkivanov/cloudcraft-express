@@ -51,7 +51,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         target: 98.0,
         unit: "%",
         trend: "up",
-        status: "fantastic"
+        status: "fantastic" as KPIStatus
       },
       {
         name: "Delivered Not Received (DNR DPMO)",
@@ -59,7 +59,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         target: 3000,
         unit: "DPMO",
         trend: "down",
-        status: "great"
+        status: "great" as KPIStatus
       },
       {
         name: "Contact Compliance",
@@ -67,7 +67,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         target: 95,
         unit: "%",
         trend: "up",
-        status: "fair"
+        status: "fair" as KPIStatus
       }
     ];
   }
