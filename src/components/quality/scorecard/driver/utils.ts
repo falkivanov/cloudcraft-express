@@ -1,3 +1,4 @@
+
 import { DriverKPI } from "../types";
 
 // Function to get status badge styling
@@ -96,6 +97,7 @@ export const calculateDriverScore = (driver: DriverKPI) => {
     "DCR": 25,
     "DNR DPMO": 25,
     "POD": 6,
+    "Contact Compliance": 14,
     "CC": 14,
     "DEX": 14,
     "CE": 16
@@ -105,14 +107,16 @@ export const calculateDriverScore = (driver: DriverKPI) => {
   let maxPossibleScore = 0;
 
   driver.metrics.forEach(metric => {
-    const weight = weightings[metric.name as keyof typeof weightings] || 0;
-    maxPossibleScore += weight;
+    // Handle both "Contact Compliance" and "CC" as the same metric
+    const metricName = metric.name === "Contact Compliance" ? "CC" : metric.name;
+    const weight = weightings[metricName as keyof typeof weightings] || 0;
     
     if (!weight) return;
     
+    maxPossibleScore += weight;
     let points = 0;
     
-    switch (metric.name) {
+    switch (metricName) {
       case "DCR":
         if (metric.value >= 99.5) points = weight;
         else if (metric.value >= 98) points = weight * 0.5;
@@ -128,7 +132,6 @@ export const calculateDriverScore = (driver: DriverKPI) => {
         else if (metric.value >= 97) points = weight * 0.5;
         break;
       
-      case "Contact Compliance":
       case "CC":
         if (metric.value >= 99) points = weight;
         else if (metric.value >= 94) points = weight * 0.5;
@@ -147,7 +150,7 @@ export const calculateDriverScore = (driver: DriverKPI) => {
     totalScore += points;
   });
 
-  const percentageScore = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+  const percentageScore = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
   
   let rating: "gut" | "mittel" | "schlecht" = "schlecht";
   let color = "text-red-500";
@@ -161,7 +164,7 @@ export const calculateDriverScore = (driver: DriverKPI) => {
   }
   
   return {
-    total: Math.round(percentageScore),
+    total: percentageScore,
     rating,
     color
   };
