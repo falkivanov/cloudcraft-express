@@ -49,7 +49,9 @@ export const getWeek6Data = (): ScoreCardData => {
           { name: "DCR", value: 98.55, target: 99, unit: "%", status: "fair" },
           { name: "DNR DPMO", value: 1371, target: 1100, unit: "", status: "fair" },
           { name: "POD", value: 98.59, target: 97, unit: "%", status: "fantastic" },
-          { name: "Contact Compliance", value: 88.68, target: 98, unit: "%", status: "poor" }
+          { name: "Contact Compliance", value: 88.68, target: 98, unit: "%", status: "poor" },
+          { name: "CE", value: 48, target: 0, unit: "", status: "great" },
+          { name: "DEX", value: 95.07, target: 85, unit: "%", status: "fantastic" }
         ]
       },
     ],

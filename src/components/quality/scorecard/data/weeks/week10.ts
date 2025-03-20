@@ -48,7 +48,9 @@ export const getDummyScoreCardData = (): ScoreCardData => {
           { name: "DCR", value: 98.88, target: 99, unit: "%", status: "fair" },
           { name: "DNR DPMO", value: 2838, target: 1100, unit: "", status: "poor" },
           { name: "POD", value: 99.54, target: 97, unit: "%", status: "fantastic" },
-          { name: "Contact Compliance", value: 89.36, target: 98, unit: "%", status: "poor" }
+          { name: "Contact Compliance", value: 89.36, target: 98, unit: "%", status: "poor" },
+          { name: "CE", value: 42, target: 0, unit: "", status: "great" },
+          { name: "DEX", value: 94.85, target: 85, unit: "%", status: "fantastic" }
         ]
       },
       { 
@@ -59,7 +61,9 @@ export const getDummyScoreCardData = (): ScoreCardData => {
           { name: "DCR", value: 99.8, target: 99, unit: "%", status: "fantastic" },
           { name: "DNR DPMO", value: 2010, target: 1100, unit: "", status: "poor" },
           { name: "POD", value: 98.77, target: 97, unit: "%", status: "fantastic" },
-          { name: "Contact Compliance", value: 50, target: 98, unit: "%", status: "poor" }
+          { name: "Contact Compliance", value: 50, target: 98, unit: "%", status: "poor" },
+          { name: "CE", value: 40, target: 0, unit: "", status: "great" },
+          { name: "DEX", value: 95.12, target: 85, unit: "%", status: "fantastic" }
         ]
       },
       { 
@@ -70,7 +74,9 @@ export const getDummyScoreCardData = (): ScoreCardData => {
           { name: "DCR", value: 97.24, target: 99, unit: "%", status: "fair" },
           { name: "DNR DPMO", value: 4054, target: 1100, unit: "", status: "poor" },
           { name: "POD", value: 98.84, target: 97, unit: "%", status: "fantastic" },
-          { name: "Contact Compliance", value: 9.09, target: 98, unit: "%", status: "poor" }
+          { name: "Contact Compliance", value: 9.09, target: 98, unit: "%", status: "poor" },
+          { name: "CE", value: 60, target: 0, unit: "", status: "fair" },
+          { name: "DEX", value: 93.5, target: 85, unit: "%", status: "fantastic" }
         ]
       }
     ],
