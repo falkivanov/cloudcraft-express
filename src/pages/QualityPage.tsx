@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/CustomerContactContent";
@@ -7,7 +6,6 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getScorecardData } from "@/components/quality/scorecard/data";
-import QualityTabs from "@/components/quality/QualityTabs";
 
 interface DriverComplianceData {
   name: string;
@@ -96,10 +94,23 @@ const QualityPage = () => {
     );
   };
 
+  // Get current page title
+  const getPageTitle = () => {
+    if (pathname.includes("/quality/scorecard")) {
+      return "Scorecard";
+    } else if (pathname.includes("/quality/customer-contact")) {
+      return "Customer Contact";
+    } else if (pathname.includes("/quality/pod")) {
+      return "POD";
+    } else if (pathname.includes("/quality/concessions")) {
+      return "Concessions";
+    }
+    return "Qualitätsmanagement";
+  };
+
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Qualitätsmanagement</h1>
-      <QualityTabs />
+      <h1 className="text-3xl font-bold mb-6">{getPageTitle()}</h1>
       <div className="mt-6">
         {renderContent()}
       </div>
