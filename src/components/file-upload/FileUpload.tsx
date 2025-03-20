@@ -24,6 +24,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
     selectedCategory,
     file,
     fileInputRef,
+    processing,
     handleCategoryChange,
     validateAndSetFile,
     handleUpload
@@ -65,13 +66,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
               {categoryInfo.name}
             </h3>
             <p className="text-sm text-muted-foreground">{categoryInfo.description}</p>
+            
+            {selectedCategory === "scorecard" && (
+              <div className="mt-2 text-xs text-amber-600">
+                <p>Das System extrahiert automatisch KPIs, Scores und Fahrerdaten aus dem PDF.</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
       <CardFooter className="flex justify-end">
         <UploadButton 
           onUpload={handleUpload}
-          disabled={!file}
+          disabled={!file || processing}
+          loading={processing}
         />
       </CardFooter>
     </Card>

@@ -30,13 +30,24 @@ export const parseWeekIdentifier = (weekId: string): { weekNum: number; year: nu
  * @returns Boolean indicating if data is available
  */
 export const isDataAvailableForWeek = (weekNum: number, year: number): boolean => {
-  // We currently have data for weeks 6-10 of 2025
+  // First check if we have extracted data from PDF
+  try {
+    const extractedData = localStorage.getItem("extractedScorecardData");
+    if (extractedData) {
+      const parsedData = JSON.parse(extractedData) as ScoreCardData;
+      if (parsedData.week === weekNum && parsedData.year === year) {
+        return true;
+      }
+    }
+  } catch (e) {
+    console.error("Error checking extracted data:", e);
+  }
+  
+  // Then check our sample data
   if (year === 2025 && weekNum >= 6 && weekNum <= 10) {
     return true;
   }
   
-  // For future weeks or other years, we return the dummy data
-  // This could be expanded to handle more cases as needed
   return false;
 };
 
@@ -47,6 +58,20 @@ export const isDataAvailableForWeek = (weekNum: number, year: number): boolean =
  * @returns Function to retrieve data for the specified week
  */
 export const getDataFunctionForWeek = (weekNum: number, year: number): (() => ScoreCardData) => {
+  // First check for extracted data
+  try {
+    const extractedData = localStorage.getItem("extractedScorecardData");
+    if (extractedData) {
+      const parsedData = JSON.parse(extractedData) as ScoreCardData;
+      if (parsedData.week === weekNum && parsedData.year === year) {
+        return () => parsedData;
+      }
+    }
+  } catch (e) {
+    console.error("Error retrieving extracted data:", e);
+  }
+  
+  // If no extracted data, use sample data
   if (year === 2025) {
     switch (weekNum) {
       case 6: return getWeek6Data;
@@ -72,6 +97,28 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
   // If we already have scorecard data, return it
   if (scorecardData) {
     return scorecardData;
+  }
+  
+  // Check for extracted data from PDF
+  try {
+    const extractedData = localStorage.getItem("extractedScorecardData");
+    if (extractedData) {
+      const parsedData = JSON.parse(extractedData) as ScoreCardData;
+      console.log("Using extracted PDF data for scorecard", parsedData);
+      
+      // If no specific week is selected, use this data
+      if (!selectedWeek) {
+        return parsedData;
+      }
+      
+      // If a week is selected, check if it matches our extracted data
+      const parsedWeek = parseWeekIdentifier(selectedWeek);
+      if (parsedWeek && parsedWeek.weekNum === parsedData.week && parsedWeek.year === parsedData.year) {
+        return parsedData;
+      }
+    }
+  } catch (e) {
+    console.error("Error retrieving extracted data:", e);
   }
   
   // If we have a selected week, try to get data for it

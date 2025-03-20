@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CustomerContactContent from "@/components/quality/CustomerContactContent";
@@ -36,10 +35,16 @@ const QualityPage = () => {
       }
     } else if (pathname.includes("/quality/scorecard")) {
       try {
-        const data = localStorage.getItem("scorecardData");
-        if (data) {
-          const parsedScorecard = JSON.parse(data);
-          setScoreCardData(parsedScorecard);
+        const extractedData = localStorage.getItem("extractedScorecardData");
+        if (extractedData) {
+          console.log("Using extracted PDF data from localStorage");
+          setScoreCardData(JSON.parse(extractedData));
+        } else {
+          const data = localStorage.getItem("scorecardData");
+          if (data) {
+            const parsedScorecard = JSON.parse(data);
+            setScoreCardData(parsedScorecard);
+          }
         }
       } catch (error) {
         console.error("Error parsing scorecard data:", error);
