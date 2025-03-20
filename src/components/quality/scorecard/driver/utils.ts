@@ -1,4 +1,3 @@
-
 import { DriverKPI } from "../types";
 
 // Function to get status badge styling
@@ -15,7 +14,7 @@ export const getStatusClass = (status: string | undefined) => {
     case "poor":
       return "bg-red-100 text-red-600";
     case "none":
-      return "bg-blue-100 text-blue-600"; // Treat none as fantastic for consistency
+      return "bg-blue-100 text-blue-600";
     default:
       return "bg-gray-100 text-gray-500";
   }
@@ -53,7 +52,7 @@ export const getMetricColorClass = (metricName: string, value: number): string =
       return "text-red-500 font-semibold";
       
     default:
-      return "text-gray-700"; // Default color for other metrics
+      return "text-gray-700";
   }
 };
 
@@ -87,5 +86,83 @@ export const getChangeDisplay = (current: number, previousValue: number | null) 
     difference,
     display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
     isPositive
+  };
+};
+
+// Function to calculate driver score based on metrics and weightings
+export const calculateDriverScore = (driver: DriverKPI) => {
+  // Define weightings
+  const weightings = {
+    "DCR": 25,
+    "DNR DPMO": 25,
+    "POD": 6,
+    "CC": 14,
+    "DEX": 14,
+    "CE": 16
+  };
+
+  let totalScore = 0;
+  let maxPossibleScore = 0;
+
+  driver.metrics.forEach(metric => {
+    const weight = weightings[metric.name as keyof typeof weightings] || 0;
+    maxPossibleScore += weight;
+    
+    if (!weight) return;
+    
+    let points = 0;
+    
+    switch (metric.name) {
+      case "DCR":
+        if (metric.value >= 99.5) points = weight;
+        else if (metric.value >= 98) points = weight * 0.5;
+        break;
+      
+      case "DNR DPMO":
+        if (metric.value <= 1000) points = weight;
+        else if (metric.value <= 1600) points = weight * 0.5;
+        break;
+      
+      case "POD":
+        if (metric.value >= 99) points = weight;
+        else if (metric.value >= 97) points = weight * 0.5;
+        break;
+      
+      case "Contact Compliance":
+      case "CC":
+        if (metric.value >= 99) points = weight;
+        else if (metric.value >= 94) points = weight * 0.5;
+        break;
+      
+      case "CE":
+        if (metric.value === 0) points = weight;
+        break;
+      
+      case "DEX":
+        if (metric.value >= 95) points = weight;
+        else if (metric.value >= 90) points = weight * 0.5;
+        break;
+    }
+    
+    totalScore += points;
+  });
+
+  const percentageScore = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+  
+  let rating: "gut" | "mittel" | "schlecht" = "schlecht";
+  let color = "text-red-500";
+  
+  if (percentageScore >= 80) {
+    rating = "gut";
+    color = "text-blue-600";
+  } else if (percentageScore >= 50) {
+    rating = "mittel";
+    color = "text-orange-500";
+  }
+  
+  return {
+    total: Math.round(percentageScore),
+    rating,
+    color
   };
 };

@@ -46,6 +46,15 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
           return 0;
         }
         
+        // Sort by score
+        if (sortConfig.key === 'score') {
+          const scoreA = a.score?.total || 0;
+          const scoreB = b.score?.total || 0;
+          return sortConfig.direction === 'ascending' 
+            ? scoreA - scoreB 
+            : scoreB - scoreA;
+        }
+        
         // Sort by metric values
         const metricA = a.metrics.find(m => m.name === sortConfig.key)?.value || 0;
         const metricB = b.metrics.find(m => m.name === sortConfig.key)?.value || 0;
@@ -95,6 +104,19 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
                 {getSortDirection('name') === 'descending' && <ArrowDown className="h-3 w-3" />}
               </div>
             </TableHead>
+            
+            {/* Score column */}
+            <TableHead 
+              className="py-1 px-3 text-center text-xs text-gray-500 cursor-pointer"
+              onClick={() => requestSort('score')}
+            >
+              <div className="flex items-center justify-center gap-1">
+                Score
+                {getSortDirection('score') === 'ascending' && <ArrowUp className="h-3 w-3" />}
+                {getSortDirection('score') === 'descending' && <ArrowDown className="h-3 w-3" />}
+              </div>
+            </TableHead>
+            
             {drivers[0].metrics.map((metric) => (
               <TableHead 
                 key={metric.name} 

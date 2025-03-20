@@ -46,6 +46,7 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
       <TabsContent value="driver" className="w-full">
         <DriverKPIs 
           driverKPIs={data.driverKPIs}
+          previousWeekData={previousWeekData}
         />
       </TabsContent>
     </Tabs>

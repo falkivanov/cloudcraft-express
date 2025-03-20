@@ -18,6 +18,11 @@ export interface DriverKPI {
     unit?: string;
     status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
   }[];
+  score?: {
+    total: number;
+    rating: "gut" | "mittel" | "schlecht";
+    color: string;
+  };
 }
 
 export interface ScoreCardData {

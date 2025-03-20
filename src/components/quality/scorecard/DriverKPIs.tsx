@@ -2,12 +2,20 @@
 import React from "react";
 import { DriverKPIsProps } from "./types";
 import DriverTable from "./driver/DriverTable";
+import { calculateDriverScore } from "./driver/utils";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
-  driverKPIs
+  driverKPIs,
+  previousWeekData
 }) => {
   // Filter only active drivers
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
+
+  // Calculate score for each driver
+  const driversWithScores = activeDrivers.map(driver => {
+    const score = calculateDriverScore(driver);
+    return { ...driver, score };
+  });
 
   return (
     <div className="space-y-4">
@@ -16,7 +24,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
       </div>
       
-      <DriverTable drivers={activeDrivers} />
+      <DriverTable drivers={driversWithScores} />
     </div>
   );
 };
