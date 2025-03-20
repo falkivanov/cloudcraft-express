@@ -16,7 +16,12 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   }
   
   const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
+    // Toggle the filter off if it's already active
+    if (filter === activeFilter) {
+      setActiveFilter("all");
+    } else {
+      setActiveFilter(filter);
+    }
   };
 
   return (
@@ -25,6 +30,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
       <CustomerContactOverview 
         driversData={driversData} 
         onFilterChange={handleFilterChange} 
+        activeFilter={activeFilter}
       />
       
       {/* Drivers Data Table */}

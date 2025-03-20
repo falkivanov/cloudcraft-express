@@ -8,11 +8,13 @@ import { getComplianceStyle } from "./utils";
 interface CustomerContactOverviewProps {
   driversData: DriverComplianceData[];
   onFilterChange: (filter: string) => void;
+  activeFilter: string;
 }
 
 const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({ 
   driversData, 
-  onFilterChange 
+  onFilterChange,
+  activeFilter
 }) => {
   const stats = calculateComplianceStatistics(driversData);
 
@@ -22,11 +24,18 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({
     return "text-green-600";
   };
 
+  const getCardStyle = (filter: string) => {
+    const baseClass = "cursor-pointer hover:shadow-md transition-shadow";
+    return activeFilter === filter 
+      ? `${baseClass} ring-2 ring-primary` 
+      : baseClass;
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow" 
+          className={getCardStyle("all")}
           onClick={() => onFilterChange("all")}
         >
           <CardHeader className="pb-2">
@@ -40,7 +49,7 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({
         </Card>
         
         <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow" 
+          className={getCardStyle("high")}
           onClick={() => onFilterChange("high")}
         >
           <CardHeader className="pb-2">
@@ -54,7 +63,7 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({
         </Card>
         
         <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow" 
+          className={getCardStyle("medium")}
           onClick={() => onFilterChange("medium")}
         >
           <CardHeader className="pb-2">
@@ -68,7 +77,7 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({
         </Card>
         
         <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow" 
+          className={getCardStyle("low")}
           onClick={() => onFilterChange("low")}
         >
           <CardHeader className="pb-2">

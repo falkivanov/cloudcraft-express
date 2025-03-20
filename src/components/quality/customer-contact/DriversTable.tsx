@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import { FilterIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { DriverComplianceData } from "./types";
@@ -44,22 +43,7 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData, activeFilter }
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Fahrerübersicht</span>
-          <div className="flex items-center space-x-2">
-            <FilterIcon className="h-4 w-4 mr-1" />
-            <select 
-              className="text-sm border rounded p-1"
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-            >
-              <option value="all">Alle Fahrer</option>
-              <option value="low">Niedrige Compliance (&lt;85%)</option>
-              <option value="medium">Mittlere Compliance (85-97%)</option>
-              <option value="high">Hohe Compliance (≥98%)</option>
-            </select>
-          </div>
-        </CardTitle>
+        <CardTitle>Fahrerübersicht</CardTitle>
         <CardDescription>
           {filteredDrivers.length} Fahrer angezeigt
         </CardDescription>
