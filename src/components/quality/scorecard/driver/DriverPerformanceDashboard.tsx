@@ -1,80 +1,21 @@
 
-import React, { useMemo } from "react";
-import { DriverKPI, ScoreCardData } from "../types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import { ScoreCardData } from "../types";
+import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Trophy, AlertTriangle } from "lucide-react";
-import { calculateDriverScore } from "./utils";
+import { useDriverPerformanceData } from "../hooks/useDriverPerformanceData";
+import DriverPerformanceCard from "./DriverPerformanceCard";
 
 interface DriverPerformanceDashboardProps {
   currentWeekData: ScoreCardData;
   previousWeekData: ScoreCardData | null;
 }
 
-interface DriverChange {
-  driver: DriverKPI;
-  previousScore: number;
-  currentScore: number;
-  change: number;
-}
-
 const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
   currentWeekData,
   previousWeekData
 }) => {
-  const { improved, worsened, highPerformers } = useMemo(() => {
-    if (!previousWeekData) {
-      return { improved: [], worsened: [], highPerformers: [] };
-    }
-
-    const driverChanges: DriverChange[] = [];
-    const topPerformers: DriverKPI[] = [];
-
-    // Process all active drivers from current week
-    currentWeekData.driverKPIs
-      .filter(driver => driver.status === "active")
-      .forEach(currentDriver => {
-        // Find the same driver in previous week
-        const previousDriver = previousWeekData.driverKPIs.find(
-          d => d.name === currentDriver.name && d.status === "active"
-        );
-
-        if (previousDriver) {
-          // Calculate scores for both weeks
-          const currentScore = calculateDriverScore(currentDriver).total;
-          const previousScore = calculateDriverScore(previousDriver).total;
-          const change = currentScore - previousScore;
-
-          // Check for high performers (score 100 in both weeks)
-          if (currentScore === 100 && previousScore === 100) {
-            topPerformers.push(currentDriver);
-          }
-
-          // Add to changes array if there's any change
-          if (change !== 0) {
-            driverChanges.push({
-              driver: currentDriver,
-              previousScore,
-              currentScore,
-              change
-            });
-          }
-        }
-      });
-
-    // Sort by change amount (improved = highest positive change first)
-    const improved = [...driverChanges]
-      .filter(item => item.change > 0)
-      .sort((a, b) => b.change - a.change)
-      .slice(0, 3);
-
-    // Sort by change amount (worsened = highest negative change first)
-    const worsened = [...driverChanges]
-      .filter(item => item.change < 0)
-      .sort((a, b) => a.change - b.change)
-      .slice(0, 3);
-
-    return { improved, worsened, highPerformers: topPerformers };
-  }, [currentWeekData, previousWeekData]);
+  const { improved, worsened, highPerformers } = useDriverPerformanceData(currentWeekData, previousWeekData);
 
   if (!previousWeekData) {
     return (
@@ -92,107 +33,28 @@ const DriverPerformanceDashboard: React.FC<DriverPerformanceDashboardProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {/* Most Improved Drivers */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-500" />
-            <span>Top 3 Meistverbesserte Fahrer</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {improved.length > 0 ? (
-            <div className="space-y-4">
-              {improved.map((item) => (
-                <div key={item.driver.name} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.driver.name}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>Vorwoche: {item.previousScore}</span>
-                      <span>→</span>
-                      <span>Aktuell: {item.currentScore}</span>
-                    </div>
-                  </div>
-                  <div className="bg-green-100 text-green-700 font-medium text-sm px-2 py-1 rounded">
-                    +{item.change}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Keine Verbesserungen in dieser Woche
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <DriverPerformanceCard
+        title="Top 3 Meistverbesserte Fahrer"
+        icon={<TrendingUp className="h-4 w-4 text-green-500" />}
+        driverData={improved}
+        type="improved"
+      />
 
       {/* Most Worsened Drivers */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <TrendingDown className="h-4 w-4 text-red-500" />
-            <span>Top 3 Meistverslechterte Fahrer</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {worsened.length > 0 ? (
-            <div className="space-y-4">
-              {worsened.map((item) => (
-                <div key={item.driver.name} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.driver.name}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>Vorwoche: {item.previousScore}</span>
-                      <span>→</span>
-                      <span>Aktuell: {item.currentScore}</span>
-                    </div>
-                  </div>
-                  <div className="bg-red-100 text-red-700 font-medium text-sm px-2 py-1 rounded">
-                    {item.change}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Keine Verschlechterungen in dieser Woche
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <DriverPerformanceCard
+        title="Top 3 Meistverslechterte Fahrer"
+        icon={<TrendingDown className="h-4 w-4 text-red-500" />}
+        driverData={worsened}
+        type="worsened"
+      />
 
       {/* High Performers */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-yellow-500" />
-            <span>100% Score Performers</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {highPerformers.length > 0 ? (
-            <div className="space-y-4">
-              {highPerformers.map((driver) => (
-                <div key={driver.name} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{driver.name}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>Perfekter Score in beiden Wochen</span>
-                    </div>
-                  </div>
-                  <div className="bg-yellow-100 text-yellow-700 font-medium text-sm px-2 py-1 rounded">
-                    100
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Keine perfekten Performer in beiden Wochen
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <DriverPerformanceCard
+        title="100% Score Performers"
+        icon={<Trophy className="h-4 w-4 text-yellow-500" />}
+        driverData={highPerformers}
+        type="highPerformers"
+      />
     </div>
   );
 };
