@@ -22,7 +22,7 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
   setScorecardTab,
 }) => {
   return (
-    <Tabs value={scorecardTab} onValueChange={setScorecardTab}>
+    <Tabs value={scorecardTab} onValueChange={setScorecardTab} className="w-full">
       <TabsList className="w-full justify-start">
         <TabsTrigger value="company" className="flex items-center gap-2">
           <BarChart className="h-4 w-4" />
@@ -34,31 +34,33 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      {/* Content sections */}
-      <TabsContent value="company" className="w-full">
-        {/* Header with summary information - only shown in Company tab */}
-        <ScorecardSummary data={data} previousWeekData={previousWeekData} />
+      {/* Content sections with consistent width */}
+      <div className="w-full">
+        <TabsContent value="company" className="w-full">
+          {/* Header with summary information - only shown in Company tab */}
+          <ScorecardSummary data={data} previousWeekData={previousWeekData} />
+          
+          <div className="w-full mx-auto">
+            <CompanyKPIs companyKPIs={data.companyKPIs} previousWeekData={previousWeekData} />
+          </div>
+        </TabsContent>
         
-        <div className="max-w-4xl mx-auto">
-          <CompanyKPIs companyKPIs={data.companyKPIs} previousWeekData={previousWeekData} />
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="driver" className="w-full bg-background">
-        {/* Driver Performance Dashboard - Show when previous week data is available */}
-        {previousWeekData && (
-          <DriverPerformanceDashboard 
-            currentWeekData={data} 
-            previousWeekData={previousWeekData} 
+        <TabsContent value="driver" className="w-full">
+          {/* Driver Performance Dashboard - Show when previous week data is available */}
+          {previousWeekData && (
+            <DriverPerformanceDashboard 
+              currentWeekData={data} 
+              previousWeekData={previousWeekData} 
+            />
+          )}
+          
+          {/* Driver KPIs table */}
+          <DriverKPIs 
+            driverKPIs={data.driverKPIs}
+            previousWeekData={previousWeekData}
           />
-        )}
-        
-        {/* Driver KPIs table */}
-        <DriverKPIs 
-          driverKPIs={data.driverKPIs}
-          previousWeekData={previousWeekData}
-        />
-      </TabsContent>
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

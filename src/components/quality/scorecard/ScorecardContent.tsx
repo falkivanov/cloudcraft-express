@@ -25,22 +25,10 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Get previous week's data for comparison
   const previousWeekData = getPreviousWeekData(selectedWeek);
 
-  if (!data) {
-    return <NoDataMessage category="Scorecard" />;
-  }
-
-  if (isUnavailableWeek()) {
-    return (
-      <UnavailableWeekMessage 
-        selectedWeek={selectedWeek}
-        setSelectedWeek={setSelectedWeek}
-      />
-    );
-  }
-
+  // Create a consistent container to maintain width regardless of content
   return (
     <div className="p-4 border rounded-lg bg-background">
-      <div className="flex flex-col space-y-6">
+      <div className="flex flex-col space-y-6 w-full max-w-[1200px] mx-auto">
         {/* Week Selector */}
         <div className="flex justify-end">
           <ScorecardWeekSelector
@@ -49,13 +37,25 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
           />
         </div>
 
-        {/* Tabs for company/driver KPIs */}
-        <ScorecardTabsContent
-          data={data}
-          previousWeekData={previousWeekData}
-          scorecardTab={scorecardTab}
-          setScorecardTab={setScorecardTab}
-        />
+        {/* Content container with fixed width */}
+        <div className="w-full min-h-[600px]">
+          {!data ? (
+            <NoDataMessage category="Scorecard" />
+          ) : isUnavailableWeek() ? (
+            <UnavailableWeekMessage 
+              selectedWeek={selectedWeek}
+              setSelectedWeek={setSelectedWeek}
+            />
+          ) : (
+            /* Tabs for company/driver KPIs */
+            <ScorecardTabsContent
+              data={data}
+              previousWeekData={previousWeekData}
+              scorecardTab={scorecardTab}
+              setScorecardTab={setScorecardTab}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
