@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from "../../types";
 
 // Get data for KW 6 2025
@@ -31,6 +30,7 @@ export const getWeek6Data = (): ScoreCardData => {
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.55, target: 99, unit: "%", trend: "up", status: "great" },
       { name: "Delivered Not Received (DNR DPMO)", value: 1371, target: 1100, unit: "", trend: "down", status: "fair" },
+      { name: "Lost on Road (LoR) DPMO", value: 370, target: 350, unit: "", trend: "down", status: "fair" },
       
       // Standard Work Compliance
       { name: "Photo-On-Delivery", value: 98.59, target: 97, unit: "%", trend: "up", status: "fantastic" },
@@ -38,6 +38,7 @@ export const getWeek6Data = (): ScoreCardData => {
       
       // Capacity KPIs
       { name: "Capacity Reliability", value: 108.04, target: 100, unit: "%", trend: "up", status: "fantastic" },
+      { name: "Next Day Capacity Reliability", value: 105.3, target: 100, unit: "%", trend: "up", status: "fantastic" },
     ],
     driverKPIs: [
       // Using placeholder driver data - could be updated with actual driver data if available
