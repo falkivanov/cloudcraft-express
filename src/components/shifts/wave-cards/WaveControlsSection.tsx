@@ -27,7 +27,7 @@ const WaveControlsSection: React.FC<WaveControlsSectionProps> = ({
   const waveCount = waves.length;
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col space-y-2 w-full">
       <div className="flex justify-between items-center">
         <div className="font-medium text-lg flex items-center gap-2">
           <Waves className="h-5 w-5 text-blue-500" />
@@ -46,7 +46,7 @@ const WaveControlsSection: React.FC<WaveControlsSectionProps> = ({
         )}
       </div>
 
-      <div className="flex gap-3 mt-2">
+      <div className="flex flex-wrap gap-3 mt-2">
         {waves.map((wave) => {
           const employeeCount =
             employeesPerWave.find((w) => w.waveId === wave.id)?.count || 0;

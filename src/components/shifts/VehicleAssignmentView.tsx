@@ -22,9 +22,9 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
   const [activeTab, setActiveTab] = useState<"daily" | "history">("daily");
   
   return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "daily" | "history")}>
-        <TabsList className="mb-4">
+    <div className="space-y-6 w-full">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "daily" | "history")} className="w-full">
+        <TabsList className="mb-4 w-full">
           <TabsTrigger value="daily" className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
             Tägliche Zuordnung
@@ -35,11 +35,11 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="daily" className="mt-0">
+        <TabsContent value="daily" className="mt-0 w-full">
           <DailyVehicleAssignment isScheduleFinalized={isEnabled} />
         </TabsContent>
         
-        <TabsContent value="history" className="mt-0">
+        <TabsContent value="history" className="mt-0 w-full">
           <VehicleAssignmentHistory />
         </TabsContent>
       </Tabs>

@@ -87,7 +87,7 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <VehicleAssignmentControls
         isScheduleFinalized={isScheduleFinalized}
         overrideFinalized={overrideFinalized}

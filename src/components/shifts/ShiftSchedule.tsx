@@ -51,7 +51,7 @@ const ShiftSchedule = () => {
   });
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <ScheduleToolbar 
         selectedWeek={selectedWeek}
         previousWeek={previousWeek}
@@ -64,21 +64,23 @@ const ShiftSchedule = () => {
         setIsPlanningOptionsOpen={setIsPlanningOptionsOpen}
       />
       
-      <ScheduleTable 
-        weekDays={weekDays}
-        filteredEmployees={filteredEmployees}
-        requiredEmployees={requiredEmployees}
-        scheduledEmployees={scheduledEmployees}
-        handleRequiredChange={handleRequiredChange}
-        formatDateKey={formatDateKey}
-        onFlexibilityOverride={handleFlexibilityOverride}
-        isTemporarilyFlexible={isTemporarilyFlexible}
-        finalizedDays={finalizedDays}
-        onFinalizeDay={handleFinalizeDay}
-        showNextDaySchedule={showNextDaySchedule}
-        getScheduledEmployeesForDay={getScheduledEmployeesForDay}
-        setShowNextDaySchedule={setShowNextDaySchedule}
-      />
+      <div className="w-full overflow-auto">
+        <ScheduleTable 
+          weekDays={weekDays}
+          filteredEmployees={filteredEmployees}
+          requiredEmployees={requiredEmployees}
+          scheduledEmployees={scheduledEmployees}
+          handleRequiredChange={handleRequiredChange}
+          formatDateKey={formatDateKey}
+          onFlexibilityOverride={handleFlexibilityOverride}
+          isTemporarilyFlexible={isTemporarilyFlexible}
+          finalizedDays={finalizedDays}
+          onFinalizeDay={handleFinalizeDay}
+          showNextDaySchedule={showNextDaySchedule}
+          getScheduledEmployeesForDay={getScheduledEmployeesForDay}
+          setShowNextDaySchedule={setShowNextDaySchedule}
+        />
+      </div>
 
       <FlexibilityOverrideDialog
         open={isFlexOverrideDialogOpen}

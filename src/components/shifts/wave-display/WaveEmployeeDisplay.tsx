@@ -16,7 +16,7 @@ const WaveEmployeeDisplay: React.FC<WaveEmployeeDisplayProps> = ({
   cardTitle
 }) => {
   return (
-    <Card className="overflow-hidden mt-6">
+    <Card className="overflow-hidden mt-6 w-full">
       <CardHeader className="bg-primary/5 pb-2">
         <CardTitle className="text-lg">
           {cardTitle || (isSingleWave 

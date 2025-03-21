@@ -4,12 +4,13 @@ import ShiftPlanningHeader from "@/components/shifts/ShiftPlanningHeader";
 import ShiftScheduleContent from "@/components/shifts/ShiftScheduleContent";
 import VehicleAssignmentContent from "@/components/shifts/VehicleAssignmentContent";
 import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
+import { Container } from "@/components/ui/container";
 
 const ShiftPlanningPage = () => {
   const { activeTab, setActiveTab, isScheduleFinalized, handleFinalizeSchedule } = useShiftPlanning();
   
   return (
-    <div className="container mx-auto p-6">
+    <Container className="py-6">
       <ShiftPlanningHeader 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -19,7 +20,7 @@ const ShiftPlanningPage = () => {
       
       {activeTab === "schedule" && <ShiftScheduleContent />}
       {activeTab === "vehicles" && <VehicleAssignmentContent isEnabled={isScheduleFinalized} />}
-    </div>
+    </Container>
   );
 };
 

@@ -9,7 +9,7 @@ interface VehicleAssignmentContentProps {
 
 const VehicleAssignmentContent: React.FC<VehicleAssignmentContentProps> = ({ isEnabled }) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Fahrzeugzuordnung</CardTitle>
         <CardDescription>
