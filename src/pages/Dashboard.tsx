@@ -12,12 +12,12 @@ const Dashboard = () => {
   const [previousWeekData, setPreviousWeekData] = useState<ScoreCardData | null>(null);
   
   useEffect(() => {
-    // Get the current week data (KW9)
-    const data = getScorecardData(null, "week-9-2025");
+    // Get the current week data (KW11)
+    const data = getScorecardData(null, "week-11-2025");
     setCurrentWeekData(data);
     
-    // Get the previous week data (KW8)
-    const prevData = getPreviousWeekData("week-9-2025");
+    // Get the previous week data (KW10)
+    const prevData = getPreviousWeekData("week-11-2025");
     setPreviousWeekData(prevData);
   }, []);
   

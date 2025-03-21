@@ -5,6 +5,8 @@ import {
   getWeek7Data, 
   getWeek8Data, 
   getWeek9Data, 
+  getWeek10Data,
+  getWeek11Data,
   getDummyScoreCardData 
 } from "./weekData";
 
@@ -44,7 +46,7 @@ export const isDataAvailableForWeek = (weekNum: number, year: number): boolean =
   }
   
   // Then check our sample data
-  if (year === 2025 && weekNum >= 6 && weekNum <= 10) {
+  if (year === 2025 && weekNum >= 6 && weekNum <= 11) {
     return true;
   }
   
@@ -78,7 +80,8 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
       case 7: return getWeek7Data;
       case 8: return getWeek8Data;
       case 9: return getWeek9Data;
-      case 10: return getDummyScoreCardData;
+      case 10: return getWeek10Data;
+      case 11: return getWeek11Data;
       default: return getDummyScoreCardData;
     }
   }

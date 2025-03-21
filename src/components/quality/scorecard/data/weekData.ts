@@ -5,5 +5,7 @@ export {
   getWeek7Data,
   getWeek8Data,
   getWeek9Data,
+  getWeek10Data,
+  getWeek11Data,
   getDummyScoreCardData
 } from './weeks';
