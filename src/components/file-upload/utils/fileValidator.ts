@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { getCategoryInfo } from "../fileCategories";
+import { ValidatorFactory } from "./validators/ValidatorFactory";
 
 /**
  * Validates a file based on category and returns whether it's valid
@@ -13,44 +14,29 @@ export const validateFile = (selectedFile: File, selectedCategory: string): bool
     return false;
   }
   
-  // Dateiendung prüfen
-  const fileExtension = `.${selectedFile.name.split('.').pop()?.toLowerCase()}`;
+  // Create appropriate validator and validate the file
+  const validator = ValidatorFactory.createValidator(selectedFile, selectedCategory);
+  const validationResult = validator.validate();
   
-  // Prüfen, ob die Datei dem erwarteten Typ entspricht
-  let isValid = false;
-  
-  if (categoryInfo.expectedType === "pdf" && fileExtension === ".pdf") {
-    isValid = true;
-  } else if (categoryInfo.expectedType === "html" && (fileExtension === ".html" || fileExtension === ".htm")) {
-    isValid = true;
-  } else if (categoryInfo.expectedType === "excel" && (fileExtension === ".xlsx" || fileExtension === ".xls")) {
-    isValid = true;
-  }
-  
-  if (isValid) {
-    showFileSelectedToast(selectedFile, categoryInfo.id);
+  if (validationResult.isValid) {
+    toast.success(validationResult.message);
   } else {
-    toast.error(`Ungültiger Dateityp für ${categoryInfo.name}. Erwartet wird: ${categoryInfo.expectedType.toUpperCase()}`);
+    toast.error(validationResult.message);
   }
   
-  return isValid;
+  return validationResult.isValid;
 };
 
 /**
  * Display appropriate success toast for selected file
+ * @deprecated Use validator classes directly instead
  */
-const showFileSelectedToast = (file: File, categoryId: string) => {
-  // Extract KW information from filename if it's a scorecard
-  if (categoryId === "scorecard") {
-    const weekMatch = file.name.match(/KW[_\s]*(\d+)/i);
-    if (weekMatch && weekMatch[1]) {
-      const extractedWeek = parseInt(weekMatch[1], 10);
-      console.log(`Detected KW ${extractedWeek} in filename`);
-      toast.success(`Datei "${file.name}" ausgewählt (KW ${extractedWeek})`);
-    } else {
-      toast.success(`Datei "${file.name}" ausgewählt`);
-    }
-  } else {
-    toast.success(`Datei "${file.name}" ausgewählt`);
+export const showFileSelectedToast = (file: File, categoryId: string) => {
+  // Create validator and get success message
+  const validator = ValidatorFactory.createValidator(file, categoryId);
+  const validationResult = validator.validate();
+  
+  if (validationResult.isValid) {
+    toast.success(validationResult.message);
   }
 };
