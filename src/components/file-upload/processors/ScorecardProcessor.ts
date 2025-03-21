@@ -24,7 +24,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
         categoryScores: { delivery: 85, quality: 92, overall: 88 }
       };
       
-      // Store parsed data in localStorage
+      // Store parsed data in localStorage - convert numbers to strings
       localStorage.setItem("scorecard_week", parsedData.week.toString());
       localStorage.setItem("scorecard_year", parsedData.year.toString());
       localStorage.setItem("scorecard_data", JSON.stringify(parsedData.categoryScores));
