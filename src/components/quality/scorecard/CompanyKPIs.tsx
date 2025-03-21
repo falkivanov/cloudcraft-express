@@ -20,7 +20,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
   );
   
   const qualityKPIs = companyKPIs.filter(kpi => 
-    ["Delivery Completion Rate (DCR)", "Delivered Not Received (DNR DPMO)"].includes(kpi.name)
+    ["Delivery Completion Rate (DCR)", "Delivered Not Received (DNR DPMO)", "Lost on Road (LoR) DPMO"].includes(kpi.name)
   );
   
   const standardWorkKPIs = companyKPIs.filter(kpi => 
@@ -28,7 +28,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
   );
   
   const capacityKPIs = companyKPIs.filter(kpi => 
-    ["Capacity Reliability"].includes(kpi.name)
+    ["Next Day Capacity Reliability", "Capacity Reliability"].includes(kpi.name)
   );
 
   return (

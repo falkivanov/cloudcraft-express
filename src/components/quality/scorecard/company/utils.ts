@@ -1,3 +1,4 @@
+
 import { ScorecardKPI } from "../types";
 
 // Function to get the status badge class
@@ -27,7 +28,16 @@ export const getStatusClass = (status: string | undefined) => {
 // Get previous week KPI by name
 export const getPreviousWeekKPI = (name: string, previousWeekData: any) => {
   if (!previousWeekData) return null;
-  return previousWeekData.companyKPIs.find((kpi: ScorecardKPI) => kpi.name === name) || null;
+  
+  // Handle exact name match first
+  const exactMatch = previousWeekData.companyKPIs.find((kpi: ScorecardKPI) => kpi.name === name);
+  if (exactMatch) return exactMatch;
+  
+  // If no exact match, check if the KPI name contains the search term
+  // This handles slight variations in naming between weeks
+  return previousWeekData.companyKPIs.find((kpi: ScorecardKPI) => 
+    kpi.name.includes(name) || name.includes(kpi.name)
+  ) || null;
 };
 
 // Function to calculate and format the change from previous week
