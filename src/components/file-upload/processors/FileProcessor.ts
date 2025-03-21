@@ -125,14 +125,14 @@ export class FileProcessor {
         // Store the parsed data in localStorage
         localStorage.setItem("extractedScorecardData", JSON.stringify(parsedData));
         
-        // Store file info for reference
+        // Store file info for reference - Fix the type error by converting numbers to strings
         localStorage.setItem("scorecardData", JSON.stringify({
           content: "PDF processed", // We don't store the raw PDF content
           type: "pdf",
           fileName: this.file.name,
           parsed: true,
-          week: parsedData.week,
-          year: parsedData.year
+          week: parsedData.week.toString(), // Convert number to string
+          year: parsedData.year.toString()  // Convert number to string
         }));
         
         // Close loading toast and show success
