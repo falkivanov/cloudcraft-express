@@ -4,7 +4,7 @@ import { parseWeekIdentifier, isDataAvailableForWeek } from "../data";
 import { ScoreCardData } from "../types";
 
 export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
-  // Initialize with week 11 as default since we've just added KW11
+  // Initialize with week 11 as default
   const [selectedWeek, setSelectedWeek] = useState<string>("week-11-2025");
   
   // Try to extract week number from data if it exists

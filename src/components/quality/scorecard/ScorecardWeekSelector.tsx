@@ -19,11 +19,17 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
   setSelectedWeek
 }) => {
   // Define the available weeks based on our uploaded data
-  // Starting with KW10 2025 as the most recent since that's what we have
   const availableWeeks = [
     {
+      id: "week-11-2025",
+      label: "KW 11 (aktuell)",
+      weekNum: 11,
+      year: 2025,
+      date: new Date(2025, 2, 10) // March 10, 2025 (approximate date for week 11)
+    },
+    {
       id: "week-10-2025",
-      label: "KW 10 (aktuell)",
+      label: "KW 10",
       weekNum: 10,
       year: 2025,
       date: new Date(2025, 2, 3) // March 3, 2025 (approximate date for week 10)
@@ -55,28 +61,7 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
       weekNum: 6,
       year: 2025,
       date: new Date(2025, 1, 5) // Feb 5, 2025
-    },
-    {
-      id: "week-5-2025",
-      label: "KW 5",
-      weekNum: 5,
-      year: 2025,
-      date: new Date(2025, 0, 29) // Jan 29, 2025
-    },
-    {
-      id: "week-4-2025",
-      label: "KW 4",
-      weekNum: 4,
-      year: 2025,
-      date: new Date(2025, 0, 22) // Jan 22, 2025
-    },
-    {
-      id: "week-3-2025",
-      label: "KW 3",
-      weekNum: 3,
-      year: 2025,
-      date: new Date(2025, 0, 15) // Jan 15, 2025
-    },
+    }
   ];
 
   return (
@@ -86,7 +71,7 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
         <SelectTrigger className="w-[180px] bg-white">
           <SelectValue placeholder="Woche auswählen" />
         </SelectTrigger>
-        <SelectContent className="bg-popover">
+        <SelectContent className="bg-white">
           {availableWeeks.map((week) => (
             <SelectItem key={week.id} value={week.id}>
               {week.label}
