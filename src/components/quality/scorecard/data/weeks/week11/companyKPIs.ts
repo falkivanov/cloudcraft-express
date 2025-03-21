@@ -20,16 +20,16 @@ export const getCompanyKPIs = (): ScorecardKPI[] => {
     { name: "Customer Delivery Feedback", value: 90.2, target: 85, unit: "%", trend: "up", status: "fantastic" },
     
     // Quality KPIs
-    { name: "Delivery Completion Rate (DCR)", value: 99.1, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
+    { name: "Delivery Completion Rate (DCR)", value: 99.1, target: 99.0, unit: "%", trend: "up", status: "fantastic" },
     { name: "Delivered Not Received (DNR DPMO)", value: 1800, target: 3000, unit: "DPMO", trend: "down", status: "fantastic" },
     { name: "Lost on Road (LoR) DPMO", value: 280, target: 350, unit: "DPMO", trend: "down", status: "fantastic" },
     
     // Standard Work Compliance
-    { name: "Photo-On-Delivery", value: 99.3, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
-    { name: "Contact Compliance", value: 96.5, target: 95, unit: "%", trend: "up", status: "fantastic" },
+    { name: "Photo-On-Delivery", value: 99.3, target: 97.0, unit: "%", trend: "up", status: "fantastic" },
+    { name: "Contact Compliance", value: 96.5, target: 98, unit: "%", trend: "up", status: "fantastic" },
     
     // Capacity KPIs
-    { name: "Capacity Reliability", value: 101.2, target: 98, unit: "%", trend: "up", status: "fantastic" },
+    { name: "Capacity Reliability", value: 101.2, target: 100, unit: "%", trend: "up", status: "fantastic" },
     { name: "Next Day Capacity Reliability", value: 100.8, target: 100, unit: "%", trend: "up", status: "fantastic" },
   ];
 };
