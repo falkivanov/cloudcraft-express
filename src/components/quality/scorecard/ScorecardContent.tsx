@@ -7,6 +7,7 @@ import { getScorecardData, getPreviousWeekData } from "./data";
 import UnavailableWeekMessage from "./components/UnavailableWeekMessage";
 import ScorecardTabsContent from "./components/ScorecardTabsContent";
 import { useScorecardWeek } from "./hooks/useScorecardWeek";
+import { Container } from "@/components/ui/container";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
@@ -28,35 +29,37 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Create a consistent container to maintain width regardless of content
   return (
     <div className="p-4 border rounded-lg bg-background">
-      <div className="flex flex-col space-y-6 w-full max-w-[1200px] mx-auto">
-        {/* Week Selector */}
-        <div className="flex justify-end">
-          <ScorecardWeekSelector
-            selectedWeek={selectedWeek}
-            setSelectedWeek={setSelectedWeek}
-          />
-        </div>
-
-        {/* Content container with fixed width */}
-        <div className="w-full min-h-[600px]">
-          {!data ? (
-            <NoDataMessage category="Scorecard" />
-          ) : isUnavailableWeek() ? (
-            <UnavailableWeekMessage 
+      <Container>
+        <div className="flex flex-col space-y-6 w-full">
+          {/* Week Selector */}
+          <div className="flex justify-end">
+            <ScorecardWeekSelector
               selectedWeek={selectedWeek}
               setSelectedWeek={setSelectedWeek}
             />
-          ) : (
-            /* Tabs for company/driver KPIs */
-            <ScorecardTabsContent
-              data={data}
-              previousWeekData={previousWeekData}
-              scorecardTab={scorecardTab}
-              setScorecardTab={setScorecardTab}
-            />
-          )}
+          </div>
+
+          {/* Content container with fixed width */}
+          <div className="w-full min-h-[600px]">
+            {!data ? (
+              <NoDataMessage category="Scorecard" />
+            ) : isUnavailableWeek() ? (
+              <UnavailableWeekMessage 
+                selectedWeek={selectedWeek}
+                setSelectedWeek={setSelectedWeek}
+              />
+            ) : (
+              /* Tabs for company/driver KPIs */
+              <ScorecardTabsContent
+                data={data}
+                previousWeekData={previousWeekData}
+                scorecardTab={scorecardTab}
+                setScorecardTab={setScorecardTab}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

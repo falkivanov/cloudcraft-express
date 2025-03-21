@@ -63,7 +63,7 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
   );
 
   return (
-    <div className="w-full min-w-[800px] max-w-[1000px] mx-auto">
+    <div className="w-full mx-auto">
       {/* Section header with period and summary */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium">Unternehmenskennzahlen</h2>
