@@ -1,7 +1,8 @@
 
 import { useState, useRef } from "react";
 import { validateFile } from "./utils/fileValidator";
-import { handleFileUpload } from "./hooks/useFileUploader";
+import { FileProcessor } from "./processors/FileProcessor";
+import { toast } from "sonner";
 
 export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
@@ -26,12 +27,12 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
 
   const handleUpload = async () => {
     if (file) {
-      const success = await handleFileUpload(
-        file, 
-        selectedCategory, 
-        onFileUpload,
-        setProcessing
-      );
+      setProcessing(true);
+      
+      const fileProcessor = new FileProcessor(file, selectedCategory, onFileUpload);
+      const success = await fileProcessor.process();
+      
+      setProcessing(false);
       
       if (success) {
         setFile(null);
@@ -54,6 +55,3 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
     handleUpload
   };
 };
-
-// Import toast separately to avoid circular dependencies
-import { toast } from "sonner";

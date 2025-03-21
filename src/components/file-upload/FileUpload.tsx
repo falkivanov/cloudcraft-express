@@ -77,6 +77,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
                 <p>HTML-Dateien werden analysiert und Kundenkontaktdaten werden extrahiert.</p>
               </div>
             )}
+            
+            {selectedCategory === "pod" && (
+              <div className="mt-2 text-xs text-purple-600">
+                <p>PDF-Dateien werden als Liefernachweise (POD) gespeichert.</p>
+              </div>
+            )}
+            
+            {selectedCategory === "concessions" && (
+              <div className="mt-2 text-xs text-orange-600">
+                <p>Excel-Dateien werden als Concessions-Daten verarbeitet.</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
