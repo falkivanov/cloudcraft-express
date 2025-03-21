@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from "../../types";
 
 // Get data for KW 10 2025
@@ -30,7 +31,7 @@ export const getWeek10Data = (): ScoreCardData => {
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.5, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
       { name: "Delivered Not Received (DNR DPMO)", value: 2500, target: 3000, unit: "DPMO", trend: "down", status: "great" },
-      { name: "Lost on Road (LoR) DPMO", value: 380, target: 350, unit: "", trend: "down", status: "fair" },
+      { name: "Lost on Road (LoR) DPMO)", value: 380, target: 350, unit: "", trend: "down", status: "fair" },
       
       // Standard Work Compliance
       { name: "Photo-On-Delivery", value: 98.1, target: 98.0, unit: "%", trend: "up", status: "fantastic" },

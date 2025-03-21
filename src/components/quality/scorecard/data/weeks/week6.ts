@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from "../../types";
 
 // Get data for KW 6 2025
@@ -24,13 +25,13 @@ export const getWeek6Data = (): ScoreCardData => {
       { name: "Comprehensive Audit Score (CAS)", value: 100, target: 100, unit: "%", trend: "up", status: "in compliance" },
       
       // Customer Experience KPIs
-      { name: "Customer escalation DPMO", value: 48, target: 0, unit: "", trend: "down", status: "great" },
+      { name: "Customer escalation DPMO", value: 48, target: 0, unit: "DPMO", trend: "down", status: "great" },
       { name: "Customer Delivery Feedback", value: 95.07, target: 85, unit: "%", trend: "up", status: "fantastic" },
       
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.55, target: 99, unit: "%", trend: "up", status: "great" },
-      { name: "Delivered Not Received (DNR DPMO)", value: 1371, target: 1100, unit: "", trend: "down", status: "fair" },
-      { name: "Lost on Road (LoR) DPMO", value: 370, target: 350, unit: "", trend: "down", status: "fair" },
+      { name: "Delivered Not Received (DNR DPMO)", value: 1371, target: 1100, unit: "DPMO", trend: "down", status: "fair" },
+      { name: "Lost on Road (LoR) DPMO)", value: 370, target: 350, unit: "", trend: "down", status: "fair" },
       
       // Standard Work Compliance
       { name: "Photo-On-Delivery", value: 98.59, target: 97, unit: "%", trend: "up", status: "fantastic" },
