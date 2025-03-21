@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { FileType, Check, Upload } from "lucide-react";
+import { FileType, Check, Upload, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getFileTypeInfo, getFileIcon } from "./fileTypes";
 
@@ -18,11 +18,13 @@ const DropZone: React.FC<DropZoneProps> = ({
   fileInputRef,
 }) => {
   const [dragging, setDragging] = useState(false);
+  const [dragError, setDragError] = useState(false);
   const fileTypeInfo = getFileTypeInfo(selectedFileType);
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragging(true);
+    setDragError(false);
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
@@ -35,13 +37,23 @@ const DropZone: React.FC<DropZoneProps> = ({
     setDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onFileChange(e.dataTransfer.files[0]);
+      // Get file extension
+      const fileExtension = `.${e.dataTransfer.files[0].name.split('.').pop()?.toLowerCase()}`;
+      
+      // Check if the file type is acceptable
+      if (fileTypeInfo && fileTypeInfo.extensions.includes(fileExtension)) {
+        onFileChange(e.dataTransfer.files[0]);
+        setDragError(false);
+      } else {
+        setDragError(true);
+      }
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       onFileChange(e.target.files[0]);
+      setDragError(false);
     }
   };
 
@@ -56,7 +68,7 @@ const DropZone: React.FC<DropZoneProps> = ({
   return (
     <div
       className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-all ${
-        dragging ? "border-primary bg-primary/5" : "border-border"
+        dragging ? "border-primary bg-primary/5" : dragError ? "border-red-400 bg-red-50" : "border-border"
       } ${file ? "bg-green-50 border-green-200" : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -74,6 +86,16 @@ const DropZone: React.FC<DropZoneProps> = ({
                 KW {weekNumber}
               </span>
             )}
+          </p>
+        </div>
+      ) : dragError ? (
+        <div className="flex flex-col items-center gap-2 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500" />
+          <p className="font-medium text-red-600">
+            Ungültiger Dateityp
+          </p>
+          <p className="text-sm text-red-500">
+            Bitte wählen Sie eine {fileTypeInfo?.extensions.join(", ")} Datei
           </p>
         </div>
       ) : (

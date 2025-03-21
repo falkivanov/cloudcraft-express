@@ -7,9 +7,15 @@ interface UploadButtonProps {
   onUpload: () => void;
   disabled: boolean;
   loading?: boolean;
+  categoryName?: string;
 }
 
-const UploadButton: React.FC<UploadButtonProps> = ({ onUpload, disabled, loading = false }) => {
+const UploadButton: React.FC<UploadButtonProps> = ({ 
+  onUpload, 
+  disabled, 
+  loading = false,
+  categoryName 
+}) => {
   return (
     <Button 
       onClick={onUpload} 
@@ -21,7 +27,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({ onUpload, disabled, loading
       ) : (
         <Upload className="h-4 w-4" />
       )}
-      {loading ? 'Verarbeite...' : 'Hochladen'}
+      {loading ? 'Verarbeite...' : categoryName ? `${categoryName} hochladen` : 'Hochladen'}
     </Button>
   );
 };

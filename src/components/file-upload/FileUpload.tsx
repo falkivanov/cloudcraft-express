@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import FileCategorySelector from "./FileTypeSelector";
 import DropZone from "./DropZone";
-import FileTypeInfo from "./FileTypeInfo";
 import UploadButton from "./UploadButton";
 import { useFileUpload } from "./useFileUpload";
 import { getCategoryInfo } from "./fileCategories";
@@ -72,6 +71,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
                 <p>Das System extrahiert automatisch KPIs, Scores und Fahrerdaten aus dem PDF.</p>
               </div>
             )}
+            
+            {selectedCategory === "customerContact" && (
+              <div className="mt-2 text-xs text-blue-600">
+                <p>HTML-Dateien werden analysiert und Kundenkontaktdaten werden extrahiert.</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
@@ -80,6 +85,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
           onUpload={handleUpload}
           disabled={!file || processing}
           loading={processing}
+          categoryName={categoryInfo?.name}
         />
       </CardFooter>
     </Card>
