@@ -22,7 +22,7 @@ export const getCompanyKPIs = (): ScorecardKPI[] => {
     // Quality KPIs
     { name: "Delivery Completion Rate (DCR)", value: 99.1, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
     { name: "Delivered Not Received (DNR DPMO)", value: 1800, target: 3000, unit: "DPMO", trend: "down", status: "fantastic" },
-    { name: "Lost on Road (LoR) DPMO", value: 280, target: 350, unit: "", trend: "down", status: "fantastic" },
+    { name: "Lost on Road (LoR) DPMO", value: 280, target: 350, unit: "DPMO", trend: "down", status: "fantastic" },
     
     // Standard Work Compliance
     { name: "Photo-On-Delivery", value: 99.3, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
