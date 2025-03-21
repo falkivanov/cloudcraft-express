@@ -27,7 +27,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   return (
     <div className="mb-6 w-full">
       <h3 className="text-sm font-medium border-b pb-2 mb-2">{title}</h3>
-      <Table className="w-full">
+      <Table className="w-full table-fixed">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[40%] py-1 px-3 text-xs text-gray-500">Metric</TableHead>

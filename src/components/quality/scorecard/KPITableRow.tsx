@@ -30,10 +30,10 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
 
   return (
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">
-      <TableCell className="py-2 px-3 text-sm">{kpi.name}</TableCell>
+      <TableCell className="py-2 px-3 text-sm truncate" title={kpi.name}>{kpi.name}</TableCell>
       <TableCell className="py-2 px-3 text-center">
         <div className="flex items-center justify-center">
-          <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{showUnit ? kpi.unit : ""}</span>
+          <span className="font-medium whitespace-nowrap">{formatKPIValue(kpi.value, kpi.unit)}{showUnit ? kpi.unit : ""}</span>
           {change && (
             <TooltipProvider>
               <Tooltip>
@@ -55,7 +55,7 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
           )}
         </div>
       </TableCell>
-      <TableCell className="py-2 px-3 text-center">{formatKPIValue(kpi.target, kpi.unit)}{showUnit ? kpi.unit : ""}</TableCell>
+      <TableCell className="py-2 px-3 text-center whitespace-nowrap">{formatKPIValue(kpi.target, kpi.unit)}{showUnit ? kpi.unit : ""}</TableCell>
       <TableCell className="py-2 px-3 text-center">
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(displayStatus)}`}>
           {displayStatus || "N/A"}
