@@ -31,7 +31,7 @@ export const getWeek6Data = (): ScoreCardData => {
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.55, target: 99, unit: "%", trend: "up", status: "great" },
       { name: "Delivered Not Received (DNR DPMO)", value: 1371, target: 1100, unit: "DPMO", trend: "down", status: "fair" },
-      { name: "Lost on Road (LoR) DPMO)", value: 370, target: 350, unit: "", trend: "down", status: "fair" },
+      { name: "Lost on Road (LoR) DPMO", value: 370, target: 350, unit: "", trend: "down", status: "fair" },
       
       // Standard Work Compliance
       { name: "Photo-On-Delivery", value: 98.59, target: 97, unit: "%", trend: "up", status: "fantastic" },
@@ -47,12 +47,12 @@ export const getWeek6Data = (): ScoreCardData => {
         name: "A10PTFSFT1G664", 
         status: "active",
         metrics: [
-          { name: "Delivered", value: 960, target: 0, unit: "" },
+          { name: "Delivered", value: 960, target: 0, unit: "", status: "none" },
           { name: "DCR", value: 98.55, target: 99, unit: "%", status: "fair" },
-          { name: "DNR DPMO", value: 1371, target: 1100, unit: "", status: "fair" },
+          { name: "DNR DPMO", value: 1371, target: 1100, unit: "DPMO", status: "fair" },
           { name: "POD", value: 98.59, target: 97, unit: "%", status: "fantastic" },
           { name: "Contact Compliance", value: 88.68, target: 98, unit: "%", status: "poor" },
-          { name: "CE", value: 48, target: 0, unit: "", status: "great" },
+          { name: "CE", value: 48, target: 0, unit: "DPMO", status: "great" },
           { name: "DEX", value: 95.07, target: 85, unit: "%", status: "fantastic" }
         ]
       },

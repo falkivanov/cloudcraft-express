@@ -31,7 +31,7 @@ export const getWeek10Data = (): ScoreCardData => {
       // Quality KPIs
       { name: "Delivery Completion Rate (DCR)", value: 98.5, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
       { name: "Delivered Not Received (DNR DPMO)", value: 2500, target: 3000, unit: "DPMO", trend: "down", status: "great" },
-      { name: "Lost on Road (LoR) DPMO)", value: 380, target: 350, unit: "", trend: "down", status: "fair" },
+      { name: "Lost on Road (LoR) DPMO", value: 380, target: 350, unit: "", trend: "down", status: "fair" },
       
       // Standard Work Compliance
       { name: "Photo-On-Delivery", value: 98.1, target: 98.0, unit: "%", trend: "up", status: "fantastic" },
@@ -46,60 +46,65 @@ export const getWeek10Data = (): ScoreCardData => {
         name: "Michael Schmidt",
         status: "active",
         metrics: [
-          { name: "DCR", value: 99.2, target: 98.5, unit: "%" },
-          { name: "DNR DPMO", value: 1200, target: 1500, unit: "DPMO" },
-          { name: "POD", value: 99.1, target: 98, unit: "%" },
-          { name: "Contact Compliance", value: 97.2, target: 95, unit: "%" },
-          { name: "CE", value: 0, target: 0, unit: "" },
-          { name: "DEX", value: 95.4, target: 95, unit: "%" }
+          { name: "Delivered", value: 1050, target: 0, unit: "", status: "none" },
+          { name: "DCR", value: 99.2, target: 98.5, unit: "%", status: "fantastic" },
+          { name: "DNR DPMO", value: 1200, target: 1500, unit: "DPMO", status: "great" },
+          { name: "POD", value: 99.1, target: 98, unit: "%", status: "fantastic" },
+          { name: "Contact Compliance", value: 97.2, target: 95, unit: "%", status: "fantastic" },
+          { name: "CE", value: 0, target: 0, unit: "DPMO", status: "fantastic" },
+          { name: "DEX", value: 95.4, target: 95, unit: "%", status: "fantastic" }
         ]
       },
       {
         name: "Lukas Weber",
         status: "active",
         metrics: [
-          { name: "DCR", value: 98.3, target: 98.5, unit: "%" },
-          { name: "DNR DPMO", value: 1700, target: 1500, unit: "DPMO" },
-          { name: "POD", value: 97.5, target: 98, unit: "%" },
-          { name: "Contact Compliance", value: 94.5, target: 95, unit: "%" },
-          { name: "CE", value: 0, target: 0, unit: "" },
-          { name: "DEX", value: 93.2, target: 95, unit: "%" }
+          { name: "Delivered", value: 980, target: 0, unit: "", status: "none" },
+          { name: "DCR", value: 98.3, target: 98.5, unit: "%", status: "fair" },
+          { name: "DNR DPMO", value: 1700, target: 1500, unit: "DPMO", status: "fair" },
+          { name: "POD", value: 97.5, target: 98, unit: "%", status: "fair" },
+          { name: "Contact Compliance", value: 94.5, target: 95, unit: "%", status: "fair" },
+          { name: "CE", value: 0, target: 0, unit: "DPMO", status: "fantastic" },
+          { name: "DEX", value: 93.2, target: 95, unit: "%", status: "fair" }
         ]
       },
       {
         name: "Emma Müller",
         status: "active",
         metrics: [
-          { name: "DCR", value: 97.8, target: 98.5, unit: "%" },
-          { name: "DNR DPMO", value: 2200, target: 1500, unit: "DPMO" },
-          { name: "POD", value: 96.9, target: 98, unit: "%" },
-          { name: "Contact Compliance", value: 92.3, target: 95, unit: "%" },
-          { name: "CE", value: 1, target: 0, unit: "" },
-          { name: "DEX", value: 91.8, target: 95, unit: "%" }
+          { name: "Delivered", value: 920, target: 0, unit: "", status: "none" },
+          { name: "DCR", value: 97.8, target: 98.5, unit: "%", status: "fair" },
+          { name: "DNR DPMO", value: 2200, target: 1500, unit: "DPMO", status: "poor" },
+          { name: "POD", value: 96.9, target: 98, unit: "%", status: "fair" },
+          { name: "Contact Compliance", value: 92.3, target: 95, unit: "%", status: "fair" },
+          { name: "CE", value: 1, target: 0, unit: "DPMO", status: "fair" },
+          { name: "DEX", value: 91.8, target: 95, unit: "%", status: "fair" }
         ]
       },
       {
         name: "Felix Becker",
         status: "active",
         metrics: [
-          { name: "DCR", value: 99.5, target: 98.5, unit: "%" },
-          { name: "DNR DPMO", value: 800, target: 1500, unit: "DPMO" },
-          { name: "POD", value: 99.3, target: 98, unit: "%" },
-          { name: "Contact Compliance", value: 98.7, target: 95, unit: "%" },
-          { name: "CE", value: 0, target: 0, unit: "" },
-          { name: "DEX", value: 97.8, target: 95, unit: "%" }
+          { name: "Delivered", value: 1100, target: 0, unit: "", status: "none" },
+          { name: "DCR", value: 99.5, target: 98.5, unit: "%", status: "fantastic" },
+          { name: "DNR DPMO", value: 800, target: 1500, unit: "DPMO", status: "fantastic" },
+          { name: "POD", value: 99.3, target: 98, unit: "%", status: "fantastic" },
+          { name: "Contact Compliance", value: 98.7, target: 95, unit: "%", status: "fantastic" },
+          { name: "CE", value: 0, target: 0, unit: "DPMO", status: "fantastic" },
+          { name: "DEX", value: 97.8, target: 95, unit: "%", status: "fantastic" }
         ]
       },
       {
         name: "Sophie Wagner",
         status: "active",
         metrics: [
-          { name: "DCR", value: 98.1, target: 98.5, unit: "%" },
-          { name: "DNR DPMO", value: 1950, target: 1500, unit: "DPMO" },
-          { name: "POD", value: 97.9, target: 98, unit: "%" },
-          { name: "Contact Compliance", value: 93.1, target: 95, unit: "%" },
-          { name: "CE", value: 0, target: 0, unit: "" },
-          { name: "DEX", value: 94.3, target: 95, unit: "%" }
+          { name: "Delivered", value: 970, target: 0, unit: "", status: "none" },
+          { name: "DCR", value: 98.1, target: 98.5, unit: "%", status: "fair" },
+          { name: "DNR DPMO", value: 1950, target: 1500, unit: "DPMO", status: "fair" },
+          { name: "POD", value: 97.9, target: 98, unit: "%", status: "fair" },
+          { name: "Contact Compliance", value: 93.1, target: 95, unit: "%", status: "fair" },
+          { name: "CE", value: 0, target: 0, unit: "DPMO", status: "fantastic" },
+          { name: "DEX", value: 94.3, target: 95, unit: "%", status: "fair" }
         ]
       }
     ],

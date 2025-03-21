@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import KPITableRow from "./KPITableRow";
+import KPITableRow from "../KPITableRow";
 
 interface CategoryTableProps {
   title: string;
@@ -25,9 +25,9 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   if (kpis.length === 0) return null;
   
   return (
-    <div className="mb-6">
+    <div className="mb-6 w-full">
       <h3 className="text-sm font-medium border-b pb-2 mb-2">{title}</h3>
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[40%] py-1 px-3 text-xs text-gray-500">Metric</TableHead>
