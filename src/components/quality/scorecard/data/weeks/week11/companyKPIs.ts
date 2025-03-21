@@ -21,7 +21,7 @@ export const getCompanyKPIs = (): ScorecardKPI[] => {
     
     // Quality KPIs
     { name: "Delivery Completion Rate (DCR)", value: 99.1, target: 99.0, unit: "%", trend: "up", status: "fantastic" },
-    { name: "Delivered Not Received (DNR DPMO)", value: 1800, target: 3000, unit: "DPMO", trend: "down", status: "fantastic" },
+    { name: "Delivered Not Received (DNR DPMO)", value: 1800, target: 1100, unit: "DPMO", trend: "down", status: "fantastic" },
     { name: "Lost on Road (LoR) DPMO", value: 280, target: 350, unit: "DPMO", trend: "down", status: "fantastic" },
     
     // Standard Work Compliance
