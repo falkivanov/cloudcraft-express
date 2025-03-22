@@ -110,7 +110,7 @@ const FileUploadPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div>
       <h1 className="text-3xl font-bold mb-6">Datei-Uploads</h1>
       
       <Tabs defaultValue="upload" className="w-full">
