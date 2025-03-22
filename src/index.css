@@ -95,3 +95,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Center content on the pages */
+.page-container {
+  @apply max-w-[1200px] mx-auto w-full px-4;
+}
+

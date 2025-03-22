@@ -26,40 +26,37 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   // Get previous week's data for comparison
   const previousWeekData = getPreviousWeekData(selectedWeek);
 
-  // Create a consistent container to maintain width regardless of content
   return (
     <div className="p-4 border rounded-lg bg-background">
-      <Container>
-        <div className="flex flex-col space-y-6 w-full">
-          {/* Week Selector */}
-          <div className="flex justify-end">
-            <ScorecardWeekSelector
+      <div className="flex flex-col space-y-6 w-full">
+        {/* Week Selector */}
+        <div className="flex justify-end">
+          <ScorecardWeekSelector
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+          />
+        </div>
+
+        {/* Content container */}
+        <div className="w-full min-h-[600px]">
+          {!data ? (
+            <NoDataMessage category="Scorecard" />
+          ) : isUnavailableWeek() ? (
+            <UnavailableWeekMessage 
               selectedWeek={selectedWeek}
               setSelectedWeek={setSelectedWeek}
             />
-          </div>
-
-          {/* Content container with fixed width */}
-          <div className="w-full min-h-[600px]">
-            {!data ? (
-              <NoDataMessage category="Scorecard" />
-            ) : isUnavailableWeek() ? (
-              <UnavailableWeekMessage 
-                selectedWeek={selectedWeek}
-                setSelectedWeek={setSelectedWeek}
-              />
-            ) : (
-              /* Tabs for company/driver KPIs */
-              <ScorecardTabsContent
-                data={data}
-                previousWeekData={previousWeekData}
-                scorecardTab={scorecardTab}
-                setScorecardTab={setScorecardTab}
-              />
-            )}
-          </div>
+          ) : (
+            /* Tabs for company/driver KPIs */
+            <ScorecardTabsContent
+              data={data}
+              previousWeekData={previousWeekData}
+              scorecardTab={scorecardTab}
+              setScorecardTab={setScorecardTab}
+            />
+          )}
         </div>
-      </Container>
+      </div>
     </div>
   );
 };

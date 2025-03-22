@@ -12,8 +12,10 @@ const Layout = () => {
       <Navbar />
       <div className="flex flex-col flex-1 w-full pl-16 md:pl-16">
         <main className="flex-1 overflow-y-auto bg-background w-full">
-          <div className="py-6 w-full">
-            <Outlet />
+          <div className="py-6 w-full flex justify-center">
+            <div className="page-container">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
