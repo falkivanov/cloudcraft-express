@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import FileUpload from "@/components/file-upload/FileUpload";
 import {
@@ -8,6 +7,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Container } from "@/components/ui/container";
 
 const FileUploadPage = () => {
   const [uploadHistory, setUploadHistory] = useState<{
@@ -110,7 +110,7 @@ const FileUploadPage = () => {
   };
 
   return (
-    <div>
+    <Container>
       <h1 className="text-3xl font-bold mb-6">Datei-Uploads</h1>
       
       <Tabs defaultValue="upload" className="w-full">
@@ -173,7 +173,7 @@ const FileUploadPage = () => {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </Container>
   );
 };
 

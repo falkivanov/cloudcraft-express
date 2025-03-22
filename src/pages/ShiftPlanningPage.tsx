@@ -10,17 +10,19 @@ const ShiftPlanningPage = () => {
   const { activeTab, setActiveTab, isScheduleFinalized, handleFinalizeSchedule } = useShiftPlanning();
   
   return (
-    <Container className="py-6">
-      <ShiftPlanningHeader 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isScheduleFinalized={isScheduleFinalized}
-        onFinalizeSchedule={handleFinalizeSchedule}
-      />
-      
-      {activeTab === "schedule" && <ShiftScheduleContent />}
-      {activeTab === "vehicles" && <VehicleAssignmentContent isEnabled={isScheduleFinalized} />}
-    </Container>
+    <div className="py-6">
+      <Container>
+        <ShiftPlanningHeader 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isScheduleFinalized={isScheduleFinalized}
+          onFinalizeSchedule={handleFinalizeSchedule}
+        />
+        
+        {activeTab === "schedule" && <ShiftScheduleContent />}
+        {activeTab === "vehicles" && <VehicleAssignmentContent isEnabled={isScheduleFinalized} />}
+      </Container>
+    </div>
   );
 };
 

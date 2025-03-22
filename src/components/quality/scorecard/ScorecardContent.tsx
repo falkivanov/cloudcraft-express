@@ -27,7 +27,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   const previousWeekData = getPreviousWeekData(selectedWeek);
 
   return (
-    <div className="p-4 border rounded-lg bg-background">
+    <div className="p-4 border rounded-lg bg-background w-full">
       <div className="flex flex-col space-y-6 w-full">
         {/* Week Selector */}
         <div className="flex justify-end">

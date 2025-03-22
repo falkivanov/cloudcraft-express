@@ -13,7 +13,7 @@ const Layout = () => {
       <div className="flex flex-col flex-1 w-full pl-16 md:pl-16">
         <main className="flex-1 overflow-y-auto bg-background w-full">
           <div className="py-6 w-full flex justify-center">
-            <div className="page-container">
+            <div className="w-full max-w-[1200px] mx-auto px-4">
               <Outlet />
             </div>
           </div>

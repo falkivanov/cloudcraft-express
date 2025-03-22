@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { FileUpIcon, TrendingUp, TrendingDown, Truck, Trophy } from "lucide-react";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
@@ -6,6 +5,7 @@ import { getScorecardData, getPreviousWeekData } from "@/components/quality/scor
 import DriverPerformanceCard from "@/components/quality/scorecard/driver/DriverPerformanceCard";
 import DashboardNavigationCard from "@/components/dashboard/DashboardNavigationCard";
 import { useDriverPerformanceData } from "@/components/quality/scorecard/hooks/useDriverPerformanceData";
+import { Container } from "@/components/ui/container";
 
 const Dashboard = () => {
   const [currentWeekData, setCurrentWeekData] = useState<ScoreCardData | null>(null);
@@ -24,7 +24,7 @@ const Dashboard = () => {
   const { improved, worsened, highPerformers } = useDriverPerformanceData(currentWeekData, previousWeekData);
 
   return (
-    <div className="container mx-auto py-8">
+    <Container>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -93,7 +93,7 @@ const Dashboard = () => {
           buttonVariant="outline"
         />
       </div>
-    </div>
+    </Container>
   );
 };
 

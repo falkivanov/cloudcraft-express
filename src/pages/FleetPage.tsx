@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Container } from "@/components/ui/container";
 
 const FleetPage = () => {
   const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
@@ -41,20 +41,16 @@ const FleetPage = () => {
     setStatusFilter
   } = useVehicleData();
 
-  // Handle filter by card click
   const handleStatusFilterChange = (newStatusFilter: "all" | "active" | "workshop") => {
     setStatusFilter(newStatusFilter);
-    // When filtering by status, we should also set the active tab to "active"
-    // to show the filtered vehicles in the active vehicles tab
     setActiveTab("active");
   };
 
-  // Get grouped vehicles based on selected grouping option
   const groupedActiveVehicles = useGroupedVehicles(filteredActiveVehicles, groupBy);
   const groupedDefleetedVehicles = useGroupedVehicles(filteredDefleetedVehicles, groupBy);
 
   return (
-    <div className="container mx-auto py-8">
+    <Container className="py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Fuhrpark</h1>
         <Button onClick={() => setIsNewVehicleDialogOpen(true)}>
@@ -160,7 +156,7 @@ const FleetPage = () => {
         onOpenChange={setIsNewVehicleDialogOpen}
         onSubmit={handleAddVehicle}
       />
-    </div>
+    </Container>
   );
 };
 
