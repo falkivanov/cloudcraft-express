@@ -7,7 +7,6 @@ import { getScorecardData, getPreviousWeekData } from "./data";
 import UnavailableWeekMessage from "./components/UnavailableWeekMessage";
 import ScorecardTabsContent from "./components/ScorecardTabsContent";
 import { useScorecardWeek } from "./hooks/useScorecardWeek";
-import { Container } from "@/components/ui/container";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;

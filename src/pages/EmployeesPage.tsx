@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import EmployeePageHeader from "@/components/employees/EmployeePageHeader";
 import EmployeePageContent from "@/components/employees/EmployeePageContent";
 import { initialEmployees } from "@/data/sampleEmployeeData";
+import { Container } from "@/components/ui/container";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-full bg-background">
+    <Container className="py-8">
       <EmployeePageHeader 
         onAddEmployeeClick={() => setIsAddEmployeeDialogOpen(true)} 
       />
@@ -18,7 +19,7 @@ const EmployeesPage = () => {
         isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
         setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
       />
-    </div>
+    </Container>
   );
 };
 
