@@ -6,7 +6,6 @@ import TextFormField from "./TextFormField";
 import DateFormField from "./DateFormField";
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,7 +22,6 @@ const EmploymentInfoSection: React.FC<EmploymentInfoSectionProps> = ({ form }) =
     <>
       <TextFormField form={form} name="transporterId" label="Transporter ID" />
       
-      {/* Mentor-Informationen direkt unter der Transporter ID */}
       <FormField
         control={form.control}
         name="mentorFirstName"
@@ -33,9 +31,6 @@ const EmploymentInfoSection: React.FC<EmploymentInfoSectionProps> = ({ form }) =
             <FormControl>
               <Input placeholder="Vorname des Mentors" {...field} value={field.value || ""} />
             </FormControl>
-            <FormDescription>
-              Der Vorname des zugewiesenen Mentors
-            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -50,9 +45,6 @@ const EmploymentInfoSection: React.FC<EmploymentInfoSectionProps> = ({ form }) =
             <FormControl>
               <Input placeholder="Nachname des Mentors" {...field} value={field.value || ""} />
             </FormControl>
-            <FormDescription>
-              Der Nachname des zugewiesenen Mentors
-            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
