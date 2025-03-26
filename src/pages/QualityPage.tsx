@@ -27,6 +27,11 @@ const QualityPage = () => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   
   useEffect(() => {
+    // Force a refresh of the data when the path changes
+    loadDataForCurrentPath();
+  }, [pathname]);
+  
+  const loadDataForCurrentPath = () => {
     if (pathname.includes("/quality/customer-contact")) {
       // Get data from localStorage or use test data
       const data = localStorage.getItem("customerContactData") || getKW11TestHTMLData();
@@ -63,18 +68,29 @@ const QualityPage = () => {
       }
     } else if (pathname.includes("/quality/mentor")) {
       try {
+        // Clear any previous mentor data first
+        setMentorData(null);
+        
+        // Try to load from localStorage
         const data = localStorage.getItem("mentorData");
         console.log("Retrieved mentorData from localStorage:", data ? "data exists" : "no data");
+        
         if (data) {
           const parsedData = JSON.parse(data);
           console.log("Parsed mentor data:", parsedData);
-          setMentorData(parsedData);
+          
+          // Validate the data structure before setting
+          if (parsedData && parsedData.drivers && Array.isArray(parsedData.drivers)) {
+            setMentorData(parsedData);
+          } else {
+            console.error("Invalid mentor data structure:", parsedData);
+          }
         }
       } catch (error) {
         console.error("Error parsing mentor data:", error);
       }
     }
-  }, [pathname]);
+  };
   
   const renderContent = () => {
     if (pathname.includes("/quality/scorecard")) {
@@ -112,6 +128,11 @@ const QualityPage = () => {
     }
     return "Qualitätsmanagement";
   };
+
+  // Trigger initial data load
+  useEffect(() => {
+    loadDataForCurrentPath();
+  }, []);
 
   return (
     <Container className="p-8">

@@ -25,6 +25,9 @@ export class CustomerContactProcessor extends BaseFileProcessor {
         localStorage.setItem("customerContactData", htmlContent);
         localStorage.setItem("parsedCustomerContactData", JSON.stringify(contactData));
         
+        // Update upload history in localStorage
+        this.updateUploadHistory();
+        
         if (showToasts) {
           toast.success(`Customer Contact Daten erfolgreich hochgeladen`, {
             description: "Die Daten können jetzt in der Customer Contact Ansicht angezeigt werden."
@@ -65,5 +68,31 @@ export class CustomerContactProcessor extends BaseFileProcessor {
       
       reader.readAsText(this.file);
     });
+  }
+  
+  /**
+   * Update the upload history in localStorage
+   */
+  private updateUploadHistory(): void {
+    try {
+      const historyString = localStorage.getItem("uploadHistory");
+      let history = historyString ? JSON.parse(historyString) : [];
+      
+      // Add new entry
+      history = [
+        {
+          name: this.file.name,
+          type: "html",
+          timestamp: new Date().toISOString(),
+          category: "customerContact"
+        },
+        ...history
+      ];
+      
+      // Save back to localStorage
+      localStorage.setItem("uploadHistory", JSON.stringify(history));
+    } catch (error) {
+      console.error("Failed to update upload history:", error);
+    }
   }
 }

@@ -27,6 +27,9 @@ export class MentorProcessor extends BaseFileProcessor {
       localStorage.setItem("mentorData", JSON.stringify(processedData));
       console.log("Stored mentor data in localStorage:", processedData);
       
+      // Update upload history in localStorage
+      this.updateUploadHistory();
+      
       if (showToasts) {
         toast.success(`Mentor Datei erfolgreich verarbeitet: ${this.file.name}`, {
           description: `KW${processedData.weekNumber}/${processedData.year} Daten mit ${processedData.drivers.length} Fahrern`
@@ -46,6 +49,32 @@ export class MentorProcessor extends BaseFileProcessor {
       throw error;
     } finally {
       this.setProcessing(false);
+    }
+  }
+  
+  /**
+   * Update the upload history in localStorage
+   */
+  private updateUploadHistory(): void {
+    try {
+      const historyString = localStorage.getItem("uploadHistory");
+      let history = historyString ? JSON.parse(historyString) : [];
+      
+      // Add new entry
+      history = [
+        {
+          name: this.file.name,
+          type: "excel",
+          timestamp: new Date().toISOString(),
+          category: "mentor"
+        },
+        ...history
+      ];
+      
+      // Save back to localStorage
+      localStorage.setItem("uploadHistory", JSON.stringify(history));
+    } catch (error) {
+      console.error("Failed to update upload history:", error);
     }
   }
 }
