@@ -19,17 +19,17 @@ export class FileProcessorFactory {
   ): BaseFileProcessor {
     switch (category) {
       case "scorecard":
-        return new ScorecardProcessor(file, setProcessing, onFileUpload);
+        return new ScorecardProcessor(file, category, setProcessing, onFileUpload);
       case "customerContact":
-        return new CustomerContactProcessor(file, setProcessing, onFileUpload);
+        return new CustomerContactProcessor(file, category, setProcessing, onFileUpload);
       case "pod":
-        return new PODProcessor(file, setProcessing, onFileUpload);
+        return new PODProcessor(file, category, setProcessing, onFileUpload);
       case "concessions":
-        return new ConcessionsProcessor(file, setProcessing, onFileUpload);
+        return new ConcessionsProcessor(file, category, setProcessing, onFileUpload);
       case "mentor":
-        return new MentorProcessor(file, setProcessing, onFileUpload);
+        return new MentorProcessor(file, category, setProcessing, onFileUpload);
       default:
-        return new GenericProcessor(file, setProcessing, onFileUpload);
+        return new GenericProcessor(file, category, setProcessing, onFileUpload);
     }
   }
 }

@@ -61,6 +61,7 @@ export class FileProcessor {
       const processor = FileProcessorFactory.createProcessor(
         this.file,
         this.category,
+        (value: boolean) => this.setProcessing(value),
         this.onFileUpload
       );
       

@@ -17,17 +17,17 @@ export class ValidatorFactory {
   ): BaseValidator {
     switch (category) {
       case "scorecard":
-        return new ScorecardValidator(file);
+        return new ScorecardValidator(file, category);
       case "customerContact":
-        return new CustomerContactValidator(file);
+        return new CustomerContactValidator(file, category);
       case "pod":
-        return new PODValidator(file);
+        return new PODValidator(file, category);
       case "concessions":
-        return new ConcessionsValidator(file);
+        return new ConcessionsValidator(file, category);
       case "mentor":
-        return new MentorValidator(file);
+        return new MentorValidator(file, category);
       default:
-        return new GenericValidator(file);
+        return new GenericValidator(file, category);
     }
   }
 }

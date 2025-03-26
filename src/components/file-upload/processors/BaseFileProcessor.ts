@@ -12,31 +12,26 @@ export interface ProcessOptions {
 export abstract class BaseFileProcessor {
   protected file: File;
   protected category: string;
+  protected setProcessingState: (processing: boolean) => void;
   protected onFileUpload?: (file: File, type: string, category: string) => void;
-  private processing: boolean = false;
   
   constructor(
     file: File, 
-    category: string, 
+    category: string,
+    setProcessing: (processing: boolean) => void,
     onFileUpload?: (file: File, type: string, category: string) => void
   ) {
     this.file = file;
     this.category = category;
+    this.setProcessingState = setProcessing;
     this.onFileUpload = onFileUpload;
-  }
-
-  /**
-   * Get the currently processing state
-   */
-  public isProcessing(): boolean {
-    return this.processing;
   }
 
   /**
    * Set the processing state
    */
   public setProcessing(value: boolean): void {
-    this.processing = value;
+    this.setProcessingState(value);
   }
   
   /**
