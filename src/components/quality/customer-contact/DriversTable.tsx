@@ -41,43 +41,49 @@ const DriversTable: React.FC<DriversTableProps> = ({ driversData, activeFilter }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Fahrerübersicht</CardTitle>
-        <CardDescription>
-          {filteredDrivers.length} Fahrer angezeigt
-        </CardDescription>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Fahrerübersicht</CardTitle>
+            <CardDescription>
+              {filteredDrivers.length} Fahrer angezeigt
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Adressen</TableHead>
-              <TableHead>davon kontaktiert</TableHead>
-              <TableHead>Compliance</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDrivers.map((driver, index) => {
-              // Extract just the name part without the transporter ID in parentheses
-              const displayName = driver.name.split(" (")[0];
-              
-              return (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{displayName}</TableCell>
-                  <TableCell>{driver.totalAddresses}</TableCell>
-                  <TableCell>{driver.totalContacts}</TableCell>
-                  <TableCell>
-                    <span className={getComplianceTextColor(driver.compliancePercentage)}>
-                      {driver.compliancePercentage}%
-                    </span>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="py-3 font-medium text-gray-700">Name</TableHead>
+                <TableHead className="py-3 font-medium text-gray-700 text-center">Adressen</TableHead>
+                <TableHead className="py-3 font-medium text-gray-700 text-center">davon kontaktiert</TableHead>
+                <TableHead className="py-3 font-medium text-gray-700 text-center">Compliance</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDrivers.map((driver, index) => {
+                // Extract just the name part without the transporter ID in parentheses
+                const displayName = driver.name.split(" (")[0];
+                
+                return (
+                  <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <TableCell className="font-medium">{displayName}</TableCell>
+                    <TableCell className="text-center">{driver.totalAddresses}</TableCell>
+                    <TableCell className="text-center">{driver.totalContacts}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={getComplianceTextColor(driver.compliancePercentage)}>
+                        {driver.compliancePercentage}%
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

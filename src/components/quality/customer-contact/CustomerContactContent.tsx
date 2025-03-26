@@ -36,9 +36,10 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   };
 
   return (
-    <div className="mt-6 space-y-6">
-      {/* Week Selector - positioned at the top right */}
-      <div className="flex justify-end">
+    <div className="space-y-6 w-full max-w-full">
+      {/* Header and Week Selector */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Customer Contact</h2>
         <CustomerContactWeekSelector
           selectedWeek={selectedWeek}
           setSelectedWeek={setSelectedWeek}
@@ -62,7 +63,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
       {customerContactData && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold mb-4">Original Report</h3>
-          <div className="border rounded-lg p-4 bg-white overflow-auto max-h-[600px]">
+          <div className="border rounded-lg p-4 bg-white overflow-auto max-h-[600px] shadow-sm">
             <ReportDisplay reportData={customerContactData} />
           </div>
         </div>
