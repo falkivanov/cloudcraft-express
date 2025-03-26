@@ -8,6 +8,7 @@ import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import MentorContent from "@/components/quality/MentorContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { getKW11TestHTMLData } from "@/components/quality/customer-contact/data/testData";
+import QualityTabs from "@/components/quality/QualityTabs";
 
 interface DriverComplianceData {
   name: string;
@@ -25,22 +26,34 @@ const QualityPage = () => {
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [mentorData, setMentorData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
   useEffect(() => {
+    console.info("QualityPage: Path changed to", pathname);
+    loadData();
+  }, [pathname]);
+  
+  const loadData = () => {
+    console.info("QualityPage: Initial data load");
+    setDataLoaded(false);
+    
     if (pathname.includes("/quality/customer-contact")) {
+      console.info("Loading customer contact data");
       // Get data from localStorage or use test data
       const data = localStorage.getItem("customerContactData") || getKW11TestHTMLData();
       setCustomerContactData(data);
       
       if (data) {
+        console.info("Found parsed customer contact data in localStorage");
         const parsedData = parseCustomerContactData(data);
         setDriversData(parsedData);
+        console.info("Customer contact data loaded");
       }
     } else if (pathname.includes("/quality/scorecard")) {
       try {
         const extractedData = localStorage.getItem("extractedScorecardData");
         if (extractedData) {
-          console.log("Using extracted PDF data from localStorage");
+          console.info("Using extracted PDF data from localStorage");
           setScoreCardData(JSON.parse(extractedData));
         } else {
           const data = localStorage.getItem("scorecardData");
@@ -71,9 +84,19 @@ const QualityPage = () => {
         console.error("Error parsing mentor data:", error);
       }
     }
-  }, [pathname]);
+    
+    setDataLoaded(true);
+  };
   
   const renderContent = () => {
+    if (!dataLoaded) {
+      return (
+        <div className="p-4 border rounded-lg bg-background flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Daten werden geladen...</p>
+        </div>
+      );
+    }
+    
     if (pathname.includes("/quality/scorecard")) {
       return <ScorecardContent scorecardData={scorecardData} />;
     } else if (pathname.includes("/quality/customer-contact")) {
@@ -111,8 +134,9 @@ const QualityPage = () => {
   };
 
   return (
-    <Container className="p-8">
+    <Container className="p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-6">{getPageTitle()}</h1>
+      <QualityTabs />
       <div className="mt-6">
         {renderContent()}
       </div>

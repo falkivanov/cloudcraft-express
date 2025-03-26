@@ -1,3 +1,4 @@
+
 import * as pdfjs from 'pdfjs-dist';
 import { ScoreCardData } from '../types';
 import { extractScorecardData } from './extractors/dataExtractor';
@@ -26,9 +27,13 @@ export const parseScorecardPDF = async (
   filename: string
 ): Promise<ScoreCardData | null> => {
   try {
+    console.info("Starting PDF parsing for: ", filename);
+    
     // Extract week number from filename if possible
     const weekMatch = filename.match(/KW[_\s]*(\d+)/i);
     const weekNum = weekMatch && weekMatch[1] ? parseInt(weekMatch[1], 10) : new Date().getWeek();
+    
+    console.info("Extracted week number:", weekNum);
     
     // Load the PDF document
     const loadingTask = pdfjs.getDocument({ data: pdfData });
@@ -49,7 +54,7 @@ export const parseScorecardPDF = async (
       throw new PDFParseError('PDF konnte nicht geladen werden.', 'LOAD_ERROR');
     }
     
-    console.log(`PDF loaded with ${pdf.numPages} pages, focusing on pages 2 and 3 only`);
+    console.info(`PDF loaded with ${pdf.numPages} pages, focusing on pages 2 and 3 only`);
     
     // Check if PDF has enough pages
     if (pdf.numPages < 2) {
@@ -73,7 +78,7 @@ export const parseScorecardPDF = async (
       }
       
       textContent.push(companyText);
-      console.log("Extracted company KPIs from page 2");
+      console.info("Extracted company KPIs from page 2");
     } catch (error) {
       console.error('Error extracting company KPIs:', error);
       throw new PDFParseError('Fehler beim Extrahieren der Firmen-KPIs von Seite 2.', 'PAGE_EXTRACTION_ERROR');
@@ -94,7 +99,7 @@ export const parseScorecardPDF = async (
         }
         
         textContent.push(driverText);
-        console.log("Extracted driver KPIs from page 3");
+        console.info("Extracted driver KPIs from page 3");
       } else {
         console.warn("PDF doesn't have a page 3 for driver KPIs");
         textContent.push(''); // Add empty string as placeholder
@@ -108,7 +113,7 @@ export const parseScorecardPDF = async (
     const companyKPIsText = textContent[0] || '';
     const driverKPIsText = textContent[1] || '';
     
-    console.log("PDF content extracted from specific pages, starting to parse data");
+    console.info("PDF content extracted from specific pages, starting to parse data");
     
     // Parse key metrics from the text
     try {
@@ -118,6 +123,10 @@ export const parseScorecardPDF = async (
       if (!parsedData.companyKPIs || parsedData.companyKPIs.length === 0) {
         throw new PDFParseError('Keine Firmen-KPIs konnten aus dem PDF extrahiert werden. Das Format könnte nicht unterstützt werden.', 'NO_KPIS_FOUND');
       }
+      
+      // Store the extracted data in localStorage for beta testing
+      localStorage.setItem("extractedScorecardData", JSON.stringify(parsedData));
+      console.info("Successfully parsed and stored PDF data for week", weekNum);
       
       return parsedData;
     } catch (error) {

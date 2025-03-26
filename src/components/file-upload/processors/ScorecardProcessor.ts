@@ -13,6 +13,8 @@ export class ScorecardProcessor extends BaseFileProcessor {
     const { showToasts = true } = options;
     this.setProcessing(true);
     
+    console.info(`Processing scorecard file: ${this.file.name}`);
+    
     try {
       // For now, just do basic processing
       // In the future, add PDF parsing here
@@ -20,7 +22,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
       // Mock PDF parsing result
       const parsedData = {
         week: 12,
-        year: 2023,
+        year: 2025,
         categoryScores: { delivery: 85, quality: 92, overall: 88 }
       };
       
@@ -28,6 +30,8 @@ export class ScorecardProcessor extends BaseFileProcessor {
       localStorage.setItem("scorecard_week", parsedData.week.toString());
       localStorage.setItem("scorecard_year", parsedData.year.toString());
       localStorage.setItem("scorecard_data", JSON.stringify(parsedData.categoryScores));
+      
+      console.info("Scorecard data stored:", parsedData);
       
       if (showToasts) {
         toast.success(

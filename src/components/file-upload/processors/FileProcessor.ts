@@ -55,6 +55,7 @@ export class FileProcessor {
     }
     
     this.processing = true;
+    console.info(`Processing ${this.category} file: ${this.file.name}`);
     
     try {
       // Create the appropriate processor using the factory
@@ -67,6 +68,7 @@ export class FileProcessor {
       
       // Process the file
       await processor.process(options);
+      console.info(`Successfully processed ${this.category} file: ${this.file.name}`);
       
       return true;
     } catch (error) {

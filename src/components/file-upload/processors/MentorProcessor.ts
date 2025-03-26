@@ -34,6 +34,12 @@ export class MentorProcessor extends BaseFileProcessor {
         this.onFileUpload(this.file, "excel", "mentor");
       }
       
+      console.info("MentorProcessor: Successfully processed mentor data", {
+        weekNumber: processedData.weekNumber,
+        year: processedData.year,
+        driversCount: processedData.drivers.length
+      });
+      
       return true;
     } catch (error) {
       console.error("Error processing Mentor data:", error);

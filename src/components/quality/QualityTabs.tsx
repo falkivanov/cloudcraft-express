@@ -3,6 +3,7 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { qualitySubItems } from "../navbar/navigationItems";
+import { Badge } from "@/components/ui/badge";
 
 const QualityTabs = () => {
   const navigate = useNavigate();
@@ -48,44 +49,25 @@ const QualityTabs = () => {
         <TabsTrigger value="customer-contact" className="flex items-center gap-2">
           {qualitySubItems[1].icon}
           <span className="hidden md:inline">{qualitySubItems[1].name}</span>
+          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs hidden md:flex">Beta</Badge>
         </TabsTrigger>
         <TabsTrigger value="concessions" className="flex items-center gap-2">
           {qualitySubItems[2].icon}
           <span className="hidden md:inline">{qualitySubItems[2].name}</span>
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs hidden md:flex">Beta</Badge>
         </TabsTrigger>
         <TabsTrigger value="mentor" className="flex items-center gap-2">
           {qualitySubItems[3].icon}
           <span className="hidden md:inline">{qualitySubItems[3].name}</span>
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs hidden md:flex">Beta</Badge>
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="scorecard">
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Scorecard</h2>
-          <p>Hier finden Sie detaillierte Leistungskennzahlen und KPIs.</p>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="customer-contact">
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Customer Contact</h2>
-          <p>Kundenkontaktberichte und Kommunikationsanalysen.</p>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="concessions">
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Concessions</h2>
-          <p>Übersicht zu Zugeständnissen und Ausnahmeregelungen.</p>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="mentor">
-        <div className="p-4 border rounded-lg bg-background">
-          <h2 className="text-2xl font-bold mb-4">Mentor</h2>
-          <p>Informationen zum Mentor-Programm und Trainingsfortschritte.</p>
-        </div>
-      </TabsContent>
+      {/* We'll hide these TabsContent elements since we're using routes to handle the content */}
+      <TabsContent value="scorecard" className="hidden" />
+      <TabsContent value="customer-contact" className="hidden" />
+      <TabsContent value="concessions" className="hidden" />
+      <TabsContent value="mentor" className="hidden" />
     </Tabs>
   );
 };
