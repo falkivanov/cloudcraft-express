@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import {
   Table,
@@ -44,7 +45,7 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
       return {
         ...driver,
         employeeName: matchedEmployee?.name || `${driver.firstName} ${driver.lastName}`,
-        transporterId: matchedEmployee?.transporterId || driver.transporterId
+        transporterId: matchedEmployee?.transporterId || ''
       };
     });
   }, [data]);

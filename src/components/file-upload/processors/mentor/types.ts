@@ -14,6 +14,7 @@ export interface MentorDriverData {
   braking: string;
   cornering: string;
   distraction: string;
+  transporterId?: string; // Added optional transporterId field
 }
 
 export interface MentorReport {
