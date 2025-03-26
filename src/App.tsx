@@ -34,7 +34,6 @@ const App = () => (
               <Route path="/quality" element={<Navigate to="/quality/scorecard" replace />} />
               <Route path="/quality/scorecard" element={<QualityPage />} />
               <Route path="/quality/customer-contact" element={<QualityPage />} />
-              <Route path="/quality/pod" element={<QualityPage />} />
               <Route path="/quality/concessions" element={<QualityPage />} />
               <Route path="/quality/mentor" element={<QualityPage />} />
               

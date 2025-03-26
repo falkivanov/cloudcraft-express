@@ -17,13 +17,6 @@ export const fileCategories = [
     description: "Customer Contact Berichte im HTML-Format"
   },
   { 
-    id: "pod", 
-    name: "POD", 
-    expectedType: "pdf",
-    icon: File,
-    description: "Liefernachweise (POD) im PDF-Format"
-  },
-  { 
     id: "concessions", 
     name: "Concessions", 
     expectedType: "excel",
@@ -55,9 +48,8 @@ export const getCategoryByFileType = (fileName: string, fileType: string): strin
       return "scorecard";
     } else if (fileName.toLowerCase().includes("mentor")) {
       return "mentor";
-    } else {
-      return "pod"; // Default für PDF-Dateien, wenn nicht als Scorecard erkannt
     }
+    return "scorecard"; // Default für PDF-Dateien
   }
   return "unknown";
 };

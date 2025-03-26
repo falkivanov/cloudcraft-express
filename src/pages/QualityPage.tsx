@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import CustomerContactContent from "@/components/quality/customer-contact/CustomerContactContent";
-import PodContent from "@/components/quality/PodContent";
 import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import MentorContent from "@/components/quality/MentorContent";
@@ -23,7 +22,6 @@ const QualityPage = () => {
   const pathname = location.pathname;
   const [customerContactData, setCustomerContactData] = useState<string | null>(null);
   const [scorecardData, setScoreCardData] = useState<any>(null);
-  const [podData, setPodData] = useState<any>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [mentorData, setMentorData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
@@ -53,15 +51,6 @@ const QualityPage = () => {
         }
       } catch (error) {
         console.error("Error parsing scorecard data:", error);
-      }
-    } else if (pathname.includes("/quality/pod")) {
-      try {
-        const data = localStorage.getItem("podData");
-        if (data) {
-          setPodData(JSON.parse(data));
-        }
-      } catch (error) {
-        console.error("Error parsing POD data:", error);
       }
     } else if (pathname.includes("/quality/concessions")) {
       try {
@@ -94,8 +83,6 @@ const QualityPage = () => {
           driversData={driversData} 
         />
       );
-    } else if (pathname.includes("/quality/pod")) {
-      return <PodContent podData={podData} />;
     } else if (pathname.includes("/quality/concessions")) {
       return <ConcessionsContent concessionsData={concessionsData} />;
     } else if (pathname.includes("/quality/mentor")) {
@@ -115,8 +102,6 @@ const QualityPage = () => {
       return "Scorecard";
     } else if (pathname.includes("/quality/customer-contact")) {
       return "Customer Contact";
-    } else if (pathname.includes("/quality/pod")) {
-      return "POD";
     } else if (pathname.includes("/quality/concessions")) {
       return "Concessions";
     } else if (pathname.includes("/quality/mentor")) {

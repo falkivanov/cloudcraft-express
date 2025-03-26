@@ -1,3 +1,4 @@
+
 import React from "react";
 import { 
   UserIcon, 
@@ -10,7 +11,6 @@ import {
   FileUpIcon,
   CheckIcon,
   PhoneCallIcon,
-  ClipboardIcon,
   TicketIcon,
   AwardIcon,
 } from "lucide-react";
@@ -34,7 +34,6 @@ const mainNavItems: NavItem[] = [
 export const qualitySubItems: NavItem[] = [
   { name: "Scorecard", path: "/quality/scorecard", icon: <CheckIcon className="h-5 w-5" /> },
   { name: "Customer Contact", path: "/quality/customer-contact", icon: <PhoneCallIcon className="h-5 w-5" /> },
-  { name: "POD", path: "/quality/pod", icon: <ClipboardIcon className="h-5 w-5" /> },
   { name: "Concessions", path: "/quality/concessions", icon: <TicketIcon className="h-5 w-5" /> },
   { name: "Mentor", path: "/quality/mentor", icon: <AwardIcon className="h-5 w-5" /> },
 ];

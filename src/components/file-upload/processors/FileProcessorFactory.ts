@@ -3,7 +3,6 @@ import { BaseFileProcessor } from "./BaseFileProcessor";
 import { GenericProcessor } from "./GenericProcessor";
 import { ScorecardProcessor } from "./ScorecardProcessor";
 import { CustomerContactProcessor } from "./CustomerContactProcessor";
-import { PODProcessor } from "./PODProcessor";
 import { ConcessionsProcessor } from "./ConcessionsProcessor";
 import { MentorProcessor } from "./MentorProcessor";
 
@@ -22,8 +21,6 @@ export class FileProcessorFactory {
         return new ScorecardProcessor(file, category, setProcessing, onFileUpload);
       case "customerContact":
         return new CustomerContactProcessor(file, category, setProcessing, onFileUpload);
-      case "pod":
-        return new PODProcessor(file, category, setProcessing, onFileUpload);
       case "concessions":
         return new ConcessionsProcessor(file, category, setProcessing, onFileUpload);
       case "mentor":

@@ -3,7 +3,6 @@ import { BaseValidator } from "./BaseValidator";
 import { GenericValidator } from "./GenericValidator";
 import { ScorecardValidator } from "./ScorecardValidator";
 import { CustomerContactValidator } from "./CustomerContactValidator";
-import { PODValidator } from "./PODValidator";
 import { ConcessionsValidator } from "./ConcessionsValidator";
 import { MentorValidator } from "./MentorValidator";
 
@@ -20,8 +19,6 @@ export class ValidatorFactory {
         return new ScorecardValidator(file, category);
       case "customerContact":
         return new CustomerContactValidator(file, category);
-      case "pod":
-        return new PODValidator(file, category);
       case "concessions":
         return new ConcessionsValidator(file, category);
       case "mentor":
