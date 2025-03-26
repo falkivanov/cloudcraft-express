@@ -33,6 +33,11 @@ const ShiftSchedule = () => {
     getScheduledEmployeesForDay
   } = useShiftSchedule(initialEmployees);
   
+  // Log the number of employees loaded to help debug
+  React.useEffect(() => {
+    console.log(`ShiftSchedule rendered with ${filteredEmployees.length} active employees`);
+  }, [filteredEmployees]);
+  
   const {
     isAutoPlanningLoading,
     planningMode,
@@ -65,21 +70,30 @@ const ShiftSchedule = () => {
       />
       
       <div className="w-full overflow-auto">
-        <ScheduleTable 
-          weekDays={weekDays}
-          filteredEmployees={filteredEmployees}
-          requiredEmployees={requiredEmployees}
-          scheduledEmployees={scheduledEmployees}
-          handleRequiredChange={handleRequiredChange}
-          formatDateKey={formatDateKey}
-          onFlexibilityOverride={handleFlexibilityOverride}
-          isTemporarilyFlexible={isTemporarilyFlexible}
-          finalizedDays={finalizedDays}
-          onFinalizeDay={handleFinalizeDay}
-          showNextDaySchedule={showNextDaySchedule}
-          getScheduledEmployeesForDay={getScheduledEmployeesForDay}
-          setShowNextDaySchedule={setShowNextDaySchedule}
-        />
+        {filteredEmployees.length > 0 ? (
+          <ScheduleTable 
+            weekDays={weekDays}
+            filteredEmployees={filteredEmployees}
+            requiredEmployees={requiredEmployees}
+            scheduledEmployees={scheduledEmployees}
+            handleRequiredChange={handleRequiredChange}
+            formatDateKey={formatDateKey}
+            onFlexibilityOverride={handleFlexibilityOverride}
+            isTemporarilyFlexible={isTemporarilyFlexible}
+            finalizedDays={finalizedDays}
+            onFinalizeDay={handleFinalizeDay}
+            showNextDaySchedule={showNextDaySchedule}
+            getScheduledEmployeesForDay={getScheduledEmployeesForDay}
+            setShowNextDaySchedule={setShowNextDaySchedule}
+          />
+        ) : (
+          <div className="p-6 text-center bg-white border rounded-lg shadow">
+            <p className="text-lg text-gray-600 mb-2">Keine aktiven Mitarbeiter gefunden.</p>
+            <p className="text-sm text-gray-500">
+              Bitte fügen Sie aktive Mitarbeiter hinzu, um mit der Dienstplanung zu beginnen.
+            </p>
+          </div>
+        )}
       </div>
 
       <FlexibilityOverrideDialog
