@@ -33,7 +33,7 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
       <span className="text-sm text-muted-foreground whitespace-nowrap">Kalenderwoche:</span>
       <Select value={selectedWeek} onValueChange={setSelectedWeek}>
         <SelectTrigger className="w-[180px] bg-white">
-          <SelectValue placeholder="Woche auswählen" />
+          <SelectValue placeholder="Keine Daten..." />
         </SelectTrigger>
         <SelectContent className="bg-white">
           {availableWeeks.map((week) => (

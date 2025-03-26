@@ -28,7 +28,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) =>
   return (
     <div className="p-4 border rounded-lg bg-background w-full">
       <div className="flex flex-col space-y-6 w-full">
-        {/* Week Selector */}
+        {/* Week Selector - Always displayed at the top level */}
         <div className="flex justify-end">
           <ScorecardWeekSelector
             selectedWeek={selectedWeek}
