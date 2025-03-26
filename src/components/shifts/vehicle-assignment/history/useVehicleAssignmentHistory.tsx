@@ -20,16 +20,19 @@ export const useVehicleAssignmentHistory = () => {
       if (savedHistory) {
         const parsedHistory = JSON.parse(savedHistory);
         setAssignmentHistory(parsedHistory);
+        console.log('Loaded vehicle assignment history from localStorage:', parsedHistory.length);
       } else {
         // Use sample data if no history exists in localStorage
         const sampleData = getSampleVehicleAssignments();
         setAssignmentHistory(sampleData);
         // Save sample data to localStorage for future use
         localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(sampleData));
+        console.log('Initialized vehicle assignment history with sample data:', sampleData.length);
       }
     } catch (error) {
       console.error('Error loading vehicle assignment history from localStorage:', error);
-      setAssignmentHistory(getSampleVehicleAssignments());
+      const sampleData = getSampleVehicleAssignments();
+      setAssignmentHistory(sampleData);
     }
   }, []);
 
@@ -40,6 +43,7 @@ export const useVehicleAssignmentHistory = () => {
         try {
           const updatedHistory = JSON.parse(e.newValue);
           setAssignmentHistory(updatedHistory);
+          console.log('Updated vehicle assignment history from storage event');
         } catch (error) {
           console.error('Error parsing vehicle assignment history from storage event:', error);
         }

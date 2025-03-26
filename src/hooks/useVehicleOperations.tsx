@@ -7,18 +7,19 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicleData);
   const { toast } = useToast();
 
-  // Fahrzeuge in localStorage speichern
+  // Save vehicles to localStorage whenever they change
   useEffect(() => {
     if (vehicles.length > 0) {
       try {
         localStorage.setItem('vehicles', JSON.stringify(vehicles));
+        console.log('Saved vehicles to localStorage:', vehicles.length);
       } catch (error) {
         console.error('Error saving vehicles to localStorage:', error);
       }
     }
   }, [vehicles]);
 
-  // Fahrzeug aktualisieren
+  // Update a vehicle
   const handleUpdateVehicle = (updatedVehicle: Vehicle) => {
     setVehicles(vehicles.map(vehicle => 
       vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
@@ -32,7 +33,7 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
     }
   };
 
-  // Fahrzeug defleeten
+  // Defleet a vehicle
   const handleDefleetVehicle = (vehicle: Vehicle, defleetDate: string) => {
     const updatedVehicle = {
       ...vehicle,
@@ -50,7 +51,7 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
     });
   };
 
-  // Neues Fahrzeug hinzufügen
+  // Add a new vehicle
   const handleAddVehicle = (vehicleData: Omit<Vehicle, "id">) => {
     const newId = (Math.max(...vehicles.map(v => parseInt(v.id)), 0) + 1).toString();
     
@@ -78,11 +79,13 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
       id: (lastId + index + 1).toString()
     }));
     
-    setVehicles([...vehicles, ...vehiclesWithIds]);
+    const combinedVehicles = [...vehicles, ...vehiclesWithIds];
+    setVehicles(combinedVehicles);
     
     // Explicitly save to localStorage after import
     try {
-      localStorage.setItem('vehicles', JSON.stringify([...vehicles, ...vehiclesWithIds]));
+      localStorage.setItem('vehicles', JSON.stringify(combinedVehicles));
+      console.log('Saved imported vehicles to localStorage:', combinedVehicles.length);
     } catch (error) {
       console.error('Error saving imported vehicles to localStorage:', error);
     }

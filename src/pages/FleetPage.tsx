@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
@@ -42,19 +42,6 @@ const FleetPage = () => {
     setStatusFilter
   } = useVehicleData();
 
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'vehicles') {
-        console.log('Vehicle data changed in another tab');
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   const handleStatusFilterChange = (newStatusFilter: "all" | "active" | "workshop") => {
     setStatusFilter(newStatusFilter);
     setActiveTab("active");
@@ -62,6 +49,9 @@ const FleetPage = () => {
 
   const groupedActiveVehicles = useGroupedVehicles(filteredActiveVehicles, groupBy);
   const groupedDefleetedVehicles = useGroupedVehicles(filteredDefleetedVehicles, groupBy);
+
+  // Output the number of vehicles to verify data is loaded
+  console.log('FleetPage rendering with vehicles:', vehicles.length);
 
   return (
     <Container className="py-8">
