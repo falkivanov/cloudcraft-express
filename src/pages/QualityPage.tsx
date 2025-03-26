@@ -7,7 +7,6 @@ import ConcessionsContent from "@/components/quality/ConcessionsContent";
 import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import MentorContent from "@/components/quality/MentorContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
-import { getKW11TestHTMLData } from "@/components/quality/customer-contact/data/testData";
 import QualityTabs from "@/components/quality/QualityTabs";
 
 interface DriverComplianceData {
@@ -28,13 +27,20 @@ const QualityPage = () => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
-  // Clear all quality-related localStorage data on component mount
+  // Clear ALL quality and test data on component mount
   useEffect(() => {
+    // Clear all localStorage items
+    localStorage.clear();
+    
+    // Specifically remove all quality-related items to be sure
     localStorage.removeItem('customerContactData');
     localStorage.removeItem('scorecardData');
     localStorage.removeItem('extractedScorecardData');
     localStorage.removeItem('concessionsData');
     localStorage.removeItem('mentorData');
+    localStorage.removeItem('employees');
+    
+    console.info("All test data and localStorage cleared");
   }, []);
   
   useEffect(() => {

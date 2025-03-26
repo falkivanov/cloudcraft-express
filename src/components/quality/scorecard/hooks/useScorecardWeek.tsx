@@ -4,12 +4,12 @@ import { parseWeekIdentifier, isDataAvailableForWeek } from "../data";
 import { ScoreCardData } from "../types";
 
 export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
-  // Initialize with week 11 as default
-  const [selectedWeek, setSelectedWeek] = useState<string>("week-11-2025");
+  // Initialize with an empty week indicator
+  const [selectedWeek, setSelectedWeek] = useState<string>("week-0-0");
   
   // Try to extract week number from data if it exists
   useEffect(() => {
-    if (scorecardData) {
+    if (scorecardData && scorecardData.week > 0) {
       // Set the week from our data
       const weekId = `week-${scorecardData.week}-${scorecardData.year}`;
       setSelectedWeek(weekId);

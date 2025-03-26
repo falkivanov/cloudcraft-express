@@ -16,28 +16,24 @@ export class ScorecardProcessor extends BaseFileProcessor {
     console.info(`Processing scorecard file: ${this.file.name}`);
     
     try {
-      // For now, just do basic processing
-      // In the future, add PDF parsing here
+      // Clear any existing data first
+      localStorage.removeItem("scorecard_week");
+      localStorage.removeItem("scorecard_year");
+      localStorage.removeItem("scorecard_data");
+      localStorage.removeItem("extractedScorecardData");
       
-      // Mock PDF parsing result
-      const parsedData = {
-        week: 12,
-        year: 2025,
-        categoryScores: { delivery: 85, quality: 92, overall: 88 }
+      // Store the file content for actual processing
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        console.log("Scorecard file loaded, ready for processing");
       };
-      
-      // Store parsed data in localStorage - convert numbers to strings
-      localStorage.setItem("scorecard_week", parsedData.week.toString());
-      localStorage.setItem("scorecard_year", parsedData.year.toString());
-      localStorage.setItem("scorecard_data", JSON.stringify(parsedData.categoryScores));
-      
-      console.info("Scorecard data stored:", parsedData);
+      fileReader.readAsArrayBuffer(this.file);
       
       if (showToasts) {
         toast.success(
-          `Scorecard für KW ${parsedData.week}/${parsedData.year} erfolgreich verarbeitet`,
+          `Scorecard Datei hochgeladen`,
           {
-            description: "Die Daten wurden aktualisiert und können jetzt eingesehen werden.",
+            description: "Die Datei wurde hochgeladen und kann jetzt verarbeitet werden.",
           }
         );
       }
