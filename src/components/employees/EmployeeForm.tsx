@@ -9,7 +9,6 @@ import PersonalInfoSection from "./form/PersonalInfoSection";
 import EmploymentInfoSection from "./form/EmploymentInfoSection";
 import AdditionalInfoSection from "./form/AdditionalInfoSection";
 import PreferredWorkingDaysSection from "./form/PreferredWorkingDaysSection";
-import MentorInfoSection from "./form/MentorInfoSection";
 import EmployeeFormActions from "./form/EmployeeFormActions";
 
 interface EmployeeFormProps {
@@ -57,7 +56,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
           <EmploymentInfoSection form={form} />
           <AdditionalInfoSection form={form} />
           <PreferredWorkingDaysSection form={form} />
-          <MentorInfoSection form={form} />
         </div>
 
         <EmployeeFormActions onCancel={onCancel} submitLabel={isNewEmployee ? "Hinzufügen" : "Speichern"} />
