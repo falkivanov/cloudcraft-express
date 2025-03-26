@@ -18,9 +18,10 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   useEffect(() => {
     console.log("CustomerContactContent rendering with data:", {
       hasHtmlData: !!customerContactData,
-      driversCount: driversData?.length || 0
+      driversCount: driversData?.length || 0,
+      selectedWeek
     });
-  }, [customerContactData, driversData]);
+  }, [customerContactData, driversData, selectedWeek]);
 
   if (!customerContactData || !driversData || driversData.length === 0) {
     return <NoDataMessage category="Customer Contact" />;
@@ -36,9 +37,9 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full">
+    <div className="space-y-6 w-full">
       {/* Header and Week Selector */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold">Customer Contact</h2>
         <CustomerContactWeekSelector
           selectedWeek={selectedWeek}
@@ -63,7 +64,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
       {customerContactData && (
         <div className="mt-8">
           <h3 className="text-xl font-semibold mb-4">Original Report</h3>
-          <div className="border rounded-lg p-4 bg-white overflow-auto max-h-[600px] shadow-sm">
+          <div className="border rounded-lg p-4 bg-white shadow-sm">
             <ReportDisplay reportData={customerContactData} />
           </div>
         </div>

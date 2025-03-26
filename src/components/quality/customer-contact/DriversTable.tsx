@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { DriverComplianceData } from "./types";
-import { getComplianceStyle, getProgressColor } from "./utils";
 
 interface DriversTableProps {
   driversData: DriverComplianceData[];

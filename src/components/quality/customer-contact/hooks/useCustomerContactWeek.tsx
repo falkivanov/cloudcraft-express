@@ -5,7 +5,10 @@ export const useCustomerContactWeek = () => {
   // Initialize with the stored week or KW12 as default
   const getInitialWeek = () => {
     const storedWeek = localStorage.getItem("customerContactWeek");
-    return storedWeek || "week-12-2025";
+    // Always default to week 12 if no valid week is stored
+    return storedWeek && ["week-8-2025", "week-9-2025", "week-10-2025", "week-11-2025", "week-12-2025"].includes(storedWeek) 
+      ? storedWeek 
+      : "week-12-2025";
   };
   
   const [selectedWeek, setSelectedWeek] = useState<string>(getInitialWeek());
@@ -13,13 +16,8 @@ export const useCustomerContactWeek = () => {
   // Save selected week to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("customerContactWeek", selectedWeek);
+    console.log("Week selection updated:", selectedWeek);
   }, [selectedWeek]);
-  
-  // Check if week has data (we would expand this for real data sources)
-  const isUnavailableWeek = () => {
-    // For now, all weeks in our selector are valid
-    return false;
-  };
 
-  return { selectedWeek, setSelectedWeek, isUnavailableWeek };
+  return { selectedWeek, setSelectedWeek };
 };

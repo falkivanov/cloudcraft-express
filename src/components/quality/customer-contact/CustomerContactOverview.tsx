@@ -3,7 +3,6 @@ import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DriverComplianceData } from "./types";
 import { calculateComplianceStatistics } from "@/components/quality/utils/parseCustomerContactData";
-import { getComplianceStyle } from "./utils";
 
 interface CustomerContactOverviewProps {
   driversData: DriverComplianceData[];
@@ -25,14 +24,14 @@ const CustomerContactOverview: React.FC<CustomerContactOverviewProps> = ({
   };
 
   const getCardStyle = (filter: string) => {
-    const baseClass = "transition-all duration-200 border bg-white shadow-sm hover:shadow";
+    const baseClass = "transition-all duration-200 border bg-white shadow-sm hover:shadow cursor-pointer h-full";
     return activeFilter === filter 
       ? `${baseClass} ring-2 ring-primary border-primary` 
       : baseClass;
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card 
         className={getCardStyle("all")}
         onClick={() => onFilterChange("all")}
