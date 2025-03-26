@@ -15,13 +15,13 @@ interface MentorDriverData {
   braking: string;
   cornering: string;
   distraction: string;
-  transporterId?: string; // Will be matched from transporter ID in station code
 }
 
 interface MentorReport {
   weekNumber: number;
   year: number;
   reportDate: string;
+  fileName: string;
   drivers: MentorDriverData[];
 }
 
@@ -51,6 +51,7 @@ export class MentorProcessor extends BaseFileProcessor {
           
           // Process the data
           const processedData = this.processMentorData(rawData, weekInfo);
+          processedData.fileName = this.file.name;
           
           // Store in localStorage
           localStorage.setItem("mentorData", JSON.stringify(processedData));
@@ -155,8 +156,7 @@ export class MentorProcessor extends BaseFileProcessor {
         acceleration: this.standardizeRiskLevel(row["Acceleration Rating"]),
         braking: this.standardizeRiskLevel(row["Braking Rating"]),
         cornering: this.standardizeRiskLevel(row["Cornering Rating"]),
-        distraction: this.standardizeRiskLevel(row["Distraction Rating"]),
-        transporterId: this.extractTransporterId(station)
+        distraction: this.standardizeRiskLevel(row["Distraction Rating"])
       };
       
       drivers.push(driver);
@@ -166,19 +166,9 @@ export class MentorProcessor extends BaseFileProcessor {
       weekNumber: weekInfo.weekNumber,
       year: weekInfo.year,
       reportDate: format(new Date(), "yyyy-MM-dd"),
+      fileName: '',
       drivers
     };
-  }
-  
-  /**
-   * Extract transporter ID from station code (e.g., "848 DSU1" -> "TR-848")
-   */
-  private extractTransporterId(station: string): string | undefined {
-    const match = station.match(/^(\d+)/);
-    if (match && match[1]) {
-      return `TR-${match[1]}`;
-    }
-    return undefined;
   }
   
   /**

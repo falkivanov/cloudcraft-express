@@ -36,26 +36,29 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
   const driversWithNames = useMemo(() => {
     if (!data?.drivers) return [];
     
-    // Create a map of transporterId to employee name
-    const transporterIdToEmployee = new Map();
+    // Create a map to match employees using mentor first/last name
+    const employeesByMentorName = new Map();
     initialEmployees.forEach(employee => {
-      transporterIdToEmployee.set(employee.transporterId, {
-        name: employee.name,
-        mentorFirstName: employee.mentorFirstName,
-        mentorLastName: employee.mentorLastName
-      });
+      if (employee.mentorFirstName || employee.mentorLastName) {
+        // Create a key based on mentor first and last name combination
+        const mentorKey = `${(employee.mentorFirstName || '').toLowerCase()}_${(employee.mentorLastName || '').toLowerCase()}`;
+        employeesByMentorName.set(mentorKey, {
+          name: employee.name,
+          transporterId: employee.transporterId
+        });
+      }
     });
     
-    // Map drivers and replace transporter IDs with actual names
+    // Map drivers and match names
     return data.drivers.map(driver => {
-      const employee = driver.transporterId ? 
-        transporterIdToEmployee.get(driver.transporterId) : undefined;
+      // Create the same key structure for matching
+      const mentorKey = `${(driver.firstName || '').toLowerCase()}_${(driver.lastName || '').toLowerCase()}`;
+      const matchedEmployee = employeesByMentorName.get(mentorKey);
       
       return {
         ...driver,
-        employeeName: employee?.name || `${driver.firstName} ${driver.lastName}`,
-        mentorFirstName: employee?.mentorFirstName,
-        mentorLastName: employee?.mentorLastName
+        employeeName: matchedEmployee?.name || `${driver.firstName} ${driver.lastName}`,
+        transporterId: matchedEmployee?.transporterId || driver.transporterId
       };
     });
   }, [data]);
@@ -93,7 +96,7 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
             <TableHead className="text-center">Bremsen</TableHead>
             <TableHead className="text-center">Kurven</TableHead>
             <TableHead className="text-center">Ablenkung</TableHead>
-            <TableHead>Mentor</TableHead>
+            <TableHead>Mentor ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -117,9 +120,9 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
                 {driver.distraction}
               </TableCell>
               <TableCell>
-                {driver.mentorFirstName || driver.mentorLastName ? 
-                  `${driver.mentorFirstName || ''} ${driver.mentorLastName || ''}`.trim() : 
-                  '-'}
+                {driver.firstName && driver.lastName ? 
+                  `${driver.firstName} ${driver.lastName}` : 
+                  (driver.transporterId || '-')}
               </TableCell>
             </TableRow>
           ))}
