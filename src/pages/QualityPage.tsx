@@ -156,12 +156,9 @@ const QualityPage = () => {
   }, []);
 
   return (
-    <Container className="p-8">
-      <h1 className="text-3xl font-bold mb-6">{getPageTitle()}</h1>
-      <div className="mt-6">
-        {renderContent()}
-      </div>
-    </Container>
+    <div className="w-full">
+      {renderContent()}
+    </div>
   );
 };
 

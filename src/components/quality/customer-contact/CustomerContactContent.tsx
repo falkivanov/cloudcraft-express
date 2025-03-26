@@ -37,9 +37,9 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="w-full space-y-6 max-w-full overflow-hidden">
       {/* Header and Week Selector */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
         <h2 className="text-2xl font-bold">Customer Contact</h2>
         <CustomerContactWeekSelector
           selectedWeek={selectedWeek}
