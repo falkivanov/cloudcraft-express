@@ -61,6 +61,33 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   const [finalizedDays, setFinalizedDays] = useState<string[]>([]);
   const [showNextDaySchedule, setShowNextDaySchedule] = useState(false);
   
+  // Lade finalisierte Tage aus dem localStorage
+  useEffect(() => {
+    const loadFinalizedDays = () => {
+      try {
+        const savedFinalizedDays = localStorage.getItem('finalizedDays');
+        if (savedFinalizedDays) {
+          const parsedFinalizedDays = JSON.parse(savedFinalizedDays);
+          console.log('Loaded finalized days from localStorage:', parsedFinalizedDays);
+          setFinalizedDays(parsedFinalizedDays);
+        }
+      } catch (error) {
+        console.error('Error loading finalized days from localStorage:', error);
+      }
+    };
+
+    loadFinalizedDays();
+  }, []);
+  
+  // Speichere finalisierte Tage im localStorage, wenn sie sich ändern
+  useEffect(() => {
+    try {
+      localStorage.setItem('finalizedDays', JSON.stringify(finalizedDays));
+    } catch (error) {
+      console.error('Error saving finalized days to localStorage:', error);
+    }
+  }, [finalizedDays]);
+  
   // Combine our smaller hooks
   const weekNavigation = useWeekNavigation();
   const { weekDays, selectedWeek, previousWeek: prevWeek, nextWeek: nextWeekFn } = weekNavigation;
@@ -91,16 +118,18 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   const previousWeek = () => {
     prevWeek();
     resetFlexibility();
-    clearShifts();
-    setFinalizedDays([]);
+    // Do not clear shifts when navigating between weeks anymore
+    // clearShifts();
+    // setFinalizedDays([]);
     setShowNextDaySchedule(false);
   };
   
   const nextWeek = () => {
     nextWeekFn();
     resetFlexibility();
-    clearShifts();
-    setFinalizedDays([]);
+    // Do not clear shifts when navigating between weeks anymore
+    // clearShifts();
+    // setFinalizedDays([]);
     setShowNextDaySchedule(false);
   };
 

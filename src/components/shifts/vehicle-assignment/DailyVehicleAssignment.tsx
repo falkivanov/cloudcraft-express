@@ -18,6 +18,8 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   const tomorrow = addDays(today, 1);
   
   const formattedTomorrow = format(tomorrow, "dd.MM.yyyy", { locale: de });
+  const tomorrowDateKey = format(tomorrow, "yyyy-MM-dd");
+  const todayDateKey = format(today, "yyyy-MM-dd");
   
   const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
@@ -28,8 +30,13 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   // Lade gespeicherte Zuordnungen aus dem localStorage
   useEffect(() => {
     try {
-      const savedTodayAssignments = localStorage.getItem('todayVehicleAssignments');
-      const savedTomorrowAssignments = localStorage.getItem('tomorrowVehicleAssignments');
+      const savedTodayAssignments = localStorage.getItem(`vehicleAssignments-${todayDateKey}`);
+      const savedTomorrowAssignments = localStorage.getItem(`vehicleAssignments-${tomorrowDateKey}`);
+      const savedOverrideFinalized = localStorage.getItem('overrideFinalized');
+      
+      if (savedOverrideFinalized) {
+        setOverrideFinalized(JSON.parse(savedOverrideFinalized));
+      }
       
       if (savedTodayAssignments) {
         setTodayAssignments(JSON.parse(savedTodayAssignments));
@@ -43,6 +50,9 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
           "9": "7",
         };
         setTodayAssignments(mockTodayAssignments);
+        
+        // Speichere die Mock-Daten, damit sie beim nächsten Mal verfügbar sind
+        localStorage.setItem(`vehicleAssignments-${todayDateKey}`, JSON.stringify(mockTodayAssignments));
       }
       
       if (savedTomorrowAssignments) {
@@ -51,24 +61,33 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     } catch (error) {
       console.error('Error loading vehicle assignments from localStorage:', error);
     }
-  }, []);
+  }, [todayDateKey, tomorrowDateKey]);
   
   // Speichere Zuordnungen im localStorage, wenn sie sich ändern
   useEffect(() => {
     try {
-      localStorage.setItem('todayVehicleAssignments', JSON.stringify(todayAssignments));
+      localStorage.setItem(`vehicleAssignments-${todayDateKey}`, JSON.stringify(todayAssignments));
     } catch (error) {
       console.error('Error saving today vehicle assignments to localStorage:', error);
     }
-  }, [todayAssignments]);
+  }, [todayAssignments, todayDateKey]);
   
   useEffect(() => {
     try {
-      localStorage.setItem('tomorrowVehicleAssignments', JSON.stringify(tomorrowAssignments));
+      localStorage.setItem(`vehicleAssignments-${tomorrowDateKey}`, JSON.stringify(tomorrowAssignments));
     } catch (error) {
       console.error('Error saving tomorrow vehicle assignments to localStorage:', error);
     }
-  }, [tomorrowAssignments]);
+  }, [tomorrowAssignments, tomorrowDateKey]);
+  
+  // Speichere override-Status
+  useEffect(() => {
+    try {
+      localStorage.setItem('overrideFinalized', JSON.stringify(overrideFinalized));
+    } catch (error) {
+      console.error('Error saving override finalized status to localStorage:', error);
+    }
+  }, [overrideFinalized]);
   
   const handleAutoAssign = () => {
     if (!effectivelyFinalized) {
@@ -105,12 +124,12 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
       const vehicle = activeVehicles.find(v => v.id === vehicleId);
       const employee = initialEmployees.find(e => e.id === employeeId);
       return {
-        id: `${vehicleId}-${employeeId}-${format(tomorrow, "yyyy-MM-dd")}`,
+        id: `${vehicleId}-${employeeId}-${tomorrowDateKey}`,
         vehicleId,
         vehicleInfo: `${vehicle?.brand} ${vehicle?.model} (${vehicle?.licensePlate})`,
         employeeId,
         employeeName: employee?.name || "",
-        date: format(tomorrow, "yyyy-MM-dd"),
+        date: tomorrowDateKey,
         assignedAt: new Date().toISOString(),
         assignedBy: "Admin"
       };

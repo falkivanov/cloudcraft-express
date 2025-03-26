@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { ShiftAssignment } from "@/types/shift";
@@ -12,6 +13,43 @@ export const useShiftTracker = (weekDays: Date[]) => {
   
   // Track scheduled employees (only those with shiftType "Arbeit")
   const [scheduledEmployees, setScheduledEmployees] = useState<Record<string, number>>({});
+  
+  // Lade gespeicherte Schichtzuweisungen
+  useEffect(() => {
+    const loadShiftsFromStorage = () => {
+      try {
+        const savedShifts = localStorage.getItem('shiftsMap');
+        if (savedShifts) {
+          // Map aus dem JSON String wiederherstellen
+          const shiftsObject = JSON.parse(savedShifts);
+          const newMap = new Map<string, ShiftAssignment>();
+          Object.entries(shiftsObject).forEach(([key, value]) => {
+            newMap.set(key, value as ShiftAssignment);
+          });
+          console.log('Loaded shifts from localStorage:', newMap.size);
+          setShiftsMap(newMap);
+        }
+      } catch (error) {
+        console.error('Error loading shifts from localStorage:', error);
+      }
+    };
+    
+    loadShiftsFromStorage();
+  }, []);
+
+  // Speichere Schichtzuweisungen im localStorage, wenn sie sich ändern
+  useEffect(() => {
+    try {
+      // Konvertiere Map zu einem speicherbaren Objekt
+      const shiftsObject: Record<string, ShiftAssignment> = {};
+      shiftsMap.forEach((value, key) => {
+        shiftsObject[key] = value;
+      });
+      localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
+    } catch (error) {
+      console.error('Error saving shifts to localStorage:', error);
+    }
+  }, [shiftsMap]);
   
   // Clear only regular shifts (preserves special shifts like Termin, Urlaub, Krank)
   const clearShifts = useCallback(() => {

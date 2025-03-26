@@ -10,11 +10,13 @@ import EmployeeAssignmentSection from "./employee-assignments/EmployeeAssignment
 interface StartTimeWavesProps {
   scheduledEmployees: Employee[];
   onAssignWaves: (waveAssignments: WaveAssignment[]) => void;
+  initialAssignments?: WaveAssignment[];
 }
 
 const StartTimeWaves: React.FC<StartTimeWavesProps> = ({ 
   scheduledEmployees,
-  onAssignWaves
+  onAssignWaves,
+  initialAssignments = []
 }) => {
   const {
     waves,
@@ -26,7 +28,7 @@ const StartTimeWaves: React.FC<StartTimeWavesProps> = ({
     handleRequestedCountChange,
     handleEmployeeWaveChange,
     getEmployeeWaveId
-  } = useWaveAssignments(scheduledEmployees);
+  } = useWaveAssignments(scheduledEmployees, initialAssignments);
   
   // Save the wave assignments
   const handleSaveAssignments = () => {
