@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import FileUpload from "@/components/file-upload/FileUpload";
 import {
   Tabs,
@@ -10,43 +9,27 @@ import {
 import { toast } from "sonner";
 import { Container } from "@/components/ui/container";
 
-interface UploadHistoryItem {
-  name: string;
-  type: string;
-  timestamp: string;
-  category: string;
-}
-
 const FileUploadPage = () => {
-  const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([]);
-
-  // Load upload history from localStorage on component mount
-  useEffect(() => {
-    const savedHistory = localStorage.getItem("uploadHistory");
-    if (savedHistory) {
-      try {
-        setUploadHistory(JSON.parse(savedHistory));
-      } catch (error) {
-        console.error("Error parsing upload history:", error);
-      }
-    }
-  }, []);
+  const [uploadHistory, setUploadHistory] = useState<{
+    name: string;
+    type: string;
+    timestamp: Date;
+    category: string;
+  }[]>([]);
 
   const handleFileUpload = (file: File, type: string, category: string) => {
     console.log(`Processing ${category} file:`, file);
     
-    // Create new history item
-    const newHistoryItem = {
-      name: file.name,
-      type: type,
-      timestamp: new Date().toISOString(),
-      category: category
-    };
-    
-    // Update history in state and localStorage
-    const updatedHistory = [newHistoryItem, ...uploadHistory];
-    setUploadHistory(updatedHistory);
-    localStorage.setItem("uploadHistory", JSON.stringify(updatedHistory));
+    // Add to upload history first so user gets immediate feedback
+    setUploadHistory(prev => [
+      {
+        name: file.name,
+        type: type,
+        timestamp: new Date(),
+        category: category
+      },
+      ...prev
+    ]);
     
     // File Reader zum Verarbeiten der Datei
     const reader = new FileReader();
@@ -112,7 +95,6 @@ const FileUploadPage = () => {
       case "customerContact": return "Customer Contact";
       case "pod": return "POD";
       case "concessions": return "Concessions";
-      case "mentor": return "Mentor";
       default: return categoryId;
     }
   };
@@ -123,16 +105,7 @@ const FileUploadPage = () => {
       case "customerContact": return "bg-blue-100 text-blue-800";
       case "pod": return "bg-purple-100 text-purple-800";
       case "concessions": return "bg-orange-100 text-orange-800";
-      case "mentor": return "bg-amber-100 text-amber-800";
       default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleString();
-    } catch (error) {
-      return dateString;
     }
   };
 
@@ -156,7 +129,6 @@ const FileUploadPage = () => {
               <li>Customer Contact: HTML-Format (.html, .htm)</li>
               <li>POD: PDF-Format (.pdf)</li>
               <li>Concessions: Excel-Format (.xlsx)</li>
-              <li>Mentor: Excel-Format (.xlsx)</li>
             </ul>
           </div>
           <FileUpload onFileUpload={handleFileUpload} />
@@ -184,7 +156,7 @@ const FileUploadPage = () => {
                           </span>
                         </td>
                         <td className="p-3 uppercase">{item.type}</td>
-                        <td className="p-3">{formatDate(item.timestamp)}</td>
+                        <td className="p-3">{item.timestamp.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>

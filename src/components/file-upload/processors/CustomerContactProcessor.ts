@@ -15,23 +15,15 @@ export class CustomerContactProcessor extends BaseFileProcessor {
     this.setProcessing(true);
     
     try {
-      console.log("Processing customer contact file:", this.file.name);
       const htmlContent = await this.readFileAsText();
       
       if (htmlContent) {
         // Parse the HTML content
         const contactData = parseCustomerContactData(htmlContent);
-        console.log("Parsed customer contact data:", contactData);
         
         // Store the raw HTML and parsed data
         localStorage.setItem("customerContactData", htmlContent);
         localStorage.setItem("parsedCustomerContactData", JSON.stringify(contactData));
-        
-        // Also store the week information - setting to KW12 for currently uploaded data
-        localStorage.setItem("customerContactWeek", "week-12-2025");
-        
-        // Update upload history in localStorage
-        this.updateUploadHistory();
         
         if (showToasts) {
           toast.success(`Customer Contact Daten erfolgreich hochgeladen`, {
@@ -49,9 +41,6 @@ export class CustomerContactProcessor extends BaseFileProcessor {
       }
     } catch (error) {
       console.error("Error processing customer contact HTML:", error);
-      toast.error("Fehler beim Verarbeiten der Customer Contact Datei", {
-        description: error instanceof Error ? error.message : "Unbekannter Fehler"
-      });
       throw error;
     } finally {
       this.setProcessing(false);
@@ -76,31 +65,5 @@ export class CustomerContactProcessor extends BaseFileProcessor {
       
       reader.readAsText(this.file);
     });
-  }
-  
-  /**
-   * Update the upload history in localStorage
-   */
-  private updateUploadHistory(): void {
-    try {
-      const historyString = localStorage.getItem("uploadHistory");
-      let history = historyString ? JSON.parse(historyString) : [];
-      
-      // Add new entry
-      history = [
-        {
-          name: this.file.name,
-          type: "html",
-          timestamp: new Date().toISOString(),
-          category: "customerContact"
-        },
-        ...history
-      ];
-      
-      // Save back to localStorage
-      localStorage.setItem("uploadHistory", JSON.stringify(history));
-    } catch (error) {
-      console.error("Failed to update upload history:", error);
-    }
   }
 }

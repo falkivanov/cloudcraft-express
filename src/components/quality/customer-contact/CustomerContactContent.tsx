@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import CustomerContactOverview from "./CustomerContactOverview";
 import DriversTable from "./DriversTable";
 import NoDataMessage from "./NoDataMessage";
 import CustomerContactWeekSelector from "./CustomerContactWeekSelector";
 import { useCustomerContactWeek } from "./hooks/useCustomerContactWeek";
 import { CustomerContactContentProps } from "./types";
-import ReportDisplay from "./ReportDisplay";
 
 const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ 
   customerContactData, 
@@ -14,16 +13,8 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
 }) => {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const { selectedWeek, setSelectedWeek } = useCustomerContactWeek();
-  
-  useEffect(() => {
-    console.log("CustomerContactContent rendering with data:", {
-      hasHtmlData: !!customerContactData,
-      driversCount: driversData?.length || 0,
-      selectedWeek
-    });
-  }, [customerContactData, driversData, selectedWeek]);
 
-  if (!customerContactData || !driversData || driversData.length === 0) {
+  if (!customerContactData) {
     return <NoDataMessage category="Customer Contact" />;
   }
   
@@ -37,10 +28,9 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   };
 
   return (
-    <div className="w-full space-y-6 max-w-full overflow-hidden">
-      {/* Header and Week Selector */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-        <h2 className="text-2xl font-bold">Customer Contact</h2>
+    <div className="mt-6 space-y-6">
+      {/* Week Selector */}
+      <div className="flex justify-end">
         <CustomerContactWeekSelector
           selectedWeek={selectedWeek}
           setSelectedWeek={setSelectedWeek}
@@ -59,16 +49,6 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
         driversData={driversData} 
         activeFilter={activeFilter} 
       />
-      
-      {/* Original HTML Report (Optional) */}
-      {customerContactData && (
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Original Report</h3>
-          <div className="border rounded-lg p-4 bg-white shadow-sm">
-            <ReportDisplay reportData={customerContactData} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

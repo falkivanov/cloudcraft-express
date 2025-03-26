@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { UploadIcon, FileSpreadsheet, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,13 +11,6 @@ interface MentorContentProps {
 }
 
 const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
-  const [dataLoaded, setDataLoaded] = useState(false);
-  
-  useEffect(() => {
-    console.log("MentorContent received data:", mentorData);
-    setDataLoaded(!!mentorData);
-  }, [mentorData]);
-
   if (!mentorData) {
     return renderNoDataMessage();
   }

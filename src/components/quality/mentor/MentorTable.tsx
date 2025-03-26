@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import {
   Table,
@@ -10,7 +9,6 @@ import {
 } from "@/components/ui/table";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
-import { getRiskColorClass } from "./utils/riskLevelUtils";
 
 interface MentorTableProps {
   data: {
@@ -45,7 +43,8 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
       
       return {
         ...driver,
-        employeeName: matchedEmployee?.name || `${driver.firstName} ${driver.lastName}`
+        employeeName: matchedEmployee?.name || `${driver.firstName} ${driver.lastName}`,
+        transporterId: matchedEmployee?.transporterId || driver.transporterId
       };
     });
   }, [data]);
@@ -57,6 +56,17 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
       </div>
     );
   }
+
+  // Helper to get risk color
+  const getRiskColor = (risk: string) => {
+    if (risk.toLowerCase().includes("high")) {
+      return "bg-red-50 text-red-700 font-medium";
+    } 
+    if (risk.toLowerCase().includes("medium")) {
+      return "bg-amber-50 text-amber-700 font-medium";
+    }
+    return "bg-green-50 text-green-700 font-medium";
+  };
 
   return (
     <div className="overflow-auto rounded-md border">
@@ -83,22 +93,22 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
               <TableCell className="text-right">{driver.totalTrips}</TableCell>
               <TableCell className="text-right">{driver.totalKm}</TableCell>
               <TableCell className="text-right">{driver.totalHours}</TableCell>
-              <TableCell className={`text-center ${getRiskColorClass(driver.acceleration)}`}>
+              <TableCell className={`text-center ${getRiskColor(driver.acceleration)}`}>
                 {driver.acceleration}
               </TableCell>
-              <TableCell className={`text-center ${getRiskColorClass(driver.braking)}`}>
+              <TableCell className={`text-center ${getRiskColor(driver.braking)}`}>
                 {driver.braking}
               </TableCell>
-              <TableCell className={`text-center ${getRiskColorClass(driver.cornering)}`}>
+              <TableCell className={`text-center ${getRiskColor(driver.cornering)}`}>
                 {driver.cornering}
               </TableCell>
-              <TableCell className={`text-center ${getRiskColorClass(driver.distraction)}`}>
+              <TableCell className={`text-center ${getRiskColor(driver.distraction)}`}>
                 {driver.distraction}
               </TableCell>
               <TableCell>
                 {driver.firstName && driver.lastName ? 
                   `${driver.firstName} ${driver.lastName}` : 
-                  '-'}
+                  (driver.transporterId || '-')}
               </TableCell>
             </TableRow>
           ))}
