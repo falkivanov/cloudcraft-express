@@ -64,7 +64,7 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
           if (rowData.length < 5) continue; // Skip invalid rows
           
           // Get column indices
-          const nameIndex = headers.findIndex(h => h.includes('Name'));
+          const nameIndex = headers.findIndex(h => h.includes('Name') && !h.includes('Mentor'));
           const emailIndex = headers.findIndex(h => h.includes('Email'));
           const phoneIndex = headers.findIndex(h => h.includes('Telefon'));
           const statusIndex = headers.findIndex(h => h.includes('Status'));
@@ -78,6 +78,8 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
           const preferredWorkingDaysIndex = headers.findIndex(h => h.includes('Bevorzugte Arbeitstage'));
           const wantsToWorkSixDaysIndex = headers.findIndex(h => h.includes('Möchte 6 Tage'));
           const isFlexibleIndex = headers.findIndex(h => h.includes('Arbeitstage flexibel'));
+          const mentorFirstNameIndex = headers.findIndex(h => h.includes('Mentor Vorname'));
+          const mentorLastNameIndex = headers.findIndex(h => h.includes('Mentor Nachname'));
           
           // Create employee object with required fields
           const employee: Employee = {
@@ -97,7 +99,9 @@ export const parseEmployeeCSVImport = (file: File): Promise<Employee[]> => {
               ? rowData[preferredWorkingDaysIndex].split(',') 
               : ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
             wantsToWorkSixDays: wantsToWorkSixDaysIndex >= 0 ? rowData[wantsToWorkSixDaysIndex].includes('Ja') : false,
-            isWorkingDaysFlexible: isFlexibleIndex >= 0 ? rowData[isFlexibleIndex].includes('Ja') : true
+            isWorkingDaysFlexible: isFlexibleIndex >= 0 ? rowData[isFlexibleIndex].includes('Ja') : true,
+            mentorFirstName: mentorFirstNameIndex >= 0 ? rowData[mentorFirstNameIndex] : undefined,
+            mentorLastName: mentorLastNameIndex >= 0 ? rowData[mentorLastNameIndex] : undefined
           };
           
           employees.push(employee);

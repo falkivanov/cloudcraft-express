@@ -26,9 +26,9 @@ export const fileCategories = [
   { 
     id: "mentor", 
     name: "Mentor", 
-    expectedType: "pdf",
+    expectedType: "excel",
     icon: Award,
-    description: "Mentor-Programm Daten im PDF-Format"
+    description: "Mentor-Programm Daten im Excel-Format (.xlsx)"
   },
 ];
 

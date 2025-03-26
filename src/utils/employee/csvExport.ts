@@ -17,10 +17,12 @@ export const exportEmployeesToCSV = (employees: Employee[], filename: string) =>
     'Adresse',
     'Telegram Username',
     'Arbeitstage pro Woche',
-    'Bevorzugtes Fahrzeug (Kennzeichen)', // Updated label to clarify it's a license plate
+    'Bevorzugtes Fahrzeug (Kennzeichen)',
     'Bevorzugte Arbeitstage',
     'Möchte 6 Tage arbeiten',
-    'Arbeitstage flexibel'
+    'Arbeitstage flexibel',
+    'Mentor Vorname',
+    'Mentor Nachname'
   ];
   
   // Transform the employee data to CSV rows
@@ -38,7 +40,9 @@ export const exportEmployeesToCSV = (employees: Employee[], filename: string) =>
     employee.preferredVehicle,
     employee.preferredWorkingDays.join(','),
     employee.wantsToWorkSixDays ? 'Ja' : 'Nein',
-    employee.isWorkingDaysFlexible !== false ? 'Ja' : 'Nein'
+    employee.isWorkingDaysFlexible !== false ? 'Ja' : 'Nein',
+    employee.mentorFirstName || '',
+    employee.mentorLastName || ''
   ]);
   
   // Combine headers and rows

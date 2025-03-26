@@ -15,10 +15,12 @@ export const generateEmployeeSampleCSV = () => {
     address: 'Musterstraße 123, 12345 Berlin',
     telegramUsername: '@maxmuster',
     workingDaysAWeek: '5',
-    preferredVehicle: 'B-AB 1234', // Changed from "VW Golf" to a license plate
+    preferredVehicle: 'B-AB 1234',
     preferredWorkingDays: 'Mo,Di,Mi,Do,Fr',
     wantsToWorkSixDays: 'Nein',
-    isWorkingDaysFlexible: 'Ja'
+    isWorkingDaysFlexible: 'Ja',
+    mentorFirstName: 'Thomas',
+    mentorLastName: 'Schmidt'
   };
   
   // Define the headers
@@ -33,10 +35,12 @@ export const generateEmployeeSampleCSV = () => {
     'Adresse',
     'Telegram Username',
     'Arbeitstage pro Woche',
-    'Bevorzugtes Fahrzeug (Kennzeichen)', // Updated label to clarify it's a license plate
+    'Bevorzugtes Fahrzeug (Kennzeichen)',
     'Bevorzugte Arbeitstage',
     'Möchte 6 Tage arbeiten',
-    'Arbeitstage flexibel'
+    'Arbeitstage flexibel',
+    'Mentor Vorname',
+    'Mentor Nachname'
   ];
   
   // Create a sample row
@@ -54,7 +58,9 @@ export const generateEmployeeSampleCSV = () => {
     sampleEmployee.preferredVehicle,
     sampleEmployee.preferredWorkingDays,
     sampleEmployee.wantsToWorkSixDays,
-    sampleEmployee.isWorkingDaysFlexible
+    sampleEmployee.isWorkingDaysFlexible,
+    sampleEmployee.mentorFirstName,
+    sampleEmployee.mentorLastName
   ];
   
   // Combine headers and rows

@@ -2,12 +2,12 @@
 import { BaseValidator, ValidationResult } from "./BaseValidator";
 
 /**
- * Validator for Mentor PDF files
+ * Validator for Mentor Excel files
  */
 export class MentorValidator extends BaseValidator {
   public validate(): ValidationResult {
     // Check file extension
-    if (!this.isExtensionValid(['.pdf'])) {
+    if (!this.isExtensionValid(['.xlsx', '.xls'])) {
       return {
         isValid: false,
         message: this.getInvalidTypeMessage()

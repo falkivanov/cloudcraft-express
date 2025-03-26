@@ -1,10 +1,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { UploadIcon } from "lucide-react";
+import { UploadIcon, FileSpreadsheet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Container } from "@/components/ui/container";
 
 interface MentorContentProps {
   mentorData: any | null;
@@ -24,7 +23,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
         <CardContent>
           <div className="mt-2">
             <h3 className="text-lg font-semibold mb-2">Geladene Mentor-Daten</h3>
-            <p>Dateiname: {mentorData.fileName}</p>
+            <p className="flex items-center"><FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" /> Dateiname: {mentorData.fileName}</p>
             <p>Dateityp: {mentorData.type.toUpperCase()}</p>
             {/* Spezifische Darstellung der Mentor-Daten hier */}
           </div>

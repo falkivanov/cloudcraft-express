@@ -9,10 +9,12 @@ export interface Employee {
   startDate: string;
   endDate: string | null;
   address: string;
-  telegramUsername: string; // New field for Telegram username
+  telegramUsername: string;
   workingDaysAWeek: number;
   preferredVehicle: string;
   preferredWorkingDays: string[];
   wantsToWorkSixDays: boolean;
-  isWorkingDaysFlexible: boolean; // New field for flexibility
+  isWorkingDaysFlexible: boolean;
+  mentorFirstName?: string; // New field for Mentor's first name
+  mentorLastName?: string;  // New field for Mentor's last name
 }

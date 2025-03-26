@@ -16,6 +16,8 @@ export const employeeFormSchema = z.object({
   preferredWorkingDays: z.array(z.string()).optional().default([]),
   wantsToWorkSixDays: z.boolean().optional().default(false),
   isWorkingDaysFlexible: z.boolean().optional().default(true),
+  mentorFirstName: z.string().optional(),
+  mentorLastName: z.string().optional(),
 });
 
 export type EmployeeFormData = z.infer<typeof employeeFormSchema>;

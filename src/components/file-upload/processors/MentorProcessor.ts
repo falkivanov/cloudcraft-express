@@ -3,11 +3,11 @@ import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 
 /**
- * Specialized processor for Mentor PDF files
+ * Specialized processor for Mentor Excel files
  */
 export class MentorProcessor extends BaseFileProcessor {
   /**
-   * Process a Mentor PDF file
+   * Process a Mentor Excel file
    */
   public async process(options: ProcessOptions = {}): Promise<boolean> {
     const { showToasts = true } = options;
@@ -17,8 +17,8 @@ export class MentorProcessor extends BaseFileProcessor {
       await this.readFileAsArrayBuffer()
         .then((content) => {
           localStorage.setItem("mentorData", JSON.stringify({
-            content: "PDF processed", // Don't store the entire PDF
-            type: "pdf",
+            content: "Excel processed", // Don't store the entire Excel file
+            type: "excel",
             fileName: this.file.name
           }));
           
@@ -29,7 +29,7 @@ export class MentorProcessor extends BaseFileProcessor {
           }
           
           if (this.onFileUpload) {
-            this.onFileUpload(this.file, "pdf", "mentor");
+            this.onFileUpload(this.file, "excel", "mentor");
           }
         });
       
