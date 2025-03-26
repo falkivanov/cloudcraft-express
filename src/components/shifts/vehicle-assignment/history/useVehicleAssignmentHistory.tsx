@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VehicleAssignment } from "@/types/shift";
 import { 
   filterAssignments, 
@@ -15,25 +15,29 @@ export const useVehicleAssignmentHistory = () => {
   
   // Load vehicle assignment history from localStorage
   useEffect(() => {
-    try {
-      const savedHistory = localStorage.getItem('vehicleAssignmentHistory');
-      if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        setAssignmentHistory(parsedHistory);
-        console.log('Loaded vehicle assignment history from localStorage:', parsedHistory.length);
-      } else {
-        // Use sample data if no history exists in localStorage
+    const loadHistoryFromStorage = () => {
+      try {
+        const savedHistory = localStorage.getItem('vehicleAssignmentHistory');
+        if (savedHistory) {
+          const parsedHistory = JSON.parse(savedHistory);
+          setAssignmentHistory(parsedHistory);
+          console.log('Loaded vehicle assignment history from localStorage:', parsedHistory.length);
+        } else {
+          // Use sample data if no history exists in localStorage
+          const sampleData = getSampleVehicleAssignments();
+          setAssignmentHistory(sampleData);
+          // Save sample data to localStorage for future use
+          localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(sampleData));
+          console.log('Initialized vehicle assignment history with sample data:', sampleData.length);
+        }
+      } catch (error) {
+        console.error('Error loading vehicle assignment history from localStorage:', error);
         const sampleData = getSampleVehicleAssignments();
         setAssignmentHistory(sampleData);
-        // Save sample data to localStorage for future use
-        localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(sampleData));
-        console.log('Initialized vehicle assignment history with sample data:', sampleData.length);
       }
-    } catch (error) {
-      console.error('Error loading vehicle assignment history from localStorage:', error);
-      const sampleData = getSampleVehicleAssignments();
-      setAssignmentHistory(sampleData);
-    }
+    };
+    
+    loadHistoryFromStorage();
   }, []);
 
   // Listen for storage events from other tabs/windows
@@ -57,15 +61,15 @@ export const useVehicleAssignmentHistory = () => {
   }, []);
 
   // Save assignment history to localStorage whenever it changes
-  useEffect(() => {
-    if (assignmentHistory.length > 0) {
-      try {
-        localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(assignmentHistory));
-      } catch (error) {
-        console.error('Error saving vehicle assignment history to localStorage:', error);
-      }
+  const updateAssignmentHistory = useCallback((newHistory: VehicleAssignment[]) => {
+    setAssignmentHistory(newHistory);
+    try {
+      localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(newHistory));
+      console.log('Saved updated vehicle assignment history:', newHistory.length);
+    } catch (error) {
+      console.error('Error saving vehicle assignment history:', error);
     }
-  }, [assignmentHistory]);
+  }, []);
   
   // Filter and sort assignments
   const filteredAssignments = filterAssignments(
@@ -86,6 +90,6 @@ export const useVehicleAssignmentHistory = () => {
     setSelectedEmployee,
     sortedAssignments,
     assignmentHistory,
-    setAssignmentHistory
+    setAssignmentHistory: updateAssignmentHistory
   };
 };

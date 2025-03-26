@@ -6,10 +6,11 @@ import { useVehicleOperations } from "@/hooks/useVehicleOperations";
 import { Vehicle } from "@/types/vehicle";
 
 export const useVehicleData = () => {
-  const [initialData, setInitialData] = useState<Vehicle[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Load vehicles from localStorage on component mount
+  const [loadedVehicles, setLoadedVehicles] = useState<Vehicle[]>([]);
+  
   useEffect(() => {
     const loadVehiclesFromStorage = () => {
       try {
@@ -19,17 +20,17 @@ export const useVehicleData = () => {
         if (savedVehicles) {
           const parsedVehicles = JSON.parse(savedVehicles);
           console.log('Found saved vehicles:', parsedVehicles.length);
-          setInitialData(parsedVehicles);
+          setLoadedVehicles(parsedVehicles);
         } else {
           // If no saved vehicles, use initialVehicles
           console.log('No saved vehicles found, using initial data');
-          setInitialData(initialVehicles);
+          setLoadedVehicles(initialVehicles);
           // Save initial vehicles to localStorage
           localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
         }
       } catch (error) {
         console.error('Error loading vehicles from localStorage:', error);
-        setInitialData(initialVehicles);
+        setLoadedVehicles(initialVehicles);
       } finally {
         setIsInitialized(true);
       }
@@ -38,14 +39,15 @@ export const useVehicleData = () => {
     loadVehiclesFromStorage();
   }, []);
   
-  // Initialize vehicle operations with data from localStorage
+  // Initialize vehicle operations with loaded data
   const {
     vehicles,
+    setVehicles, // We need this to sync with storage events
     handleUpdateVehicle,
     handleDefleetVehicle, 
     handleAddVehicle,
     handleImportVehicles
-  } = useVehicleOperations(isInitialized ? initialData : []);
+  } = useVehicleOperations(loadedVehicles);
   
   // Filter and sort the vehicles
   const {
@@ -69,7 +71,8 @@ export const useVehicleData = () => {
         console.log('Vehicle data changed in another tab');
         try {
           const updatedVehicles = JSON.parse(e.newValue);
-          setInitialData(updatedVehicles);
+          setVehicles(updatedVehicles); // Use setVehicles from useVehicleOperations
+          console.log('Updated vehicles from another tab:', updatedVehicles.length);
         } catch (error) {
           console.error('Error parsing vehicles from storage event:', error);
         }
@@ -80,20 +83,12 @@ export const useVehicleData = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [setVehicles]);
 
-  // Fix for UI pointer events issue
+  // Debug check
   useEffect(() => {
-    const handleMouseMove = () => {
-      document.body.style.pointerEvents = 'auto';
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
+    console.log('useVehicleData current vehicles count:', vehicles.length);
+  }, [vehicles]);
 
   return {
     vehicles,
