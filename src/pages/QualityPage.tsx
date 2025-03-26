@@ -64,8 +64,11 @@ const QualityPage = () => {
     } else if (pathname.includes("/quality/mentor")) {
       try {
         const data = localStorage.getItem("mentorData");
+        console.log("Retrieved mentorData from localStorage:", data ? "data exists" : "no data");
         if (data) {
-          setMentorData(JSON.parse(data));
+          const parsedData = JSON.parse(data);
+          console.log("Parsed mentor data:", parsedData);
+          setMentorData(parsedData);
         }
       } catch (error) {
         console.error("Error parsing mentor data:", error);

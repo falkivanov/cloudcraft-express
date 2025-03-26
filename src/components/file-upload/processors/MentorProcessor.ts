@@ -15,6 +15,8 @@ export class MentorProcessor extends BaseFileProcessor {
     this.setProcessing(true);
     
     try {
+      console.log("Processing mentor file:", this.file);
+      
       // Create data processor
       const dataProcessor = new MentorDataProcessor(this.file);
       
@@ -23,6 +25,7 @@ export class MentorProcessor extends BaseFileProcessor {
       
       // Store in localStorage
       localStorage.setItem("mentorData", JSON.stringify(processedData));
+      console.log("Stored mentor data in localStorage:", processedData);
       
       if (showToasts) {
         toast.success(`Mentor Datei erfolgreich verarbeitet: ${this.file.name}`, {
