@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import {
   Table,
@@ -9,26 +8,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { initialEmployees } from "@/data/sampleEmployeeData";
-
-interface MentorDriver {
-  firstName: string;
-  lastName: string;
-  station: string;
-  totalTrips: number;
-  totalKm: number;
-  totalHours: string;
-  acceleration: string;
-  braking: string;
-  cornering: string;
-  distraction: string;
-  transporterId?: string;
-}
+import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
 
 interface MentorTableProps {
   data: {
     weekNumber: number;
     year: number;
-    drivers: MentorDriver[];
+    drivers: MentorDriverData[];
   } | null;
 }
 
