@@ -2,10 +2,10 @@
 export const getMetadata = () => {
   return {
     sectionRatings: {
-      complianceAndSafety: "Fantastic",
-      qualityAndSWC: "Great",
-      capacity: "Great"
+      complianceAndSafety: "",
+      qualityAndSWC: "",
+      capacity: ""
     },
-    currentWeekTips: "Coming Soon"
+    currentWeekTips: ""
   };
 };

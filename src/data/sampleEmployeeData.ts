@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 
 // Try to load employees from localStorage, or use empty array as fallback

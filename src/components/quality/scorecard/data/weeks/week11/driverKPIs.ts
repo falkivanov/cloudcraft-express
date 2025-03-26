@@ -7,11 +7,6 @@ import { getDriverGroup4 } from "./driverGroups/group4";
 import { getDriverGroup5 } from "./driverGroups/group5";
 
 export const getDriverKPIs = (): DriverKPI[] => {
-  return [
-    ...getDriverGroup1(),
-    ...getDriverGroup2(),
-    ...getDriverGroup3(),
-    ...getDriverGroup4(),
-    ...getDriverGroup5()
-  ];
+  // Return empty array instead of driver groups
+  return [];
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import EmployeePageHeader from "@/components/employees/EmployeePageHeader";
 import EmployeePageContent from "@/components/employees/EmployeePageContent";
 import { initialEmployees } from "@/data/sampleEmployeeData";
@@ -7,6 +7,11 @@ import { Container } from "@/components/ui/container";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
+  
+  // Clear localStorage on initial load
+  useEffect(() => {
+    localStorage.removeItem('employees');
+  }, []);
 
   return (
     <Container className="py-8">

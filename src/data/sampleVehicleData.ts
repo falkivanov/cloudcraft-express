@@ -11,7 +11,7 @@ import { sampleAppointments } from "./vehicle/sampleAppointments";
 export { sampleRepairs } from "./vehicle/sampleRepairs";
 export { sampleAppointments } from "./vehicle/sampleAppointments";
 
-// Combine all vehicles into a single array
+// Combine all vehicles into a single array (now empty)
 export const initialVehicles: Vehicle[] = [
   ...activeVehiclesBatch1,
   ...activeVehiclesBatch2,
