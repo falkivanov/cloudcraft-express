@@ -36,6 +36,14 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   } = useEmployeeFilter(employees);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('employees', JSON.stringify(employees));
+    } catch (error) {
+      console.error('Error saving employees to localStorage:', error);
+    }
+  }, [employees]);
+
+  useEffect(() => {
     const handleMouseMove = () => {
       document.body.style.pointerEvents = 'auto';
     };

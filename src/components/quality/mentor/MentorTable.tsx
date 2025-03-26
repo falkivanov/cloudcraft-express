@@ -36,6 +36,9 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
       }
     });
     
+    console.log('Available employees for matching:', initialEmployees.length);
+    console.log('Employees with mentor data:', employeesByMentorName.size);
+    
     // Map drivers and match names
     return data.drivers.map(driver => {
       // Create the same key structure for matching
