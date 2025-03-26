@@ -15,11 +15,13 @@ export class CustomerContactProcessor extends BaseFileProcessor {
     this.setProcessing(true);
     
     try {
+      console.log("Processing customer contact file:", this.file.name);
       const htmlContent = await this.readFileAsText();
       
       if (htmlContent) {
         // Parse the HTML content
         const contactData = parseCustomerContactData(htmlContent);
+        console.log("Parsed customer contact data:", contactData);
         
         // Store the raw HTML and parsed data
         localStorage.setItem("customerContactData", htmlContent);
@@ -44,6 +46,9 @@ export class CustomerContactProcessor extends BaseFileProcessor {
       }
     } catch (error) {
       console.error("Error processing customer contact HTML:", error);
+      toast.error("Fehler beim Verarbeiten der Customer Contact Datei", {
+        description: error instanceof Error ? error.message : "Unbekannter Fehler"
+      });
       throw error;
     } finally {
       this.setProcessing(false);
