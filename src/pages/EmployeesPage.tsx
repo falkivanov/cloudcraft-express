@@ -4,14 +4,22 @@ import EmployeePageHeader from "@/components/employees/EmployeePageHeader";
 import EmployeePageContent from "@/components/employees/EmployeePageContent";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Container } from "@/components/ui/container";
+import { Employee } from "@/types/employee";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
+  const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
   
-  // Clear localStorage on initial load - ensure it's completely removed
+  // Load employees from localStorage on initial load
   useEffect(() => {
-    localStorage.removeItem('employees');
-    localStorage.clear(); // Clear all localStorage data
+    try {
+      const savedEmployees = localStorage.getItem('employees');
+      if (savedEmployees) {
+        setLoadedEmployees(JSON.parse(savedEmployees));
+      }
+    } catch (error) {
+      console.error('Error loading employees from localStorage:', error);
+    }
   }, []);
 
   return (
@@ -21,7 +29,7 @@ const EmployeesPage = () => {
       />
       
       <EmployeePageContent 
-        initialEmployees={[]} // Pass empty array instead of initialEmployees
+        initialEmployees={loadedEmployees} 
         isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
         setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
       />

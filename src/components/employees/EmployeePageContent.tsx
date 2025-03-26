@@ -36,12 +36,17 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
+  // Wenn sich initialEmployees ändert, aktualisiere auch employees
+  useEffect(() => {
+    if (initialEmployees.length > 0) {
+      setEmployees(initialEmployees);
+    }
+  }, [initialEmployees]);
+
   useEffect(() => {
     try {
-      // Only save to localStorage if there are employees
-      if (employees.length > 0) {
-        localStorage.setItem('employees', JSON.stringify(employees));
-      }
+      // Always save to localStorage when employees change
+      localStorage.setItem('employees', JSON.stringify(employees));
     } catch (error) {
       console.error('Error saving employees to localStorage:', error);
     }
