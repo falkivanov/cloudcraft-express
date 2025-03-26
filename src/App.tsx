@@ -36,6 +36,7 @@ const App = () => (
               <Route path="/quality/customer-contact" element={<QualityPage />} />
               <Route path="/quality/pod" element={<QualityPage />} />
               <Route path="/quality/concessions" element={<QualityPage />} />
+              <Route path="/quality/mentor" element={<QualityPage />} />
               
               {/* Neue Schichtplanungs-Route */}
               <Route path="/shifts" element={<ShiftPlanningPage />} />

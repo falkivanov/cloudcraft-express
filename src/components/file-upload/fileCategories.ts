@@ -1,5 +1,5 @@
 
-import { FileText, File, FileSpreadsheet } from "lucide-react";
+import { FileText, File, FileSpreadsheet, Award } from "lucide-react";
 
 export const fileCategories = [
   { 
@@ -30,6 +30,13 @@ export const fileCategories = [
     icon: FileSpreadsheet,
     description: "Concessions-Daten im Excel-Format (.xlsx)"
   },
+  { 
+    id: "mentor", 
+    name: "Mentor", 
+    expectedType: "pdf",
+    icon: Award,
+    description: "Mentor-Programm Daten im PDF-Format"
+  },
 ];
 
 export const getCategoryInfo = (categoryId: string) => {
@@ -46,6 +53,8 @@ export const getCategoryByFileType = (fileName: string, fileType: string): strin
     // Bei PDFs prüfen wir den Dateinamen für die Unterscheidung
     if (fileName.toLowerCase().includes("scorecard") || fileName.toLowerCase().includes("score")) {
       return "scorecard";
+    } else if (fileName.toLowerCase().includes("mentor")) {
+      return "mentor";
     } else {
       return "pod"; // Default für PDF-Dateien, wenn nicht als Scorecard erkannt
     }

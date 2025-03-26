@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   UserIcon, 
@@ -13,6 +12,7 @@ import {
   PhoneCallIcon,
   ClipboardIcon,
   TicketIcon,
+  AwardIcon,
 } from "lucide-react";
 
 interface NavItem {
@@ -36,6 +36,7 @@ export const qualitySubItems: NavItem[] = [
   { name: "Customer Contact", path: "/quality/customer-contact", icon: <PhoneCallIcon className="h-5 w-5" /> },
   { name: "POD", path: "/quality/pod", icon: <ClipboardIcon className="h-5 w-5" /> },
   { name: "Concessions", path: "/quality/concessions", icon: <TicketIcon className="h-5 w-5" /> },
+  { name: "Mentor", path: "/quality/mentor", icon: <AwardIcon className="h-5 w-5" /> },
 ];
 
 const fileUploadItem: NavItem = { 

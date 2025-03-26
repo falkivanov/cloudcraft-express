@@ -14,6 +14,7 @@ const QualityTabs = () => {
     if (pathname.includes("customer-contact")) return "customer-contact";
     if (pathname.includes("pod")) return "pod";
     if (pathname.includes("concessions")) return "concessions";
+    if (pathname.includes("mentor")) return "mentor";
     return "scorecard"; // Default
   };
 
@@ -33,6 +34,9 @@ const QualityTabs = () => {
       case "concessions":
         navigate("/quality/concessions");
         break;
+      case "mentor":
+        navigate("/quality/mentor");
+        break;
       default:
         navigate("/quality/scorecard");
     }
@@ -40,7 +44,7 @@ const QualityTabs = () => {
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="mb-6 grid grid-cols-4 w-full">
+      <TabsList className="mb-6 grid grid-cols-5 w-full">
         <TabsTrigger value="scorecard" className="flex items-center gap-2">
           {qualitySubItems[0].icon}
           <span className="hidden md:inline">{qualitySubItems[0].name}</span>
@@ -56,6 +60,10 @@ const QualityTabs = () => {
         <TabsTrigger value="concessions" className="flex items-center gap-2">
           {qualitySubItems[3].icon}
           <span className="hidden md:inline">{qualitySubItems[3].name}</span>
+        </TabsTrigger>
+        <TabsTrigger value="mentor" className="flex items-center gap-2">
+          {qualitySubItems[4].icon}
+          <span className="hidden md:inline">{qualitySubItems[4].name}</span>
         </TabsTrigger>
       </TabsList>
       
@@ -84,6 +92,13 @@ const QualityTabs = () => {
         <div className="p-4 border rounded-lg bg-background">
           <h2 className="text-2xl font-bold mb-4">Concessions</h2>
           <p>Übersicht zu Zugeständnissen und Ausnahmeregelungen.</p>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="mentor">
+        <div className="p-4 border rounded-lg bg-background">
+          <h2 className="text-2xl font-bold mb-4">Mentor</h2>
+          <p>Informationen zum Mentor-Programm und Trainingsfortschritte.</p>
         </div>
       </TabsContent>
     </Tabs>

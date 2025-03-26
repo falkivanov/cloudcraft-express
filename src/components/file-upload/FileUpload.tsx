@@ -89,6 +89,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
                 <p>Excel-Dateien werden als Concessions-Daten verarbeitet.</p>
               </div>
             )}
+            
+            {selectedCategory === "mentor" && (
+              <div className="mt-2 text-xs text-green-600">
+                <p>PDF-Dateien mit Mentor-Programm Informationen werden verarbeitet und analysiert.</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
