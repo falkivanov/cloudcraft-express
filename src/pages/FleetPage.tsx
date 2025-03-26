@@ -44,7 +44,7 @@ const FleetPage = () => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'vehicles') {
-        window.location.reload();
+        console.log('Vehicle data changed in another tab');
       }
     };
     

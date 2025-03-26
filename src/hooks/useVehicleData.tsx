@@ -38,6 +38,25 @@ export const useVehicleData = () => {
     handleImportVehicles
   } = useVehicleOperations(isInitialized ? loadedVehicles : []);
   
+  // Listen for storage changes from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vehicles' && e.newValue) {
+        try {
+          const updatedVehicles = JSON.parse(e.newValue);
+          setLoadedVehicles(updatedVehicles);
+        } catch (error) {
+          console.error('Error parsing vehicles from storage event:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const {
     searchQuery,
     setSearchQuery,

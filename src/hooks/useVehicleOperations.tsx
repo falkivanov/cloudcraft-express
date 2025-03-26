@@ -9,10 +9,12 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
 
   // Fahrzeuge in localStorage speichern
   useEffect(() => {
-    try {
-      localStorage.setItem('vehicles', JSON.stringify(vehicles));
-    } catch (error) {
-      console.error('Error saving vehicles to localStorage:', error);
+    if (vehicles.length > 0) {
+      try {
+        localStorage.setItem('vehicles', JSON.stringify(vehicles));
+      } catch (error) {
+        console.error('Error saving vehicles to localStorage:', error);
+      }
     }
   }, [vehicles]);
 
@@ -50,7 +52,7 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
 
   // Neues Fahrzeug hinzufügen
   const handleAddVehicle = (vehicleData: Omit<Vehicle, "id">) => {
-    const newId = (Math.max(...vehicles.map(v => parseInt(v.id))) + 1).toString();
+    const newId = (Math.max(...vehicles.map(v => parseInt(v.id)), 0) + 1).toString();
     
     const newVehicle: Vehicle = {
       id: newId,
@@ -77,6 +79,13 @@ export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
     }));
     
     setVehicles([...vehicles, ...vehiclesWithIds]);
+    
+    // Explicitly save to localStorage after import
+    try {
+      localStorage.setItem('vehicles', JSON.stringify([...vehicles, ...vehiclesWithIds]));
+    } catch (error) {
+      console.error('Error saving imported vehicles to localStorage:', error);
+    }
   };
 
   return {

@@ -33,6 +33,25 @@ export const useVehicleAssignmentHistory = () => {
     }
   }, []);
 
+  // Listen for storage events from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vehicleAssignmentHistory' && e.newValue) {
+        try {
+          const updatedHistory = JSON.parse(e.newValue);
+          setAssignmentHistory(updatedHistory);
+        } catch (error) {
+          console.error('Error parsing vehicle assignment history from storage event:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   // Save assignment history to localStorage whenever it changes
   useEffect(() => {
     if (assignmentHistory.length > 0) {
