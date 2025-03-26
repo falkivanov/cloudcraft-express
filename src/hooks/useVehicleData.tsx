@@ -7,27 +7,36 @@ import { Vehicle } from "@/types/vehicle";
 
 export const useVehicleData = () => {
   const [loadedVehicles, setLoadedVehicles] = useState<Vehicle[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  // Versuche Fahrzeuge aus localStorage zu laden
+  // Try to load vehicles from localStorage
   useEffect(() => {
     try {
       const savedVehicles = localStorage.getItem('vehicles');
       if (savedVehicles) {
-        setLoadedVehicles(JSON.parse(savedVehicles));
+        const parsedVehicles = JSON.parse(savedVehicles);
+        setLoadedVehicles(parsedVehicles);
+      } else {
+        // If no saved vehicles, use initialVehicles and save them
+        setLoadedVehicles(initialVehicles);
+        localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Error loading vehicles from localStorage:', error);
+      setLoadedVehicles(initialVehicles);
+      setIsInitialized(true);
     }
   }, []);
   
-  // Verwende die geladenen Fahrzeuge oder Standarddaten, wenn keine vorhanden sind
+  // Use the loaded vehicles or standard data if none are available
   const {
     vehicles,
     handleUpdateVehicle,
     handleDefleetVehicle,
     handleAddVehicle,
     handleImportVehicles
-  } = useVehicleOperations(loadedVehicles.length > 0 ? loadedVehicles : initialVehicles);
+  } = useVehicleOperations(isInitialized ? loadedVehicles : []);
   
   const {
     searchQuery,

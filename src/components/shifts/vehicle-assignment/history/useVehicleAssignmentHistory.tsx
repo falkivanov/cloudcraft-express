@@ -13,7 +13,7 @@ export const useVehicleAssignmentHistory = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [assignmentHistory, setAssignmentHistory] = useState<VehicleAssignment[]>([]);
   
-  // Lade Fahrzeugzuordnungshistorie aus localStorage
+  // Load vehicle assignment history from localStorage
   useEffect(() => {
     try {
       const savedHistory = localStorage.getItem('vehicleAssignmentHistory');
@@ -21,16 +21,30 @@ export const useVehicleAssignmentHistory = () => {
         const parsedHistory = JSON.parse(savedHistory);
         setAssignmentHistory(parsedHistory);
       } else {
-        // Fallback auf Beispieldaten, wenn keine Historie im localStorage vorhanden ist
-        setAssignmentHistory(getSampleVehicleAssignments());
+        // Use sample data if no history exists in localStorage
+        const sampleData = getSampleVehicleAssignments();
+        setAssignmentHistory(sampleData);
+        // Save sample data to localStorage for future use
+        localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(sampleData));
       }
     } catch (error) {
       console.error('Error loading vehicle assignment history from localStorage:', error);
       setAssignmentHistory(getSampleVehicleAssignments());
     }
   }, []);
+
+  // Save assignment history to localStorage whenever it changes
+  useEffect(() => {
+    if (assignmentHistory.length > 0) {
+      try {
+        localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(assignmentHistory));
+      } catch (error) {
+        console.error('Error saving vehicle assignment history to localStorage:', error);
+      }
+    }
+  }, [assignmentHistory]);
   
-  // Filtern und Sortieren der Zuweisungen
+  // Filter and sort assignments
   const filteredAssignments = filterAssignments(
     assignmentHistory,
     searchQuery,
@@ -47,6 +61,8 @@ export const useVehicleAssignmentHistory = () => {
     setDateFilter,
     selectedEmployee,
     setSelectedEmployee,
-    sortedAssignments
+    sortedAssignments,
+    assignmentHistory,
+    setAssignmentHistory
   };
 };

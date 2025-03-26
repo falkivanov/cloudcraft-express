@@ -36,17 +36,48 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
-  // Wenn sich initialEmployees ändert, aktualisiere auch employees
-  useEffect(() => {
-    if (initialEmployees.length > 0) {
-      setEmployees(initialEmployees);
-    }
-  }, [initialEmployees]);
-
+  // Initialize employees from localStorage or use initialEmployees
   useEffect(() => {
     try {
-      // Always save to localStorage when employees change
-      localStorage.setItem('employees', JSON.stringify(employees));
+      const savedEmployees = localStorage.getItem('employees');
+      if (savedEmployees) {
+        setEmployees(JSON.parse(savedEmployees));
+      } else if (initialEmployees.length > 0) {
+        setEmployees(initialEmployees);
+        localStorage.setItem('employees', JSON.stringify(initialEmployees));
+      }
+    } catch (error) {
+      console.error('Error loading employees from localStorage:', error);
+      if (initialEmployees.length > 0) {
+        setEmployees(initialEmployees);
+      }
+    }
+  }, []);
+
+  // Listen for storage changes in other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'employees' && e.newValue) {
+        try {
+          setEmployees(JSON.parse(e.newValue));
+        } catch (error) {
+          console.error('Error parsing employees from storage event:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Save to localStorage whenever employees change
+  useEffect(() => {
+    try {
+      if (employees.length > 0) {
+        localStorage.setItem('employees', JSON.stringify(employees));
+      }
     } catch (error) {
       console.error('Error saving employees to localStorage:', error);
     }

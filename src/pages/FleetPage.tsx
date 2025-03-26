@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
 import FleetFilter from "@/components/fleet/FleetFilter";
@@ -40,6 +40,19 @@ const FleetPage = () => {
     statusFilter,
     setStatusFilter
   } = useVehicleData();
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vehicles') {
+        window.location.reload();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const handleStatusFilterChange = (newStatusFilter: "all" | "active" | "workshop") => {
     setStatusFilter(newStatusFilter);
