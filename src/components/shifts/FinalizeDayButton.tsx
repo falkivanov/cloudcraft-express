@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, CalendarIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface FinalizeDayButtonProps {
   date: Date;
@@ -20,8 +21,21 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
   // Handle the finalize button click
   const handleClick = () => {
     onFinalize(dateKey);
+    
     // Dispatch an event to make sure all components are aware of the change
     window.dispatchEvent(new CustomEvent('dayFinalized', { detail: { dateKey } }));
+    
+    // Auch den globalen Finalisierungsstatus setzen
+    try {
+      localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error saving schedule finalized status to localStorage:', error);
+    }
+    
+    toast.success("Tag erfolgreich finalisiert", {
+      description: "Sie können jetzt mit der Fahrzeugzuordnung fortfahren."
+    });
   };
   
   return (

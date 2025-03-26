@@ -13,6 +13,7 @@ export const useShiftPlanning = () => {
       const savedIsScheduleFinalized = localStorage.getItem('isScheduleFinalized');
       if (savedIsScheduleFinalized) {
         setIsScheduleFinalized(JSON.parse(savedIsScheduleFinalized));
+        console.log('Loaded schedule finalized status:', JSON.parse(savedIsScheduleFinalized));
       }
     } catch (error) {
       console.error('Error loading schedule finalized status from localStorage:', error);
@@ -23,6 +24,7 @@ export const useShiftPlanning = () => {
   useEffect(() => {
     try {
       localStorage.setItem('isScheduleFinalized', JSON.stringify(isScheduleFinalized));
+      console.log('Saved schedule finalized status:', isScheduleFinalized);
     } catch (error) {
       console.error('Error saving schedule finalized status to localStorage:', error);
     }

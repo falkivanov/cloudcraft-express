@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface VehicleAssignmentControlsProps {
   isScheduleFinalized: boolean;
@@ -37,12 +38,13 @@ const VehicleAssignmentControls: React.FC<VehicleAssignmentControlsProps> = ({
             variant="outline"
             onClick={onAutoAssign}
             className="gap-2"
+            disabled={!isScheduleFinalized}
           >
             <WandSparkles className="h-4 w-4" />
             Auto-Zuordnung für {formattedTomorrow}
           </Button>
           <Button 
-            disabled={Object.keys(tomorrowAssignments).length === 0}
+            disabled={Object.keys(tomorrowAssignments).length === 0 || !isScheduleFinalized}
             onClick={onSaveAssignments}
           >
             <Car className="h-4 w-4 mr-2" />
@@ -50,6 +52,14 @@ const VehicleAssignmentControls: React.FC<VehicleAssignmentControlsProps> = ({
           </Button>
         </div>
       </div>
+      
+      {!isScheduleFinalized && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            Der Dienstplan ist nicht finalisiert. Bitte finalisieren Sie erst den Dienstplan für den morgigen Tag.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {!isScheduleFinalized && (
         <div className="flex items-center space-x-2 bg-muted p-4 rounded-md mb-4">

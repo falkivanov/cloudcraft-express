@@ -24,8 +24,46 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   const [overrideFinalized, setOverrideFinalized] = useState(false);
+  const [localFinalized, setLocalFinalized] = useState(isScheduleFinalized);
   
-  const effectivelyFinalized = isScheduleFinalized || overrideFinalized;
+  // Check for changes in isScheduleFinalized prop
+  useEffect(() => {
+    setLocalFinalized(isScheduleFinalized);
+    console.log("isScheduleFinalized prop changed:", isScheduleFinalized);
+  }, [isScheduleFinalized]);
+  
+  // Listen for storage events that might update the finalized status
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const savedIsScheduleFinalized = localStorage.getItem('isScheduleFinalized');
+        if (savedIsScheduleFinalized) {
+          const newValue = JSON.parse(savedIsScheduleFinalized);
+          setLocalFinalized(newValue);
+          console.log("Schedule finalized status updated from storage:", newValue);
+        }
+      } catch (error) {
+        console.error('Error reading schedule finalized status from localStorage:', error);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom dayFinalized events
+    const handleDayFinalized = () => {
+      setLocalFinalized(true);
+      console.log("Day finalized event detected, updating local finalized state");
+    };
+    
+    window.addEventListener('dayFinalized', handleDayFinalized);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('dayFinalized', handleDayFinalized);
+    };
+  }, []);
+  
+  const effectivelyFinalized = localFinalized || overrideFinalized;
   
   // Lade gespeicherte Zuordnungen aus dem localStorage
   useEffect(() => {
@@ -152,7 +190,7 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   return (
     <div className="space-y-6 w-full">
       <VehicleAssignmentControls
-        isScheduleFinalized={isScheduleFinalized}
+        isScheduleFinalized={effectivelyFinalized}
         overrideFinalized={overrideFinalized}
         setOverrideFinalized={setOverrideFinalized}
         tomorrowAssignments={tomorrowAssignments}
