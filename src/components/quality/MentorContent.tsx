@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { UploadIcon, FileSpreadsheet } from "lucide-react";
+import { UploadIcon, FileSpreadsheet, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import MentorTable from "./mentor/MentorTable";
 
 interface MentorContentProps {
   mentorData: any | null;
@@ -15,18 +16,32 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
   }
 
   return (
-    <div className="p-4 border rounded-lg bg-background w-full">
+    <div className="space-y-6 w-full">
       <Card>
         <CardHeader>
-          <CardTitle>Mentor Programm</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-green-500" /> 
+              Mentor Programm - KW{mentorData.weekNumber}/{mentorData.year}
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/file-upload" className="flex items-center gap-2">
+                <UploadIcon className="h-4 w-4" />
+                <span>Neue Datei hochladen</span>
+              </Link>
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mt-2">
-            <h3 className="text-lg font-semibold mb-2">Geladene Mentor-Daten</h3>
-            <p className="flex items-center"><FileSpreadsheet className="h-4 w-4 mr-2 text-green-500" /> Dateiname: {mentorData.fileName}</p>
-            <p>Dateityp: {mentorData.type.toUpperCase()}</p>
-            {/* Spezifische Darstellung der Mentor-Daten hier */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Dateiname: {mentorData.fileName}</span>
+            <span className="text-sm text-muted-foreground">
+              • {mentorData.drivers?.length || 0} Fahrer
+            </span>
           </div>
+          
+          <MentorTable data={mentorData} />
         </CardContent>
       </Card>
     </div>
