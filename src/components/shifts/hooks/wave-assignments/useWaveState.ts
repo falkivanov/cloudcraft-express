@@ -4,11 +4,11 @@ import { Employee } from "@/types/employee";
 import { Wave } from "../../types/wave-types";
 import { WaveState } from "./types";
 
-export const useWaveState = (scheduledEmployees: Employee[]) => {
+export const useWaveState = (scheduledEmployees: Employee[] = []) => {
   const [waveState, setWaveState] = useState<WaveState>({
     waveCount: 1,
     waves: [
-      { id: 1, time: "11:00", requestedCount: scheduledEmployees.length }
+      { id: 1, time: "11:00", requestedCount: scheduledEmployees?.length || 0 }
     ]
   });
 
@@ -34,7 +34,7 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
       const newWaveId = waveState.waveCount + 1;
       
       // Calculate initial distribution for the new wave
-      const totalEmployees = scheduledEmployees.length;
+      const totalEmployees = scheduledEmployees?.length || 0;
       const newTotalWaves = waveState.waveCount + 1;
       
       // Aim for even distribution between all waves
@@ -117,7 +117,7 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
     if (newCount < 0) newCount = 0;
     
     // Don't allow more than the total number of employees
-    if (newCount > scheduledEmployees.length) newCount = scheduledEmployees.length;
+    if (newCount > (scheduledEmployees?.length || 0)) newCount = scheduledEmployees?.length || 0;
     
     const updatedWaves = waveState.waves.map(w => 
       w.id === waveId ? { ...w, requestedCount: newCount } : w
@@ -126,16 +126,16 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
     // Ensure the total requested count doesn't exceed the total number of employees
     let totalRequestedCount = updatedWaves.reduce((sum, wave) => sum + wave.requestedCount, 0);
     
-    if (totalRequestedCount > scheduledEmployees.length) {
+    if (totalRequestedCount > (scheduledEmployees?.length || 0)) {
       // Adjust other waves to make the total match the employee count
       for (let i = 0; i < updatedWaves.length; i++) {
         if (updatedWaves[i].id !== waveId && updatedWaves[i].requestedCount > 0) {
-          const diff = totalRequestedCount - scheduledEmployees.length;
+          const diff = totalRequestedCount - (scheduledEmployees?.length || 0);
           const newRequestedCount = Math.max(0, updatedWaves[i].requestedCount - diff);
           updatedWaves[i].requestedCount = newRequestedCount;
           totalRequestedCount = updatedWaves.reduce((sum, wave) => sum + wave.requestedCount, 0);
           
-          if (totalRequestedCount <= scheduledEmployees.length) break;
+          if (totalRequestedCount <= (scheduledEmployees?.length || 0)) break;
         }
       }
     }
@@ -148,10 +148,10 @@ export const useWaveState = (scheduledEmployees: Employee[]) => {
 
   // Update the first wave count when employees change
   useEffect(() => {
-    if (waveState.waves.length === 1 && waveState.waves[0].requestedCount !== scheduledEmployees.length) {
-      setWaves([{ ...waveState.waves[0], requestedCount: scheduledEmployees.length }]);
+    if (waveState.waves.length === 1 && waveState.waves[0].requestedCount !== (scheduledEmployees?.length || 0)) {
+      setWaves([{ ...waveState.waves[0], requestedCount: scheduledEmployees?.length || 0 }]);
     }
-  }, [scheduledEmployees.length]);
+  }, [scheduledEmployees]);
 
   return {
     waves: waveState.waves,

@@ -1,29 +1,31 @@
 
 import { Employee } from "@/types/employee";
+import { Wave, WaveAssignment } from "../../types/wave-types";
 import { useWaveState } from "./useWaveState";
 import { useAssignments } from "./useAssignments";
 import { useEmployeesPerWave } from "./useEmployeesPerWave";
 
-export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
-  // Use our separated hooks
-  const waveState = useWaveState(scheduledEmployees);
-  const { 
-    waves, 
-    handleAddWave, 
-    handleRemoveWave, 
-    handleWaveTimeChange, 
-    handleRequestedCountChange 
-  } = waveState;
+export const useWaveAssignments = (scheduledEmployees: Employee[] = []) => {
+  // Initialize wave state
+  const {
+    waves,
+    handleAddWave,
+    handleRemoveWave,
+    handleWaveTimeChange,
+    handleRequestedCountChange
+  } = useWaveState(scheduledEmployees);
 
-  const { 
-    assignments, 
-    applyWaveDistribution, 
-    handleEmployeeWaveChange: handleEmployeeWaveChangeBase, 
-    getEmployeeWaveId, 
+  // Initialize assignments
+  const {
+    assignments,
+    applyWaveDistribution,
+    handleEmployeeWaveChange,
+    getEmployeeWaveId,
     updateAssignmentTimes,
     reassignEmployeesFromWave
-  } = useAssignments(scheduledEmployees, waves);
+  } = useAssignments(scheduledEmployees);
 
+  // Count employees per wave
   const employeesPerWave = useEmployeesPerWave(waves, assignments);
 
   // Handle wave removal with appropriate reassignments
@@ -42,15 +44,14 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
   };
 
   // Handle employee wave changes while maintaining the wave context
-  const handleEmployeeWaveChange = (employeeId: string, waveId: number) => {
-    handleEmployeeWaveChangeBase(employeeId, waveId, waves);
+  const handleEmployeeWaveChangeWrapped = (employeeId: string, waveId: number) => {
+    handleEmployeeWaveChange(employeeId, waveId, waves);
   };
 
   // Handler for adding a wave with automatic distribution
   const handleAddWaveWithDistribution = () => {
     // We pass the applyWaveDistribution function to be executed after the wave is added
     handleAddWave((updatedWaves) => {
-      console.log("Applying wave distribution after adding wave:", updatedWaves);
       applyWaveDistribution(updatedWaves);
     });
   };
@@ -64,7 +65,7 @@ export const useWaveAssignments = (scheduledEmployees: Employee[]) => {
     handleWaveTimeChange: handleWaveTimeChangeWithAssignments,
     handleRequestedCountChange: (waveId: number, newCount: number) => 
       handleRequestedCountChange(waveId, newCount, () => applyWaveDistribution(waves)),
-    handleEmployeeWaveChange,
+    handleEmployeeWaveChange: handleEmployeeWaveChangeWrapped,
     getEmployeeWaveId,
     applyWaveDistribution: () => applyWaveDistribution(waves)
   };

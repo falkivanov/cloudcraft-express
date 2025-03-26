@@ -21,4 +21,5 @@ export interface WaveEmployeeCount {
 export interface StartTimeWavesProps {
   scheduledEmployees: Employee[];
   onAssignWaves: (waveAssignments: WaveAssignment[]) => void;
+  initialAssignments?: WaveAssignment[];
 }
