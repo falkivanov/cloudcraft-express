@@ -8,9 +8,10 @@ import { Container } from "@/components/ui/container";
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   
-  // Clear localStorage on initial load
+  // Clear localStorage on initial load - ensure it's completely removed
   useEffect(() => {
     localStorage.removeItem('employees');
+    localStorage.clear(); // Clear all localStorage data
   }, []);
 
   return (
@@ -20,7 +21,7 @@ const EmployeesPage = () => {
       />
       
       <EmployeePageContent 
-        initialEmployees={initialEmployees}
+        initialEmployees={[]} // Pass empty array instead of initialEmployees
         isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
         setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
       />

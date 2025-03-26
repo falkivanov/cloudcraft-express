@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -37,7 +38,10 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
 
   useEffect(() => {
     try {
-      localStorage.setItem('employees', JSON.stringify(employees));
+      // Only save to localStorage if there are employees
+      if (employees.length > 0) {
+        localStorage.setItem('employees', JSON.stringify(employees));
+      }
     } catch (error) {
       console.error('Error saving employees to localStorage:', error);
     }

@@ -28,6 +28,15 @@ const QualityPage = () => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
+  // Clear all quality-related localStorage data on component mount
+  useEffect(() => {
+    localStorage.removeItem('customerContactData');
+    localStorage.removeItem('scorecardData');
+    localStorage.removeItem('extractedScorecardData');
+    localStorage.removeItem('concessionsData');
+    localStorage.removeItem('mentorData');
+  }, []);
+  
   useEffect(() => {
     console.info("QualityPage: Path changed to", pathname);
     loadData();
@@ -39,8 +48,8 @@ const QualityPage = () => {
     
     if (pathname.includes("/quality/customer-contact")) {
       console.info("Loading customer contact data");
-      // Get data from localStorage or use test data
-      const data = localStorage.getItem("customerContactData") || getKW11TestHTMLData();
+      // Don't use test data, only try to load from localStorage
+      const data = localStorage.getItem("customerContactData");
       setCustomerContactData(data);
       
       if (data) {
