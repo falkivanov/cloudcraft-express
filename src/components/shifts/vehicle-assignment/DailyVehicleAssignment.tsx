@@ -25,16 +25,50 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
   
   const effectivelyFinalized = isScheduleFinalized || overrideFinalized;
   
+  // Lade gespeicherte Zuordnungen aus dem localStorage
   useEffect(() => {
-    const mockTodayAssignments: Record<string, string> = {
-      "1": "1",
-      "2": "3",
-      "3": "2",
-      "6": "5",
-      "9": "7",
-    };
-    setTodayAssignments(mockTodayAssignments);
+    try {
+      const savedTodayAssignments = localStorage.getItem('todayVehicleAssignments');
+      const savedTomorrowAssignments = localStorage.getItem('tomorrowVehicleAssignments');
+      
+      if (savedTodayAssignments) {
+        setTodayAssignments(JSON.parse(savedTodayAssignments));
+      } else {
+        // Fallback auf Mock-Daten nur wenn keine gespeicherten Daten vorhanden sind
+        const mockTodayAssignments: Record<string, string> = {
+          "1": "1",
+          "2": "3",
+          "3": "2",
+          "6": "5",
+          "9": "7",
+        };
+        setTodayAssignments(mockTodayAssignments);
+      }
+      
+      if (savedTomorrowAssignments) {
+        setTomorrowAssignments(JSON.parse(savedTomorrowAssignments));
+      }
+    } catch (error) {
+      console.error('Error loading vehicle assignments from localStorage:', error);
+    }
   }, []);
+  
+  // Speichere Zuordnungen im localStorage, wenn sie sich ändern
+  useEffect(() => {
+    try {
+      localStorage.setItem('todayVehicleAssignments', JSON.stringify(todayAssignments));
+    } catch (error) {
+      console.error('Error saving today vehicle assignments to localStorage:', error);
+    }
+  }, [todayAssignments]);
+  
+  useEffect(() => {
+    try {
+      localStorage.setItem('tomorrowVehicleAssignments', JSON.stringify(tomorrowAssignments));
+    } catch (error) {
+      console.error('Error saving tomorrow vehicle assignments to localStorage:', error);
+    }
+  }, [tomorrowAssignments]);
   
   const handleAutoAssign = () => {
     if (!effectivelyFinalized) {
@@ -81,6 +115,16 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
         assignedBy: "Admin"
       };
     });
+    
+    // Speichere die Zuordnungshistorie im localStorage
+    try {
+      const existingHistory = localStorage.getItem('vehicleAssignmentHistory');
+      const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
+      const updatedHistory = [...historyArray, ...savedAssignments];
+      localStorage.setItem('vehicleAssignmentHistory', JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error('Error saving vehicle assignment history to localStorage:', error);
+    }
     
     console.log("Saved assignments for tomorrow:", savedAssignments);
     toast.success(`Fahrzeugzuordnungen für ${formattedTomorrow} wurden gespeichert!`);

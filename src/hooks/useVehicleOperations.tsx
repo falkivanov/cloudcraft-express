@@ -1,11 +1,20 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/hooks/use-toast";
 
 export const useVehicleOperations = (initialVehicleData: Vehicle[] = []) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicleData);
   const { toast } = useToast();
+
+  // Fahrzeuge in localStorage speichern
+  useEffect(() => {
+    try {
+      localStorage.setItem('vehicles', JSON.stringify(vehicles));
+    } catch (error) {
+      console.error('Error saving vehicles to localStorage:', error);
+    }
+  }, [vehicles]);
 
   // Fahrzeug aktualisieren
   const handleUpdateVehicle = (updatedVehicle: Vehicle) => {

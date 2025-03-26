@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableHeader, 
@@ -24,7 +24,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 
-// Beispieldaten für die Fahrzeugzuordnungshistorie
+// Typ für Fahrzeugzuordnungseintrag
+interface VehicleAssignment {
+  id: string;
+  date: string;
+  employeeId: string;
+  employeeName: string;
+  vehicleId: string;
+  vehicleInfo: string;
+  assignedAt: string;
+  assignedBy: string;
+}
+
+// Beispieldaten für die Fahrzeugzuordnungshistorie als Fallback
 const sampleVehicleAssignments = [
   {
     id: "va1",
@@ -103,6 +115,24 @@ const VehicleAssignmentHistory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [assignmentHistory, setAssignmentHistory] = useState<VehicleAssignment[]>([]);
+  
+  // Lade Fahrzeugzuordnungshistorie aus localStorage
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('vehicleAssignmentHistory');
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        setAssignmentHistory(parsedHistory);
+      } else {
+        // Fallback auf Beispieldaten, wenn keine Historie im localStorage vorhanden ist
+        setAssignmentHistory(sampleVehicleAssignments);
+      }
+    } catch (error) {
+      console.error('Error loading vehicle assignment history from localStorage:', error);
+      setAssignmentHistory(sampleVehicleAssignments);
+    }
+  }, []);
   
   // Generieren von Datumswerten für die letzten 30 Tage
   const dateOptions = Array.from({ length: 30 }, (_, i) => {
@@ -114,7 +144,7 @@ const VehicleAssignmentHistory: React.FC = () => {
   });
   
   // Filtern der Zuweisungen basierend auf den Suchkriterien
-  const filteredAssignments = sampleVehicleAssignments.filter(assignment => {
+  const filteredAssignments = assignmentHistory.filter(assignment => {
     const matchesSearch = searchQuery === "" || 
       assignment.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) || 
       assignment.vehicleInfo.toLowerCase().includes(searchQuery.toLowerCase());
