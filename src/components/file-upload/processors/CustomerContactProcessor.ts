@@ -27,6 +27,9 @@ export class CustomerContactProcessor extends BaseFileProcessor {
         localStorage.setItem("customerContactData", htmlContent);
         localStorage.setItem("parsedCustomerContactData", JSON.stringify(contactData));
         
+        // Also store the week information - setting to KW12 for currently uploaded data
+        localStorage.setItem("customerContactWeek", "week-12-2025");
+        
         // Update upload history in localStorage
         this.updateUploadHistory();
         

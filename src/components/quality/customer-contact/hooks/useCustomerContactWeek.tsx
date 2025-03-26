@@ -2,8 +2,18 @@
 import { useState, useEffect } from "react";
 
 export const useCustomerContactWeek = () => {
-  // Initialize with week 11 as default since our test data is from KW11
-  const [selectedWeek, setSelectedWeek] = useState<string>("week-11-2025");
+  // Initialize with the stored week or KW12 as default
+  const getInitialWeek = () => {
+    const storedWeek = localStorage.getItem("customerContactWeek");
+    return storedWeek || "week-12-2025";
+  };
+  
+  const [selectedWeek, setSelectedWeek] = useState<string>(getInitialWeek());
+  
+  // Save selected week to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("customerContactWeek", selectedWeek);
+  }, [selectedWeek]);
   
   // Check if week has data (we would expand this for real data sources)
   const isUnavailableWeek = () => {

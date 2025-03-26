@@ -17,11 +17,17 @@ const CustomerContactWeekSelector: React.FC<CustomerContactWeekSelectorProps> = 
   selectedWeek,
   setSelectedWeek
 }) => {
-  // Define the available weeks for Customer Contact data
+  // Define the available weeks for Customer Contact data, including KW12
   const availableWeeks = [
     {
+      id: "week-12-2025",
+      label: "KW 12 (aktuell)",
+      weekNum: 12,
+      year: 2025,
+    },
+    {
       id: "week-11-2025",
-      label: "KW 11 (aktuell)",
+      label: "KW 11",
       weekNum: 11,
       year: 2025,
     },
@@ -52,7 +58,7 @@ const CustomerContactWeekSelector: React.FC<CustomerContactWeekSelectorProps> = 
         <SelectTrigger className="w-[180px] bg-white">
           <SelectValue placeholder="Woche auswählen" />
         </SelectTrigger>
-        <SelectContent className="bg-popover">
+        <SelectContent className="bg-white z-50">
           {availableWeeks.map((week) => (
             <SelectItem key={week.id} value={week.id}>
               {week.label}
