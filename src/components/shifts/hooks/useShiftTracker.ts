@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { ShiftAssignment } from "@/types/shift";
@@ -23,14 +22,27 @@ export const useShiftTracker = (weekDays: Date[]) => {
           // Map aus dem JSON String wiederherstellen
           const shiftsObject = JSON.parse(savedShifts);
           const newMap = new Map<string, ShiftAssignment>();
-          Object.entries(shiftsObject).forEach(([key, value]) => {
-            newMap.set(key, value as ShiftAssignment);
-          });
-          console.log('Loaded shifts from localStorage:', newMap.size);
-          setShiftsMap(newMap);
+          
+          if (typeof shiftsObject === 'object' && shiftsObject !== null) {
+            Object.entries(shiftsObject).forEach(([key, value]) => {
+              if (value && typeof value === 'object' && 'employeeId' in value && 'date' in value && 'shiftType' in value) {
+                newMap.set(key, value as ShiftAssignment);
+              } else {
+                console.warn(`Invalid shift assignment found for key ${key}, skipping`, value);
+              }
+            });
+            console.log('Loaded shifts from localStorage:', newMap.size);
+            setShiftsMap(newMap);
+          } else {
+            console.error('Invalid shifts data structure in localStorage');
+            // Keep empty map if data is invalid
+          }
+        } else {
+          console.log('No saved shifts found in localStorage, starting with empty map');
         }
       } catch (error) {
         console.error('Error loading shifts from localStorage:', error);
+        // Keep initial empty map if data is corrupted
       }
     };
     
@@ -48,6 +60,10 @@ export const useShiftTracker = (weekDays: Date[]) => {
       localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
     } catch (error) {
       console.error('Error saving shifts to localStorage:', error);
+      // Notify about potential data loss
+      if (shiftsMap.size > 0) {
+        console.warn('Shift assignments might not persist after page refresh due to storage error');
+      }
     }
   }, [shiftsMap]);
   
@@ -93,29 +109,33 @@ export const useShiftTracker = (weekDays: Date[]) => {
     
     // Listen for shift assignments
     const handleShiftAssigned = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { assignment, action } = customEvent.detail;
-      
-      if (!assignment || !assignment.date) {
-        console.error("Invalid assignment data:", customEvent.detail);
-        return;
-      }
-      
-      console.log(`Shift event received:`, { assignment, action });
-      
-      // Update the shiftsMap first
-      setShiftsMap(prevMap => {
-        const newMap = new Map(prevMap);
-        const key = `${assignment.employeeId}-${assignment.date}`;
+      try {
+        const customEvent = event as CustomEvent;
+        const { assignment, action } = customEvent.detail;
         
-        if (action === 'add') {
-          newMap.set(key, assignment);
-        } else if (action === 'remove') {
-          newMap.delete(key);
+        if (!assignment || !assignment.date || !assignment.employeeId) {
+          console.error("Invalid assignment data:", customEvent.detail);
+          return;
         }
         
-        return newMap;
-      });
+        console.log(`Shift event received:`, { assignment, action });
+        
+        // Update the shiftsMap first
+        setShiftsMap(prevMap => {
+          const newMap = new Map(prevMap);
+          const key = `${assignment.employeeId}-${assignment.date}`;
+          
+          if (action === 'add') {
+            newMap.set(key, assignment);
+          } else if (action === 'remove') {
+            newMap.delete(key);
+          }
+          
+          return newMap;
+        });
+      } catch (error) {
+        console.error('Error handling shift assignment event:', error);
+      }
     };
     
     document.addEventListener('shiftAssigned', handleShiftAssigned);

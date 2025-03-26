@@ -22,6 +22,7 @@ interface VehicleAssignmentViewProps {
 const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled }) => {
   const [activeTab, setActiveTab] = useState<"daily" | "history">("daily");
   const [localFinalized, setLocalFinalized] = useState(isEnabled);
+  const [storageError, setStorageError] = useState<string | null>(null);
   
   // Check for changes in the isEnabled prop
   useEffect(() => {
@@ -36,11 +37,13 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
         const savedIsScheduleFinalized = localStorage.getItem('isScheduleFinalized');
         if (savedIsScheduleFinalized) {
           const newValue = JSON.parse(savedIsScheduleFinalized);
-          setLocalFinalized(newValue);
+          setLocalFinalized(!!newValue);
           console.log("Schedule finalized status updated from storage:", newValue);
+          setStorageError(null);
         }
       } catch (error) {
         console.error('Error reading schedule finalized status from localStorage:', error);
+        setStorageError('Fehler beim Lesen des Finalisierungsstatus');
       }
     };
     
@@ -50,9 +53,27 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
     const handleDayFinalized = () => {
       setLocalFinalized(true);
       console.log("Day finalized event detected, updating local finalized state");
+      setStorageError(null);
+    };
+    
+    // Listen for custom scheduleFinalized events
+    const handleScheduleFinalized = (event: Event) => {
+      try {
+        const customEvent = event as CustomEvent;
+        const { finalized } = customEvent.detail;
+        
+        if (finalized === true) {
+          setLocalFinalized(true);
+          console.log("Schedule finalized event received");
+          setStorageError(null);
+        }
+      } catch (error) {
+        console.error('Error handling scheduleFinalized event:', error);
+      }
     };
     
     window.addEventListener('dayFinalized', handleDayFinalized);
+    window.addEventListener('scheduleFinalized', handleScheduleFinalized);
     
     // Initial check from localStorage
     handleStorageChange();
@@ -60,6 +81,7 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('dayFinalized', handleDayFinalized);
+      window.removeEventListener('scheduleFinalized', handleScheduleFinalized);
     };
   }, []);
   
@@ -72,6 +94,18 @@ const VehicleAssignmentView: React.FC<VehicleAssignmentViewProps> = ({ isEnabled
           Um Fahrzeuge zuzuordnen, müssen Sie zuerst den Dienstplan finalisieren. 
           Bitte gehen Sie zurück zum Wochendienstplan und klicken Sie auf "Tag finalisieren" 
           für den morgigen Tag.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (storageError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTriangle className="h-5 w-5" />
+        <AlertTitle>Speicherproblem erkannt</AlertTitle>
+        <AlertDescription>
+          {storageError}. Bitte laden Sie die Seite neu und versuchen Sie es erneut.
         </AlertDescription>
       </Alert>
     );

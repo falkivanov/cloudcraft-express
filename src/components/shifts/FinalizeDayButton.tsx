@@ -20,22 +20,40 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
 }) => {
   // Handle the finalize button click
   const handleClick = () => {
-    onFinalize(dateKey);
-    
-    // Dispatch an event to make sure all components are aware of the change
-    window.dispatchEvent(new CustomEvent('dayFinalized', { detail: { dateKey } }));
-    
-    // Auch den globalen Finalisierungsstatus setzen
-    try {
-      localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
-      window.dispatchEvent(new Event('storage'));
-    } catch (error) {
-      console.error('Error saving schedule finalized status to localStorage:', error);
+    if (!dateKey) {
+      console.error('Invalid dateKey provided to FinalizeDayButton');
+      toast.error("Fehler beim Finalisieren des Tages", {
+        description: "Ein technischer Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      });
+      return;
     }
     
-    toast.success("Tag erfolgreich finalisiert", {
-      description: "Sie können jetzt mit der Fahrzeugzuordnung fortfahren."
-    });
+    onFinalize(dateKey);
+    
+    try {
+      // Dispatch an event to make sure all components are aware of the change
+      window.dispatchEvent(new CustomEvent('dayFinalized', { 
+        detail: { dateKey } 
+      }));
+      
+      // Auch den globalen Finalisierungsstatus setzen
+      localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
+      
+      // Trigger storage event on the current window (for components in the same window)
+      window.dispatchEvent(new Event('storage'));
+      
+      toast.success("Tag erfolgreich finalisiert", {
+        description: "Sie können jetzt mit der Fahrzeugzuordnung fortfahren."
+      });
+    } catch (error) {
+      console.error('Error finalizing day:', error);
+      
+      // Still show success toast because onFinalize already executed successfully
+      // but add warning about persistence
+      toast.success("Tag finalisiert", {
+        description: "Der Tag wurde finalisiert, aber es gab ein Problem beim Speichern. Einige Funktionen könnten beeinträchtigt sein."
+      });
+    }
   };
   
   return (

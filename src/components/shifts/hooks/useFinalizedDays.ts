@@ -15,9 +15,14 @@ export const useFinalizedDays = () => {
           const parsedFinalizedDays = JSON.parse(savedFinalizedDays);
           console.log('Loaded finalized days from localStorage:', parsedFinalizedDays);
           setFinalizedDays(parsedFinalizedDays);
+        } else {
+          console.log('No finalized days found in localStorage, starting with empty array');
+          setFinalizedDays([]);
         }
       } catch (error) {
         console.error('Error loading finalized days from localStorage:', error);
+        // Reset to empty array if data is corrupted
+        setFinalizedDays([]);
       }
     };
 
@@ -28,13 +33,23 @@ export const useFinalizedDays = () => {
   useEffect(() => {
     try {
       localStorage.setItem('finalizedDays', JSON.stringify(finalizedDays));
+      console.log('Saved finalized days to localStorage:', finalizedDays);
     } catch (error) {
       console.error('Error saving finalized days to localStorage:', error);
+      // Notify user that changes might not persist after page refresh
+      if (finalizedDays.length > 0) {
+        console.warn('Your finalized days might not persist after page refresh due to storage error');
+      }
     }
   }, [finalizedDays]);
   
   // Memoize the finalize day function to prevent unnecessary rerenders
   const handleFinalizeDay = useCallback((dateKey: string) => {
+    if (!dateKey) {
+      console.error('Invalid dateKey provided to handleFinalizeDay');
+      return;
+    }
+    
     console.log(`Finalizing day: ${dateKey}`);
     setFinalizedDays(prev => {
       if (!prev.includes(dateKey)) {
@@ -47,12 +62,21 @@ export const useFinalizedDays = () => {
   // Listen for day finalized events (from other components)
   useEffect(() => {
     const handleDayFinalized = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { dateKey } = customEvent.detail;
-      
-      if (dateKey && !finalizedDays.includes(dateKey)) {
-        console.log(`Day finalized event received: ${dateKey}`);
-        setFinalizedDays(prev => [...prev, dateKey]);
+      try {
+        const customEvent = event as CustomEvent;
+        const { dateKey } = customEvent.detail;
+        
+        if (!dateKey) {
+          console.error('Missing dateKey in dayFinalized event');
+          return;
+        }
+        
+        if (dateKey && !finalizedDays.includes(dateKey)) {
+          console.log(`Day finalized event received: ${dateKey}`);
+          setFinalizedDays(prev => [...prev, dateKey]);
+        }
+      } catch (error) {
+        console.error('Error handling dayFinalized event:', error);
       }
     };
     

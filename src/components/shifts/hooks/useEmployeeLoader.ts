@@ -25,6 +25,8 @@ export const useEmployeeLoader = (initialEmployees: Employee[]) => {
         }
       } catch (error) {
         console.error('Error loading employees from localStorage:', error);
+        // Fallback to initial data when localStorage fails
+        setEmployees(initialEmployees);
         setFilteredEmployees(initialEmployees.filter(emp => emp.status === "Aktiv"));
       }
     };
@@ -43,6 +45,8 @@ export const useEmployeeLoader = (initialEmployees: Employee[]) => {
           setFilteredEmployees(updatedEmployees.filter(emp => emp.status === "Aktiv"));
         } catch (error) {
           console.error('Error parsing employees from storage event:', error);
+          // Don't update state if storage event data is invalid
+          // This prevents corrupted data from breaking the application
         }
       }
     };

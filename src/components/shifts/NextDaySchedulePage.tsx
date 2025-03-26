@@ -6,9 +6,10 @@ import { Employee } from "@/types/employee";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StartTimeWaves from "./StartTimeWaves";
 import { WaveAssignment } from "./types/wave-types";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, AlertTriangle } from "lucide-react";
 import { groupEmployeesByWave, getSortedWaves, isSingleWave } from "./utils/wave-utils";
 import WaveEmployeeDisplay from "./wave-display/WaveEmployeeDisplay";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface NextDaySchedulePageProps {
   scheduledEmployees: Employee[];
@@ -23,6 +24,7 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
   const dateKey = format(date, "yyyy-MM-dd");
   
   const [waveAssignments, setWaveAssignments] = useState<WaveAssignment[]>([]);
+  const [storageError, setStorageError] = useState<string | null>(null);
   
   // Lade gespeicherte Wellenzuweisungen aus dem localStorage
   useEffect(() => {
@@ -33,8 +35,21 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
         
         if (savedWaveAssignments) {
           const parsedWaveAssignments = JSON.parse(savedWaveAssignments);
-          console.log(`Loaded wave assignments for ${dateKey}:`, parsedWaveAssignments.length);
-          setWaveAssignments(parsedWaveAssignments);
+          
+          // Validate the parsed data structure
+          if (Array.isArray(parsedWaveAssignments) && 
+              parsedWaveAssignments.every(assignment => 
+                typeof assignment === 'object' && 
+                assignment !== null &&
+                'employeeId' in assignment && 
+                'startTime' in assignment && 
+                'waveNumber' in assignment)) {
+            console.log(`Loaded wave assignments for ${dateKey}:`, parsedWaveAssignments.length);
+            setWaveAssignments(parsedWaveAssignments);
+            setStorageError(null);
+          } else {
+            throw new Error('Invalid data structure for wave assignments');
+          }
         } else {
           // Initialisiere mit Standardwerten, wenn keine gespeicherten Daten vorhanden sind
           const defaultAssignments = scheduledEmployees.map(emp => ({
@@ -43,9 +58,12 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
             waveNumber: 1
           }));
           setWaveAssignments(defaultAssignments);
+          setStorageError(null);
         }
       } catch (error) {
         console.error('Error loading wave assignments from localStorage:', error);
+        setStorageError('Fehler beim Laden der Wellenzuweisungen. Standardwerte werden verwendet.');
+        
         // Fallback zu Standardwerten
         const defaultAssignments = scheduledEmployees.map(emp => ({
           employeeId: emp.id,
@@ -73,8 +91,10 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
       const key = `waveAssignments-${dateKey}`;
       localStorage.setItem(key, JSON.stringify(assignments));
       console.log(`Saved wave assignments for ${dateKey}:`, assignments.length);
+      setStorageError(null);
     } catch (error) {
       console.error('Error saving wave assignments to localStorage:', error);
+      setStorageError('Fehler beim Speichern der Wellenzuweisungen. Änderungen werden nach dem Neuladen der Seite verloren gehen.');
     }
   };
   
@@ -88,6 +108,14 @@ const NextDaySchedulePage: React.FC<NextDaySchedulePageProps> = ({
           {scheduledEmployees.length} Mitarbeiter eingeplant
         </div>
       </div>
+
+      {storageError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Speicherproblem</AlertTitle>
+          <AlertDescription>{storageError}</AlertDescription>
+        </Alert>
+      )}
 
       {scheduledEmployees.length === 0 ? (
         <div className="bg-muted rounded-lg p-8 text-center">
