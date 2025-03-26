@@ -15,7 +15,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   
   // Combine our smaller hooks
   const weekNavigation = useWeekNavigation();
-  const { weekDays, selectedWeek, previousWeek: prevWeek, nextWeek: nextWeekFn } = weekNavigation;
+  const { weekDays, selectedWeek, previousWeek, nextWeek } = weekNavigation;
   
   const employeeFlexibility = useEmployeeFlexibility();
   const { 
@@ -48,24 +48,18 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   
   const { getScheduledEmployeesForDay } = useScheduledEmployees(filteredEmployees, shiftsMap);
   
-  // Custom previousWeek and nextWeek functions that reset flexibility and shifts
-  const previousWeek = useCallback(() => {
-    prevWeek();
+  // Use the week navigation functions directly with flexibility and shifts reset
+  const handlePreviousWeek = useCallback(() => {
+    previousWeek();
     resetFlexibility();
-    // Do not clear shifts when navigating between weeks anymore
-    // clearShifts();
-    // setFinalizedDays([]);
     setShowNextDaySchedule(false);
-  }, [prevWeek, resetFlexibility, setShowNextDaySchedule]);
+  }, [previousWeek, resetFlexibility, setShowNextDaySchedule]);
   
-  const nextWeek = useCallback(() => {
-    nextWeekFn();
+  const handleNextWeek = useCallback(() => {
+    nextWeek();
     resetFlexibility();
-    // Do not clear shifts when navigating between weeks anymore
-    // clearShifts();
-    // setFinalizedDays([]);
     setShowNextDaySchedule(false);
-  }, [nextWeekFn, resetFlexibility, setShowNextDaySchedule]);
+  }, [nextWeek, resetFlexibility, setShowNextDaySchedule]);
   
   return {
     selectedWeek,
@@ -74,8 +68,8 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     requiredEmployees,
     scheduledEmployees,
     formatDateKey,
-    previousWeek,
-    nextWeek,
+    previousWeek: handlePreviousWeek,
+    nextWeek: handleNextWeek,
     handleRequiredChange,
     handleFlexibilityOverride,
     confirmFlexibilityOverride,
