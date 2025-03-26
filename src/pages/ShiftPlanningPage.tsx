@@ -11,7 +11,7 @@ const ShiftPlanningPage = () => {
   
   // Listen for day finalized events and update the tab if needed
   useEffect(() => {
-    const handleDayFinalized = () => {
+    const handleDayFinalized = (event: Event) => {
       // Wenn ein Tag finalisiert wird, automatisch zur Fahrzeugzuordnung wechseln
       console.log("Day finalized event detected, switching to vehicles tab");
       setActiveTab("vehicles");

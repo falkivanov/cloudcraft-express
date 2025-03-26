@@ -55,7 +55,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
       </div>
       
       <div className="flex flex-col sm:flex-row gap-2">
-        <Select value={dateFilter || ""} onValueChange={(value) => setDateFilter(value || null)}>
+        <Select value={dateFilter || undefined} onValueChange={(value) => setDateFilter(value || null)}>
           <SelectTrigger className="min-w-[180px]">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -63,7 +63,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Alle Datums</SelectItem>
+            <SelectItem value="all-dates">Alle Datums</SelectItem>
             {dateOptions.map(option => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -73,14 +73,14 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
         </Select>
         
         <Select 
-          value={selectedEmployee || ""} 
+          value={selectedEmployee || undefined} 
           onValueChange={(value) => setSelectedEmployee(value || null)}
         >
           <SelectTrigger className="min-w-[180px]">
             <SelectValue placeholder="Mitarbeiter wählen" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Alle Mitarbeiter</SelectItem>
+            <SelectItem value="all-employees">Alle Mitarbeiter</SelectItem>
             {employees.map(employee => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.name}
