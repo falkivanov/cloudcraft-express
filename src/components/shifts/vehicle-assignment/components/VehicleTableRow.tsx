@@ -25,6 +25,7 @@ interface VehicleBasic {
 
 interface VehicleTableRowProps {
   vehicle: VehicleBasic;
+  yesterdayEmployeeId: string;
   todayEmployeeId: string;
   assignedEmployeeId: string;
   employees: Employee[];
@@ -33,6 +34,7 @@ interface VehicleTableRowProps {
 
 const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   vehicle,
+  yesterdayEmployeeId,
   todayEmployeeId,
   assignedEmployeeId,
   employees,
@@ -62,6 +64,9 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
       <td className="px-4 py-3">
         <p className="font-medium">{vehicle.brand} {vehicle.model}</p>
         <p className="text-xs text-muted-foreground">{vehicle.licensePlate}</p>
+      </td>
+      <td className="px-4 py-3">
+        {getEmployeeName(yesterdayEmployeeId)}
       </td>
       <td className="px-4 py-3">
         {getEmployeeName(todayEmployeeId)}

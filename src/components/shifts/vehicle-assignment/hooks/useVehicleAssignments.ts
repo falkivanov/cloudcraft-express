@@ -1,16 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { format, addDays } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
 import { generateAssignments } from "../utils/vehicleAssignmentUtils";
 
 export const useVehicleAssignments = (isScheduleFinalized: boolean) => {
   const today = new Date();
+  const yesterday = subDays(today, 1);
   const tomorrow = addDays(today, 1);
   
+  const yesterdayDateKey = format(yesterday, "yyyy-MM-dd");
   const todayDateKey = format(today, "yyyy-MM-dd");
   const tomorrowDateKey = format(tomorrow, "yyyy-MM-dd");
   
+  const [yesterdayAssignments, setYesterdayAssignments] = useState<Record<string, string>>({});
   const [todayAssignments, setTodayAssignments] = useState<Record<string, string>>({});
   const [tomorrowAssignments, setTomorrowAssignments] = useState<Record<string, string>>({});
   const [overrideFinalized, setOverrideFinalized] = useState(false);
@@ -56,12 +59,30 @@ export const useVehicleAssignments = (isScheduleFinalized: boolean) => {
   // Load saved assignments from localStorage
   useEffect(() => {
     try {
+      const savedYesterdayAssignments = localStorage.getItem(`vehicleAssignments-${yesterdayDateKey}`);
       const savedTodayAssignments = localStorage.getItem(`vehicleAssignments-${todayDateKey}`);
       const savedTomorrowAssignments = localStorage.getItem(`vehicleAssignments-${tomorrowDateKey}`);
       const savedOverrideFinalized = localStorage.getItem('overrideFinalized');
       
       if (savedOverrideFinalized) {
         setOverrideFinalized(JSON.parse(savedOverrideFinalized));
+      }
+      
+      if (savedYesterdayAssignments) {
+        setYesterdayAssignments(JSON.parse(savedYesterdayAssignments));
+      } else {
+        // Fallback to mock data only if no saved data exists
+        const mockYesterdayAssignments: Record<string, string> = {
+          "1": "2",
+          "2": "4",
+          "3": "1",
+          "6": "3",
+          "9": "5",
+        };
+        setYesterdayAssignments(mockYesterdayAssignments);
+        
+        // Save the mock data for next time
+        localStorage.setItem(`vehicleAssignments-${yesterdayDateKey}`, JSON.stringify(mockYesterdayAssignments));
       }
       
       if (savedTodayAssignments) {
@@ -87,7 +108,16 @@ export const useVehicleAssignments = (isScheduleFinalized: boolean) => {
     } catch (error) {
       console.error('Error loading vehicle assignments from localStorage:', error);
     }
-  }, [todayDateKey, tomorrowDateKey]);
+  }, [yesterdayDateKey, todayDateKey, tomorrowDateKey]);
+  
+  // Save yesterday assignments to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(`vehicleAssignments-${yesterdayDateKey}`, JSON.stringify(yesterdayAssignments));
+    } catch (error) {
+      console.error('Error saving yesterday vehicle assignments to localStorage:', error);
+    }
+  }, [yesterdayAssignments, yesterdayDateKey]);
   
   // Save today assignments to localStorage when they change
   useEffect(() => {
@@ -190,6 +220,7 @@ export const useVehicleAssignments = (isScheduleFinalized: boolean) => {
   };
 
   return {
+    yesterdayAssignments,
     todayAssignments,
     tomorrowAssignments,
     overrideFinalized,
@@ -197,6 +228,8 @@ export const useVehicleAssignments = (isScheduleFinalized: boolean) => {
     effectivelyFinalized: localFinalized || overrideFinalized,
     handleAutoAssign,
     handleSaveAssignments,
-    tomorrowDateKey
+    tomorrowDateKey,
+    yesterdayDateKey,
+    todayDateKey
   };
 };

@@ -11,6 +11,7 @@ interface DailyVehicleAssignmentProps {
 
 const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isScheduleFinalized }) => {
   const {
+    yesterdayAssignments,
     todayAssignments,
     tomorrowAssignments,
     overrideFinalized,
