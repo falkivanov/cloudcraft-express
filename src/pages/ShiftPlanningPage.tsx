@@ -9,12 +9,13 @@ import { Container } from "@/components/ui/container";
 const ShiftPlanningPage = () => {
   const { activeTab, setActiveTab, isScheduleFinalized, handleFinalizeSchedule } = useShiftPlanning();
   
-  // Listen for day finalized events and update the tab if needed
+  // Listen for day finalized events, but don't automatically switch tabs
   useEffect(() => {
     const handleDayFinalized = (event: Event) => {
-      // Wenn ein Tag finalisiert wird, automatisch zur Fahrzeugzuordnung wechseln
-      console.log("Day finalized event detected, switching to vehicles tab");
-      setActiveTab("vehicles");
+      // We don't want to automatically switch to vehicles tab anymore
+      console.log("Day finalized event detected, but not switching tabs automatically");
+      
+      // Instead we let the ShiftScheduleContent handle the tab change internally
     };
     
     window.addEventListener('dayFinalized', handleDayFinalized);
@@ -22,7 +23,7 @@ const ShiftPlanningPage = () => {
     return () => {
       window.removeEventListener('dayFinalized', handleDayFinalized);
     };
-  }, [setActiveTab]);
+  }, []);
   
   // Load the finalized status from localStorage when component mounts
   useEffect(() => {

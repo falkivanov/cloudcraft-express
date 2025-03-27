@@ -49,6 +49,29 @@ const ShiftScheduleContent: React.FC = () => {
     });
   };
 
+  // Listen for day finalized event to switch to nextday tab
+  useEffect(() => {
+    const handleDayFinalized = (event: Event) => {
+      try {
+        const customEvent = event as CustomEvent;
+        const { shouldSwitchToNextDay } = customEvent.detail;
+        
+        if (shouldSwitchToNextDay && tomorrow) {
+          console.log("Day finalized event with shouldSwitchToNextDay flag detected, switching to nextday tab");
+          setActiveTab("nextday");
+        }
+      } catch (error) {
+        console.error('Error handling dayFinalized event in ShiftScheduleContent:', error);
+      }
+    };
+    
+    window.addEventListener('dayFinalized', handleDayFinalized);
+    
+    return () => {
+      window.removeEventListener('dayFinalized', handleDayFinalized);
+    };
+  }, [tomorrow]);
+
   // Tab change handler
   const handleTabChange = (value: string) => {
     // If trying to access nextday tab when not finalized, show toast with helpful message

@@ -33,7 +33,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
     try {
       // Dispatch an event to make sure all components are aware of the change
       window.dispatchEvent(new CustomEvent('dayFinalized', { 
-        detail: { dateKey } 
+        detail: { dateKey, shouldSwitchToNextDay: true } 
       }));
       
       // Auch den globalen Finalisierungsstatus setzen
@@ -43,7 +43,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
       window.dispatchEvent(new Event('storage'));
       
       toast.success("Tag erfolgreich finalisiert", {
-        description: "Sie können jetzt mit der Fahrzeugzuordnung fortfahren."
+        description: "Sie können jetzt den Einsatzplan für morgen ansehen."
       });
     } catch (error) {
       console.error('Error finalizing day:', error);
