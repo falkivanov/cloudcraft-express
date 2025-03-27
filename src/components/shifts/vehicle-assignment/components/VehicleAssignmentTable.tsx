@@ -1,6 +1,6 @@
 
 import React from "react";
-import { format, addDays, subDays } from "date-fns";
+import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { activeVehicles } from "../utils/vehicleAssignmentUtils";
 import { useAssignmentState } from "../hooks/useAssignmentState";
@@ -16,35 +16,30 @@ import {
 } from "@/components/ui/table";
 
 interface VehicleAssignmentTableProps {
+  yesterdayAssignments: Record<string, string>;
   todayAssignments: Record<string, string>;
   tomorrowAssignments: Record<string, string>;
+  yesterdayDateKey: string;
+  todayDateKey: string;
+  tomorrowDateKey: string;
 }
 
 const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
+  yesterdayAssignments,
   todayAssignments,
-  tomorrowAssignments
+  tomorrowAssignments,
+  yesterdayDateKey,
+  todayDateKey,
+  tomorrowDateKey
 }) => {
   const { assignmentMap, handleAssignmentChange } = useAssignmentState(tomorrowAssignments);
   const employees = useEmployeeLoader();
   const vehicleList = activeVehicles();
   
-  // Get dates for column headers
-  const today = new Date();
-  const yesterday = subDays(today, 1);
-  const tomorrow = addDays(today, 1);
-  
-  // Generate yesterday assignments (2 days ago compared to tomorrow)
-  // This is a simple mock. In a real app, you would load this from your backend or localStorage
-  const yesterdayAssignments: Record<string, string> = {};
-  vehicleList.forEach(vehicle => {
-    // For this example, we'll just use a different assignment than today
-    // In a real app, you would load the actual data for 2 days ago
-    if (todayAssignments[vehicle.id]) {
-      // Just use a different assignment than today for demonstration
-      const employeeIndex = parseInt(todayAssignments[vehicle.id]) % employees.length;
-      yesterdayAssignments[vehicle.id] = employeeIndex.toString();
-    }
-  });
+  // Parse dates from date keys
+  const yesterday = new Date(yesterdayDateKey);
+  const today = new Date(todayDateKey);
+  const tomorrow = new Date(tomorrowDateKey);
   
   return (
     <div className="border rounded-lg overflow-hidden">

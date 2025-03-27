@@ -18,7 +18,10 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
     setOverrideFinalized,
     effectivelyFinalized,
     handleAutoAssign,
-    handleSaveAssignments
+    handleSaveAssignments,
+    yesterdayDateKey,
+    todayDateKey,
+    tomorrowDateKey
   } = useVehicleAssignments(isScheduleFinalized);
   
   return (
@@ -37,6 +40,10 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
       <VehicleAssignmentTable
         todayAssignments={todayAssignments}
         tomorrowAssignments={tomorrowAssignments}
+        yesterdayAssignments={yesterdayAssignments}
+        yesterdayDateKey={yesterdayDateKey}
+        todayDateKey={todayDateKey}
+        tomorrowDateKey={tomorrowDateKey}
       />
     </div>
   );
