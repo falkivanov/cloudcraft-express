@@ -1,9 +1,19 @@
 
-import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle } from "lucide-react";
+import React, { useState } from "react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { AlertTriangle, Check, ChevronsUpDown, Search } from "lucide-react";
 import { Employee } from "@/types/employee";
 import { getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 // Create a VehicleBasic type that only includes the properties we need
 interface VehicleBasic {
@@ -28,6 +38,9 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   employees,
   onAssignmentChange
 }) => {
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  
   const keyChangeStatus = needsKeyChange(
     { [vehicle.id]: todayEmployeeId },
     vehicle.id,
@@ -54,22 +67,71 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
         {getEmployeeName(todayEmployeeId)}
       </td>
       <td className="px-4 py-3">
-        <Select 
-          value={assignedEmployeeId || "none"}
-          onValueChange={(value) => onAssignmentChange(vehicle.id, value)}
-        >
-          <SelectTrigger className="h-8 w-[180px]">
-            <SelectValue placeholder="Mitarbeiter wählen" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Nicht zugewiesen</SelectItem>
-            {employees.map(employee => (
-              <SelectItem key={employee.id} value={employee.id}>
-                {employee.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="outline" 
+              role="combobox" 
+              aria-expanded={open} 
+              className="w-[180px] justify-between h-8"
+            >
+              {assignedEmployeeId && assignedEmployeeId !== "none" 
+                ? employees.find(employee => employee.id === assignedEmployeeId)?.name || "Mitarbeiter wählen"
+                : "Nicht zugewiesen"}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[240px] p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Mitarbeiter suchen..." 
+                onValueChange={setSearchValue}
+                className="h-9"
+              />
+              <CommandList>
+                <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="none"
+                    onSelect={() => {
+                      onAssignmentChange(vehicle.id, "none");
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        (!assignedEmployeeId || assignedEmployeeId === "none") ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    Nicht zugewiesen
+                  </CommandItem>
+                  {employees
+                    .filter(employee => 
+                      employee.name.toLowerCase().includes(searchValue.toLowerCase()))
+                    .map(employee => (
+                      <CommandItem
+                        key={employee.id}
+                        value={employee.name}
+                        onSelect={() => {
+                          onAssignmentChange(vehicle.id, employee.id);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            assignedEmployeeId === employee.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {employee.name}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </td>
       <td className="px-4 py-3">
         {keyChangeStatus === "new" && (
