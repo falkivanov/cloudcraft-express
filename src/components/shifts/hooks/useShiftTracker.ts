@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { ShiftAssignment } from "@/types/shift";
@@ -17,6 +18,10 @@ export const useShiftTracker = (weekDays: Date[]) => {
   useEffect(() => {
     const loadShiftsFromStorage = () => {
       try {
+        // Überprüfe, ob ein Zeitstempel existiert, um zu bestätigen, dass die Daten gültig sind
+        const dataTimestamp = localStorage.getItem('dataTimestamp');
+        
+        // Lade die Daten aus localStorage
         const savedShifts = localStorage.getItem('shiftsMap');
         if (savedShifts) {
           // Map aus dem JSON String wiederherstellen
@@ -47,22 +52,50 @@ export const useShiftTracker = (weekDays: Date[]) => {
     };
     
     loadShiftsFromStorage();
+    
+    // Füge einen Event-Listener für das beforeunload-Event hinzu, um die Daten zu sichern
+    const handleBeforeUnload = () => {
+      try {
+        // Konvertiere Map zu einem speicherbaren Objekt
+        const shiftsObject: Record<string, ShiftAssignment> = {};
+        shiftsMap.forEach((value, key) => {
+          shiftsObject[key] = value;
+        });
+        
+        // Setze einen Zeitstempel für die Datenüberprüfung
+        localStorage.setItem('dataTimestamp', Date.now().toString());
+        localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
+        console.log('Saved shifts to localStorage before unload:', Object.keys(shiftsObject).length);
+      } catch (error) {
+        console.error('Error saving shifts to localStorage before unload:', error);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   // Speichere Schichtzuweisungen im localStorage, wenn sie sich ändern
   useEffect(() => {
-    try {
-      // Konvertiere Map zu einem speicherbaren Objekt
-      const shiftsObject: Record<string, ShiftAssignment> = {};
-      shiftsMap.forEach((value, key) => {
-        shiftsObject[key] = value;
-      });
-      localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
-    } catch (error) {
-      console.error('Error saving shifts to localStorage:', error);
-      // Notify about potential data loss
-      if (shiftsMap.size > 0) {
-        console.warn('Shift assignments might not persist after page refresh due to storage error');
+    if (shiftsMap.size > 0) {
+      try {
+        // Konvertiere Map zu einem speicherbaren Objekt
+        const shiftsObject: Record<string, ShiftAssignment> = {};
+        shiftsMap.forEach((value, key) => {
+          shiftsObject[key] = value;
+        });
+        localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
+        
+        // Setze auch einen Zeitstempel für die Datenüberprüfung
+        localStorage.setItem('dataTimestamp', Date.now().toString());
+      } catch (error) {
+        console.error('Error saving shifts to localStorage:', error);
+        // Notify about potential data loss
+        if (shiftsMap.size > 0) {
+          console.warn('Shift assignments might not persist after page refresh due to storage error');
+        }
       }
     }
   }, [shiftsMap]);

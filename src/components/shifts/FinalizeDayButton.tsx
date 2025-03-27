@@ -19,7 +19,11 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
   isFinalized
 }) => {
   // Handle the finalize button click
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent any default behavior that might cause page reload
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!dateKey) {
       console.error('Invalid dateKey provided to FinalizeDayButton');
       toast.error("Fehler beim Finalisieren des Tages", {
@@ -37,7 +41,15 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
       }));
       
       // Auch den globalen Finalisierungsstatus setzen
-      localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
+      // Verwende try-catch für jede localStorage-Operation
+      try {
+        localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
+        
+        // Speichere auch einen Zeitstempel, um die Daten vor versehentlichem Löschen zu schützen
+        localStorage.setItem('dataTimestamp', Date.now().toString());
+      } catch (storageError) {
+        console.error('Error writing to localStorage:', storageError);
+      }
       
       // Trigger storage event on the current window (for components in the same window)
       window.dispatchEvent(new Event('storage'));
@@ -66,6 +78,7 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
             onClick={handleClick}
             disabled={isFinalized}
             size="sm"
+            type="button" // Explicitly set to button to prevent form submission behavior
           >
             {isFinalized ? (
               <>

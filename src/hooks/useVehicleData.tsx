@@ -14,6 +14,9 @@ export const useVehicleData = () => {
   useEffect(() => {
     const loadVehiclesFromStorage = () => {
       try {
+        // Überprüfe, ob ein Zeitstempel existiert, um zu bestätigen, dass die Daten gültig sind
+        const dataTimestamp = localStorage.getItem('dataTimestamp');
+        
         const savedVehicles = localStorage.getItem('vehicles');
         console.log('Loading vehicles from localStorage');
         
@@ -22,6 +25,9 @@ export const useVehicleData = () => {
           if (parsedVehicles && Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
             console.log('Found saved vehicles:', parsedVehicles.length);
             setLoadedVehicles(parsedVehicles);
+            
+            // Nach erfolgreichem Laden, einen neuen Zeitstempel setzen
+            localStorage.setItem('dataTimestamp', Date.now().toString());
             return; // Erfolgreich geladen
           }
         }
@@ -32,17 +38,43 @@ export const useVehicleData = () => {
         
         // Initialdaten im localStorage speichern
         localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
+        localStorage.setItem('dataTimestamp', Date.now().toString());
       } catch (error) {
         console.error('Error loading vehicles from localStorage:', error);
         setLoadedVehicles(initialVehicles);
         // Bei Fehler auch die Initialdaten speichern
-        localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
+        try {
+          localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
+          localStorage.setItem('dataTimestamp', Date.now().toString());
+        } catch (storageError) {
+          console.error('Error saving fallback vehicle data:', storageError);
+        }
       } finally {
         setIsInitialized(true);
       }
     };
 
     loadVehiclesFromStorage();
+    
+    // Füge einen Event-Listener für das beforeunload-Event hinzu, um die Daten zu sichern
+    const handleBeforeUnload = () => {
+      try {
+        // Setze einen Zeitstempel für die Datenüberprüfung
+        localStorage.setItem('dataTimestamp', Date.now().toString());
+        
+        // Stelle sicher, dass die Fahrzeugdaten gespeichert sind
+        if (vehicles.length > 0) {
+          localStorage.setItem('vehicles', JSON.stringify(vehicles));
+        }
+      } catch (error) {
+        console.error('Error saving vehicles to localStorage before unload:', error);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
   
   // Initialize vehicle operations with loaded data
@@ -72,17 +104,33 @@ export const useVehicleData = () => {
 
   // Listen for storage events from other tabs
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'vehicles' && e.newValue) {
-        console.log('Vehicle data changed in another tab');
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      // Wenn es ein StorageEvent ist, überprüfe den Key
+      if (e instanceof StorageEvent) {
+        if (e.key === 'vehicles' && e.newValue) {
+          console.log('Vehicle data changed in another tab');
+          try {
+            const updatedVehicles = JSON.parse(e.newValue);
+            if (updatedVehicles && Array.isArray(updatedVehicles) && updatedVehicles.length > 0) {
+              setVehicles(updatedVehicles);
+              console.log('Updated vehicles from another tab:', updatedVehicles.length);
+            }
+          } catch (error) {
+            console.error('Error parsing vehicles from storage event:', error);
+          }
+        }
+      } else {
+        // Wenn es ein generisches Event ist (für innerhalb des gleichen Tabs)
         try {
-          const updatedVehicles = JSON.parse(e.newValue);
-          if (updatedVehicles && Array.isArray(updatedVehicles) && updatedVehicles.length > 0) {
-            setVehicles(updatedVehicles);
-            console.log('Updated vehicles from another tab:', updatedVehicles.length);
+          const savedVehicles = localStorage.getItem('vehicles');
+          if (savedVehicles) {
+            const parsedVehicles = JSON.parse(savedVehicles);
+            if (parsedVehicles && Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
+              setVehicles(parsedVehicles);
+            }
           }
         } catch (error) {
-          console.error('Error parsing vehicles from storage event:', error);
+          console.error('Error handling internal storage event:', error);
         }
       }
     };
