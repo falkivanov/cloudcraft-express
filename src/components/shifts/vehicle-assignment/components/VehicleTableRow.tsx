@@ -2,12 +2,19 @@
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle } from "lucide-react";
-import { Vehicle } from "@/types/vehicle";
 import { Employee } from "@/types/employee";
 import { getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
 
+// Create a VehicleBasic type that only includes the properties we need
+interface VehicleBasic {
+  id: string;
+  licensePlate: string;
+  brand: string;
+  model: string;
+}
+
 interface VehicleTableRowProps {
-  vehicle: Vehicle;
+  vehicle: VehicleBasic;
   todayEmployeeId: string;
   assignedEmployeeId: string;
   employees: Employee[];

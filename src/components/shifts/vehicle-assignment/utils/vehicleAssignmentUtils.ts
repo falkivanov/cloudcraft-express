@@ -4,8 +4,16 @@ import { Vehicle } from "@/types/vehicle";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { initialVehicles } from "@/data/sampleVehicleData";
 
+// Define interface for the simplified vehicle objects
+export interface VehicleBasic {
+  id: string;
+  licensePlate: string;
+  brand: string;
+  model: string;
+}
+
 // Dynamisch aktive Fahrzeuge aus localStorage laden, mit Fallback
-export const getActiveVehicles = () => {
+export const getActiveVehicles = (): VehicleBasic[] => {
   try {
     const savedVehicles = localStorage.getItem('vehicles');
     if (savedVehicles) {
@@ -37,8 +45,8 @@ export const getActiveVehicles = () => {
 };
 
 // Lazy-evaluierte aktive Fahrzeuge beim ersten Aufruf
-let activeVehiclesCache: ReturnType<typeof getActiveVehicles> | null = null;
-export const activeVehicles = () => {
+let activeVehiclesCache: VehicleBasic[] | null = null;
+export const activeVehicles = (): VehicleBasic[] => {
   if (!activeVehiclesCache) {
     activeVehiclesCache = getActiveVehicles();
   }
