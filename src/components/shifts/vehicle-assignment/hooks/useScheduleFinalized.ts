@@ -10,6 +10,16 @@ export const useScheduleFinalized = (isScheduleFinalized: boolean) => {
     console.log("isScheduleFinalized prop changed:", isScheduleFinalized);
   }, [isScheduleFinalized]);
   
+  // Save localFinalized changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('isScheduleFinalized', JSON.stringify(localFinalized));
+      console.log("Saved schedule finalized status to localStorage:", localFinalized);
+    } catch (error) {
+      console.error('Error saving schedule finalized status to localStorage:', error);
+    }
+  }, [localFinalized]);
+  
   // Listen for storage events that might update the finalized status
   useEffect(() => {
     const handleStorageChange = () => {
