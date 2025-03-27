@@ -158,8 +158,10 @@ const DailyVehicleAssignment: React.FC<DailyVehicleAssignmentProps> = ({ isSched
       return;
     }
     
+    const activeVehiclesList = activeVehicles();
+    
     const savedAssignments = Object.entries(tomorrowAssignments).map(([vehicleId, employeeId]) => {
-      const vehicle = activeVehicles.find(v => v.id === vehicleId);
+      const vehicle = activeVehiclesList.find(v => v.id === vehicleId);
       const employee = initialEmployees.find(e => e.id === employeeId);
       return {
         id: `${vehicleId}-${employeeId}-${tomorrowDateKey}`,

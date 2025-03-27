@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -8,6 +7,7 @@ import EmployeeDashboard from "./dashboard/EmployeeDashboard";
 import EmployeeFilter from "./EmployeeFilter";
 import EmployeeTabs from "./EmployeeTabs";
 import AddEmployeeDialog from "./AddEmployeeDialog";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 
 interface EmployeePageContentProps {
   initialEmployees: Employee[];
@@ -16,11 +16,13 @@ interface EmployeePageContentProps {
 }
 
 const EmployeePageContent: React.FC<EmployeePageContentProps> = ({ 
-  initialEmployees,
+  initialEmployees: propInitialEmployees,
   isAddEmployeeDialogOpen = false,
   setIsAddEmployeeDialogOpen = () => {}
 }) => {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>(
+    propInitialEmployees.length > 0 ? propInitialEmployees : initialEmployees
+  );
   const { toast } = useToast();
   const { setOpen } = useSidebar();
 
@@ -36,30 +38,46 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
-  // Initialize employees from localStorage or use initialEmployees
   useEffect(() => {
     try {
       const savedEmployees = localStorage.getItem('employees');
       if (savedEmployees) {
-        setEmployees(JSON.parse(savedEmployees));
-      } else if (initialEmployees.length > 0) {
+        const parsedEmployees = JSON.parse(savedEmployees);
+        if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+          console.log('Loaded employees from localStorage:', parsedEmployees.length);
+          setEmployees(parsedEmployees);
+          return; // Erfolgreich geladen
+        }
+      }
+      
+      if (propInitialEmployees.length > 0) {
+        console.log('Using prop initialEmployees as fallback');
+        setEmployees(propInitialEmployees);
+        localStorage.setItem('employees', JSON.stringify(propInitialEmployees));
+      } else {
+        console.log('Using sample initialEmployees as fallback');
         setEmployees(initialEmployees);
         localStorage.setItem('employees', JSON.stringify(initialEmployees));
       }
     } catch (error) {
       console.error('Error loading employees from localStorage:', error);
-      if (initialEmployees.length > 0) {
+      if (propInitialEmployees.length > 0) {
+        setEmployees(propInitialEmployees);
+      } else {
         setEmployees(initialEmployees);
+        localStorage.setItem('employees', JSON.stringify(initialEmployees));
       }
     }
-  }, []);
+  }, [propInitialEmployees]);
 
-  // Listen for storage changes in other tabs/windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'employees' && e.newValue) {
         try {
-          setEmployees(JSON.parse(e.newValue));
+          const parsedEmployees = JSON.parse(e.newValue);
+          if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+            setEmployees(parsedEmployees);
+          }
         } catch (error) {
           console.error('Error parsing employees from storage event:', error);
         }
@@ -72,7 +90,6 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     };
   }, []);
 
-  // Save to localStorage whenever employees change
   useEffect(() => {
     try {
       if (employees.length > 0) {

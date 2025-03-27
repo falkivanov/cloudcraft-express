@@ -1,17 +1,9 @@
 
-import React from "react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import React, { useState } from "react";
+import { activeVehicles, getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
 import { AlertTriangle } from "lucide-react";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  activeVehicles, 
-  getEmployeeName, 
-  needsKeyChange, 
-  getKeyChangeStyle,
-  notAssignedPreferredVehicle 
-} from "../utils/vehicleAssignmentUtils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 
 interface VehicleAssignmentTableProps {
   todayAssignments: Record<string, string>;
@@ -22,69 +14,132 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
   todayAssignments,
   tomorrowAssignments
 }) => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const [assignmentMap, setAssignmentMap] = useState(tomorrowAssignments);
   
-  const formattedToday = format(today, "dd.MM.yyyy", { locale: de });
-  const formattedTomorrow = format(tomorrow, "dd.MM.yyyy", { locale: de });
+  // Load employees from localStorage
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const savedEmployees = localStorage.getItem('employees');
+      if (savedEmployees) {
+        const parsedEmployees = JSON.parse(savedEmployees);
+        if (Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+          return parsedEmployees.filter(emp => emp.status === "Aktiv");
+        }
+      }
+      return initialEmployees.filter(emp => emp.status === "Aktiv");
+    } catch (error) {
+      console.error('Error loading employees from localStorage:', error);
+      return initialEmployees.filter(emp => emp.status === "Aktiv");
+    }
+  });
+  
+  React.useEffect(() => {
+    setAssignmentMap(tomorrowAssignments);
+  }, [tomorrowAssignments]);
 
+  const handleAssignmentChange = (vehicleId: string, employeeId: string) => {
+    setAssignmentMap(prev => {
+      // Handle unassignment
+      if (employeeId === "none") {
+        const newMap = { ...prev };
+        delete newMap[vehicleId];
+        return newMap;
+      }
+      
+      // First remove if this employee is already assigned elsewhere
+      const updatedMap = { ...prev };
+      Object.keys(updatedMap).forEach(vId => {
+        if (updatedMap[vId] === employeeId) {
+          delete updatedMap[vId];
+        }
+      });
+      
+      // Now assign to the new vehicle
+      return {
+        ...updatedMap,
+        [vehicleId]: employeeId
+      };
+    });
+  };
+
+  const vehicleList = activeVehicles();
+  
   return (
-    <div className="w-full overflow-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/3">Fahrzeug</TableHead>
-            <TableHead className="w-1/3">{formattedToday}</TableHead>
-            <TableHead className="w-1/3">{formattedTomorrow}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {activeVehicles.map(vehicle => {
-            const tomorrowEmployeeId = tomorrowAssignments[vehicle.id];
-            const keyChangeStatus = needsKeyChange(todayAssignments, vehicle.id, tomorrowEmployeeId);
-            const cellStyle = getKeyChangeStyle(keyChangeStatus);
-            const isNotPreferred = notAssignedPreferredVehicle(tomorrowEmployeeId, vehicle.id);
+    <div className="border rounded-lg overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="text-left px-4 py-3 font-medium">Fahrzeug</th>
+            <th className="text-left px-4 py-3 font-medium">Heute</th>
+            <th className="text-left px-4 py-3 font-medium">Morgen</th>
+            <th className="text-left px-4 py-3 font-medium">Hinweise</th>
+          </tr>
+        </thead>
+        <tbody>
+          {vehicleList.map(vehicle => {
+            const todayEmployeeId = todayAssignments[vehicle.id];
+            const employeeId = assignmentMap[vehicle.id] || "";
+            const keyChangeStatus = needsKeyChange(
+              todayAssignments,
+              vehicle.id,
+              employeeId
+            );
+            const notPreferred = notAssignedPreferredVehicle(employeeId, vehicle.id);
             
             return (
-              <TableRow key={vehicle.id}>
-                <TableCell>
-                  <div className="font-medium">{vehicle.licensePlate}</div>
-                  <div className="text-sm text-muted-foreground">{vehicle.brand} {vehicle.model}</div>
-                </TableCell>
-                <TableCell>
-                  {todayAssignments[vehicle.id] ? (
-                    <div>{getEmployeeName(todayAssignments[vehicle.id])}</div>
-                  ) : (
-                    <div className="text-muted-foreground">Nicht zugewiesen</div>
-                  )}
-                </TableCell>
-                <TableCell className={cellStyle}>
-                  {tomorrowEmployeeId ? (
-                    <div className="flex items-center">
-                      <div>{getEmployeeName(tomorrowEmployeeId)}</div>
-                      {isNotPreferred && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <AlertTriangle className="h-4 w-4 text-amber-500 ml-2 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Mitarbeiter erhält nicht das präferierte Fahrzeug</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
+              <tr 
+                key={vehicle.id} 
+                className={`${getKeyChangeStyle(keyChangeStatus)} border-b`}
+              >
+                <td className="px-4 py-3">
+                  <p className="font-medium">{vehicle.brand} {vehicle.model}</p>
+                  <p className="text-xs text-muted-foreground">{vehicle.licensePlate}</p>
+                </td>
+                <td className="px-4 py-3">
+                  {getEmployeeName(todayEmployeeId)}
+                </td>
+                <td className="px-4 py-3">
+                  <Select 
+                    value={employeeId || "none"}
+                    onValueChange={(value) => handleAssignmentChange(vehicle.id, value)}
+                  >
+                    <SelectTrigger className="h-8 w-[180px]">
+                      <SelectValue placeholder="Mitarbeiter wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nicht zugewiesen</SelectItem>
+                      {employees.map(employee => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="px-4 py-3">
+                  {keyChangeStatus === "new" && (
+                    <div className="flex items-center text-xs text-blue-700">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Schlüsselübergabe notwendig
                     </div>
-                  ) : (
-                    <div className="text-muted-foreground">Noch nicht zugewiesen</div>
                   )}
-                </TableCell>
-              </TableRow>
+                  {keyChangeStatus === "exchange" && (
+                    <div className="flex items-center text-xs text-amber-700">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Schlüsseltausch notwendig
+                    </div>
+                  )}
+                  {notPreferred && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Nicht bevorzugtes Fahrzeug
+                    </div>
+                  )}
+                </td>
+              </tr>
             );
           })}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };

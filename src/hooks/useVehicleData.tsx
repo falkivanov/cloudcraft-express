@@ -9,7 +9,7 @@ export const useVehicleData = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Load vehicles from localStorage on component mount
-  const [loadedVehicles, setLoadedVehicles] = useState<Vehicle[]>([]);
+  const [loadedVehicles, setLoadedVehicles] = useState<Vehicle[]>(initialVehicles);
   
   useEffect(() => {
     const loadVehiclesFromStorage = () => {
@@ -19,18 +19,24 @@ export const useVehicleData = () => {
         
         if (savedVehicles) {
           const parsedVehicles = JSON.parse(savedVehicles);
-          console.log('Found saved vehicles:', parsedVehicles.length);
-          setLoadedVehicles(parsedVehicles);
-        } else {
-          // If no saved vehicles, use initialVehicles
-          console.log('No saved vehicles found, using initial data');
-          setLoadedVehicles(initialVehicles);
-          // Save initial vehicles to localStorage
-          localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
+          if (parsedVehicles && Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
+            console.log('Found saved vehicles:', parsedVehicles.length);
+            setLoadedVehicles(parsedVehicles);
+            return; // Erfolgreich geladen
+          }
         }
+        
+        // Wenn keine gültigen gespeicherten Daten vorhanden sind oder Parsing fehlschlägt
+        console.log('No valid vehicles found in localStorage, using initial data');
+        setLoadedVehicles(initialVehicles);
+        
+        // Initialdaten im localStorage speichern
+        localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
       } catch (error) {
         console.error('Error loading vehicles from localStorage:', error);
         setLoadedVehicles(initialVehicles);
+        // Bei Fehler auch die Initialdaten speichern
+        localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
       } finally {
         setIsInitialized(true);
       }
@@ -42,7 +48,7 @@ export const useVehicleData = () => {
   // Initialize vehicle operations with loaded data
   const {
     vehicles,
-    setVehicles, // We need this to sync with storage events
+    setVehicles,
     handleUpdateVehicle,
     handleDefleetVehicle, 
     handleAddVehicle,
@@ -71,8 +77,10 @@ export const useVehicleData = () => {
         console.log('Vehicle data changed in another tab');
         try {
           const updatedVehicles = JSON.parse(e.newValue);
-          setVehicles(updatedVehicles); // Use setVehicles from useVehicleOperations
-          console.log('Updated vehicles from another tab:', updatedVehicles.length);
+          if (updatedVehicles && Array.isArray(updatedVehicles) && updatedVehicles.length > 0) {
+            setVehicles(updatedVehicles);
+            console.log('Updated vehicles from another tab:', updatedVehicles.length);
+          }
         } catch (error) {
           console.error('Error parsing vehicles from storage event:', error);
         }

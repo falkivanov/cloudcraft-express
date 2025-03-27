@@ -1,16 +1,70 @@
 
+import { Employee } from "@/types/employee";
+import { Vehicle } from "@/types/vehicle";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { initialVehicles } from "@/data/sampleVehicleData";
 
-export const activeVehicles = initialVehicles.filter(vehicle => vehicle.status === "Aktiv").map(vehicle => ({
-  id: vehicle.id,
-  licensePlate: vehicle.licensePlate,
-  brand: vehicle.brand,
-  model: vehicle.model
-}));
+// Dynamisch aktive Fahrzeuge aus localStorage laden, mit Fallback
+export const getActiveVehicles = () => {
+  try {
+    const savedVehicles = localStorage.getItem('vehicles');
+    if (savedVehicles) {
+      const parsedVehicles = JSON.parse(savedVehicles);
+      if (Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
+        return parsedVehicles
+          .filter(vehicle => vehicle.status === "Aktiv")
+          .map(vehicle => ({
+            id: vehicle.id,
+            licensePlate: vehicle.licensePlate,
+            brand: vehicle.brand,
+            model: vehicle.model
+          }));
+      }
+    }
+  } catch (error) {
+    console.error('Error loading vehicles from localStorage:', error);
+  }
+  
+  // Fallback zu initialVehicles wenn localStorage leer oder fehlerhaft ist
+  return initialVehicles
+    .filter(vehicle => vehicle.status === "Aktiv")
+    .map(vehicle => ({
+      id: vehicle.id,
+      licensePlate: vehicle.licensePlate,
+      brand: vehicle.brand,
+      model: vehicle.model
+    }));
+};
+
+// Lazy-evaluierte aktive Fahrzeuge beim ersten Aufruf
+let activeVehiclesCache: ReturnType<typeof getActiveVehicles> | null = null;
+export const activeVehicles = () => {
+  if (!activeVehiclesCache) {
+    activeVehiclesCache = getActiveVehicles();
+  }
+  return activeVehiclesCache;
+};
+
+// Dynamisch Mitarbeiter aus localStorage laden, mit Fallback
+const getEmployees = (): Employee[] => {
+  try {
+    const savedEmployees = localStorage.getItem('employees');
+    if (savedEmployees) {
+      const parsedEmployees = JSON.parse(savedEmployees);
+      if (Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+        return parsedEmployees;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading employees from localStorage:', error);
+  }
+  
+  return initialEmployees;
+};
 
 export const getEmployeeName = (employeeId: string) => {
-  const employee = initialEmployees.find(e => e.id === employeeId);
+  const employees = getEmployees();
+  const employee = employees.find(e => e.id === employeeId);
   return employee ? employee.name : "Nicht zugewiesen";
 };
 
@@ -42,10 +96,11 @@ export const getKeyChangeStyle = (status: "new" | "exchange" | null) => {
 export const notAssignedPreferredVehicle = (employeeId: string, vehicleId: string): boolean => {
   if (!employeeId) return false;
   
-  const employee = initialEmployees.find(e => e.id === employeeId);
+  const employees = getEmployees();
+  const employee = employees.find(e => e.id === employeeId);
   if (!employee || !employee.preferredVehicle) return false;
   
-  const vehicle = activeVehicles.find(v => v.id === vehicleId);
+  const vehicle = activeVehicles().find(v => v.id === vehicleId);
   if (!vehicle) return false;
   
   return employee.preferredVehicle !== vehicle.licensePlate;
@@ -56,11 +111,13 @@ export const notAssignedPreferredVehicle = (employeeId: string, vehicleId: strin
 export const generateAssignments = () => {
   const newAssignments: Record<string, string> = {};
   
-  const activeEmployees = initialEmployees.filter(emp => emp.status === "Aktiv");
+  const employees = getEmployees();
+  const activeEmployeesList = employees.filter(emp => emp.status === "Aktiv");
+  const availableVehicles = activeVehicles();
   
   // Zuerst zuweisen: Mitarbeiter, die ein bestimmtes Fahrzeug bevorzugen
-  activeVehicles.forEach(vehicle => {
-    const employeeWithPreference = activeEmployees.find(
+  availableVehicles.forEach(vehicle => {
+    const employeeWithPreference = activeEmployeesList.find(
       emp => emp.preferredVehicle === vehicle.licensePlate && 
             !Object.values(newAssignments).includes(emp.id)
     );
@@ -71,9 +128,9 @@ export const generateAssignments = () => {
   });
   
   // Dann: Verbleibende Fahrzeuge den verbleibenden Mitarbeitern zuweisen
-  activeVehicles.forEach(vehicle => {
+  availableVehicles.forEach(vehicle => {
     if (!newAssignments[vehicle.id]) {
-      const availableEmployee = activeEmployees.find(
+      const availableEmployee = activeEmployeesList.find(
         emp => !Object.values(newAssignments).includes(emp.id)
       );
       

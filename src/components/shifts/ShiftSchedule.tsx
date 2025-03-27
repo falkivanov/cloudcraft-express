@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
 import { useShiftSchedule } from "./hooks/useShiftSchedule";
@@ -34,8 +34,20 @@ const ShiftSchedule = () => {
   } = useShiftSchedule(initialEmployees);
   
   // Log the number of employees loaded to help debug
-  React.useEffect(() => {
+  useEffect(() => {
     console.log(`ShiftSchedule rendered with ${filteredEmployees.length} active employees`);
+    if (filteredEmployees.length === 0) {
+      // Wenn keine Mitarbeiter geladen wurden, stellen wir sicher, dass localStorage korrekt initialisiert ist
+      try {
+        const savedEmployees = localStorage.getItem('employees');
+        if (!savedEmployees) {
+          console.log('Initializing employees in localStorage with sample data');
+          localStorage.setItem('employees', JSON.stringify(initialEmployees));
+        }
+      } catch (error) {
+        console.error('Error checking/setting employees in localStorage:', error);
+      }
+    }
   }, [filteredEmployees]);
   
   const {
