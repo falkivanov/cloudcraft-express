@@ -36,9 +36,15 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   
   const notPreferred = notAssignedPreferredVehicle(assignedEmployeeId, vehicle.id);
   
+  const isUnassigned = !assignedEmployeeId || assignedEmployeeId === "none";
+  
   return (
     <tr 
-      className={`${getKeyChangeStyle(keyChangeStatus)} border-b`}
+      className={`
+        ${getKeyChangeStyle(keyChangeStatus)} 
+        ${isUnassigned ? "bg-green-50 hover:bg-green-100" : ""}
+        border-b
+      `}
     >
       <td className="px-4 py-3">
         <p className="font-medium">{vehicle.brand} {vehicle.model}</p>
@@ -81,6 +87,11 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
         {notPreferred && (
           <div className="text-xs text-muted-foreground mt-1">
             Nicht bevorzugtes Fahrzeug
+          </div>
+        )}
+        {isUnassigned && (
+          <div className="text-xs text-green-700 mt-1">
+            Verfügbar
           </div>
         )}
       </td>
