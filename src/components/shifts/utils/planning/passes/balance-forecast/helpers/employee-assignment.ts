@@ -92,11 +92,10 @@ export function shouldConsiderForExtraDay(
  */
 export function findAvailableUnderutilizedEmployees(
   underutilizedEmployees: Employee[] | undefined,
-  dayIndex: number,
   day: Date,
   dateKey: string,
-  assignedWorkDays: Map<string, Set<string>>,
   isTemporarilyFlexible: (employeeId: string) => boolean,
+  assignedWorkDays: Map<string, Set<string>>,
   existingShifts?: Map<string, ShiftAssignment>
 ): Employee[] {
   if (!underutilizedEmployees || underutilizedEmployees.length === 0) {
