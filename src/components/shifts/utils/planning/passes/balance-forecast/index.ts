@@ -1,9 +1,15 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
 import { balanceEmployeeDistribution } from "./balance-employee-distribution";
 import { ensureFullWorkingDays } from "./ensure-full-working-days";
 import { aggressiveRebalancing } from "./aggressive-rebalancing";
+import { 
+  prioritizeDaysForRebalancing,
+  findOptimalSourceDays,
+  calculateStaffingImbalanceRatio
+} from "./helpers/employee-movement";
 
 /**
  * Identifies overfilled and underfilled days based on required and filled positions
@@ -42,7 +48,7 @@ function identifyStaffingImbalances(
     overfilledDays, 
     underfilledDays, 
     totalRequired, 
-    totalFilled
+    totalFilled 
   };
 }
 
@@ -128,6 +134,91 @@ function identifyDaysWithExtraStaff(
   daysWithExtraStaff.sort((a, b) => a.excess - b.excess);
   
   return daysWithExtraStaff;
+}
+
+/**
+ * Performs advanced balancing for a significantly imbalanced schedule
+ * Prioritizes evening out the distribution when total capacity is insufficient
+ */
+function performAdvancedRebalancing(
+  sortedEmployees: Employee[],
+  weekDays: Date[],
+  filledPositions: Record<number, number>,
+  requiredEmployees: Record<number, number>,
+  formatDateKey: (date: Date) => string,
+  isTemporarilyFlexible: (employeeId: string) => boolean,
+  assignedWorkDays: Map<string, Set<string>>,
+  existingShifts?: Map<string, ShiftAssignment>,
+  workShifts?: ShiftPlan[],
+  freeShifts?: ShiftPlan[]
+): void {
+  console.log("Performing advanced rebalancing for significantly imbalanced schedule");
+  
+  // Calculate overall staffing situation
+  let totalRequired = 0;
+  let totalFilled = 0;
+  
+  weekDays.forEach((_, dayIndex) => {
+    totalRequired += requiredEmployees[dayIndex] || 0;
+    totalFilled += filledPositions[dayIndex];
+  });
+  
+  // If we're globally understaffed, prioritize evening out the distribution
+  if (totalFilled < totalRequired) {
+    console.log(`Global staffing shortage detected: ${totalFilled}/${totalRequired}`);
+    
+    // Find the most severely understaffed days first (using ratio-based prioritization)
+    const prioritizedDays = prioritizeDaysForRebalancing(
+      weekDays, filledPositions, requiredEmployees, formatDateKey
+    );
+    
+    console.log("Days prioritized by staffing imbalance:", 
+      prioritizedDays.map(d => `Day ${d.dayIndex}: ${d.filled}/${d.required} (${Math.round(d.imbalance * 100)}%)`));
+    
+    // Process each understaffed day, starting with the most severely understaffed
+    for (const understaffedDay of prioritizedDays) {
+      // Find optimal source days to take staff from
+      const optimalSources = findOptimalSourceDays(
+        weekDays, filledPositions, requiredEmployees, 
+        understaffedDay.dayIndex, formatDateKey
+      );
+      
+      console.log(`For day ${understaffedDay.dayIndex}, potential sources:`, 
+        optimalSources.map(d => `Day ${d.dayIndex}: ${d.filled}/${d.required} (excess: ${d.excess})`));
+      
+      // Calculate target staffing to make the imbalance more equitable
+      // Instead of trying to fully staff, aim for a balanced understaffing
+      for (const sourceDay of optimalSources) {
+        // Make progressive improvements without completely depleting source days
+        aggressiveRebalancing(
+          sortedEmployees, 
+          weekDays, 
+          filledPositions,
+          requiredEmployees,
+          [sourceDay], 
+          [{ dayIndex: understaffedDay.dayIndex, shortage: 1 }],
+          assignedWorkDays,
+          formatDateKey,
+          isTemporarilyFlexible,
+          existingShifts,
+          workShifts,
+          freeShifts
+        );
+        
+        // Check if we've made sufficient improvement
+        const newImbalance = calculateStaffingImbalanceRatio(
+          filledPositions[understaffedDay.dayIndex], 
+          requiredEmployees[understaffedDay.dayIndex] || 0
+        );
+        
+        // If imbalance is now below 25%, consider it good enough
+        if (newImbalance < 0.25) {
+          console.log(`Day ${understaffedDay.dayIndex} rebalanced to acceptable level: ${filledPositions[understaffedDay.dayIndex]}/${requiredEmployees[understaffedDay.dayIndex]}`);
+          break;
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -243,24 +334,47 @@ export function runBalanceForecastPass(
     existingShifts, workShifts, freeShifts
   );
   
-  // PHASE 5: Final aggressive balancing pass - prioritize critical understaffed days
+  // PHASE 5: Critical inspection - if we have days that are significantly understaffed
+  // compared to others, perform advanced rebalancing
   const criticalUnderfilledDays = identifyCriticalUnderfilledDays(
     weekDays, filledPositions, requiredEmployees
   );
   
   if (criticalUnderfilledDays.length > 0) {
-    // Now look through all days that have staffing above the required level
-    const daysWithExtraStaff = identifyDaysWithExtraStaff(
-      weekDays, filledPositions, requiredEmployees
-    );
+    // Check if we have days with very different staffing levels relative to requirements
+    const staffingImbalances = weekDays.map((_, dayIndex) => {
+      const required = requiredEmployees[dayIndex] || 0;
+      const filled = filledPositions[dayIndex];
+      return { dayIndex, ratio: required > 0 ? filled / required : 1 };
+    });
     
-    // Try to move employees from any day with extra staff to critically understaffed days
-    if (daysWithExtraStaff.length > 0) {
-      aggressiveRebalancing(
+    // Calculate the variance in staffing ratios
+    const ratios = staffingImbalances.map(day => day.ratio).filter(r => !isNaN(r) && isFinite(r));
+    const avgRatio = ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
+    const hasSignificantImbalance = ratios.some(r => Math.abs(r - avgRatio) > 0.2);
+    
+    if (totalFilled < totalRequired && hasSignificantImbalance) {
+      // If we're globally understaffed with significant imbalance between days,
+      // perform a more advanced rebalancing
+      performAdvancedRebalancing(
         sortedEmployees, weekDays, filledPositions, requiredEmployees,
-        daysWithExtraStaff, criticalUnderfilledDays, assignedWorkDays, formatDateKey,
-        isTemporarilyFlexible, existingShifts, workShifts, freeShifts
+        formatDateKey, isTemporarilyFlexible, assignedWorkDays,
+        existingShifts, workShifts, freeShifts
       );
+    } else {
+      // Now look through all days that have staffing above the required level
+      const daysWithExtraStaff = identifyDaysWithExtraStaff(
+        weekDays, filledPositions, requiredEmployees
+      );
+      
+      // Try to move employees from any day with extra staff to critically understaffed days
+      if (daysWithExtraStaff.length > 0) {
+        aggressiveRebalancing(
+          sortedEmployees, weekDays, filledPositions, requiredEmployees,
+          daysWithExtraStaff, criticalUnderfilledDays, assignedWorkDays, formatDateKey,
+          isTemporarilyFlexible, existingShifts, workShifts, freeShifts
+        );
+      }
     }
   }
   
