@@ -1,3 +1,4 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
@@ -105,6 +106,21 @@ export function aggressiveRebalancing(
     if (isWeekendDay) {
       // First approach: Try using underutilized employees or employees who prefer/can work weekends
       if (remainingNeeded > 0) {
+        // Create a simple employeeAssignments object to track assigned days per employee
+        const employeeAssignments: Record<string, number> = {};
+        
+        // Calculate how many days each employee is assigned
+        sortedEmployees.forEach(employee => {
+          let count = 0;
+          weekDays.forEach(day => {
+            const dateKey = formatDateKey(day);
+            if (assignedWorkDays.get(dateKey)?.has(employee.id)) {
+              count++;
+            }
+          });
+          employeeAssignments[employee.id] = count;
+        });
+        
         // Prioritize employees based on weekend suitability
         const prioritizedEmployees = prioritizeForWeekendAssignment(
           sortedEmployees,
