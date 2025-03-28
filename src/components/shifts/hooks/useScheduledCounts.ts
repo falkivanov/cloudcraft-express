@@ -39,15 +39,10 @@ export const useScheduledCounts = (
     return initialScheduled;
   }, [weekDays, shiftsMap]);
   
-  // Initialize scheduled counts
+  // Initialize scheduled counts on mount and whenever relevant dependencies change
   useEffect(() => {
     refreshScheduledCounts();
-  }, [weekDays, refreshScheduledCounts]);
-  
-  // Effect to recalculate scheduled counts whenever shiftsMap changes
-  useEffect(() => {
-    refreshScheduledCounts();
-  }, [shiftsMap, refreshScheduledCounts]);
+  }, [weekDays, shiftsMap, refreshScheduledCounts]);
   
   return {
     scheduledEmployees,

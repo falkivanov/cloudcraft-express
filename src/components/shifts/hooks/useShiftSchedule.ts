@@ -37,7 +37,8 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     clearShifts,
     clearAllShifts,
     refreshScheduledCounts,
-    shiftsMap 
+    shiftsMap,
+    setShiftsMap
   } = shiftTracker;
   
   const { 
@@ -55,7 +56,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     resetFlexibility();
     setShowNextDaySchedule(false);
     
-    // Ensure scheduled counts are refreshed when changing week
+    // Force refresh scheduled counts when changing week
     setTimeout(() => {
       refreshScheduledCounts();
     }, 50);
@@ -66,7 +67,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     resetFlexibility();
     setShowNextDaySchedule(false);
     
-    // Ensure scheduled counts are refreshed when changing week
+    // Force refresh scheduled counts when changing week
     setTimeout(() => {
       refreshScheduledCounts();
     }, 50);
@@ -91,6 +92,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     clearShifts,
     clearAllShifts,
     shiftsMap,
+    setShiftsMap,
     finalizedDays,
     handleFinalizeDay,
     showNextDaySchedule,

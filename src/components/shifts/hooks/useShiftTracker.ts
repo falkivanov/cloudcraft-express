@@ -27,7 +27,12 @@ export const useShiftTracker = (weekDays: Date[]) => {
       
       return newMap;
     });
-  }, [setShiftsMap]);
+    
+    // Force refresh the scheduled counts to ensure UI updates
+    setTimeout(() => {
+      refreshScheduledCounts();
+    }, 50);
+  }, [setShiftsMap, refreshScheduledCounts]);
   
   // Clear ALL shifts for the week
   const clearAllShifts = useCallback(() => {
@@ -37,11 +42,12 @@ export const useShiftTracker = (weekDays: Date[]) => {
     // Force refresh the scheduled counts to ensure UI updates
     setTimeout(() => {
       refreshScheduledCounts();
-    }, 0);
+    }, 50);
   }, [setShiftsMap, refreshScheduledCounts]);
   
   return {
     shiftsMap,
+    setShiftsMap,
     scheduledEmployees,
     formatDateKey,
     clearShifts,

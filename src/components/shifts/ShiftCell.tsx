@@ -39,10 +39,18 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
         
         if (shiftsObject[shiftKey]) {
           setShift(shiftsObject[shiftKey].shiftType);
+        } else {
+          // If no shift is found for this cell, explicitly set to null
+          setShift(null);
         }
+      } else {
+        // If no shiftsMap exists at all, explicitly set to null
+        setShift(null);
       }
     } catch (error) {
       console.error('Error loading initial shift data:', error);
+      // On error, explicitly set to null
+      setShift(null);
     }
   }, [employeeId, date]);
   

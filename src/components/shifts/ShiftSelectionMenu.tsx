@@ -32,6 +32,11 @@ const ShiftSelectionMenu: React.FC<ShiftSelectionMenuProps> = ({
   backgroundColorClass,
   onShiftSelect 
 }) => {
+  // Logging to debug shift status
+  React.useEffect(() => {
+    console.log(`ShiftSelectionMenu rendering with shift: ${shift}`);
+  }, [shift]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -40,6 +45,7 @@ const ShiftSelectionMenu: React.FC<ShiftSelectionMenuProps> = ({
             "w-full h-full min-h-[3.5rem] flex items-center justify-center",
             backgroundColorClass
           )}
+          data-shift-type={shift} // Add data attribute for debugging
         >
           {shift ? (
             <div className="flex flex-col items-center">

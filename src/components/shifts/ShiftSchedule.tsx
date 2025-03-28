@@ -61,6 +61,24 @@ const ShiftSchedule = () => {
     console.log("Current scheduled employees state:", scheduledEmployees);
   }, [scheduledEmployees]);
   
+  // Add an effect to check if the shiftsMap and scheduledEmployees are in sync
+  useEffect(() => {
+    const shiftsCount = Array.from(shiftsMap.values()).filter(s => s.shiftType === "Arbeit").length;
+    const scheduledCount = Object.values(scheduledEmployees).reduce((sum, count) => sum + count, 0);
+    
+    console.log(`Shifts in map: ${shiftsMap.size}, Arbeit shifts: ${shiftsCount}, Scheduled count: ${scheduledCount}`);
+    
+    if (shiftsCount !== scheduledCount) {
+      console.log("Counts mismatch detected, refreshing counts");
+      refreshScheduledCounts();
+    }
+  }, [shiftsMap, scheduledEmployees, refreshScheduledCounts]);
+  
+  // Ensure counts are refreshed when component mounts
+  useEffect(() => {
+    refreshScheduledCounts();
+  }, [refreshScheduledCounts]);
+  
   const {
     isAutoPlanningLoading,
     planningMode,
