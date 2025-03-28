@@ -18,6 +18,7 @@ export const useScheduledCounts = (
   
   // Function to refresh the counts when needed (e.g., when changing weeks or clearing shifts)
   const refreshScheduledCounts = useCallback(() => {
+    // Create a new object to hold counts
     const initialScheduled: Record<string, number> = {};
     
     // Initialize with 0 for all days
@@ -33,7 +34,10 @@ export const useScheduledCounts = (
       }
     });
     
-    console.log("Forcefully refreshing scheduled counts:", initialScheduled);
+    console.log("Refreshing scheduled counts with current shifts data:", initialScheduled);
+    console.log("Total 'Arbeit' shifts in map:", Array.from(shiftsMap.values()).filter(s => s.shiftType === "Arbeit").length);
+    
+    // Update the state with new counts
     setScheduledEmployees(initialScheduled);
     
     return initialScheduled;
@@ -41,7 +45,8 @@ export const useScheduledCounts = (
   
   // Initialize scheduled counts on mount and whenever relevant dependencies change
   useEffect(() => {
-    refreshScheduledCounts();
+    const counts = refreshScheduledCounts();
+    console.log("Updated scheduled counts:", counts);
   }, [weekDays, shiftsMap, refreshScheduledCounts]);
   
   return {

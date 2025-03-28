@@ -57,6 +57,15 @@ export const dispatchShiftEvent = (
   }
 };
 
+export const dispatchClearAllShiftsEvent = () => {
+  try {
+    console.log("Dispatching clearAllShifts event");
+    document.dispatchEvent(new CustomEvent('clearAllShifts'));
+  } catch (error) {
+    console.error("Error dispatching clearAllShifts event:", error);
+  }
+};
+
 export const getBackgroundColorClass = (
   shift: ShiftType, 
   isPreferredDay: boolean, 

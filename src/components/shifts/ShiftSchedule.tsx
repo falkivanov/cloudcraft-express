@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
@@ -31,6 +30,7 @@ const ShiftSchedule = () => {
     clearShifts,
     clearAllShifts,
     shiftsMap,
+    setShiftsMap,
     finalizedDays,
     handleFinalizeDay,
     showNextDaySchedule,
@@ -56,26 +56,29 @@ const ShiftSchedule = () => {
     }
   }, [filteredEmployees]);
   
-  // Add an effect to log scheduled employees whenever it changes
+  // Log scheduled employees whenever it changes
   useEffect(() => {
     console.log("Current scheduled employees state:", scheduledEmployees);
+    const scheduledTotal = Object.values(scheduledEmployees).reduce((sum, count) => sum + count, 0);
+    console.log(`Total scheduled: ${scheduledTotal}`);
   }, [scheduledEmployees]);
   
-  // Add an effect to check if the shiftsMap and scheduledEmployees are in sync
+  // Check if the shiftsMap and scheduledEmployees are in sync
   useEffect(() => {
     const shiftsCount = Array.from(shiftsMap.values()).filter(s => s.shiftType === "Arbeit").length;
     const scheduledCount = Object.values(scheduledEmployees).reduce((sum, count) => sum + count, 0);
     
-    console.log(`Shifts in map: ${shiftsMap.size}, Arbeit shifts: ${shiftsCount}, Scheduled count: ${scheduledCount}`);
+    console.log(`Sync check - Shifts in map: ${shiftsMap.size}, Arbeit shifts: ${shiftsCount}, Scheduled count: ${scheduledCount}`);
     
     if (shiftsCount !== scheduledCount) {
-      console.log("Counts mismatch detected, refreshing counts");
+      console.log("Counts mismatch detected, forcing refresh");
       refreshScheduledCounts();
     }
   }, [shiftsMap, scheduledEmployees, refreshScheduledCounts]);
   
   // Ensure counts are refreshed when component mounts
   useEffect(() => {
+    console.log("ShiftSchedule mounted, forcing refresh of counts");
     refreshScheduledCounts();
   }, [refreshScheduledCounts]);
   
@@ -97,19 +100,29 @@ const ShiftSchedule = () => {
   });
   
   const handleClearAllShifts = () => {
+    // Dispatch a custom event to notify all components that shifts are being cleared
+    document.dispatchEvent(new CustomEvent('clearAllShifts'));
+    
+    // Completely clear the shifts map
+    clearAllShifts();
+    
     // Zeige einen Toast als Bestätigung an
     toast({
       title: "Dienstplan zurückgesetzt",
       description: "Der gesamte Dienstplan für die Woche wurde gelöscht.",
     });
     
-    // Lösche alle Schichten
-    clearAllShifts();
-    
-    // Forcefully refresh the scheduled counts immediately after clearing
+    // Force refresh the scheduled counts several times to ensure UI updates
+    // This helps catch race conditions
     setTimeout(() => {
+      console.log("First refresh after clear");
       refreshScheduledCounts();
-    }, 50);
+      
+      setTimeout(() => {
+        console.log("Second refresh after clear");
+        refreshScheduledCounts();
+      }, 100);
+    }, 100);
   };
   
   return (

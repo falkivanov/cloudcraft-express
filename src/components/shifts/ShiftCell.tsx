@@ -29,7 +29,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   const isFullTime = workingDaysAWeek >= 5;
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
-  // Try to load initial shift from localStorage on mount
+  // Try to load initial shift from localStorage on mount and whenever date or employeeId changes
   useEffect(() => {
     try {
       const shiftsMapData = localStorage.getItem('shiftsMap');
@@ -38,6 +38,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
         const shiftKey = `${employeeId}-${date}`;
         
         if (shiftsObject[shiftKey]) {
+          console.log(`Loading shift for ${employeeId} on ${date}: ${shiftsObject[shiftKey].shiftType}`);
           setShift(shiftsObject[shiftKey].shiftType);
         } else {
           // If no shift is found for this cell, explicitly set to null
@@ -54,7 +55,7 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     }
   }, [employeeId, date]);
   
-  // Listen for external shift assignment changes (e.g., from auto-planning)
+  // Listen for external shift assignment changes (e.g., from auto-planning or clearing)
   useEffect(() => {
     const handleShiftAssigned = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -62,6 +63,8 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       
       // Only update this cell if the assignment matches this cell
       if (assignment.employeeId === employeeId && assignment.date === date) {
+        console.log(`Shift event for ${employeeId} on ${date}: ${action}, type: ${assignment.shiftType}`);
+        
         if (action === 'add') {
           setShift(assignment.shiftType);
         } else if (action === 'remove') {
@@ -70,10 +73,18 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       }
     };
     
+    // Listen for clearAll event which affects all cells
+    const handleClearAllShifts = () => {
+      console.log(`Clearing shift for ${employeeId} on ${date}`);
+      setShift(null);
+    };
+    
     document.addEventListener('shiftAssigned', handleShiftAssigned);
+    document.addEventListener('clearAllShifts', handleClearAllShifts);
     
     return () => {
       document.removeEventListener('shiftAssigned', handleShiftAssigned);
+      document.addEventListener('clearAllShifts', handleClearAllShifts);
     };
   }, [employeeId, date]);
   
@@ -87,6 +98,8 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
       });
       return;
     }
+    
+    console.log(`Changing shift for ${employeeId} on ${date} from ${shift} to ${shiftType}`);
     
     // Store the current shift before changing it
     const previousShiftType = shift;

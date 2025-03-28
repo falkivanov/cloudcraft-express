@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { ShiftType } from "../utils/shift-utils";
 import { useShiftStorage } from "./useShiftStorage";
 import { useScheduledCounts } from "./useScheduledCounts";
@@ -13,8 +13,15 @@ export const useShiftTracker = (weekDays: Date[]) => {
   // Set up event handling
   useShiftEvents(setShiftsMap);
   
+  // After any shift change, ensure counts are refreshed
+  useEffect(() => {
+    refreshScheduledCounts();
+  }, [shiftsMap, refreshScheduledCounts]);
+  
   // Clear only regular shifts (preserves special shifts like Termin, Urlaub, Krank)
   const clearShifts = useCallback(() => {
+    console.log("Before clearing shifts - Map size:", shiftsMap.size);
+    
     setShiftsMap(prevMap => {
       const newMap = new Map();
       
@@ -25,24 +32,29 @@ export const useShiftTracker = (weekDays: Date[]) => {
         }
       });
       
+      console.log("After filtering - New map size:", newMap.size);
       return newMap;
     });
     
     // Force refresh the scheduled counts to ensure UI updates
     setTimeout(() => {
+      console.log("Refreshing counts after clearShifts");
       refreshScheduledCounts();
-    }, 50);
-  }, [setShiftsMap, refreshScheduledCounts]);
+    }, 100);
+  }, [setShiftsMap, refreshScheduledCounts, shiftsMap]);
   
   // Clear ALL shifts for the week
   const clearAllShifts = useCallback(() => {
+    console.log("Clearing ALL shifts");
+    
     // Completely clear the shifts map
     setShiftsMap(new Map());
     
     // Force refresh the scheduled counts to ensure UI updates
     setTimeout(() => {
+      console.log("Refreshing counts after clearAllShifts");
       refreshScheduledCounts();
-    }, 50);
+    }, 100);
   }, [setShiftsMap, refreshScheduledCounts]);
   
   return {

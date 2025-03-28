@@ -17,6 +17,9 @@ export const useShiftStorage = () => {
           newMap.set(key, shiftsObject[key]);
         });
         
+        console.log(`Loaded ${newMap.size} shifts from localStorage`);
+        console.log(`'Arbeit' shifts loaded: ${Array.from(newMap.values()).filter(s => s.shiftType === "Arbeit").length}`);
+        
         return newMap;
       }
     } catch (error) {
@@ -29,15 +32,19 @@ export const useShiftStorage = () => {
   // Save shiftsMap to localStorage whenever it changes
   useEffect(() => {
     try {
-      if (shiftsMap.size > 0) {
-        // Convert Map to object for localStorage
-        const shiftsObject: Record<string, ShiftAssignment> = {};
-        shiftsMap.forEach((value, key) => {
-          shiftsObject[key] = value;
-        });
-        
-        localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
-      }
+      // Convert Map to object for localStorage
+      const shiftsObject: Record<string, ShiftAssignment> = {};
+      shiftsMap.forEach((value, key) => {
+        shiftsObject[key] = value;
+      });
+      
+      // Log to debug
+      console.log(`Saving ${shiftsMap.size} shifts to localStorage`);
+      console.log(`'Arbeit' shifts being saved: ${Array.from(shiftsMap.values()).filter(s => s.shiftType === "Arbeit").length}`);
+      
+      // Save even if empty - this ensures we clear the localStorage when shifts are cleared
+      localStorage.setItem('shiftsMap', JSON.stringify(shiftsObject));
+      
     } catch (error) {
       console.error('Error saving shifts to localStorage:', error);
     }
