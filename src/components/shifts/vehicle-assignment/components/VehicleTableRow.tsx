@@ -36,16 +36,22 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   
-  // Filtern der Mitarbeiter basierend auf dem Suchwert im Dropdown
+  // Improved filtering: make sure we're doing case-insensitive search on the exact text entered
   const filteredDropdownEmployees = employees.filter(employee => 
     searchValue.trim() === "" || 
     employee.name.toLowerCase().includes(searchValue.toLowerCase())
   );
   
-  // Log employees on props change
+  // Log employees on props change and search change
   useEffect(() => {
     console.log("Employees passed to VehicleTableRow:", employees.length);
   }, [employees]);
+  
+  useEffect(() => {
+    console.log("Search in dropdown changed to:", searchValue);
+    console.log("Filtered dropdown employees:", filteredDropdownEmployees.length);
+    console.log("Sample filtered names:", filteredDropdownEmployees.slice(0, 3).map(e => e.name));
+  }, [searchValue, filteredDropdownEmployees.length]);
   
   const keyChangeStatus = needsKeyChange(
     { [vehicle.id]: todayEmployeeId },
@@ -111,6 +117,7 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
                     onSelect={() => {
                       onAssignmentChange(vehicle.id, "none");
                       setOpen(false);
+                      setSearchValue(""); // Clear search on selection
                     }}
                   >
                     <Check
@@ -128,6 +135,7 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
                       onSelect={() => {
                         onAssignmentChange(vehicle.id, employee.id);
                         setOpen(false);
+                        setSearchValue(""); // Clear search on selection
                       }}
                     >
                       <Check
