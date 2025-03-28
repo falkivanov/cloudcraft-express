@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Check, ChevronsUpDown, Search } from "lucide-react";
+import { AlertTriangle, Check, ChevronsUpDown, Search, X } from "lucide-react";
 import { Employee } from "@/types/employee";
 import { getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
 import { Button } from "@/components/ui/button";
@@ -36,14 +36,11 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   
-  // Better filtering function - uses both trimmed and lowercase for more accurate matching
+  // Simple case-insensitive filtering
   const filteredDropdownEmployees = employees.filter(employee => {
     if (!searchValue || searchValue.trim() === "") return true;
     
-    const normalizedSearch = searchValue.toLowerCase().trim();
-    const normalizedName = employee.name.toLowerCase();
-    
-    return normalizedName.includes(normalizedSearch);
+    return employee.name.toLowerCase().includes(searchValue.toLowerCase().trim());
   });
   
   // Debug logs for the employee filtering
@@ -71,11 +68,10 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   
   const isUnassigned = !assignedEmployeeId || assignedEmployeeId === "none";
   
-  // Memoized handler for search value changes to improve performance
-  const handleSearchValueChange = useCallback((value: string) => {
-    console.log("Search in dropdown changed to:", value);
-    setSearchValue(value);
-  }, []);
+  // Handler for clearing the search
+  const handleClearSearch = () => {
+    setSearchValue("");
+  };
   
   return (
     <tr 
@@ -111,41 +107,34 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[240px] p-0">
-            <Command shouldFilter={false}>
-              <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                <CommandInput 
-                  placeholder="Mitarbeiter suchen..." 
-                  onValueChange={handleSearchValueChange}
+            <Command>
+              <div className="flex items-center border-b px-3 relative">
+                <Search className="ml-1 h-4 w-4 shrink-0 opacity-50" />
+                <input
+                  className="flex w-full rounded-md bg-transparent py-3 pl-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Mitarbeiter suchen..."
                   value={searchValue}
-                  className="h-9"
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
+                {searchValue && (
+                  <Button 
+                    variant="ghost" 
+                    className="h-4 w-4 p-0 opacity-70 hover:opacity-100" 
+                    onClick={handleClearSearch}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <CommandList>
-                <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="none"
-                    onSelect={() => {
-                      onAssignmentChange(vehicle.id, "none");
-                      setOpen(false);
-                      setSearchValue(""); // Clear search on selection
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        (!assignedEmployeeId || assignedEmployeeId === "none") ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    Nicht zugewiesen
-                  </CommandItem>
-                  {filteredDropdownEmployees.map(employee => (
+                {filteredDropdownEmployees.length === 0 ? (
+                  <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
+                ) : (
+                  <CommandGroup>
                     <CommandItem
-                      key={employee.id}
-                      value={employee.name}
+                      value="none"
                       onSelect={() => {
-                        onAssignmentChange(vehicle.id, employee.id);
+                        onAssignmentChange(vehicle.id, "none");
                         setOpen(false);
                         setSearchValue(""); // Clear search on selection
                       }}
@@ -153,13 +142,32 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          assignedEmployeeId === employee.id ? "opacity-100" : "opacity-0"
+                          (!assignedEmployeeId || assignedEmployeeId === "none") ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {employee.name}
+                      Nicht zugewiesen
                     </CommandItem>
-                  ))}
-                </CommandGroup>
+                    {filteredDropdownEmployees.map(employee => (
+                      <CommandItem
+                        key={employee.id}
+                        value={employee.id}
+                        onSelect={() => {
+                          onAssignmentChange(vehicle.id, employee.id);
+                          setOpen(false);
+                          setSearchValue(""); // Clear search on selection
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            assignedEmployeeId === employee.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {employee.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
               </CommandList>
             </Command>
           </PopoverContent>
