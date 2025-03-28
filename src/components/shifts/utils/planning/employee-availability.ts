@@ -8,11 +8,12 @@ export const canEmployeeWorkOnDay = (
   day: Date, 
   isTemporarilyFlexible: (employeeId: string) => boolean
 ): boolean => {
-  // Full-time employees (5+ days) are always considered available
+  // Full-time employees (5+ days) are always considered available regardless of preferred days
   if (employee.workingDaysAWeek >= 5) {
     return true;
   }
   
+  // For part-time employees, check flexibility and preferred days
   const dayAbbr = getDayAbbreviation(day);
   return employee.isWorkingDaysFlexible || 
          isTemporarilyFlexible(employee.id) || 

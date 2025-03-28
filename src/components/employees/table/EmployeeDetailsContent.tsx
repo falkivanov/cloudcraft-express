@@ -18,6 +18,7 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
 }) => {
   // Array of day abbreviations (Monday to Saturday)
   const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  const isFullTimeEmployee = employee.workingDaysAWeek >= 5;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -82,33 +83,39 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           </div>
         </div>
         
-        <div className="flex items-start gap-2">
-          <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Präferierte Arbeitstage</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {weekDays.map((day) => (
-                <span 
-                  key={day} 
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    employee.preferredWorkingDays?.includes(day) 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {day}
-                </span>
-              ))}
+        {!isFullTimeEmployee && (
+          <div className="flex items-start gap-2">
+            <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Präferierte Arbeitstage</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {weekDays.map((day) => (
+                  <span 
+                    key={day} 
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      employee.preferredWorkingDays?.includes(day) 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {day}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <div className="flex items-start gap-2">
           <Clock className="h-4 w-4 mt-1 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium">Bei Arbeitstagen flexibel</p>
             <div className="mt-1">
-              {employee.isWorkingDaysFlexible !== false ? (
+              {isFullTimeEmployee ? (
+                <span className="inline-flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-1" /> Ja (Vollzeitmitarbeiter)
+                </span>
+              ) : employee.isWorkingDaysFlexible ? (
                 <span className="inline-flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-1" /> Ja
                 </span>

@@ -50,6 +50,9 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
   // Create Telegram link if username exists
   const telegramLink = employee.telegramUsername ? 
     `https://t.me/${employee.telegramUsername.replace('@', '')}` : null;
+    
+  // Check if this is a full-time employee
+  const isFullTimeEmployee = employee.workingDaysAWeek >= 5;
 
   return (
     <TableRow 
@@ -74,20 +77,26 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
         </span>
       </TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1">
-          {["Mo", "Di", "Mi", "Do", "Fr", "Sa"].map((day, index) => (
-            <span 
-              key={index} 
-              className={`text-xs px-1.5 py-0.5 rounded-full ${
-                employee.preferredWorkingDays?.includes(day) 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {day}
-            </span>
-          ))}
-        </div>
+        {isFullTimeEmployee ? (
+          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
+            Vollzeit (flexibel)
+          </span>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {["Mo", "Di", "Mi", "Do", "Fr", "Sa"].map((day, index) => (
+              <span 
+                key={index} 
+                className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  employee.preferredWorkingDays?.includes(day) 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {day}
+              </span>
+            ))}
+          </div>
+        )}
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
