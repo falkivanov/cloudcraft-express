@@ -32,12 +32,17 @@ export function balanceEmployeeDistribution(
   console.log(`Underfilled days: ${underfilledDays.map(d => `Day ${d.dayIndex} (shortage: ${d.shortage})`).join(', ')}`);
   console.log(`Overfilled days: ${overfilledDays.map(d => `Day ${d.dayIndex} (excess: ${d.excess})`).join(', ')}`);
   
-  // Prioritize weekend staffing first
-  const weekendDays = underfilledDays.filter(d => d.dayIndex >= 5);
+  // SIGNIFICANT CHANGE: Massively increase priority for weekend days (5 and 6)
+  // Prioritize weekend staffing first - give weekend days 3x priority
+  const weekendDays = underfilledDays
+    .filter(d => d.dayIndex >= 5)
+    .map(day => ({...day, shortage: day.shortage * 3})); // Triple the perceived shortage for weekends
+    
   const weekdayDays = underfilledDays.filter(d => d.dayIndex < 5);
   
   if (weekendDays.length > 0) {
-    console.log(`Prioritizing ${weekendDays.length} weekend days for balancing`);
+    console.log(`Prioritizing ${weekendDays.length} weekend days for balancing with INCREASED PRIORITY`);
+    console.log(`Weekend days after priority boost: ${weekendDays.map(d => `Day ${d.dayIndex} (boosted shortage: ${d.shortage})`).join(', ')}`);
   }
   
   if (underutilizedEmployees && underutilizedEmployees.length > 0) {
