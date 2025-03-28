@@ -6,7 +6,6 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getStatusClass, getPreviousWeekKPI, getChangeDisplay, formatKPIValue } from "./company/utils";
@@ -35,23 +34,21 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
         <div className="flex items-center justify-center">
           <span className="font-medium whitespace-nowrap">{formatKPIValue(kpi.value, kpi.unit)}{showUnit ? kpi.unit : ""}</span>
           {change && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"}`}>
-                    {change.isPositive ? (
-                      <ArrowUp className="h-3 w-3 mr-0.5" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-0.5" />
-                    )}
-                    {change.display}{showUnit ? kpi.unit : ""}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Vorwoche: {previousKPI?.value}{showUnit ? kpi.unit : ""}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"}`}>
+                  {change.isPositive ? (
+                    <ArrowUp className="h-3 w-3 mr-0.5" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-0.5" />
+                  )}
+                  {change.display}{showUnit ? kpi.unit : ""}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Vorwoche: {previousKPI?.value}{showUnit ? kpi.unit : ""}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </TableCell>

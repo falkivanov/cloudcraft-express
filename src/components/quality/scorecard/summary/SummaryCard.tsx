@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SummaryCardProps } from "./types";
@@ -38,42 +37,38 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         )}
         
         {change && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <div className="flex items-center ml-2 text-xs">
-                  {change.isPositive ? (
-                    <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 text-red-500 mr-0.5" />
-                  )}
-                  <span className={change.isPositive ? "text-green-500" : "text-red-500"}>
-                    {change.difference > 0 ? "+" : ""}
-                    {Math.round(change.difference)}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Vorwoche: {previousValue}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center ml-2 text-xs">
+                {change.isPositive ? (
+                  <TrendingUp className="h-3 w-3 text-green-500 mr-0.5" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 text-red-500 mr-0.5" />
+                )}
+                <span className={change.isPositive ? "text-green-500" : "text-red-500"}>
+                  {change.difference > 0 ? "+" : ""}
+                  {Math.round(change.difference)}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Vorwoche: {previousValue}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {rankNote && rankChangeInfo && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className={`ml-2 text-xs flex items-center ${rankChangeInfo.color || 'text-gray-500'}`}>
-                  {rankChangeInfo.icon}
-                  <span className="ml-0.5">({rankNote})</span>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Vorwoche: {previousValue}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <span className={`ml-2 text-xs flex items-center ${rankChangeInfo.color || 'text-gray-500'}`}>
+                {rankChangeInfo.icon}
+                <span className="ml-0.5">({rankNote})</span>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Vorwoche: {previousValue}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
       
