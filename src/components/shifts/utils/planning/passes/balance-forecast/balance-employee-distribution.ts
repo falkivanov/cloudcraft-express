@@ -7,7 +7,7 @@ import {
   assignUnderutilizedEmployeeToDay,
   sortEmployeesByAssignmentStatus,
   canMoveEmployeeBetweenDays,
-  moveEmployeeBetweenDays
+  reassignEmployeeBetweenDays
 } from "./distribution-helpers";
 
 // Helper function to balance employee distribution from overfilled to underfilled days
@@ -159,9 +159,9 @@ function processOverfilledDays(
   formatDateKey: (date: Date) => string,
   isTemporarilyFlexible: (employeeId: string) => boolean,
   employeeAssignments: Record<string, number>,
-  existingShifts?: Map<string, ShiftAssignment>,
-  workShifts?: ShiftPlan[],
-  freeShifts?: ShiftPlan[],
+  existingShifts: Map<string, ShiftAssignment> | undefined,
+  workShifts: ShiftPlan[] | undefined,
+  freeShifts: ShiftPlan[] | undefined,
   employeesMoved: number,
   shortage: number
 ) {
@@ -203,7 +203,7 @@ function processOverfilledDays(
         assignedWorkDays,
         existingShifts
       )) {
-        moveEmployeeBetweenDays(
+        reassignEmployeeBetweenDays(
           employee,
           overfilledDateKey,
           underfilledDateKey,

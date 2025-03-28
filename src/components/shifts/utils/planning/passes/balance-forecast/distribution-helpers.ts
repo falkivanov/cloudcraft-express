@@ -132,9 +132,10 @@ export function canMoveEmployeeBetweenDays(
 }
 
 /**
- * Move an employee from an overfilled day to an underfilled day
+ * Reassign an employee from an overfilled day to an underfilled day
+ * (Renamed from moveEmployeeBetweenDays to avoid name collision)
  */
-export function moveEmployeeBetweenDays(
+export function reassignEmployeeBetweenDays(
   employee: Employee,
   overfilledDateKey: string,
   underfilledDateKey: string,
