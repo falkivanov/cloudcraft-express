@@ -6,9 +6,32 @@ import VehicleAssignmentContent from "@/components/shifts/VehicleAssignmentConte
 import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
 import { Container } from "@/components/ui/container";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
 
 const ShiftPlanningPage = () => {
+  const { toast } = useToast();
   const { activeTab, setActiveTab, isScheduleFinalized, handleFinalizeSchedule } = useShiftPlanning();
+  
+  // Show confirmation message when page is loaded and shifts are restored
+  useEffect(() => {
+    try {
+      const shiftsMapData = localStorage.getItem('shiftsMap');
+      if (shiftsMapData) {
+        const shiftsObject = JSON.parse(shiftsMapData);
+        const shiftsCount = Object.keys(shiftsObject).length;
+        
+        if (shiftsCount > 0) {
+          console.log(`Restored ${shiftsCount} shift assignments from previous session`);
+          toast({
+            title: "Dienstplan geladen",
+            description: `${shiftsCount} Schichten wurden aus der vorherigen Planung wiederhergestellt.`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking shift data on page load:', error);
+    }
+  }, [toast]);
   
   // Listen for day finalized events, but don't automatically switch tabs
   useEffect(() => {
