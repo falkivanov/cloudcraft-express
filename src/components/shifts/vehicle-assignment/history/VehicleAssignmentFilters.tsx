@@ -58,6 +58,12 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
   const [employeeOpen, setEmployeeOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("Setting search query to:", value);
+    setSearchQuery(value);
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="flex-1 flex items-center gap-2">
@@ -65,7 +71,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
         <Input
           placeholder="Suche nach Mitarbeiter oder Fahrzeug..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
           className="flex-1"
         />
       </div>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 
 interface VehicleAssignmentTableProps {
   yesterdayAssignments: Record<string, string>;
@@ -43,6 +44,26 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
   const today = new Date(todayDateKey);
   const tomorrow = new Date(tomorrowDateKey);
   
+  // Verbesserte Suchfunktion mit Feedback
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("Main search input changed to:", value);
+    setSearchQuery(value);
+    
+    // Zeige Feedback, wenn die Suche nach "100%" durchgeführt wird
+    if (value.includes("100%")) {
+      const availableCount = employees.filter(emp => emp.isWorkingDaysFlexible).length;
+      toast.info(`Zeige ${availableCount} Mitarbeiter mit 100% Verfügbarkeit`);
+    }
+  };
+  
+  const displayEmployees = searchQuery ? filteredEmployees : employees;
+  
+  // Protokollieren der Anzahl der angezeigten Mitarbeiter
+  React.useEffect(() => {
+    console.log(`Displaying ${displayEmployees.length} of ${employees.length} employees. Search: "${searchQuery}"`);
+  }, [displayEmployees.length, employees.length, searchQuery]);
+  
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -50,7 +71,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
         <Input
           placeholder="Mitarbeiter suchen (z.B. Namen oder '100%' für volle Verfügbarkeit)"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
           className="pl-10"
         />
       </div>
@@ -74,7 +95,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
                 yesterdayEmployeeId={yesterdayAssignments[vehicle.id]}
                 todayEmployeeId={todayAssignments[vehicle.id]}
                 assignedEmployeeId={assignmentMap[vehicle.id] || ""}
-                employees={searchQuery ? filteredEmployees : employees}
+                employees={displayEmployees}
                 onAssignmentChange={handleAssignmentChange}
               />
             ))}

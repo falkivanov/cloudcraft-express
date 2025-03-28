@@ -22,19 +22,32 @@ export function useEmployeeLoader() {
   
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Filter employees based on search query
+  // Verbesserte Filterfunktion für Mitarbeiter
   const filteredEmployees = employees.filter(employee => {
+    // Wenn Suchfeld leer ist, alle Mitarbeiter anzeigen
     if (!searchQuery.trim()) return true;
     
-    // Search in employee name
-    const nameMatch = employee.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
     
-    // Search in employee availability (100% available)
-    const availabilityMatch = searchQuery.toLowerCase().includes("100%") && 
-      employee.isWorkingDaysFlexible;
+    // Suche im Namen (jetzt auch nach Teilstrings)
+    const nameMatch = employee.name.toLowerCase().includes(query);
+    
+    // Suche nach "100%" für flexible Mitarbeiter
+    const isFlexibilitySearch = query.includes("100%");
+    const availabilityMatch = isFlexibilitySearch && employee.isWorkingDaysFlexible;
+    
+    // Debugging-Info
+    console.log(`Filtering employee: ${employee.name}, Query: ${query}, nameMatch: ${nameMatch}, availabilityMatch: ${availabilityMatch}`);
     
     return nameMatch || availabilityMatch;
   });
+  
+  // Debugging-Info hinzufügen
+  useEffect(() => {
+    console.log("Search query changed to:", searchQuery);
+    console.log("Filtered employees count:", filteredEmployees.length);
+    console.log("Total employees count:", employees.length);
+  }, [searchQuery, filteredEmployees.length, employees.length]);
   
   return {
     employees,

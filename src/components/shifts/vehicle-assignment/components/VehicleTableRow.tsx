@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AlertTriangle, Check, ChevronsUpDown } from "lucide-react";
 import { Employee } from "@/types/employee";
 import { getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
@@ -36,6 +36,17 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   
+  // Filtern der Mitarbeiter basierend auf dem Suchwert im Dropdown
+  const filteredDropdownEmployees = employees.filter(employee => 
+    searchValue.trim() === "" || 
+    employee.name.toLowerCase().includes(searchValue.toLowerCase())
+  );
+  
+  // Log employees on props change
+  useEffect(() => {
+    console.log("Employees passed to VehicleTableRow:", employees.length);
+  }, [employees]);
+  
   const keyChangeStatus = needsKeyChange(
     { [vehicle.id]: todayEmployeeId },
     vehicle.id,
@@ -45,6 +56,11 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   const notPreferred = notAssignedPreferredVehicle(assignedEmployeeId, vehicle.id);
   
   const isUnassigned = !assignedEmployeeId || assignedEmployeeId === "none";
+  
+  const handleSearchValueChange = (value: string) => {
+    console.log("Search in dropdown changed to:", value);
+    setSearchValue(value);
+  };
   
   return (
     <tr 
@@ -83,7 +99,8 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
             <Command>
               <CommandInput 
                 placeholder="Mitarbeiter suchen..." 
-                onValueChange={setSearchValue}
+                onValueChange={handleSearchValueChange}
+                value={searchValue}
                 className="h-9"
               />
               <CommandList>
@@ -104,27 +121,24 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
                     />
                     Nicht zugewiesen
                   </CommandItem>
-                  {employees
-                    .filter(employee => 
-                      employee.name.toLowerCase().includes(searchValue.toLowerCase()))
-                    .map(employee => (
-                      <CommandItem
-                        key={employee.id}
-                        value={employee.name}
-                        onSelect={() => {
-                          onAssignmentChange(vehicle.id, employee.id);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            assignedEmployeeId === employee.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {employee.name}
-                      </CommandItem>
-                    ))}
+                  {filteredDropdownEmployees.map(employee => (
+                    <CommandItem
+                      key={employee.id}
+                      value={employee.name}
+                      onSelect={() => {
+                        onAssignmentChange(vehicle.id, employee.id);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          assignedEmployeeId === employee.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {employee.name}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>
