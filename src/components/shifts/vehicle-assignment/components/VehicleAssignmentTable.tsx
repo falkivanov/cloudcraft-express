@@ -33,7 +33,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
   tomorrowDateKey
 }) => {
   const { assignmentMap, handleAssignmentChange } = useAssignmentState(tomorrowAssignments);
-  const employees = useEmployeeLoader();
+  const { employees } = useEmployeeLoader(); // Update to destructure the employees property
   const vehicleList = activeVehicles();
   
   // Parse dates from date keys
@@ -61,7 +61,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
               yesterdayEmployeeId={yesterdayAssignments[vehicle.id]}
               todayEmployeeId={todayAssignments[vehicle.id]}
               assignedEmployeeId={assignmentMap[vehicle.id] || ""}
-              employees={employees}
+              employees={employees} // Now this properly passes the employees array
               onAssignmentChange={handleAssignmentChange}
             />
           ))}
