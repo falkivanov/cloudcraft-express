@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { format, subDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { Search, Calendar, ChevronsUpDown } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Employee } from "@/types/employee";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
 
 interface VehicleAssignmentFiltersProps {
   searchQuery: string;
@@ -54,16 +52,6 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
     }
   };
 
-  // State for employee dropdown
-  const [employeeOpen, setEmployeeOpen] = useState(false);
-  const [employeeSearch, setEmployeeSearch] = useState("");
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log("Setting search query to:", value);
-    setSearchQuery(value);
-  };
-
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="flex-1 flex items-center gap-2">
@@ -71,7 +59,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
         <Input
           placeholder="Suche nach Mitarbeiter oder Fahrzeug..."
           value={searchQuery}
-          onChange={handleSearchChange}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1"
         />
       </div>
@@ -108,72 +96,22 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
           </PopoverContent>
         </Popover>
         
-        <Popover open={employeeOpen} onOpenChange={setEmployeeOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={employeeOpen}
-              className="min-w-[180px] justify-between"
-            >
-              {selectedEmployee 
-                ? employees.find((employee) => employee.id === selectedEmployee)?.name || "Mitarbeiter wählen"
-                : "Alle Mitarbeiter"}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0">
-            <Command>
-              <CommandInput 
-                placeholder="Mitarbeiter suchen..." 
-                className="h-9"
-                value={employeeSearch}
-                onValueChange={setEmployeeSearch}
-              />
-              <CommandList>
-                <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="all-employees"
-                    onSelect={() => {
-                      setSelectedEmployee(null);
-                      setEmployeeOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        !selectedEmployee ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    Alle Mitarbeiter
-                  </CommandItem>
-                  {employees
-                    .filter(employee => 
-                      employee.name.toLowerCase().includes(employeeSearch.toLowerCase()))
-                    .map(employee => (
-                      <CommandItem
-                        key={employee.id}
-                        value={employee.id}
-                        onSelect={() => {
-                          setSelectedEmployee(employee.id);
-                          setEmployeeOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedEmployee === employee.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {employee.name}
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <Select 
+          value={selectedEmployee || "all-employees"} 
+          onValueChange={(value) => setSelectedEmployee(value === "all-employees" ? null : value)}
+        >
+          <SelectTrigger className="min-w-[180px]">
+            <SelectValue placeholder="Mitarbeiter wählen" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all-employees">Alle Mitarbeiter</SelectItem>
+            {employees.map(employee => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
         <Button 
           variant="outline" 

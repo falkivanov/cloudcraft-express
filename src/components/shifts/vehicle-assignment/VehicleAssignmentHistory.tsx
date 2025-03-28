@@ -2,6 +2,7 @@
 import React from "react";
 import { Car } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 import VehicleAssignmentHistoryTable from "./history/VehicleAssignmentHistoryTable";
 import VehicleAssignmentFilters from "./history/VehicleAssignmentFilters";
 import { useVehicleAssignmentHistory } from "./history/useVehicleAssignmentHistory";
@@ -19,7 +20,7 @@ const VehicleAssignmentHistory: React.FC = () => {
   } = useVehicleAssignmentHistory();
   
   // Load employees using the hook
-  const { filteredEmployees } = useEmployeeLoader();
+  const employees = useEmployeeLoader();
   
   return (
     <Card>
@@ -38,7 +39,7 @@ const VehicleAssignmentHistory: React.FC = () => {
             setDateFilter={setDateFilter}
             selectedEmployee={selectedEmployee}
             setSelectedEmployee={setSelectedEmployee}
-            employees={filteredEmployees}
+            employees={employees}
           />
           
           <VehicleAssignmentHistoryTable assignments={sortedAssignments} />
