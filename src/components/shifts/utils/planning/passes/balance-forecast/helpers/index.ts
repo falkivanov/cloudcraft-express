@@ -8,11 +8,10 @@ export * from './advanced-rebalancing';
 export * from './logging';
 export * from './weekend-prioritization';
 
-// Explicitly re-export weekend balancing functions with different names to avoid conflicts
-import { calculateAverageFilledRatio as calcAvgFilledRatio, hasSpecialShift as checkSpecialShift } from './weekend-balancing';
-export {
-  calcAvgFilledRatio as calculateAverageFilledRatio,
-  checkSpecialShift as hasSpecialShift,
+// Explicitly re-export weekend balancing functions
+export { 
+  calculateAverageFilledRatio,
+  hasSpecialShift,
   getAssignedDaysCount,
   createEmployeeAssignmentsMap
 } from './weekend-balancing';

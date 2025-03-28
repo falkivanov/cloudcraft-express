@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
@@ -12,14 +11,12 @@ import {
 } from "./helpers/staffing-calculations";
 import { moveEmployeeBetweenDays } from "./helpers/employee-reassignment";
 import { isAvailableForWeekendDay } from "./helpers/employee-utilization";
-import { 
-  prioritizeForWeekendAssignment 
-} from "./helpers/weekend-prioritization";
+import { prioritizeForWeekendAssignment } from "./helpers/weekend-prioritization";
 import { canEmployeeWorkOnDay } from "../../employee-availability";
 // Import from shift-status module but alias to avoid conflicts
 import { hasSpecialShift as hasShiftStatus } from "../../shift-status";
-// Import the renamed function from weekend-balancing to avoid conflicts
-import { calcAvgFilledRatio } from "./helpers";
+// Import directly from weekend-balancing to avoid the index.ts problems
+import { calculateAverageFilledRatio } from "./helpers/weekend-balancing";
 
 /**
  * More aggressive rebalancing algorithm to handle critical understaffing
@@ -198,7 +195,7 @@ function handleWeekendDay(
   }
   
   // Calculate the current average filled ratio across all days
-  const averageFilledRatio = calcAvgFilledRatio(
+  const averageFilledRatio = calculateAverageFilledRatio(
     weekDays, filledPositions, requiredEmployees
   );
   

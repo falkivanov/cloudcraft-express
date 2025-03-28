@@ -2,7 +2,10 @@
 // Re-export utilities from specialized files
 export * from './date-utils';
 export * from './employee-availability';
-export * from './shift-status';
+
+// Import the specialized shift-status and explicitly re-export with a different name
+import { hasSpecialShift as checkSpecialShift } from './shift-status';
+export { checkSpecialShift };
 
 // Export the distribution helpers
 export * from './passes/balance-forecast/distribution-helpers';

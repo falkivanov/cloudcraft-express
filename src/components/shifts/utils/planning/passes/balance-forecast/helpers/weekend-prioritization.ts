@@ -1,11 +1,54 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../../types";
 import { addEmployeeToDay, canAssignEmployeeToDay } from "./employee-assignment";
 import { moveEmployeeBetweenDays } from "./employee-reassignment";
-import { isAvailableForWeekendDay, prioritizeForWeekendAssignment } from "./employee-utilization";
+import { isAvailableForWeekendDay } from "./employee-utilization";
 import { hasSpecialShift, getAssignedDaysCount, createEmployeeAssignmentsMap } from "./weekend-balancing";
 import { shouldConsiderForExtraDay } from "./employee-assignment";
+
+/**
+ * Prioritizes employees for weekend assignment based on various criteria
+ */
+export function prioritizeForWeekendAssignment(
+  sortedEmployees: Employee[],
+  assignedWorkDays: Map<string, Set<string>>,
+  employeeAssignments: Record<string, number>,
+  formatDateKey: (date: Date) => string,
+  weekDays: Date[]
+): Employee[] {
+  // Prioritize employees for weekend assignments based on several factors:
+  // 1. Employees who have fewer assigned days compared to their workingDaysAWeek
+  // 2. Employees who are flexible in their working days
+  // 3. Employees who want to work six days
+  
+  return sortedEmployees
+    .filter(employee => {
+      const assignedCount = employeeAssignments[employee.id] || 0;
+      return assignedCount < employee.workingDaysAWeek || 
+             (employee.wantsToWorkSixDays && assignedCount < 6);
+    })
+    .sort((a, b) => {
+      // Prioritize employees who have more days to fill
+      const aDaysLeft = a.workingDaysAWeek - (employeeAssignments[a.id] || 0);
+      const bDaysLeft = b.workingDaysAWeek - (employeeAssignments[b.id] || 0);
+      
+      if (aDaysLeft !== bDaysLeft) return bDaysLeft - aDaysLeft;
+      
+      // Then prioritize flexible employees
+      if (a.isWorkingDaysFlexible !== b.isWorkingDaysFlexible) {
+        return a.isWorkingDaysFlexible ? -1 : 1;
+      }
+      
+      // Then employees who want to work six days
+      if (a.wantsToWorkSixDays !== b.wantsToWorkSixDays) {
+        return a.wantsToWorkSixDays ? -1 : 1;
+      }
+      
+      return 0;
+    });
+}
 
 /**
  * Handles weekend day staffing with specialized approach
