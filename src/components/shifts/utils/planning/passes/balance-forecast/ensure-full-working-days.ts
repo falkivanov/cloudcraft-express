@@ -19,6 +19,8 @@ export function ensureFullWorkingDays(
   workShifts?: ShiftPlan[],
   freeShifts?: ShiftPlan[]
 ) {
+  console.log("Starting ensure-full-working-days pass");
+  
   // First, check if we have a global shortage (total required > total possible shifts)
   let totalRequired = 0;
   let totalFilled = 0;
@@ -37,6 +39,22 @@ export function ensureFullWorkingDays(
   
   // Determine if we need to assign 6th days or not
   const needsExtraDays = totalShortage > 0;
+  console.log(`Total shortage: ${totalShortage}, needs extra days: ${needsExtraDays}`);
+  
+  // First pass: find employees who aren't assigned their full working days yet
+  const underutilizedEmployees = sortedEmployees
+    .filter(employee => {
+      const assignedDays = employeeAssignments[employee.id] || 0;
+      return assignedDays < employee.workingDaysAWeek;
+    })
+    .sort((a, b) => {
+      // Prioritize employees with the biggest gap between assigned and target days
+      const aGap = a.workingDaysAWeek - (employeeAssignments[a.id] || 0);
+      const bGap = b.workingDaysAWeek - (employeeAssignments[b.id] || 0);
+      return bGap - aGap;
+    });
+  
+  console.log(`Found ${underutilizedEmployees.length} employees not assigned their full days`);
   
   // First, prioritize days that are still underfilled
   const underfilledDays: { dayIndex: number, dateKey: string, day: Date }[] = [];
@@ -58,10 +76,15 @@ export function ensureFullWorkingDays(
     return bGap - aGap;
   });
   
-  // Process each employee who isn't assigned their full working days
-  for (const employee of sortedEmployees) {
+  // Process each underutilized employee (who isn't assigned their full working days)
+  for (const employee of underutilizedEmployees) {
     const assignedDays = employeeAssignments[employee.id] || 0;
     const targetDays = employee.workingDaysAWeek;
+    const daysNeeded = targetDays - assignedDays;
+    
+    if (daysNeeded <= 0) continue;
+    
+    console.log(`Employee ${employee.name} needs ${daysNeeded} more days (current: ${assignedDays}, target: ${targetDays})`);
     
     // Special case for employees who want to work 6 days but are set to 5
     // Only consider this if we truly need extra days
@@ -71,13 +94,11 @@ export function ensureFullWorkingDays(
     
     const actualTargetDays = shouldConsiderExtraDay ? 6 : targetDays;
     
-    // Skip if already fully assigned or over-assigned
-    if (assignedDays >= actualTargetDays) continue;
-    
-    // Try to assign to underfilled days first
+    // First try to assign to underfilled days
     let remainingDaysToAssign = actualTargetDays - assignedDays;
+    let daysAssigned = 0;
     
-    // First pass: try to fill underfilled days
+    // First pass: focus on underfilled days
     if (remainingDaysToAssign > 0 && underfilledDays.length > 0) {
       for (const { dayIndex, dateKey, day } of underfilledDays) {
         // Skip if already assigned to this day
@@ -95,6 +116,15 @@ export function ensureFullWorkingDays(
             shiftType: "Arbeit"
           });
           
+          // Remove any "Frei" shifts for this employee on this day
+          const freeShiftIndex = freeShifts.findIndex(
+            shift => shift.employeeId === employee.id && shift.date === dateKey
+          );
+          
+          if (freeShiftIndex !== -1) {
+            freeShifts.splice(freeShiftIndex, 1);
+          }
+          
           // Update tracking
           employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
           filledPositions[dayIndex]++;
@@ -105,7 +135,10 @@ export function ensureFullWorkingDays(
             dayEmployees.add(employee.id);
           }
           
+          daysAssigned++;
           remainingDaysToAssign--;
+          
+          console.log(`Assigned ${employee.name} to underfilled day ${dayIndex}`);
           
           // Stop if fully assigned or this day is now filled
           if (remainingDaysToAssign <= 0 || filledPositions[dayIndex] >= (requiredEmployees[dayIndex] || 0)) {
@@ -115,54 +148,27 @@ export function ensureFullWorkingDays(
       }
     }
     
-    // Second pass: if still not fully assigned, try all days (preferring Saturday which is often understaffed)
+    // Second pass: if still not fully assigned, try all days with a preference for the least overstaffed
     if (remainingDaysToAssign > 0) {
-      // If we're considering a 6th day but don't need it, stop here
-      if (assignedDays === 5 && !shouldConsiderExtraDay) continue;
+      // Get all days where the employee is not yet assigned, sorted by staffing level (least overstaffed first)
+      const availableDays = weekDays
+        .map((day, index) => ({ day, index, dateKey: formatDateKey(day) }))
+        .filter(({ dateKey }) => !assignedWorkDays.get(dateKey)?.has(employee.id))
+        .filter(({ dateKey }) => !hasSpecialShift(employee.id, dateKey, existingShifts))
+        .sort((a, b) => {
+          const aRequired = requiredEmployees[a.index] || 0;
+          const bRequired = requiredEmployees[b.index] || 0;
+          
+          // Compare overstaffing ratios (filled / required)
+          const aRatio = aRequired === 0 ? Infinity : filledPositions[a.index] / aRequired;
+          const bRatio = bRequired === 0 ? Infinity : filledPositions[b.index] / bRequired;
+          
+          return aRatio - bRatio; // Lower ratio (less overstaffed) comes first
+        });
       
-      // Reorder days to prioritize days with required staffing, especially Saturday (assuming index 5 is Saturday)
-      const orderedDayIndices = [...Array(weekDays.length).keys()].sort((a, b) => {
-        // First priority is days that are still understaffed
-        const aStillNeeds = (requiredEmployees[a] || 0) - filledPositions[a] > 0;
-        const bStillNeeds = (requiredEmployees[b] || 0) - filledPositions[b] > 0;
-        
-        if (aStillNeeds && !bStillNeeds) return -1;
-        if (!aStillNeeds && bStillNeeds) return 1;
-        
-        // Second priority is Saturday (index 5)
-        if (a === 5) return -1;
-        if (b === 5) return 1;
-        
-        // Third priority is days with required staffing, most required first
-        const aRequired = requiredEmployees[a] || 0;
-        const bRequired = requiredEmployees[b] || 0;
-        
-        if (aRequired > 0 && bRequired > 0) {
-          // If both have requirements, prioritize the one that's closer to the required count
-          const aRatio = filledPositions[a] / (aRequired || 1);
-          const bRatio = filledPositions[b] / (bRequired || 1);
-          return aRatio - bRatio; // Lower ratio (less filled) comes first
-        }
-        
-        if (aRequired > 0) return -1;
-        if (bRequired > 0) return 1;
-        
-        // Otherwise maintain original order
-        return a - b;
-      });
-      
-      for (const dayIndex of orderedDayIndices) {
-        // Skip if this day already has enough staff
-        if (filledPositions[dayIndex] >= (requiredEmployees[dayIndex] || 0)) continue;
-        
-        const day = weekDays[dayIndex];
-        const dateKey = formatDateKey(day);
-        
-        // Skip if already assigned to this day
+      for (const { day, index, dateKey } of availableDays) {
+        // Skip if already assigned
         if (assignedWorkDays.get(dateKey)?.has(employee.id)) continue;
-        
-        // Skip if has special shift
-        if (hasSpecialShift(employee.id, dateKey, existingShifts)) continue;
         
         // Check if employee can work on this day
         if (canEmployeeWorkOnDay(employee, day, isTemporarilyFlexible)) {
@@ -173,9 +179,18 @@ export function ensureFullWorkingDays(
             shiftType: "Arbeit"
           });
           
+          // Remove any "Frei" shifts for this employee on this day
+          const freeShiftIndex = freeShifts.findIndex(
+            shift => shift.employeeId === employee.id && shift.date === dateKey
+          );
+          
+          if (freeShiftIndex !== -1) {
+            freeShifts.splice(freeShiftIndex, 1);
+          }
+          
           // Update tracking
           employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
-          filledPositions[dayIndex]++;
+          filledPositions[index]++;
           
           // Add to assigned employees for this day
           const dayEmployees = assignedWorkDays.get(dateKey);
@@ -183,12 +198,87 @@ export function ensureFullWorkingDays(
             dayEmployees.add(employee.id);
           }
           
+          daysAssigned++;
           remainingDaysToAssign--;
+          
+          console.log(`Assigned ${employee.name} to day ${index} (still needs: ${remainingDaysToAssign})`);
           
           // Stop if fully assigned
           if (remainingDaysToAssign <= 0) {
             break;
           }
+        }
+      }
+    }
+    
+    // Log if we couldn't fully assign this employee
+    if (daysAssigned < daysNeeded) {
+      console.log(`Could only assign ${daysAssigned}/${daysNeeded} additional days to ${employee.name}`);
+    }
+  }
+  
+  // Check if we need to enforce 5 days for employees who should work 5 days
+  // This may involve removing employees from overstaffed days and adding them to understaffed days
+  const fullTimeEmployees = sortedEmployees.filter(e => e.workingDaysAWeek >= 5);
+  console.log(`Checking ${fullTimeEmployees.length} full-time employees for enforcing 5-day schedules`);
+  
+  for (const employee of fullTimeEmployees) {
+    const assignedDays = employeeAssignments[employee.id] || 0;
+    
+    // Skip if already assigned enough days
+    if (assignedDays >= employee.workingDaysAWeek) continue;
+    
+    console.log(`Full-time employee ${employee.name} is under-scheduled (${assignedDays}/${employee.workingDaysAWeek} days)`);
+    
+    // For each day, check if employee is free and can be assigned to work
+    for (let dayIndex = 0; dayIndex < weekDays.length; dayIndex++) {
+      const day = weekDays[dayIndex];
+      const dateKey = formatDateKey(day);
+      
+      // Skip if already assigned to this day
+      if (assignedWorkDays.get(dateKey)?.has(employee.id)) continue;
+      
+      // Skip if has special shift
+      if (hasSpecialShift(employee.id, dateKey, existingShifts)) continue;
+      
+      // Check if this employee has "Frei" on this day (we can convert to "Arbeit")
+      const hasFreeShift = freeShifts.some(
+        shift => shift.employeeId === employee.id && shift.date === dateKey
+      );
+      
+      // Check if employee can work on this day
+      if (hasFreeShift && canEmployeeWorkOnDay(employee, day, isTemporarilyFlexible)) {
+        // Remove the "Frei" shift
+        const freeShiftIndex = freeShifts.findIndex(
+          shift => shift.employeeId === employee.id && shift.date === dateKey
+        );
+        
+        if (freeShiftIndex !== -1) {
+          freeShifts.splice(freeShiftIndex, 1);
+        }
+        
+        // Add work shift
+        workShifts.push({
+          employeeId: employee.id,
+          date: dateKey,
+          shiftType: "Arbeit"
+        });
+        
+        // Update tracking
+        employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
+        filledPositions[dayIndex]++;
+        
+        // Add to assigned employees for this day
+        const dayEmployees = assignedWorkDays.get(dateKey);
+        if (dayEmployees) {
+          dayEmployees.add(employee.id);
+        }
+        
+        console.log(`Converted ${employee.name}'s "Frei" to "Arbeit" on day ${dayIndex}`);
+        
+        // Stop if fully assigned
+        if (employeeAssignments[employee.id] >= employee.workingDaysAWeek) {
+          break;
         }
       }
     }

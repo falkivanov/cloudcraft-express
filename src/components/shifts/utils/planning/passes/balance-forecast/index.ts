@@ -26,6 +26,7 @@ export function runBalanceForecastPass(
   
   // Calculate total required and filled positions to determine if we're globally understaffed
   let totalRequired = 0;
+  let totalFilled = 0;
   let totalPossibleAssignments = 0;
   
   weekDays.forEach((_, dayIndex) => {
@@ -33,6 +34,7 @@ export function runBalanceForecastPass(
     const filled = filledPositions[dayIndex];
     
     totalRequired += required;
+    totalFilled += filled;
     
     if (filled > required && required > 0) {
       overfilledDays.push({ dayIndex, excess: filled - required });
@@ -59,23 +61,50 @@ export function runBalanceForecastPass(
   overfilledDays.sort((a, b) => b.excess - a.excess);
   underfilledDays.sort((a, b) => b.shortage - a.shortage);
   
-  // PHASE 2: Balance employee distribution by moving employees from overfilled to underfilled days
-  if (underfilledDays.length > 0 && overfilledDays.length > 0) {
-    balanceEmployeeDistribution(
-      sortedEmployees, weekDays, filledPositions, requiredEmployees,
-      overfilledDays, underfilledDays, assignedWorkDays, formatDateKey,
-      isTemporarilyFlexible, employeeAssignments, existingShifts, workShifts, freeShifts
-    );
+  // ENHANCED PHASE 2: Identify employees not working their full days
+  const underutilizedEmployees = sortedEmployees.filter(employee => {
+    const assigned = employeeAssignments[employee.id] || 0;
+    return assigned < employee.workingDaysAWeek;
+  });
+  
+  console.log(`Found ${underutilizedEmployees.length} employees not working their full schedule`);
+  
+  // PHASE 3: Balance employee distribution by moving employees from overfilled to underfilled days
+  // Prioritize rebalancing with underutilized employees first
+  if (underfilledDays.length > 0) {
+    if (overfilledDays.length > 0) {
+      balanceEmployeeDistribution(
+        sortedEmployees, weekDays, filledPositions, requiredEmployees,
+        overfilledDays, underfilledDays, assignedWorkDays, formatDateKey,
+        isTemporarilyFlexible, employeeAssignments, existingShifts, workShifts, freeShifts,
+        underutilizedEmployees
+      );
+    }
+    
+    // If there are still underfilled days after balancing, try to handle them with underutilized employees
+    const remainingUnderfilled = weekDays.map((_, dayIndex) => {
+      const required = requiredEmployees[dayIndex] || 0;
+      const filled = filledPositions[dayIndex];
+      
+      if (filled < required) {
+        return { dayIndex, shortage: required - filled };
+      }
+      return null;
+    }).filter(Boolean);
+    
+    if (remainingUnderfilled.length > 0 && underutilizedEmployees.length > 0) {
+      console.log(`Still have ${remainingUnderfilled.length} underfilled days, attempting to assign underutilized employees`);
+    }
   }
   
-  // PHASE 3: Ensure all employees are working their specified number of days
+  // PHASE 4: Ensure all employees are working their specified number of days
   ensureFullWorkingDays(
     sortedEmployees, weekDays, filledPositions, requiredEmployees,
     assignedWorkDays, formatDateKey, isTemporarilyFlexible, employeeAssignments,
     existingShifts, workShifts, freeShifts
   );
   
-  // PHASE 4: Final balancing pass - look for critical understaffed days again
+  // PHASE 5: Final aggressive balancing pass - prioritize critical understaffed days
   const criticalUnderfilledDays: { dayIndex: number, shortage: number }[] = [];
   
   weekDays.forEach((_, dayIndex) => {
@@ -117,15 +146,37 @@ export function runBalanceForecastPass(
     }
   }
   
-  // Final verification: log how many employees are scheduled for more than their normal days
+  // PHASE 6: Verify and log results
+  // Count how many employees are scheduled for fewer than their working days
+  let underScheduledCount = 0;
   let overScheduledCount = 0;
+  
   sortedEmployees.forEach(employee => {
     const assigned = employeeAssignments[employee.id] || 0;
-    if (assigned > employee.workingDaysAWeek) {
+    const expected = employee.workingDaysAWeek;
+    
+    if (assigned < expected) {
+      underScheduledCount++;
+      console.log(`Employee ${employee.name} is under-scheduled: ${assigned}/${expected} days`);
+    } else if (assigned > expected) {
       overScheduledCount++;
-      console.log(`Employee ${employee.name} is scheduled for ${assigned} days (normal: ${employee.workingDaysAWeek})`);
+      console.log(`Employee ${employee.name} is scheduled for extra days: ${assigned}/${expected}`);
     }
   });
   
-  console.log(`Total employees scheduled for extra days: ${overScheduledCount}`);
+  console.log(`Final stats: ${underScheduledCount} employees under-scheduled, ${overScheduledCount} scheduled for extra days`);
+  
+  // Check if we achieved the required staffing for each day
+  weekDays.forEach((_, dayIndex) => {
+    const required = requiredEmployees[dayIndex] || 0;
+    const filled = filledPositions[dayIndex];
+    
+    if (filled < required) {
+      console.log(`Day ${dayIndex} is still understaffed: ${filled}/${required}`);
+    } else if (filled > required) {
+      console.log(`Day ${dayIndex} is overstaffed: ${filled}/${required} (+${filled - required})`);
+    } else if (required > 0) {
+      console.log(`Day ${dayIndex} is perfectly staffed: ${filled}/${required}`);
+    }
+  });
 }
