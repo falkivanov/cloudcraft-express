@@ -6,32 +6,38 @@ import {
   SunIcon, 
   CalendarIcon, 
   UmbrellaIcon, 
-  ThermometerIcon, 
-  Loader2Icon, 
-  PlusIcon 
+  ThermometerIcon,
+  Loader2Icon
 } from "lucide-react";
 
 interface ShiftIconProps {
   shift: ShiftType;
-  isLoading: boolean;
+  isLoading?: boolean;
+  className?: string;
 }
 
-const ShiftIcon: React.FC<ShiftIconProps> = ({ shift, isLoading }) => {
-  if (isLoading) return <Loader2Icon className="h-4 w-4 animate-spin" />;
+const ShiftIcon: React.FC<ShiftIconProps> = ({ 
+  shift, 
+  isLoading = false,
+  className = "h-5 w-5" 
+}) => {
+  if (isLoading) {
+    return <Loader2Icon className={`${className} animate-spin text-gray-500`} />;
+  }
   
   switch (shift) {
     case "Arbeit":
-      return <PackageIcon className="h-4 w-4 text-blue-600" />;
+      return <PackageIcon className={`${className} text-blue-600`} />;
     case "Frei":
-      return <SunIcon className="h-4 w-4 text-yellow-500" />;
+      return <SunIcon className={`${className} text-yellow-500`} />;
     case "Termin":
-      return <CalendarIcon className="h-4 w-4 text-purple-500" />;
+      return <CalendarIcon className={`${className} text-purple-500`} />;
     case "Urlaub":
-      return <UmbrellaIcon className="h-4 w-4 text-green-500" />;
+      return <UmbrellaIcon className={`${className} text-green-500`} />;
     case "Krank":
-      return <ThermometerIcon className="h-4 w-4 text-red-500" />;
+      return <ThermometerIcon className={`${className} text-red-500`} />;
     default:
-      return <PlusIcon className="h-4 w-4" />;
+      return null;
   }
 };
 

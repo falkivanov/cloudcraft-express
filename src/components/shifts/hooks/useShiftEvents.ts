@@ -3,41 +3,31 @@ import { useEffect } from "react";
 import { ShiftAssignment } from "@/types/shift";
 
 /**
- * Hook for handling shift assignment events
+ * Hook to listen for shift assignment events and update the shiftsMap
  */
 export const useShiftEvents = (
   setShiftsMap: React.Dispatch<React.SetStateAction<Map<string, ShiftAssignment>>>
 ) => {
-  // Listen for shift assignments
+  // Listen for shift assignment events
   useEffect(() => {
     const handleShiftAssigned = (event: Event) => {
-      try {
-        const customEvent = event as CustomEvent;
-        const { assignment, action } = customEvent.detail;
+      const customEvent = event as CustomEvent;
+      const { assignment, action } = customEvent.detail;
+      
+      console.log(`Shift ${action} event received:`, assignment);
+      
+      setShiftsMap(prev => {
+        const newMap = new Map(prev);
+        const key = `${assignment.employeeId}-${assignment.date}`;
         
-        if (!assignment || !assignment.date || !assignment.employeeId) {
-          console.error("Invalid assignment data:", customEvent.detail);
-          return;
+        if (action === 'add') {
+          newMap.set(key, assignment);
+        } else if (action === 'remove') {
+          newMap.delete(key);
         }
         
-        console.log(`Shift event received:`, { assignment, action });
-        
-        // Update the shiftsMap first
-        setShiftsMap(prevMap => {
-          const newMap = new Map(prevMap);
-          const key = `${assignment.employeeId}-${assignment.date}`;
-          
-          if (action === 'add') {
-            newMap.set(key, assignment);
-          } else if (action === 'remove') {
-            newMap.delete(key);
-          }
-          
-          return newMap;
-        });
-      } catch (error) {
-        console.error('Error handling shift assignment event:', error);
-      }
+        return newMap;
+      });
     };
     
     document.addEventListener('shiftAssigned', handleShiftAssigned);

@@ -13,7 +13,8 @@ import {
   CalendarIcon, 
   UmbrellaIcon, 
   ThermometerIcon, 
-  XCircleIcon 
+  XCircleIcon,
+  PlusIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ShiftIcon from "./ShiftIcon";
@@ -40,10 +41,14 @@ const ShiftSelectionMenu: React.FC<ShiftSelectionMenuProps> = ({
             backgroundColorClass
           )}
         >
-          <div className="flex flex-col items-center">
-            <ShiftIcon shift={shift} isLoading={isLoading} />
-            {shift && <span className="text-xs mt-1">{shift}</span>}
-          </div>
+          {shift ? (
+            <div className="flex flex-col items-center">
+              <ShiftIcon shift={shift} isLoading={isLoading} />
+              <span className="text-xs mt-1">{shift}</span>
+            </div>
+          ) : (
+            <PlusIcon className="h-5 w-5 text-gray-400" />
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">

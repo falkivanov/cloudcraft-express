@@ -29,6 +29,23 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   const isFullTime = workingDaysAWeek >= 5;
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
+  // Try to load initial shift from localStorage on mount
+  useEffect(() => {
+    try {
+      const shiftsMapData = localStorage.getItem('shiftsMap');
+      if (shiftsMapData) {
+        const shiftsObject = JSON.parse(shiftsMapData);
+        const shiftKey = `${employeeId}-${date}`;
+        
+        if (shiftsObject[shiftKey]) {
+          setShift(shiftsObject[shiftKey].shiftType);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading initial shift data:', error);
+    }
+  }, [employeeId, date]);
+  
   // Listen for external shift assignment changes (e.g., from auto-planning)
   useEffect(() => {
     const handleShiftAssigned = (event: Event) => {
