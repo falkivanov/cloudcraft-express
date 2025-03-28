@@ -10,5 +10,16 @@ export * from './employee-availability';
 export * from './shift-status';
 
 // Import helper functions with renamed exports to avoid conflicts
-import { checkSpecialShift } from './helper-functions';
-export { checkSpecialShift };
+import { 
+  checkSpecialShift,
+  assignEmployeeToUnderstaffedDay,
+  findAvailableEmployeesForDay,
+  balanceWeekendStaffing
+} from './helper-functions';
+
+export { 
+  checkSpecialShift,
+  assignEmployeeToUnderstaffedDay,
+  findAvailableEmployeesForDay,
+  balanceWeekendStaffing
+};

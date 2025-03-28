@@ -5,7 +5,8 @@ import { ShiftPlan } from "../../../types";
 import {
   findAvailableUnderutilizedEmployees,
   assignUnderutilizedEmployeeToDay,
-  canAssignEmployeeToDay
+  canAssignEmployeeToDay,
+  prioritizeWeekendStaffing
 } from "./employee-assignment";
 import {
   sortEmployeesByAssignmentStatus
@@ -31,6 +32,27 @@ export function processUnderfilledDays(
   freeShifts?: ShiftPlan[],
   underutilizedEmployees?: Employee[]
 ) {
+  // First, prioritize weekend days for staffing
+  for (let dayIndex = 5; dayIndex < 7 && dayIndex < weekDays.length; dayIndex++) {
+    const day = weekDays[dayIndex];
+    const dateKey = formatDateKey(day);
+    
+    prioritizeWeekendStaffing(
+      dayIndex,
+      dateKey,
+      day,
+      requiredEmployees,
+      filledPositions,
+      weekDays,
+      sortedEmployees,
+      assignedWorkDays,
+      employeeAssignments,
+      isTemporarilyFlexible,
+      existingShifts,
+      workShifts
+    );
+  }
+  
   // For each underfilled day, try to move employees from overfilled days
   for (const { dayIndex: underfilledIndex, shortage } of underfilledDays) {
     // Skip if we've already reached the target for this underfilled day

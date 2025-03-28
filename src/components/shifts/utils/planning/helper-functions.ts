@@ -7,15 +7,19 @@ export * from './employee-availability';
 import { hasSpecialShift as checkSpecialShift } from './shift-status';
 export { checkSpecialShift };
 
-// Export the balance-forecast/distribution-helpers with explicit naming to avoid conflicts
+// Export employee assignment helpers with explicit naming to avoid conflicts
 import { 
   assignUnderutilizedEmployeeToDay as assignEmployeeToUnderstaffedDay,
-  findAvailableUnderutilizedEmployees as findAvailableEmployeesForDay
-} from './passes/balance-forecast/distribution-helpers';
+  findAvailableUnderutilizedEmployees as findAvailableEmployeesForDay,
+  prioritizeWeekendStaffing as balanceWeekendStaffing
+} from './passes/balance-forecast/helpers/employee-assignment';
+
 export { 
   assignEmployeeToUnderstaffedDay,
-  findAvailableEmployeesForDay
+  findAvailableEmployeesForDay,
+  balanceWeekendStaffing
 };
 
 // Export the new reorganized rebalancing helpers
-export * from './passes/balance-forecast/helpers';
+import * as rebalancingHelpers from './passes/balance-forecast/helpers';
+export { rebalancingHelpers };

@@ -141,3 +141,160 @@ export function assignUnderutilizedEmployeeToDay(
   
   console.log(`Assigned underutilized employee ${employee.name} to day ${dayIndex}`);
 }
+
+/**
+ * Prioritizes weekend days in employee assignment
+ */
+export function prioritizeWeekendStaffing(
+  weekendDayIndex: number,
+  weekendDateKey: string,
+  weekendDay: Date,
+  requiredEmployees: Record<number, number>,
+  filledPositions: Record<number, number>,
+  weekDays: Date[],
+  sortedEmployees: Employee[],
+  assignedWorkDays: Map<string, Set<string>>,
+  employeeAssignments: Record<string, number>,
+  isTemporarilyFlexible: (employeeId: string) => boolean,
+  existingShifts?: Map<string, ShiftAssignment>,
+  workShifts?: ShiftPlan[]
+): void {
+  // Only apply to Saturday (index 5) and Sunday (index 6)
+  if (weekendDayIndex < 5) return;
+  
+  const shortage = Math.max(0, (requiredEmployees[weekendDayIndex] || 0) - filledPositions[weekendDayIndex]);
+  if (shortage <= 0) return;
+  
+  console.log(`Prioritizing weekend staffing for day ${weekendDayIndex} (${weekendDay.toDateString()}), shortage: ${shortage}`);
+  
+  // First, look for employees who are working under their target days
+  const underutilizedEmployees = sortedEmployees.filter(employee => {
+    const assignedCount = employeeAssignments[employee.id] || 0;
+    return assignedCount < employee.workingDaysAWeek;
+  });
+  
+  for (const employee of underutilizedEmployees) {
+    if (canAssignEmployeeToDay(
+      employee, 
+      weekendDay, 
+      weekendDateKey, 
+      isTemporarilyFlexible, 
+      assignedWorkDays, 
+      existingShifts
+    )) {
+      addEmployeeToDay(
+        employee,
+        weekendDayIndex,
+        weekendDateKey,
+        filledPositions,
+        assignedWorkDays,
+        workShifts
+      );
+      
+      employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
+      console.log(`Added underutilized employee ${employee.name} to weekend day ${weekendDayIndex}`);
+      
+      if (filledPositions[weekendDayIndex] >= (requiredEmployees[weekendDayIndex] || 0)) {
+        break;
+      }
+    }
+  }
+  
+  // If still understaffed, try to move employees from overstaffed weekdays
+  if (filledPositions[weekendDayIndex] < (requiredEmployees[weekendDayIndex] || 0)) {
+    // Find overstaffed weekdays
+    const overstaffedWeekdays = weekDays
+      .slice(0, 5) // Monday to Friday
+      .map((day, idx) => ({
+        dayIndex: idx,
+        day,
+        dateKey: formatDateKey(day),
+        excess: filledPositions[idx] - (requiredEmployees[idx] || 0)
+      }))
+      .filter(d => d.excess > 0)
+      .sort((a, b) => b.excess - a.excess); // Sort by most overstaffed first
+    
+    if (overstaffedWeekdays.length > 0) {
+      console.log(`Found ${overstaffedWeekdays.length} overstaffed weekdays to pull employees from`);
+      
+      // For each overstaffed weekday, try to move employees to the weekend
+      for (const { dayIndex: weekdayIndex, dateKey: weekdayDateKey } of overstaffedWeekdays) {
+        // Get employees working on this weekday
+        const employeesOnWeekday = Array.from(assignedWorkDays.get(weekdayDateKey) || [])
+          .map(id => sortedEmployees.find(e => e.id === id))
+          .filter(e => e !== undefined) as Employee[];
+        
+        // Prioritize employees who are flexible or specifically available for weekends
+        const prioritizedEmployees = employeesOnWeekday.sort((a, b) => {
+          // Prioritize flexible employees
+          if (a.isWorkingDaysFlexible !== b.isWorkingDaysFlexible) {
+            return a.isWorkingDaysFlexible ? -1 : 1;
+          }
+          
+          // Then prioritize those who want to work 6 days
+          if (a.wantsToWorkSixDays !== b.wantsToWorkSixDays) {
+            return a.wantsToWorkSixDays ? -1 : 1;
+          }
+          
+          // Then prioritize those who are assigned to more days than their minimum
+          const aExcess = (employeeAssignments[a.id] || 0) - a.workingDaysAWeek;
+          const bExcess = (employeeAssignments[b.id] || 0) - b.workingDaysAWeek;
+          return bExcess - aExcess;
+        });
+        
+        // Try to move each employee
+        for (const employee of prioritizedEmployees) {
+          if (canAssignEmployeeToDay(
+            employee, 
+            weekendDay, 
+            weekendDateKey, 
+            isTemporarilyFlexible, 
+            assignedWorkDays, 
+            existingShifts
+          )) {
+            // Check if moving this employee would cause a staffing shortage on the weekday
+            if (filledPositions[weekdayIndex] - 1 >= (requiredEmployees[weekdayIndex] || 0)) {
+              // Remove from weekday
+              const weekdayEmployees = assignedWorkDays.get(weekdayDateKey);
+              if (weekdayEmployees) {
+                weekdayEmployees.delete(employee.id);
+              }
+              filledPositions[weekdayIndex]--;
+              
+              // Update work shifts
+              if (workShifts) {
+                const shiftIndex = workShifts.findIndex(s => 
+                  s.employeeId === employee.id && s.date === weekdayDateKey);
+                if (shiftIndex !== -1) {
+                  workShifts.splice(shiftIndex, 1);
+                }
+              }
+              
+              // Add to weekend
+              addEmployeeToDay(
+                employee,
+                weekendDayIndex,
+                weekendDateKey,
+                filledPositions,
+                assignedWorkDays,
+                workShifts
+              );
+              
+              console.log(`Moved employee ${employee.name} from weekday ${weekdayIndex} to weekend day ${weekendDayIndex}`);
+              
+              // Check if weekend is now sufficiently staffed
+              if (filledPositions[weekendDayIndex] >= (requiredEmployees[weekendDayIndex] || 0)) {
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Helper function to format date key (since this is used internally)
+function formatDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
