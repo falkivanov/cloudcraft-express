@@ -6,7 +6,10 @@ export * from './staffing-imbalance';
 export * from './employee-utilization';
 export * from './advanced-rebalancing';
 export * from './logging';
-export * from './weekend-prioritization';
+
+// Export weekend prioritization with a specific name to avoid conflicts
+import { prioritizeForWeekendAssignment as prioritizeEmployeesForWeekend } from './weekend-prioritization';
+export { prioritizeEmployeesForWeekend };
 
 // Explicitly re-export weekend balancing functions
 export { 

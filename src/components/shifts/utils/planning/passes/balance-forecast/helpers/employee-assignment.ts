@@ -1,3 +1,4 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../../types";
@@ -14,7 +15,8 @@ export function canAssignEmployeeToDay(
   existingShifts?: Map<string, ShiftAssignment>
 ): boolean {
   // Check if the employee is temporarily flexible or if the day is a preferred day
-  const isFlexible = isTemporarilyFlexible(employee.id) || employee.preferredDays.includes(day.getDay());
+  const dayOfWeek = day.getDay();
+  const isFlexible = isTemporarilyFlexible(employee.id) || employee.preferredWorkingDays.includes(['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][dayOfWeek]);
   
   // Check if the employee is already assigned to work on this day
   if (assignedWorkDays.get(dateKey)?.has(employee.id)) {

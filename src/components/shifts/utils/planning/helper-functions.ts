@@ -7,8 +7,15 @@ export * from './employee-availability';
 import { hasSpecialShift as checkSpecialShift } from './shift-status';
 export { checkSpecialShift };
 
-// Export the distribution helpers
-export * from './passes/balance-forecast/distribution-helpers';
+// Export the balance-forecast/distribution-helpers with explicit naming to avoid conflicts
+import { 
+  assignUnderutilizedEmployeeToDay as assignEmployeeToUnderstaffedDay,
+  findAvailableUnderutilizedEmployees as findAvailableEmployeesForDay
+} from './passes/balance-forecast/distribution-helpers';
+export { 
+  assignEmployeeToUnderstaffedDay,
+  findAvailableEmployeesForDay
+};
 
 // Export the new reorganized rebalancing helpers
 export * from './passes/balance-forecast/helpers';

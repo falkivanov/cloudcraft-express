@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
@@ -13,7 +12,6 @@ export function findAvailableUnderutilizedEmployees(
   underfilledDay: Date,
   underfilledDateKey: string,
   isTemporarilyFlexible: (employeeId: string) => boolean,
-  employeeAssignments: Record<string, number>,
   assignedWorkDays: Map<string, Set<string>>,
   existingShifts?: Map<string, ShiftAssignment>
 ): Employee[] {
@@ -22,9 +20,6 @@ export function findAvailableUnderutilizedEmployees(
   }
 
   return underutilizedEmployees.filter(employee => {
-    // Skip if already fully assigned
-    if (employeeAssignments[employee.id] >= employee.workingDaysAWeek) return false;
-    
     // Skip if already assigned to this day
     if (assignedWorkDays.get(underfilledDateKey)?.has(employee.id)) return false;
     
@@ -41,29 +36,33 @@ export function findAvailableUnderutilizedEmployees(
  */
 export function assignUnderutilizedEmployeeToDay(
   employee: Employee,
-  underfilledDateKey: string,
   underfilledIndex: number,
-  employeeAssignments: Record<string, number>,
+  underfilledDateKey: string,
   filledPositions: Record<number, number>,
   assignedWorkDays: Map<string, Set<string>>,
-  workShifts: ShiftPlan[]
+  employeeAssignments: Record<string, number>,
+  workShifts?: ShiftPlan[]
 ): void {
   // Assign directly to this underfilled day without removing from another day
-  workShifts.push({
-    employeeId: employee.id,
-    date: underfilledDateKey,
-    shiftType: "Arbeit"
-  });
+  if (workShifts) {
+    workShifts.push({
+      employeeId: employee.id,
+      date: underfilledDateKey,
+      shiftType: "Arbeit"
+    });
+  }
   
   // Update tracking
   employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
   filledPositions[underfilledIndex]++;
   
   // Add to assigned employees for this day
-  const underfilledDayEmployees = assignedWorkDays.get(underfilledDateKey);
-  if (underfilledDayEmployees) {
-    underfilledDayEmployees.add(employee.id);
+  let underfilledDayEmployees = assignedWorkDays.get(underfilledDateKey);
+  if (!underfilledDayEmployees) {
+    underfilledDayEmployees = new Set<string>();
+    assignedWorkDays.set(underfilledDateKey, underfilledDayEmployees);
   }
+  underfilledDayEmployees.add(employee.id);
   
   console.log(`Assigned underutilized employee ${employee.name} to underfilled day ${underfilledIndex}`);
 }

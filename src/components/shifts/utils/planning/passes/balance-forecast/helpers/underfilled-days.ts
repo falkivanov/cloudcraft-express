@@ -52,7 +52,6 @@ export function processUnderfilledDays(
         underfilledDay,
         underfilledDateKey,
         isTemporarilyFlexible,
-        employeeAssignments,
         assignedWorkDays,
         existingShifts
       );
@@ -68,11 +67,11 @@ export function processUnderfilledDays(
         )) {
           assignUnderutilizedEmployeeToDay(
             employee,
-            underfilledDateKey,
             underfilledIndex,
-            employeeAssignments,
+            underfilledDateKey,
             filledPositions,
             assignedWorkDays,
+            employeeAssignments,
             workShifts
           );
           
