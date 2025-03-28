@@ -6,8 +6,12 @@ import { useShiftSchedule } from "./hooks/useShiftSchedule";
 import { useAutoPlanningActions } from "./hooks/useAutoPlanningActions";
 import ScheduleToolbar from "./ScheduleToolbar";
 import ScheduleTable from "./ScheduleTable";
+import { Button } from "@/components/ui/button";
+import { Trash2Icon } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const ShiftSchedule = () => {
+  const { toast } = useToast();
   const {
     selectedWeek,
     weekDays,
@@ -25,6 +29,7 @@ const ShiftSchedule = () => {
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
     clearShifts,
+    clearAllShifts,
     shiftsMap,
     finalizedDays,
     handleFinalizeDay,
@@ -67,19 +72,41 @@ const ShiftSchedule = () => {
     shiftsMap
   });
   
+  const handleClearAllShifts = () => {
+    // Zeige einen Toast als Bestätigung an
+    toast({
+      title: "Dienstplan zurückgesetzt",
+      description: "Der gesamte Dienstplan für die Woche wurde gelöscht.",
+    });
+    
+    // Lösche alle Schichten
+    clearAllShifts();
+  };
+  
   return (
     <div className="space-y-4 w-full">
-      <ScheduleToolbar 
-        selectedWeek={selectedWeek}
-        previousWeek={previousWeek}
-        nextWeek={nextWeek}
-        planningMode={planningMode}
-        setPlanningMode={setPlanningMode}
-        onPlanNow={handleAutomaticPlanning}
-        isAutoPlanningLoading={isAutoPlanningLoading}
-        isPlanningOptionsOpen={isPlanningOptionsOpen}
-        setIsPlanningOptionsOpen={setIsPlanningOptionsOpen}
-      />
+      <div className="flex justify-between items-center">
+        <ScheduleToolbar 
+          selectedWeek={selectedWeek}
+          previousWeek={previousWeek}
+          nextWeek={nextWeek}
+          planningMode={planningMode}
+          setPlanningMode={setPlanningMode}
+          onPlanNow={handleAutomaticPlanning}
+          isAutoPlanningLoading={isAutoPlanningLoading}
+          isPlanningOptionsOpen={isPlanningOptionsOpen}
+          setIsPlanningOptionsOpen={setIsPlanningOptionsOpen}
+        />
+        
+        <Button 
+          variant="destructive" 
+          size="sm"
+          onClick={handleClearAllShifts}
+        >
+          <Trash2Icon className="mr-1 h-4 w-4" />
+          Komplette Woche löschen
+        </Button>
+      </div>
       
       <div className="w-full overflow-auto">
         {filteredEmployees.length > 0 ? (

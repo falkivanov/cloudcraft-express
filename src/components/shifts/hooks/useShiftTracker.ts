@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { ShiftType } from "../utils/shift-utils";
 import { useShiftStorage } from "./useShiftStorage";
@@ -28,11 +29,17 @@ export const useShiftTracker = (weekDays: Date[]) => {
     });
   }, [setShiftsMap]);
   
+  // Clear ALL shifts for the week
+  const clearAllShifts = useCallback(() => {
+    setShiftsMap(new Map());
+  }, [setShiftsMap]);
+  
   return {
     shiftsMap,
     scheduledEmployees,
     formatDateKey,
     clearShifts,
+    clearAllShifts,
     refreshScheduledCounts
   };
 };

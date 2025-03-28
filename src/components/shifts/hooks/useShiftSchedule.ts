@@ -35,6 +35,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     scheduledEmployees, 
     formatDateKey, 
     clearShifts,
+    clearAllShifts,
     refreshScheduledCounts,
     shiftsMap 
   } = shiftTracker;
@@ -78,6 +79,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     isFlexOverrideDialogOpen,
     setIsFlexOverrideDialogOpen,
     clearShifts,
+    clearAllShifts,
     shiftsMap,
     finalizedDays,
     handleFinalizeDay,
