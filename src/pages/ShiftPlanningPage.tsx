@@ -5,6 +5,7 @@ import ShiftScheduleContent from "@/components/shifts/ShiftScheduleContent";
 import VehicleAssignmentContent from "@/components/shifts/VehicleAssignmentContent";
 import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
 import { Container } from "@/components/ui/container";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const ShiftPlanningPage = () => {
   const { activeTab, setActiveTab, isScheduleFinalized, handleFinalizeSchedule } = useShiftPlanning();
