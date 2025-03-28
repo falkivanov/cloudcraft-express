@@ -76,7 +76,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
             >
               <Calendar className="mr-2 h-4 w-4" />
               {selectedDate ? (
-                format(selectedDate, "dd.MM.yyyy (EEEE)", { locale: de })
+                format(selectedDate, "dd.MM.yyyy", { locale: de })
               ) : (
                 "Datum wählen"
               )}
@@ -97,7 +97,7 @@ const VehicleAssignmentFilters: React.FC<VehicleAssignmentFiltersProps> = ({
         </Popover>
         
         <Select 
-          value={selectedEmployee || undefined} 
+          value={selectedEmployee || "all-employees"} 
           onValueChange={(value) => setSelectedEmployee(value === "all-employees" ? null : value)}
         >
           <SelectTrigger className="min-w-[180px]">

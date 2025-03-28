@@ -6,6 +6,7 @@ import { initialEmployees } from "@/data/sampleEmployeeData";
 import VehicleAssignmentHistoryTable from "./history/VehicleAssignmentHistoryTable";
 import VehicleAssignmentFilters from "./history/VehicleAssignmentFilters";
 import { useVehicleAssignmentHistory } from "./history/useVehicleAssignmentHistory";
+import { useEmployeeLoader } from "../vehicle-assignment/hooks/useEmployeeLoader";
 
 const VehicleAssignmentHistory: React.FC = () => {
   const {
@@ -17,6 +18,9 @@ const VehicleAssignmentHistory: React.FC = () => {
     setSelectedEmployee,
     sortedAssignments
   } = useVehicleAssignmentHistory();
+  
+  // Load employees using the hook
+  const employees = useEmployeeLoader();
   
   return (
     <Card>
@@ -35,7 +39,7 @@ const VehicleAssignmentHistory: React.FC = () => {
             setDateFilter={setDateFilter}
             selectedEmployee={selectedEmployee}
             setSelectedEmployee={setSelectedEmployee}
-            employees={initialEmployees}
+            employees={employees}
           />
           
           <VehicleAssignmentHistoryTable assignments={sortedAssignments} />
