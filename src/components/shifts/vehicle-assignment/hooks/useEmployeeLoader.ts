@@ -20,5 +20,10 @@ export function useEmployeeLoader() {
     }
   });
   
-  return employees;
+  // Return both the employees and filteredEmployees (which are the same in this case)
+  // to match the interface expected by the component
+  return {
+    employees,
+    filteredEmployees: employees
+  };
 }
