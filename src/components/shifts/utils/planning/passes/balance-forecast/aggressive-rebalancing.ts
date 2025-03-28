@@ -1,15 +1,18 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
 import {
   shouldConsiderForExtraDay,
-  moveEmployeeBetweenDays,
+  canAssignEmployeeToDay,
   addEmployeeToDay,
+} from "./helpers/employee-assignment";
+import {
+  moveEmployeeBetweenDays
+} from "./helpers/employee-reassignment";
+import {
   getSortedEmployeesOnOverstaffedDay,
-  calculateStaffingImbalance,
-  canAssignEmployeeToDay
-} from "./helpers";
+  calculateStaffingImbalance
+} from "./helpers/staffing-analysis";
 
 // Final aggressive rebalancing to address critical shortages
 export function aggressiveRebalancing(
