@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { AlertTriangle, Check, ChevronsUpDown } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { AlertTriangle, Check, ChevronsUpDown, Search } from "lucide-react";
 import { Employee } from "@/types/employee";
 import { getEmployeeName, needsKeyChange, getKeyChangeStyle, notAssignedPreferredVehicle } from "../utils/vehicleAssignmentUtils";
 import { Button } from "@/components/ui/button";
@@ -36,13 +36,17 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   
-  // Improved filtering: make sure we're doing case-insensitive search on the exact text entered
-  const filteredDropdownEmployees = employees.filter(employee => 
-    searchValue.trim() === "" || 
-    employee.name.toLowerCase().includes(searchValue.toLowerCase())
-  );
+  // Better filtering function - uses both trimmed and lowercase for more accurate matching
+  const filteredDropdownEmployees = employees.filter(employee => {
+    if (!searchValue || searchValue.trim() === "") return true;
+    
+    const normalizedSearch = searchValue.toLowerCase().trim();
+    const normalizedName = employee.name.toLowerCase();
+    
+    return normalizedName.includes(normalizedSearch);
+  });
   
-  // Log employees on props change and search change
+  // Debug logs for the employee filtering
   useEffect(() => {
     console.log("Employees passed to VehicleTableRow:", employees.length);
   }, [employees]);
@@ -50,8 +54,12 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   useEffect(() => {
     console.log("Search in dropdown changed to:", searchValue);
     console.log("Filtered dropdown employees:", filteredDropdownEmployees.length);
-    console.log("Sample filtered names:", filteredDropdownEmployees.slice(0, 3).map(e => e.name));
-  }, [searchValue, filteredDropdownEmployees.length]);
+    if (filteredDropdownEmployees.length > 0) {
+      console.log("Sample filtered names:", filteredDropdownEmployees.slice(0, 3).map(e => e.name));
+    } else {
+      console.log("No employees matched the search criteria");
+    }
+  }, [searchValue, filteredDropdownEmployees]);
   
   const keyChangeStatus = needsKeyChange(
     { [vehicle.id]: todayEmployeeId },
@@ -63,10 +71,11 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
   
   const isUnassigned = !assignedEmployeeId || assignedEmployeeId === "none";
   
-  const handleSearchValueChange = (value: string) => {
+  // Memoized handler for search value changes to improve performance
+  const handleSearchValueChange = useCallback((value: string) => {
     console.log("Search in dropdown changed to:", value);
     setSearchValue(value);
-  };
+  }, []);
   
   return (
     <tr 
@@ -102,13 +111,16 @@ const VehicleTableRow: React.FC<VehicleTableRowProps> = ({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[240px] p-0">
-            <Command>
-              <CommandInput 
-                placeholder="Mitarbeiter suchen..." 
-                onValueChange={handleSearchValueChange}
-                value={searchValue}
-                className="h-9"
-              />
+            <Command shouldFilter={false}>
+              <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <CommandInput 
+                  placeholder="Mitarbeiter suchen..." 
+                  onValueChange={handleSearchValueChange}
+                  value={searchValue}
+                  className="h-9"
+                />
+              </div>
               <CommandList>
                 <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
                 <CommandGroup>
