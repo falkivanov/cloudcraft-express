@@ -99,9 +99,10 @@ const ShiftSchedule = () => {
         />
         
         <Button 
-          variant="destructive" 
+          variant="ghost" 
           size="sm"
           onClick={handleClearAllShifts}
+          className="text-destructive hover:bg-destructive/10"
         >
           <Trash2Icon className="mr-1 h-4 w-4" />
           Komplette Woche löschen
@@ -146,3 +147,4 @@ const ShiftSchedule = () => {
 };
 
 export default ShiftSchedule;
+
