@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 
 /**
@@ -30,22 +29,4 @@ export function identifyUnderutilizedEmployees(
     const assigned = employeeAssignments[employee.id] || 0;
     return assigned < employee.workingDaysAWeek;
   });
-}
-
-/**
- * Determines if an employee should be considered for an extra day assignment
- */
-export function shouldConsiderForExtraDay(
-  employee: Employee,
-  assignedDaysCount: number,
-  totalShortage: number,
-  totalExcessStaff: number,
-  employeesScheduledForExtraDays: Set<string>
-): boolean {
-  // Only consider adding a 6th day if the employee wants it AND we have critical shortages
-  // that exceed our excess staff
-  return employee.workingDaysAWeek === 5 && 
-         employee.wantsToWorkSixDays && 
-         totalShortage > totalExcessStaff && 
-         !employeesScheduledForExtraDays.has(employee.id);
 }
