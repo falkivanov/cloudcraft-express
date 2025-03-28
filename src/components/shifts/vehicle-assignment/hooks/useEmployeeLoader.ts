@@ -20,10 +20,26 @@ export function useEmployeeLoader() {
     }
   });
   
-  // Return both the employees and filteredEmployees (which are the same in this case)
-  // to match the interface expected by the component
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Filter employees based on search query
+  const filteredEmployees = employees.filter(employee => {
+    if (!searchQuery.trim()) return true;
+    
+    // Search in employee name
+    const nameMatch = employee.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Search in employee availability (100% available)
+    const availabilityMatch = searchQuery.toLowerCase().includes("100%") && 
+      employee.isWorkingDaysFlexible;
+    
+    return nameMatch || availabilityMatch;
+  });
+  
   return {
     employees,
-    filteredEmployees: employees
+    filteredEmployees,
+    searchQuery,
+    setSearchQuery
   };
 }
