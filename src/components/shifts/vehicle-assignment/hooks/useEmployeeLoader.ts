@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Employee } from "@/types/employee";
 import { initialEmployees } from "@/data/sampleEmployeeData";
@@ -22,31 +21,34 @@ export function useEmployeeLoader() {
   
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Verbesserte Filterfunktion für Mitarbeiter
+  // Improved filtering function for employees with better 100% flexibility search
   const filteredEmployees = employees.filter(employee => {
-    // Wenn Suchfeld leer ist, alle Mitarbeiter anzeigen
+    // If search field is empty, show all employees
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase();
     
-    // Suche im Namen (jetzt auch nach Teilstrings)
-    const nameMatch = employee.name.toLowerCase().includes(query);
+    // Specific case: Search for "100%" to find flexible employees
+    if (query.includes("100%") || query.includes("100")) {
+      console.log(`Found flexibility search term in query for employee ${employee.name}, isWorkingDaysFlexible: ${employee.isWorkingDaysFlexible}`);
+      return employee.isWorkingDaysFlexible === true;
+    }
     
-    // Suche nach "100%" für flexible Mitarbeiter
-    const isFlexibilitySearch = query.includes("100%");
-    const availabilityMatch = isFlexibilitySearch && employee.isWorkingDaysFlexible;
-    
-    // Debugging-Info
-    console.log(`Filtering employee: ${employee.name}, Query: ${query}, nameMatch: ${nameMatch}, availabilityMatch: ${availabilityMatch}`);
-    
-    return nameMatch || availabilityMatch;
+    // Otherwise, search in name
+    return employee.name.toLowerCase().includes(query);
   });
   
-  // Debugging-Info hinzufügen
+  // Add debugging logs
   useEffect(() => {
     console.log("Search query changed to:", searchQuery);
     console.log("Filtered employees count:", filteredEmployees.length);
     console.log("Total employees count:", employees.length);
+    
+    if (searchQuery.includes("100%") || searchQuery.includes("100")) {
+      console.log("100% availability search detected");
+      console.log("Employees with 100% availability:", employees.filter(emp => emp.isWorkingDaysFlexible).length);
+      console.log("Filtered results:", filteredEmployees.map(e => `${e.name} (flexible: ${e.isWorkingDaysFlexible})`));
+    }
   }, [searchQuery, filteredEmployees.length, employees.length]);
   
   return {

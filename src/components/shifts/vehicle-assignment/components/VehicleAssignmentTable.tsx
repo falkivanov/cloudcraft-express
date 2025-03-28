@@ -36,7 +36,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
   tomorrowDateKey
 }) => {
   const { assignmentMap, handleAssignmentChange } = useAssignmentState(tomorrowAssignments);
-  const { employees, filteredEmployees, searchQuery, setSearchQuery } = useEmployeeLoader();
+  const { filteredEmployees, searchQuery, setSearchQuery } = useEmployeeLoader();
   const vehicleList = activeVehicles();
   
   // Parse dates from date keys
@@ -44,25 +44,29 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
   const today = new Date(todayDateKey);
   const tomorrow = new Date(tomorrowDateKey);
   
-  // Verbesserte Suchfunktion mit Feedback
+  // Improved search function with feedback
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     console.log("Main search input changed to:", value);
     setSearchQuery(value);
     
-    // Zeige Feedback, wenn die Suche nach "100%" durchgeführt wird
-    if (value.includes("100%")) {
-      const availableCount = employees.filter(emp => emp.isWorkingDaysFlexible).length;
-      toast.info(`Zeige ${availableCount} Mitarbeiter mit 100% Verfügbarkeit`);
+    // Show feedback when searching for "100%" flexibility
+    if (value.includes("100%") || value.includes("100")) {
+      const flexibleEmployees = filteredEmployees.filter(emp => emp.isWorkingDaysFlexible);
+      console.log(`Filtered to ${flexibleEmployees.length} employees with 100% flexibility`);
+      
+      toast.info(`Zeige ${flexibleEmployees.length} Mitarbeiter mit 100% Verfügbarkeit`);
     }
   };
   
-  const displayEmployees = searchQuery ? filteredEmployees : employees;
-  
-  // Protokollieren der Anzahl der angezeigten Mitarbeiter
+  // Log the current state for debugging
   React.useEffect(() => {
-    console.log(`Displaying ${displayEmployees.length} of ${employees.length} employees. Search: "${searchQuery}"`);
-  }, [displayEmployees.length, employees.length, searchQuery]);
+    console.log(`Displaying ${filteredEmployees.length} employees. Search: "${searchQuery}"`);
+    if (searchQuery.includes("100")) {
+      console.log("Current filteredEmployees with 100% search:", 
+        filteredEmployees.map(e => `${e.name} (flexible: ${e.isWorkingDaysFlexible})`));
+    }
+  }, [filteredEmployees.length, searchQuery]);
   
   return (
     <div className="space-y-4">
@@ -95,7 +99,7 @@ const VehicleAssignmentTable: React.FC<VehicleAssignmentTableProps> = ({
                 yesterdayEmployeeId={yesterdayAssignments[vehicle.id]}
                 todayEmployeeId={todayAssignments[vehicle.id]}
                 assignedEmployeeId={assignmentMap[vehicle.id] || ""}
-                employees={displayEmployees}
+                employees={filteredEmployees}
                 onAssignmentChange={handleAssignmentChange}
               />
             ))}
