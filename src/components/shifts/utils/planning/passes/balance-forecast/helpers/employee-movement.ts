@@ -88,7 +88,7 @@ export function prioritizeDaysForRebalancing(
   filledPositions: Record<number, number>,
   requiredEmployees: Record<number, number>,
   formatDateKey: (date: Date) => string
-): { dayIndex: number, dateKey: string, imbalance: number }[] {
+): { dayIndex: number, dateKey: string, imbalance: number, filled: number, required: number }[] {
   const daysWithImbalance = weekDays.map((day, index) => {
     const required = requiredEmployees[index] || 0;
     const filled = filledPositions[index];
@@ -119,7 +119,7 @@ export function findOptimalSourceDays(
   requiredEmployees: Record<number, number>,
   excludeDayIndex: number,
   formatDateKey: (date: Date) => string
-): { dayIndex: number, dateKey: string, excess: number }[] {
+): { dayIndex: number, dateKey: string, excess: number, surplusRatio: number, filled: number, required: number }[] {
   return weekDays
     .map((day, index) => {
       if (index === excludeDayIndex) return null;
@@ -143,4 +143,3 @@ export function findOptimalSourceDays(
     .filter(day => day !== null && day.excess > 0)
     .sort((a, b) => b.surplusRatio - a.surplusRatio); // Sort by highest surplus ratio first
 }
-
