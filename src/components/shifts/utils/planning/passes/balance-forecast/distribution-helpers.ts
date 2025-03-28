@@ -2,8 +2,8 @@
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
-import { hasSpecialShift } from "../../shift-status";
 import { canEmployeeWorkOnDay } from "../../employee-availability";
+import { hasSpecialShift } from "../../shift-status";
 
 /**
  * Finds underutilized employees who can work on a specific day
@@ -133,7 +133,6 @@ export function canMoveEmployeeBetweenDays(
 
 /**
  * Reassign an employee from an overfilled day to an underfilled day
- * (Renamed from moveEmployeeBetweenDays to avoid name collision)
  */
 export function reassignEmployeeBetweenDays(
   employee: Employee,

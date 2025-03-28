@@ -1,29 +1,28 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
-import {
-  shouldConsiderForExtraDay,
-  canAssignEmployeeToDay,
-  addEmployeeToDay,
-} from "./helpers/employee-assignment";
-import {
-  moveEmployeeBetweenDays
-} from "./helpers/employee-reassignment";
-import {
-  getSortedEmployeesOnOverstaffedDay,
-  calculateStaffingImbalance
+import { 
+  calculateStaffingImbalance, 
+  getSortedEmployeesOnOverstaffedDay 
 } from "./helpers/staffing-analysis";
-import {
-  balanceWeekendDay,
-  aggressiveWeekendBalancing
+import { addEmployeeToDay, canAssignEmployeeToDay } from "./helpers/employee-assignment";
+import { 
+  calculateStaffingImbalanceRatio 
+} from "./helpers/staffing-calculations";
+import { moveEmployeeBetweenDays } from "./helpers/employee-reassignment";
+import { isAvailableForWeekendDay } from "./helpers/employee-utilization";
+import { 
+  prioritizeForWeekendAssignment 
 } from "./helpers/weekend-prioritization";
-import {
-  hasSpecialShift,
-  calculateAverageFilledRatio
-} from "./helpers/weekend-balancing";
+import { canEmployeeWorkOnDay } from "../../employee-availability";
+// Import from shift-status module but alias to avoid conflicts
+import { hasSpecialShift as hasShiftStatus } from "../../shift-status";
+// Import the renamed function from weekend-balancing to avoid conflicts
+import { calcAvgFilledRatio } from "./helpers";
 
 /**
- * Final aggressive rebalancing to address critical shortages
+ * More aggressive rebalancing algorithm to handle critical understaffing
  */
 export function aggressiveRebalancing(
   sortedEmployees: Employee[],
@@ -31,7 +30,7 @@ export function aggressiveRebalancing(
   filledPositions: Record<number, number>,
   requiredEmployees: Record<number, number>,
   daysWithExtraStaff: { dayIndex: number, excess: number }[],
-  criticalUnderfilledDays: { dayIndex: number, shortage: number }[],
+  criticalUnderfilledDays: { dayIndex: number, shortage: number, isCritical?: boolean }[],
   assignedWorkDays: Map<string, Set<string>>,
   formatDateKey: (date: Date) => string,
   isTemporarilyFlexible: (employeeId: string) => boolean,
@@ -39,266 +38,238 @@ export function aggressiveRebalancing(
   workShifts?: ShiftPlan[],
   freeShifts?: ShiftPlan[]
 ) {
-  // Track employees who have been scheduled for 6 days (exceeding their standard 5)
-  // to avoid over-assigning when not necessary
-  const employeesScheduledForExtraDays = new Set<string>();
+  if (!workShifts || !freeShifts) return;
   
-  // Calculate total staffing imbalance
+  // Calculate staffing imbalance
   const { totalExcessStaff, totalShortage } = calculateStaffingImbalance(
-    daysWithExtraStaff,
-    criticalUnderfilledDays
+    daysWithExtraStaff, criticalUnderfilledDays
   );
   
-  // Calculate average staffing ratio per day to detect severe imbalances
-  const avgFilledRatio = calculateAverageFilledRatio(weekDays, filledPositions, requiredEmployees);
-  console.log(`Average filled ratio across week: ${avgFilledRatio.toFixed(2)}`);
+  console.log(`Aggressive rebalancing - Total excess: ${totalExcessStaff}, Total shortage: ${totalShortage}`);
   
-  // Sort understaffed days by most critical first (weekend days with significant shortage get higher priority)
-  const prioritizedUnderfilledDays = [...criticalUnderfilledDays].sort((a, b) => {
-    // HIGHEST PRIORITY: Weekend days (prioritize Saturday above all)
-    if (a.dayIndex === 5 && b.dayIndex !== 5) return -1; // Saturday is highest priority
-    if (a.dayIndex !== 5 && b.dayIndex === 5) return 1;
-    if (a.dayIndex === 6 && b.dayIndex !== 6) return -1; // Sunday is next
-    if (a.dayIndex !== 6 && b.dayIndex === 6) return 1;
-    
-    // Calculate shortage severity as a percentage of required
-    const aRequired = requiredEmployees[a.dayIndex] || 1;
-    const bRequired = requiredEmployees[b.dayIndex] || 1;
-    
-    const aShortageRatio = a.shortage / aRequired;
-    const bShortageRatio = b.shortage / bRequired;
-    
-    // For same severity, prioritize by absolute shortage
-    if (Math.abs(aShortageRatio - bShortageRatio) < 0.1) {
-      return b.shortage - a.shortage; // Higher absolute shortage first
-    }
-    
-    // Otherwise sort by severity ratio
-    return bShortageRatio - aShortageRatio;
+  // Track employees that have been scheduled for an extra day
+  const employeesScheduledForExtraDays = new Set<string>();
+  
+  // Local tracking of employee assignments for this function
+  const employeeAssignments: Record<string, number> = {};
+  
+  // Populate initial employee assignments
+  sortedEmployees.forEach(employee => {
+    let count = 0;
+    weekDays.forEach(day => {
+      const dateKey = formatDateKey(day);
+      if (assignedWorkDays.get(dateKey)?.has(employee.id)) {
+        count++;
+      }
+    });
+    employeeAssignments[employee.id] = count;
   });
   
-  // Log prioritized days for debugging
-  console.log("Prioritized underfilled days:", prioritizedUnderfilledDays.map(d => 
-    `Day ${d.dayIndex} (${weekDays[d.dayIndex].toDateString()}): shortage ${d.shortage}, required ${requiredEmployees[d.dayIndex]}`));
-    
-  // Process each understaffed day, prioritizing weekend days
-  for (const { dayIndex: understaffedDayIndex, shortage } of prioritizedUnderfilledDays) {
-    if (shortage <= 0) continue;
-    
+  // Handle each critical underfilled day in order of priority
+  for (const { dayIndex: understaffedDayIndex, shortage } of criticalUnderfilledDays) {
     const understaffedDay = weekDays[understaffedDayIndex];
     const understaffedDateKey = formatDateKey(understaffedDay);
+    
+    console.log(`Processing critically understaffed day ${understaffedDayIndex} (${understaffedDay.toLocaleDateString()}), shortage: ${shortage}`);
+    
+    // Special handling for weekend days (Saturday = index 5, Sunday = index 6)
     const isWeekendDay = understaffedDayIndex >= 5;
     
-    // For weekdays, just log brief info
-    if (!isWeekendDay) {
-      console.log(`Processing day ${understaffedDayIndex} with shortage ${shortage}`);
-    }
-    
-    let remainingNeeded = shortage;
-    
-    // SPECIAL HANDLING FOR WEEKEND DAYS
+    // For weekend days, we consider even more aggressive strategies
     if (isWeekendDay) {
-      // Use specialized weekend balancing function
-      remainingNeeded = balanceWeekendDay(
+      handleWeekendDay(
         understaffedDayIndex,
         understaffedDay,
         understaffedDateKey,
-        shortage,
-        isWeekendDay,
-        sortedEmployees,
         weekDays,
+        sortedEmployees,
         filledPositions,
         requiredEmployees,
-        daysWithExtraStaff,
         assignedWorkDays,
         formatDateKey,
         isTemporarilyFlexible,
-        totalShortage,
-        totalExcessStaff,
+        employeeAssignments,
         employeesScheduledForExtraDays,
         existingShifts,
         workShifts,
         freeShifts
       );
+      
+      // If we've fixed this day, continue to the next one
+      if (filledPositions[understaffedDayIndex] >= requiredEmployees[understaffedDayIndex]) {
+        continue;
+      }
     }
     
-    // If we still need more employees, try from overstaffed days
-    if (remainingNeeded > 0) {
-      console.log(`Still need ${remainingNeeded} more employees for day ${understaffedDayIndex}`);
+    // Try to move from days with extra staff first
+    for (const { dayIndex: overstaffedDayIndex } of daysWithExtraStaff) {
+      if (overstaffedDayIndex === understaffedDayIndex) continue;
       
-      // For weekend days, try more aggressive rebalancing
-      if (isWeekendDay) {
-        remainingNeeded = aggressiveWeekendBalancing(
-          sortedEmployees,
-          weekDays,
-          filledPositions,
-          requiredEmployees,
-          daysWithExtraStaff,
-          understaffedDayIndex,
-          understaffedDateKey,
-          remainingNeeded,
-          assignedWorkDays,
-          formatDateKey,
-          isTemporarilyFlexible,
-          existingShifts,
-          workShifts
-        );
+      if (daysWithExtraStaff.find(d => d.dayIndex === overstaffedDayIndex)?.excess <= 0) {
+        continue;
       }
       
-      // General rebalancing for any remaining needs
-      if (remainingNeeded > 0) {
-        // Sort overstaffed days - prefer taking from most overstaffed first
-        const sortedOverstaffedDays = [...daysWithExtraStaff]
-          .sort((a, b) => b.excess - a.excess);
-          
-        // Try to move employees from overstaffed days
-        for (const { dayIndex: overstaffedDayIndex, excess } of sortedOverstaffedDays) {
-          if (remainingNeeded <= 0) break; // Stop if we've filled the day
-          if (excess <= 0) continue; // Skip if not actually overstaffed
-          
-          const overstaffedDay = weekDays[overstaffedDayIndex];
-          const overstaffedDateKey = formatDateKey(overstaffedDay);
-          
-          // Get all employees assigned to the overstaffed day
-          const employeesOnOverstaffedDay = assignedWorkDays.get(overstaffedDateKey) || new Set<string>();
-          
-          // Get sorted employees from overstaffed day - prioritizing those who'd be better suited for movement
-          const employeesWithInfo = getSortedEmployeesOnOverstaffedDay(
-            employeesOnOverstaffedDay,
-            sortedEmployees,
-            weekDays,
+      const overstaffedDay = weekDays[overstaffedDayIndex];
+      const overstaffedDateKey = formatDateKey(overstaffedDay);
+      
+      // Get employees working on the overstaffed day
+      const employeesOnOverstaffedDay = assignedWorkDays.get(overstaffedDateKey) || new Set<string>();
+      
+      // Sort employees to prioritize those who can be moved
+      const sortedEmployeesOnDay = getSortedEmployeesOnOverstaffedDay(
+        employeesOnOverstaffedDay,
+        sortedEmployees,
+        weekDays,
+        assignedWorkDays,
+        formatDateKey
+      );
+      
+      // Try to move employees to the understaffed day
+      for (const { employee } of sortedEmployeesOnDay) {
+        // Only move if we need more employees on the understaffed day
+        if (filledPositions[understaffedDayIndex] >= (requiredEmployees[understaffedDayIndex] || 0)) {
+          break;
+        }
+        
+        // Check if this employee can work on the understaffed day
+        if (canAssignEmployeeToDay(
+          employee,
+          understaffedDay,
+          understaffedDateKey,
+          isTemporarilyFlexible,
+          assignedWorkDays,
+          existingShifts
+        )) {
+          // Move employee from overstaffed to understaffed day
+          moveEmployeeBetweenDays(
+            employee,
+            overstaffedDayIndex,
+            overstaffedDateKey,
+            understaffedDayIndex,
+            understaffedDateKey,
+            filledPositions,
             assignedWorkDays,
-            formatDateKey
+            workShifts,
+            daysWithExtraStaff
           );
           
-          // Now try to move employees one by one
-          for (const { employee, assignedDaysCount } of employeesWithInfo) {
-            if (remainingNeeded <= 0) break; // Stop if we've filled the day
-            
-            // Check if employee can be assigned to the understaffed day
-            let canAssign = canAssignEmployeeToDay(
-              employee,
-              understaffedDay,
-              understaffedDateKey,
-              isTemporarilyFlexible,
-              assignedWorkDays,
-              existingShifts
-            );
-            
-            if (!canAssign) {
-              continue;
-            }
-            
-            // Determine if employee would exceed standard days
-            const standardWorkingDays = employee.workingDaysAWeek;
-            const wouldExceedStandard = assignedDaysCount >= standardWorkingDays;
-            
-            // Move the employee between days (standard rebalancing)
-            if (wouldExceedStandard && !employee.wantsToWorkSixDays) {
-              moveEmployeeBetweenDays(
-                employee,
-                overstaffedDayIndex,
-                overstaffedDateKey,
-                understaffedDayIndex,
-                understaffedDateKey,
-                filledPositions,
-                assignedWorkDays,
-                workShifts,
-                daysWithExtraStaff
-              );
-              remainingNeeded--;
-              console.log(`Moved ${employee.name} from day ${overstaffedDayIndex} to day ${understaffedDayIndex}`);
-            } 
-            // For employees who want to work 6 days and we have critical shortages
-            else if (shouldConsiderForExtraDay(
-              employee,
-              assignedDaysCount,
-              totalShortage,
-              totalExcessStaff,
-              employeesScheduledForExtraDays
-            )) {
-              // Directly add to understaffed day without removing from overstaffed
-              addEmployeeToDay(
-                employee,
-                understaffedDayIndex,
-                understaffedDateKey,
-                filledPositions,
-                assignedWorkDays,
-                workShifts,
-                employeesScheduledForExtraDays
-              );
-              remainingNeeded--;
-              console.log(`Added extra day for ${employee.name} on day ${understaffedDayIndex}`);
-            }
-            
-            // If we've addressed the shortage for this day, break out
-            if (remainingNeeded <= 0) break;
+          console.log(`Moved employee ${employee.name} from day ${overstaffedDayIndex} to critical day ${understaffedDayIndex}`);
+          
+          // If we've fixed this day, break out early
+          if (filledPositions[understaffedDayIndex] >= (requiredEmployees[understaffedDayIndex] || 0)) {
+            break;
           }
         }
       }
-    }
-    
-    // Log final status for this day
-    const finalStatus = `After processing, day ${understaffedDayIndex} has ${filledPositions[understaffedDayIndex]}/${requiredEmployees[understaffedDayIndex] || 0} employees (shortage was ${shortage})`;
-    if (isWeekendDay) {
-      console.log(`WEEKEND DAY STATUS: ${finalStatus}`);
-    } else {
-      console.log(finalStatus);
+      
+      // If we've fixed this day, break out of the overstaffed days loop
+      if (filledPositions[understaffedDayIndex] >= (requiredEmployees[understaffedDayIndex] || 0)) {
+        break;
+      }
     }
   }
 }
 
-// Helper function to calculate average filled ratio across all days
-function calculateAverageFilledRatio(
+/**
+ * Handle a critically understaffed weekend day with special strategies
+ */
+function handleWeekendDay(
+  understaffedDayIndex: number,
+  understaffedDay: Date,
+  understaffedDateKey: string,
   weekDays: Date[],
+  sortedEmployees: Employee[],
   filledPositions: Record<number, number>,
-  requiredEmployees: Record<number, number>
-): number {
-  let totalRatio = 0;
-  let daysWithRequirements = 0;
-  
-  weekDays.forEach((_, dayIndex) => {
-    const required = requiredEmployees[dayIndex] || 0;
-    if (required > 0) {
-      const filled = filledPositions[dayIndex];
-      totalRatio += filled / required;
-      daysWithRequirements++;
-    }
-  });
-  
-  return daysWithRequirements > 0 ? totalRatio / daysWithRequirements : 1;
-}
-
-// Helper function to check if an employee has a special shift
-function hasSpecialShift(
-  employeeId: string,
-  dateKey: string,
-  existingShifts?: Map<string, ShiftAssignment>
-): boolean {
-  if (!existingShifts) return false;
-  
-  const shiftKey = `${employeeId}-${dateKey}`;
-  const shift = existingShifts.get(shiftKey);
-  
-  return shift !== undefined && 
-    (shift.shiftType === "Termin" || 
-     shift.shiftType === "Urlaub" || 
-     shift.shiftType === "Krank");
-}
-
-// Helper to get the assigned days count for an employee
-function getAssignedDaysCount(
-  employeeId: string,
-  weekDays: Date[],
+  requiredEmployees: Record<number, number>,
   assignedWorkDays: Map<string, Set<string>>,
-  formatDateKey: (date: Date) => string
-): number {
-  let count = 0;
-  weekDays.forEach(day => {
-    const dateKey = formatDateKey(day);
-    if (assignedWorkDays.get(dateKey)?.has(employeeId)) {
-      count++;
+  formatDateKey: (date: Date) => string,
+  isTemporarilyFlexible: (employeeId: string) => boolean,
+  employeeAssignments: Record<string, number>,
+  employeesScheduledForExtraDays: Set<string>,
+  existingShifts?: Map<string, ShiftAssignment>,
+  workShifts?: ShiftPlan[],
+  freeShifts?: ShiftPlan[]
+) {
+  console.log(`Special handling for weekend day ${understaffedDayIndex} (${understaffedDay.toLocaleDateString()})`);
+  
+  // First, check if we're already sufficiently staffed
+  if (filledPositions[understaffedDayIndex] >= (requiredEmployees[understaffedDayIndex] || 0)) {
+    return;
+  }
+  
+  // Calculate the current average filled ratio across all days
+  const averageFilledRatio = calcAvgFilledRatio(
+    weekDays, filledPositions, requiredEmployees
+  );
+  
+  // Calculate the current filled ratio for this weekend day
+  const weekendRequired = requiredEmployees[understaffedDayIndex] || 0;
+  const weekendFilled = filledPositions[understaffedDayIndex];
+  const weekendFilledRatio = weekendRequired > 0 ? weekendFilled / weekendRequired : 1;
+  
+  console.log(`Weekend day ${understaffedDayIndex} filled ratio: ${weekendFilledRatio.toFixed(2)}, average: ${averageFilledRatio.toFixed(2)}`);
+  
+  // If weekend coverage is significantly worse than average, prioritize filling it
+  const isSignificantlyWorse = weekendFilledRatio < (averageFilledRatio * 0.8);
+  
+  if (isSignificantlyWorse) {
+    console.log(`Weekend day ${understaffedDayIndex} is significantly understaffed compared to average`);
+    
+    // Prioritize employees for weekend assignments
+    const prioritizedEmployees = prioritizeForWeekendAssignment(
+      sortedEmployees,
+      assignedWorkDays,
+      employeeAssignments,
+      formatDateKey,
+      weekDays
+    );
+    
+    // Try to assign employees who are good candidates for weekend work
+    for (const employee of prioritizedEmployees) {
+      // Check if this employee can be assigned to the weekend day
+      if (isAvailableForWeekendDay(
+        employee, 
+        understaffedDayIndex, 
+        employeeAssignments[employee.id] || 0,
+        isTemporarilyFlexible
+      )) {
+        // Check if employee is not already assigned to this day and doesn't have a special shift
+        if (!assignedWorkDays.get(understaffedDateKey)?.has(employee.id) &&
+            !hasShiftStatus(employee.id, understaffedDateKey, existingShifts)) {
+          
+          // Check if employee can work on this day
+          if (canEmployeeWorkOnDay(employee, understaffedDay, isTemporarilyFlexible)) {
+            // Only add as extra day if they don't exceed 6 days or if they've asked for 6 days
+            const currentAssignedDays = employeeAssignments[employee.id] || 0;
+            const canWorkExtraDay = employee.wantsToWorkSixDays && currentAssignedDays < 6;
+            
+            if (currentAssignedDays < employee.workingDaysAWeek || canWorkExtraDay) {
+              // Add employee to the weekend day
+              if (workShifts) {
+                addEmployeeToDay(
+                  employee,
+                  understaffedDayIndex,
+                  understaffedDateKey,
+                  filledPositions,
+                  assignedWorkDays,
+                  workShifts,
+                  employeesScheduledForExtraDays
+                );
+                
+                // Update local tracking of assignments
+                employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
+                
+                console.log(`Assigned employee ${employee.name} to weekend day ${understaffedDayIndex}`);
+                
+                // If we've reached the target, break out
+                if (filledPositions[understaffedDayIndex] >= (requiredEmployees[understaffedDayIndex] || 0)) {
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
     }
-  });
-  return count;
+  }
 }
