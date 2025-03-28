@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { EmployeeFormData } from "./employeeFormSchema";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -25,47 +25,57 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
   // Berechne, ob der Mitarbeiter aktuell 5 Tage pro Woche arbeitet
   const workingDaysValue = form.watch("workingDaysAWeek");
   const isWorkingFiveDays = workingDaysValue === 5;
+  const isFullTimeEmployee = workingDaysValue >= 5;
   
   // Watch the flexibility setting
   const isFlexible = form.watch("isWorkingDaysFlexible");
+  
+  // Clear preferred working days when switching to full-time
+  useEffect(() => {
+    if (isFullTimeEmployee && form.getValues("preferredWorkingDays").length > 0) {
+      form.setValue("preferredWorkingDays", []);
+    }
+  }, [isFullTimeEmployee, form]);
 
   return (
     <>
-      <div className="col-span-2">
-        <FormField
-          control={form.control}
-          name="preferredWorkingDays"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Präferierte Arbeitstage</FormLabel>
-              <FormDescription>
-                Wählen Sie die präferierten Arbeitstage aus
-              </FormDescription>
-              <FormControl>
-                <ToggleGroup
-                  type="multiple"
-                  variant="outline"
-                  className="flex flex-wrap gap-1"
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  {weekDays.map((day) => (
-                    <ToggleGroupItem 
-                      key={day.value} 
-                      value={day.value} 
-                      aria-label={day.label}
-                      className="data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300 data-[state=on]:font-medium transition-colors"
-                    >
-                      {day.label}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      {!isFullTimeEmployee && (
+        <div className="col-span-2">
+          <FormField
+            control={form.control}
+            name="preferredWorkingDays"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Präferierte Arbeitstage</FormLabel>
+                <FormDescription>
+                  Wählen Sie die präferierten Arbeitstage aus
+                </FormDescription>
+                <FormControl>
+                  <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    className="flex flex-wrap gap-1"
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    {weekDays.map((day) => (
+                      <ToggleGroupItem 
+                        key={day.value} 
+                        value={day.value} 
+                        aria-label={day.label}
+                        className="data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300 data-[state=on]:font-medium transition-colors"
+                      >
+                        {day.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
 
       <div className="col-span-2">
         <FormField
@@ -84,7 +94,9 @@ const PreferredWorkingDaysSection: React.FC<PreferredWorkingDaysSectionProps> = 
                   Bei Arbeitstagen flexibel
                 </FormLabel>
                 <FormDescription>
-                  Wenn ausgeschaltet, kann der Mitarbeiter nur an den ausgewählten Tagen arbeiten.
+                  {isFullTimeEmployee ? 
+                    "Vollzeitmitarbeiter haben keine präferierten Arbeitstage und sind standardmäßig flexibel." : 
+                    "Wenn ausgeschaltet, kann der Mitarbeiter nur an den ausgewählten Tagen arbeiten."}
                 </FormDescription>
               </div>
             </FormItem>

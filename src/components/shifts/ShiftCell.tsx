@@ -11,6 +11,7 @@ interface ShiftCellProps {
   preferredDays: string[];
   dayOfWeek: string;
   isFlexible?: boolean;
+  workingDaysAWeek?: number;
 }
 
 const ShiftCell: React.FC<ShiftCellProps> = ({ 
@@ -18,12 +19,14 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   date, 
   preferredDays, 
   dayOfWeek,
-  isFlexible = true 
+  isFlexible = true,
+  workingDaysAWeek = 5
 }) => {
   const [shift, setShift] = useState<ShiftType>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
+  const isFullTime = workingDaysAWeek >= 5;
   const isPreferredDay = preferredDays.includes(dayOfWeek);
   
   // Listen for external shift assignment changes (e.g., from auto-planning)
@@ -50,7 +53,8 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   }, [employeeId, date]);
   
   const handleShiftSelect = useCallback((shiftType: ShiftType) => {
-    if (shiftType !== null && !isPreferredDay && !isFlexible) {
+    // Full-time employees can always be assigned to any day
+    if (!isFullTime && shiftType !== null && !isPreferredDay && !isFlexible) {
       toast({
         title: "Nicht möglich",
         description: "Dieser Mitarbeiter kann nur an den angegebenen Arbeitstagen arbeiten.",
@@ -68,14 +72,14 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     // Then dispatch events
     const action = shiftType !== null ? 'add' : 'remove';
     dispatchShiftEvent(employeeId, date, shiftType, action, previousShiftType);
-  }, [shift, employeeId, date, isPreferredDay, isFlexible, toast]);
+  }, [shift, employeeId, date, isPreferredDay, isFlexible, isFullTime, toast]);
   
-  // If employee is not flexible and this day is not preferred, show unavailable cell
-  if (!isFlexible && !isPreferredDay) {
+  // For part-time employees who are not flexible and it's not a preferred day, show unavailable cell
+  if (!isFullTime && !isFlexible && !isPreferredDay) {
     return <UnavailableCell />;
   }
   
-  const backgroundColorClass = getBackgroundColorClass(shift, isPreferredDay, isFlexible);
+  const backgroundColorClass = getBackgroundColorClass(shift, isPreferredDay, isFlexible || isFullTime);
   
   return (
     <ShiftSelectionMenu
