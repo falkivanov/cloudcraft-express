@@ -4,6 +4,7 @@ import { ShiftPlan } from "../../types";
 import { balanceEmployeeDistribution } from "./balance-employee-distribution";
 import { ensureFullWorkingDays } from "./ensure-full-working-days";
 import { aggressiveRebalancing } from "./aggressive-rebalancing";
+import { prioritizeWeekendStaffing } from './helpers/employee-assignment';
 import { 
   prioritizeDaysForRebalancing,
   findOptimalSourceDays,
@@ -25,7 +26,6 @@ import {
   logFinalStaffingStats
 } from "./helpers/logging";
 
-// Improves the distribution of employees to better match forecast requirements and ensures all employees are assigned their full working days
 export function runBalanceForecastPass(
   sortedEmployees: Employee[],
   weekDays: Date[],
@@ -39,7 +39,7 @@ export function runBalanceForecastPass(
   workShifts?: ShiftPlan[],
   freeShifts?: ShiftPlan[]
 ) {
-  // PHASE 1: Identify overfilled and underfilled days
+  // PHASE 1: Identify staffing imbalances
   const { 
     overfilledDays, 
     underfilledDays, 
@@ -47,84 +47,57 @@ export function runBalanceForecastPass(
     totalFilled 
   } = identifyStaffingImbalances(weekDays, filledPositions, requiredEmployees);
   
-  // Calculate total possible assignments based on employee working days
+  // Calculate total possible assignments
   const totalPossibleAssignments = calculatePossibleAssignments(sortedEmployees);
   
-  // Log staffing situation for debugging
+  // Log staffing situation
   console.log(`Total required: ${totalRequired}, Total possible: ${totalPossibleAssignments}`);
   console.log(`Overfilled days: ${overfilledDays.length}, Underfilled days: ${underfilledDays.length}`);
   
-  // WEEKEND PRIORITY: PRE-PROCESS WEEKEND DAYS FIRST
-  // Before general balancing, specifically target weekend days
-  const weekendDays = weekDays.slice(5);
-  let criticalWeekendShortage = false;
+  // Handle weekend days first
+  const saturdayIndex = 5;
+  const sundayIndex = 6;
+  const weekendIndices = [saturdayIndex, sundayIndex];
   
-  weekendDays.forEach((day, idx) => {
-    const dayIndex = idx + 5; // 5 = Saturday, 6 = Sunday
-    const dateKey = formatDateKey(day);
-    const required = requiredEmployees[dayIndex] || 0;
-    const filled = filledPositions[dayIndex];
-    const ratio = required > 0 ? (filled / required) * 100 : 100;
-    
-    console.log(`PRE-PROCESSING Weekend day ${dateKey} (${day.toDateString()}): ${filled}/${required} (${ratio.toFixed(1)}%)`);
-    
-    // Mark weekend as critical if staffing is below 80%
-    if (required > 0 && ratio < 80) {
-      criticalWeekendShortage = true;
-      console.log(`🚨 CRITICAL WEEKEND SHORTAGE DETECTED: Day ${dayIndex} at ${ratio.toFixed(1)}%`);
-    }
-    
-    // Before anything else, try to boost weekend staffing directly
-    if (filled < required) {
-      console.log(`Direct pre-processing for weekend day ${dayIndex}`);
-      prioritizeWeekendStaffing(
-        dayIndex,
-        dateKey,
-        day,
-        requiredEmployees,
-        filledPositions,
-        weekDays,
-        sortedEmployees,
-        assignedWorkDays,
-        employeeAssignments,
-        isTemporarilyFlexible,
-        existingShifts,
-        workShifts
-      );
-    }
-  });
-  
-  // ENHANCED PHASE 2: Identify employees not working their full days
-  const underutilizedEmployees = identifyUnderutilizedEmployees(sortedEmployees, employeeAssignments);
-  
-  console.log(`Found ${underutilizedEmployees.length} employees not working their full schedule`);
-  
-  // PHASE 3: Balance employee distribution
-  // Prioritize rebalancing with underutilized employees first
-  if (underfilledDays.length > 0) {
-    if (overfilledDays.length > 0) {
-      balanceEmployeeDistribution(
-        sortedEmployees, weekDays, filledPositions, requiredEmployees,
-        overfilledDays, underfilledDays, assignedWorkDays, formatDateKey,
-        isTemporarilyFlexible, employeeAssignments, existingShifts, workShifts, freeShifts,
-        underutilizedEmployees
-      );
-    }
-    
-    // If there are still underfilled days after balancing, try to handle them with underutilized employees
-    const remainingUnderfilled = weekDays.map((_, dayIndex) => {
+  // Process each weekend day
+  weekendIndices.forEach(dayIndex => {
+    if (dayIndex < weekDays.length) {
+      const day = weekDays[dayIndex];
+      const dateKey = formatDateKey(day);
       const required = requiredEmployees[dayIndex] || 0;
       const filled = filledPositions[dayIndex];
+      const ratio = required > 0 ? (filled / required) * 100 : 100;
       
       if (filled < required) {
-        return { dayIndex, shortage: required - filled };
+        prioritizeWeekendStaffing(
+          dayIndex,
+          dateKey,
+          day,
+          requiredEmployees,
+          filledPositions,
+          weekDays,
+          sortedEmployees,
+          assignedWorkDays,
+          employeeAssignments,
+          isTemporarilyFlexible,
+          existingShifts,
+          workShifts
+        );
       }
-      return null;
-    }).filter(Boolean);
-    
-    if (remainingUnderfilled.length > 0 && underutilizedEmployees.length > 0) {
-      console.log(`Still have ${remainingUnderfilled.length} underfilled days, attempting to assign underutilized employees`);
     }
+  });
+
+  // PHASE 2: Identify underutilized employees
+  const underutilizedEmployees = identifyUnderutilizedEmployees(sortedEmployees, employeeAssignments);
+  
+  // PHASE 3: Balance employee distribution
+  if (underfilledDays.length > 0 && overfilledDays.length > 0) {
+    balanceEmployeeDistribution(
+      sortedEmployees, weekDays, filledPositions, requiredEmployees,
+      overfilledDays, underfilledDays, assignedWorkDays, formatDateKey,
+      isTemporarilyFlexible, employeeAssignments, existingShifts, workShifts, 
+      freeShifts, underutilizedEmployees
+    );
   }
   
   // PHASE 4: Ensure all employees are working their specified number of days
