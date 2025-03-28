@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../../types";
@@ -194,92 +193,114 @@ export function aggressiveWeekendBalancing(
   
   let stillNeeded = remainingNeeded;
   
-  // For each overstaffed day, try to move employees to the weekend
-  for (const { dayIndex: overstaffedDayIndex, excess } of sortedOverstaffedDays) {
+  // First, try to find ANY employee who can work this weekend day
+  // Even if they're already at their target days
+  for (const employee of sortedEmployees) {
     if (stillNeeded <= 0) break;
-    if (excess <= 0) continue;
     
-    const overstaffedDay = weekDays[overstaffedDayIndex];
-    const overstaffedDateKey = formatDateKey(overstaffedDay);
+    // Skip if already assigned
+    if (assignedWorkDays.get(understaffedDateKey)?.has(employee.id)) continue;
     
-    // Get all employees on the overstaffed day
-    const employeesIds = assignedWorkDays.get(overstaffedDateKey) || new Set<string>();
+    // Skip if has special shift
+    const understaffedDay = weekDays[understaffedDayIndex];
+    if (hasSpecialShift(employee.id, understaffedDateKey, existingShifts)) continue;
     
-    // Find employees on this day that can potentially work weekends
-    for (const employeeId of employeesIds) {
+    // Check if employee is available for this day (weekend specific)
+    const dayOfWeek = understaffedDay.getDay();
+    const dayName = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][dayOfWeek];
+    
+    // EXTREMELY AGGRESSIVE: If this is a weekend day and employee is flexible,
+    // schedule them even beyond their normal limits
+    const isFlexible = isTemporarilyFlexible(employee.id) || employee.isWorkingDaysFlexible;
+    const canWorkOnWeekend = employee.preferredWorkingDays.includes(dayName) || isFlexible;
+    
+    if (canWorkOnWeekend) {
+      const assignedDaysCount = getAssignedDaysCount(employee.id, weekDays, assignedWorkDays, formatDateKey);
+      
+      // Allow scheduling 6 days for anyone who's flexible on weekend days,
+      // not just those who explicitly want 6 days
+      const canTakeExtraDay = (employee.wantsToWorkSixDays || isFlexible) && assignedDaysCount < 6;
+      
+      if (canTakeExtraDay) {
+        // Add to weekend directly without removing from weekday
+        const understaffedDayEmployees = assignedWorkDays.get(understaffedDateKey);
+        if (understaffedDayEmployees) {
+          understaffedDayEmployees.add(employee.id);
+        }
+        
+        // Add work shift
+        if (workShifts) {
+          workShifts.push({
+            employeeId: employee.id,
+            date: understaffedDateKey,
+            shiftType: "Arbeit"
+          });
+        }
+        
+        // Update filled positions
+        filledPositions[understaffedDayIndex]++;
+        
+        console.log(`EXTREME PRIORITY: Added extra weekend day for ${employee.name} (day ${understaffedDayIndex})`);
+        stillNeeded--;
+        
+        if (stillNeeded <= 0) break;
+      }
+    }
+  }
+  
+  // For each overstaffed day, try to move employees to the weekend
+  if (stillNeeded > 0) {
+    for (const { dayIndex: overstaffedDayIndex, excess } of sortedOverstaffedDays) {
       if (stillNeeded <= 0) break;
+      if (excess <= 0) continue;
       
-      const employee = sortedEmployees.find(e => e.id === employeeId);
-      if (!employee) continue;
+      const overstaffedDay = weekDays[overstaffedDayIndex];
+      const overstaffedDateKey = formatDateKey(overstaffedDay);
       
-      const understaffedDay = weekDays[understaffedDayIndex];
+      // Get all employees on the overstaffed day
+      const employeesIds = assignedWorkDays.get(overstaffedDateKey) || new Set<string>();
       
-      // Check if employee is already assigned to the weekend day
-      if (assignedWorkDays.get(understaffedDateKey)?.has(employee.id)) {
-        continue;
-      }
-      
-      // Check if employee has a special shift
-      if (hasSpecialShift(employee.id, understaffedDateKey, existingShifts)) {
-        continue;
-      }
-      
-      // For weekend days, use more aggressive criteria
-      const isSaturday = understaffedDayIndex === 5;
-      const severeShortage = isSaturday || requiredEmployees[understaffedDayIndex] > 0;
-      
-      if (severeShortage && (employee.isWorkingDaysFlexible || employee.wantsToWorkSixDays)) {
-        console.log(`Aggressively trying to move ${employee.name} to weekend day ${understaffedDayIndex}`);
+      // Find employees on this day that can potentially work weekends
+      for (const employeeId of employeesIds) {
+        if (stillNeeded <= 0) break;
         
-        // Calculate days assigned
-        const assignedDaysCount = getAssignedDaysCount(employee.id, weekDays, assignedWorkDays, formatDateKey);
+        const employee = sortedEmployees.find(e => e.id === employeeId);
+        if (!employee) continue;
         
-        // If they're under their working days or want to work 6 days
-        if (assignedDaysCount < employee.workingDaysAWeek || 
-            (employee.wantsToWorkSixDays && assignedDaysCount < 6)) {
-          // Try to clone, not move (add to weekend without removing from weekday)
-          const canAddExtraDay = employee.wantsToWorkSixDays && assignedDaysCount < 6;
+        const understaffedDay = weekDays[understaffedDayIndex];
+        
+        // Check if employee is already assigned to the weekend day
+        if (assignedWorkDays.get(understaffedDateKey)?.has(employee.id)) {
+          continue;
+        }
+        
+        // Check if employee has a special shift
+        if (hasSpecialShift(employee.id, understaffedDateKey, existingShifts)) {
+          continue;
+        }
+        
+        // For weekend days, use extremely aggressive criteria - almost any employee is a candidate
+        const minWeekdayStaffing = Math.floor((requiredEmployees[overstaffedDayIndex] || 0) * 0.7);
+        const isCriticalWeekendStaffing = understaffedDayIndex >= 5 && 
+                                          (filledPositions[understaffedDayIndex] < requiredEmployees[understaffedDayIndex] * 0.8);
+        
+        // If this is a critical weekend staffing situation, be extremely aggressive
+        if (isCriticalWeekendStaffing && filledPositions[overstaffedDayIndex] - 1 >= minWeekdayStaffing) {
+          // Try to move the employee
+          moveEmployeeBetweenDays(
+            employee,
+            overstaffedDayIndex,
+            overstaffedDateKey,
+            understaffedDayIndex,
+            understaffedDateKey,
+            filledPositions,
+            assignedWorkDays,
+            workShifts,
+            daysWithExtraStaff
+          );
           
-          if (canAddExtraDay) {
-            // Add extra day
-            const understaffedDayEmployees = assignedWorkDays.get(understaffedDateKey);
-            if (understaffedDayEmployees) {
-              understaffedDayEmployees.add(employee.id);
-            }
-            
-            // Add work shift
-            if (workShifts) {
-              workShifts.push({
-                employeeId: employee.id,
-                date: understaffedDateKey,
-                shiftType: "Arbeit"
-              });
-            }
-            
-            // Update filled positions
-            filledPositions[understaffedDayIndex]++;
-            
-            console.log(`Added extra weekend day for ${employee.name} (day ${understaffedDayIndex})`);
-            stillNeeded--;
-          } 
-          // Otherwise try to move them
-          else {
-            moveEmployeeBetweenDays(
-              employee,
-              overstaffedDayIndex,
-              overstaffedDateKey,
-              understaffedDayIndex,
-              understaffedDateKey,
-              filledPositions,
-              assignedWorkDays,
-              workShifts,
-              daysWithExtraStaff
-            );
-            console.log(`Moved ${employee.name} from day ${overstaffedDayIndex} to weekend day ${understaffedDayIndex}`);
-            stillNeeded--;
-          }
-          
-          if (stillNeeded <= 0) break;
+          console.log(`EXTREME PRIORITY: Moved ${employee.name} from day ${overstaffedDayIndex} to weekend day ${understaffedDayIndex}`);
+          stillNeeded--;
         }
       }
     }

@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
@@ -55,16 +54,44 @@ export function runBalanceForecastPass(
   console.log(`Total required: ${totalRequired}, Total possible: ${totalPossibleAssignments}`);
   console.log(`Overfilled days: ${overfilledDays.length}, Underfilled days: ${underfilledDays.length}`);
   
-  // Log weekend coverage specifically
-  const weekend = weekDays.slice(5);
-  weekend.forEach((day, idx) => {
-    const dayIndex = idx + 5;
+  // WEEKEND PRIORITY: PRE-PROCESS WEEKEND DAYS FIRST
+  // Before general balancing, specifically target weekend days
+  const weekendDays = weekDays.slice(5);
+  let criticalWeekendShortage = false;
+  
+  weekendDays.forEach((day, idx) => {
+    const dayIndex = idx + 5; // 5 = Saturday, 6 = Sunday
     const dateKey = formatDateKey(day);
     const required = requiredEmployees[dayIndex] || 0;
     const filled = filledPositions[dayIndex];
     const ratio = required > 0 ? (filled / required) * 100 : 100;
     
-    console.log(`Weekend day ${dateKey} (${day.toDateString()}): ${filled}/${required} (${ratio.toFixed(1)}%)`);
+    console.log(`PRE-PROCESSING Weekend day ${dateKey} (${day.toDateString()}): ${filled}/${required} (${ratio.toFixed(1)}%)`);
+    
+    // Mark weekend as critical if staffing is below 80%
+    if (required > 0 && ratio < 80) {
+      criticalWeekendShortage = true;
+      console.log(`🚨 CRITICAL WEEKEND SHORTAGE DETECTED: Day ${dayIndex} at ${ratio.toFixed(1)}%`);
+    }
+    
+    // Before anything else, try to boost weekend staffing directly
+    if (filled < required) {
+      console.log(`Direct pre-processing for weekend day ${dayIndex}`);
+      prioritizeWeekendStaffing(
+        dayIndex,
+        dateKey,
+        day,
+        requiredEmployees,
+        filledPositions,
+        weekDays,
+        sortedEmployees,
+        assignedWorkDays,
+        employeeAssignments,
+        isTemporarilyFlexible,
+        existingShifts,
+        workShifts
+      );
+    }
   });
   
   // ENHANCED PHASE 2: Identify employees not working their full days
@@ -72,7 +99,7 @@ export function runBalanceForecastPass(
   
   console.log(`Found ${underutilizedEmployees.length} employees not working their full schedule`);
   
-  // PHASE 3: Balance employee distribution by moving employees from overfilled to underfilled days
+  // PHASE 3: Balance employee distribution
   // Prioritize rebalancing with underutilized employees first
   if (underfilledDays.length > 0) {
     if (overfilledDays.length > 0) {

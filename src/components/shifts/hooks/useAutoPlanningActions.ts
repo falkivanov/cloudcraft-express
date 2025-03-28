@@ -58,6 +58,33 @@ export const useAutoPlanningActions = ({
     setIsAutoPlanningLoading(true);
     
     try {
+      // Before generating the plan, analyze the situation
+      const totalRequired = Object.values(requiredEmployees).reduce((sum, req) => sum + (req || 0), 0);
+      const totalWeekendRequired = (requiredEmployees[5] || 0) + (requiredEmployees[6] || 0);
+      const totalWeekdayRequired = totalRequired - totalWeekendRequired;
+      
+      console.log(`Planning analysis: Total required: ${totalRequired}, Weekend: ${totalWeekendRequired}, Weekday: ${totalWeekdayRequired}`);
+      
+      // Check if we have enough employees
+      const maxPossibleShifts = filteredEmployees.reduce((sum, emp) => {
+        // Calculate max shifts this employee can work
+        const maxShifts = emp.wantsToWorkSixDays ? 6 : emp.workingDaysAWeek;
+        return sum + maxShifts;
+      }, 0);
+      
+      console.log(`Max possible shifts with all employees: ${maxPossibleShifts} vs ${totalRequired} required`);
+      
+      if (maxPossibleShifts < totalRequired) {
+        console.log("WARNING: Not enough employees to fill all required shifts!");
+        
+        // Still continue with planning, but show warning
+        toast({
+          title: "Warnung: Nicht genug Mitarbeiter",
+          description: `Es werden insgesamt ${totalRequired} Schichten benötigt, aber maximal ${maxPossibleShifts} können durch die verfügbaren Mitarbeiter abgedeckt werden.`,
+          variant: "warning",
+        });
+      }
+      
       // Generate the plan with the selected mode
       const { workShifts, freeShifts } = createAutomaticPlan({
         employees: filteredEmployees,

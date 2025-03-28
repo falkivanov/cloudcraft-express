@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../../types";
@@ -167,13 +166,17 @@ export function prioritizeWeekendStaffing(
   
   console.log(`Prioritizing weekend staffing for day ${weekendDayIndex} (${weekendDay.toDateString()}), shortage: ${shortage}`);
   
+  // AGGRESSIVE WEEKEND STAFFING: Try much harder to fill weekend days
+  
   // First, look for employees who are working under their target days
   const underutilizedEmployees = sortedEmployees.filter(employee => {
     const assignedCount = employeeAssignments[employee.id] || 0;
     return assignedCount < employee.workingDaysAWeek;
   });
   
-  for (const employee of underutilizedEmployees) {
+  // Apply more lenient criteria for weekend assignments - any employee who has space is considered
+  for (const employee of sortedEmployees) {
+    // Check if employee is available for this weekend day
     if (canAssignEmployeeToDay(
       employee, 
       weekendDay, 
@@ -182,25 +185,36 @@ export function prioritizeWeekendStaffing(
       assignedWorkDays, 
       existingShifts
     )) {
-      addEmployeeToDay(
-        employee,
-        weekendDayIndex,
-        weekendDateKey,
-        filledPositions,
-        assignedWorkDays,
-        workShifts
-      );
+      // For weekends, we'll add employees even if they're at their target days
+      // if they're flexible or want to work 6 days
+      const assignedCount = employeeAssignments[employee.id] || 0;
+      const canAddMore = assignedCount < employee.workingDaysAWeek ||
+                         (employee.wantsToWorkSixDays && assignedCount < 6);
       
-      employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
-      console.log(`Added underutilized employee ${employee.name} to weekend day ${weekendDayIndex}`);
-      
-      if (filledPositions[weekendDayIndex] >= (requiredEmployees[weekendDayIndex] || 0)) {
-        break;
+      if (canAddMore) {
+        // Add to weekend
+        addEmployeeToDay(
+          employee,
+          weekendDayIndex,
+          weekendDateKey,
+          filledPositions,
+          assignedWorkDays,
+          workShifts
+        );
+        
+        employeeAssignments[employee.id] = (employeeAssignments[employee.id] || 0) + 1;
+        console.log(`Added employee ${employee.name} to weekend day ${weekendDayIndex}`);
+        
+        // Check if weekend is now sufficiently staffed
+        if (filledPositions[weekendDayIndex] >= (requiredEmployees[weekendDayIndex] || 0)) {
+          return;
+        }
       }
     }
   }
   
-  // If still understaffed, try to move employees from overstaffed weekdays
+  // If we still need more employees for weekend, try to move from weekdays
+  // Find overstaffed weekdays and move employees from there
   if (filledPositions[weekendDayIndex] < (requiredEmployees[weekendDayIndex] || 0)) {
     // Find overstaffed weekdays
     const overstaffedWeekdays = weekDays
@@ -225,8 +239,8 @@ export function prioritizeWeekendStaffing(
           .filter(e => e !== undefined) as Employee[];
         
         // Prioritize employees who are flexible or specifically available for weekends
-        const prioritizedEmployees = employeesOnWeekday.sort((a, b) => {
-          // Prioritize flexible employees
+        const prioritizedEmployees = [...employeesOnWeekday].sort((a, b) => {
+          // Prioritize flexible employees first
           if (a.isWorkingDaysFlexible !== b.isWorkingDaysFlexible) {
             return a.isWorkingDaysFlexible ? -1 : 1;
           }
@@ -236,14 +250,13 @@ export function prioritizeWeekendStaffing(
             return a.wantsToWorkSixDays ? -1 : 1;
           }
           
-          // Then prioritize those who are assigned to more days than their minimum
-          const aExcess = (employeeAssignments[a.id] || 0) - a.workingDaysAWeek;
-          const bExcess = (employeeAssignments[b.id] || 0) - b.workingDaysAWeek;
-          return bExcess - aExcess;
+          return 0;
         });
         
         // Try to move each employee
         for (const employee of prioritizedEmployees) {
+          // More aggressively move employees to weekend - even if it creates imbalance
+          // Check if employee can be assigned to the weekend day
           if (canAssignEmployeeToDay(
             employee, 
             weekendDay, 
@@ -252,8 +265,11 @@ export function prioritizeWeekendStaffing(
             assignedWorkDays, 
             existingShifts
           )) {
-            // Check if moving this employee would cause a staffing shortage on the weekday
-            if (filledPositions[weekdayIndex] - 1 >= (requiredEmployees[weekdayIndex] || 0)) {
+            // AGGRESSIVE APPROACH: Remove from weekday and add to weekend even if it creates a deficit on weekday
+            // as long as we keep a minimum level of staffing (80% of required)
+            const minWeekdayStaffing = Math.floor((requiredEmployees[weekdayIndex] || 0) * 0.8);
+            
+            if (filledPositions[weekdayIndex] - 1 >= minWeekdayStaffing) {
               // Remove from weekday
               const weekdayEmployees = assignedWorkDays.get(weekdayDateKey);
               if (weekdayEmployees) {
@@ -280,7 +296,7 @@ export function prioritizeWeekendStaffing(
                 workShifts
               );
               
-              console.log(`Moved employee ${employee.name} from weekday ${weekdayIndex} to weekend day ${weekendDayIndex}`);
+              console.log(`AGGRESSIVELY moved employee ${employee.name} from weekday ${weekdayIndex} to weekend day ${weekendDayIndex}`);
               
               // Check if weekend is now sufficiently staffed
               if (filledPositions[weekendDayIndex] >= (requiredEmployees[weekendDayIndex] || 0)) {
