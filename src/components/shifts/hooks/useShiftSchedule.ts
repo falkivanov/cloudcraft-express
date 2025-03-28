@@ -54,13 +54,23 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     previousWeek();
     resetFlexibility();
     setShowNextDaySchedule(false);
-  }, [previousWeek, resetFlexibility, setShowNextDaySchedule]);
+    
+    // Ensure scheduled counts are refreshed when changing week
+    setTimeout(() => {
+      refreshScheduledCounts();
+    }, 50);
+  }, [previousWeek, resetFlexibility, setShowNextDaySchedule, refreshScheduledCounts]);
   
   const handleNextWeek = useCallback(() => {
     nextWeek();
     resetFlexibility();
     setShowNextDaySchedule(false);
-  }, [nextWeek, resetFlexibility, setShowNextDaySchedule]);
+    
+    // Ensure scheduled counts are refreshed when changing week
+    setTimeout(() => {
+      refreshScheduledCounts();
+    }, 50);
+  }, [nextWeek, resetFlexibility, setShowNextDaySchedule, refreshScheduledCounts]);
   
   return {
     selectedWeek,
@@ -85,6 +95,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     handleFinalizeDay,
     showNextDaySchedule,
     setShowNextDaySchedule,
-    getScheduledEmployeesForDay
+    getScheduledEmployeesForDay,
+    refreshScheduledCounts
   };
 };

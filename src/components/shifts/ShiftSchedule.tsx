@@ -35,7 +35,8 @@ const ShiftSchedule = () => {
     handleFinalizeDay,
     showNextDaySchedule,
     setShowNextDaySchedule,
-    getScheduledEmployeesForDay
+    getScheduledEmployeesForDay,
+    refreshScheduledCounts
   } = useShiftSchedule(initialEmployees);
   
   // Log the number of employees loaded to help debug
@@ -54,6 +55,11 @@ const ShiftSchedule = () => {
       }
     }
   }, [filteredEmployees]);
+  
+  // Add an effect to log scheduled employees whenever it changes
+  useEffect(() => {
+    console.log("Current scheduled employees state:", scheduledEmployees);
+  }, [scheduledEmployees]);
   
   const {
     isAutoPlanningLoading,
@@ -81,6 +87,11 @@ const ShiftSchedule = () => {
     
     // Lösche alle Schichten
     clearAllShifts();
+    
+    // Forcefully refresh the scheduled counts immediately after clearing
+    setTimeout(() => {
+      refreshScheduledCounts();
+    }, 50);
   };
   
   return (
@@ -147,4 +158,3 @@ const ShiftSchedule = () => {
 };
 
 export default ShiftSchedule;
-
