@@ -9,7 +9,7 @@ import {
   getSortedEmployeesOnOverstaffedDay,
   calculateStaffingImbalance,
   canAssignEmployeeToDay
-} from "./rebalancing-helpers";
+} from "./helpers";
 
 // Final aggressive rebalancing to address critical shortages
 export function aggressiveRebalancing(
