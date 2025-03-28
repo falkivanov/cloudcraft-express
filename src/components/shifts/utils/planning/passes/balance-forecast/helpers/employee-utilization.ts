@@ -1,31 +1,31 @@
+
 import { Employee } from "@/types/employee";
 
 /**
  * Calculates total possible assignments based on employee working days
  */
-export function calculatePossibleAssignments(sortedEmployees: Employee[]): number {
-  let totalPossibleAssignments = 0;
-  
-  sortedEmployees.forEach(employee => {
-    totalPossibleAssignments += employee.workingDaysAWeek;
+export function calculatePossibleAssignments(employees: Employee[]): number {
+  return employees.reduce((total, employee) => {
+    // Count standard days (5 days for full-time)
+    let assignableDays = employee.workingDaysAWeek;
     
-    // Add potential extra day for employees who want to work 6 days
-    if (employee.workingDaysAWeek === 5 && employee.wantsToWorkSixDays) {
-      totalPossibleAssignments += 1;
+    // Add an extra day for employees willing to work 6 days if needed
+    if (employee.wantsToWorkSixDays && employee.workingDaysAWeek === 5) {
+      assignableDays += 1;
     }
-  });
-  
-  return totalPossibleAssignments;
+    
+    return total + assignableDays;
+  }, 0);
 }
 
 /**
- * Identifies employees not working their full required days
+ * Identifies employees who are not working their full schedule
  */
 export function identifyUnderutilizedEmployees(
-  sortedEmployees: Employee[],
+  employees: Employee[],
   employeeAssignments: Record<string, number>
 ): Employee[] {
-  return sortedEmployees.filter(employee => {
+  return employees.filter(employee => {
     const assigned = employeeAssignments[employee.id] || 0;
     return assigned < employee.workingDaysAWeek;
   });
