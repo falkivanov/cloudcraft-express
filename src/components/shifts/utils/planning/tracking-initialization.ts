@@ -2,7 +2,7 @@
 import { ShiftPlan } from "./types";
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
-import { hasSpecialShift } from "./helper-functions";
+import { checkSpecialShift } from "./helper-functions";
 
 // Initializes tracking maps and counters for the planning algorithm
 export function initializePlanningTrackers(
@@ -48,7 +48,7 @@ export function initializePlanningTrackers(
     if (existingShifts) {
       weekDays.forEach(day => {
         const dateKey = formatDateKey(day);
-        const specialShift = hasSpecialShift(employee.id, dateKey, existingShifts);
+        const specialShift = checkSpecialShift(employee.id, dateKey, existingShifts);
         if (specialShift) {
           employeeAssignments[employee.id]++;
         }
