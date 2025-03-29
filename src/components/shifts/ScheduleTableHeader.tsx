@@ -7,7 +7,14 @@ import FinalizeDayButton from "./FinalizeDayButton";
 import { isWeekend } from "@/components/shifts/utils/planning/date-utils"; // Wir werden diese Utility-Funktion importieren
 
 interface ScheduleTableHeaderProps {
-  // ... bestehende Props
+  weekDays: Date[];
+  requiredEmployees: Record<number, number>;
+  scheduledEmployees: Record<string, number>;
+  onRequiredChange: (dayIndex: number, value: string) => void;
+  formatDateKey: (date: Date) => string;
+  finalizedDays: string[];
+  onFinalizeDay: (dateKey: string) => void;
+  tomorrowDate: Date | null;
 }
 
 const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
