@@ -1,5 +1,7 @@
 
 import React from "react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
@@ -60,6 +62,17 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   
   return (
     <div className="border rounded-lg overflow-hidden">
+      {holidaysInWeek.length > 0 && (
+        <div className="bg-red-50 px-4 py-3 text-sm border-b">
+          <strong>Feiertage in dieser Woche:</strong>{" "}
+          {holidaysInWeek.map((holiday, index) => (
+            <span key={format(holiday.date, "yyyy-MM-dd")}>
+              {holiday.name} ({format(holiday.date, "dd.MM.")})
+              {index < holidaysInWeek.length - 1 ? ", " : ""}
+            </span>
+          ))}
+        </div>
+      )}
       <table className="w-full border-collapse">
         <ScheduleTableHeader 
           weekDays={weekDays}

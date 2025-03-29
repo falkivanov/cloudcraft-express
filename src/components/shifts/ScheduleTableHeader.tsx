@@ -8,7 +8,8 @@ import {
   isWeekend, 
   findNextWorkday, 
   isSameDay, 
-  isPublicHoliday
+  isPublicHoliday,
+  isWorkday
 } from "@/components/shifts/utils/planning/date-utils";
 import { getHolidayName, getSelectedBundesland } from "@/components/shifts/utils/planning/holidays-utils";
 

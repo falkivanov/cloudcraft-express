@@ -1,9 +1,10 @@
 
 import React, { useState, useCallback, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ShiftType, dispatchShiftEvent, getBackgroundColorClass } from "./utils/shift-utils";
 import UnavailableCell from "./UnavailableCell";
 import ShiftSelectionMenu from "./ShiftSelectionMenu";
+import { isPublicHoliday } from "./utils/planning/date-utils";
 
 interface ShiftCellProps {
   employeeId: string;
@@ -28,6 +29,26 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   
   const isFullTime = workingDaysAWeek >= 5;
   const isPreferredDay = preferredDays.includes(dayOfWeek);
+  
+  // Check if the date is a holiday
+  const isHoliday = React.useMemo(() => {
+    // Convert the date string to a Date object
+    if (!date) return false;
+    try {
+      const dateParts = date.split('-');
+      if (dateParts.length !== 3) return false;
+      
+      const year = parseInt(dateParts[0]);
+      const month = parseInt(dateParts[1]) - 1; // JavaScript months are 0-indexed
+      const day = parseInt(dateParts[2]);
+      
+      const dateObj = new Date(year, month, day);
+      return isPublicHoliday(dateObj);
+    } catch (error) {
+      console.error("Error checking for holiday:", error);
+      return false;
+    }
+  }, [date]);
   
   // Try to load initial shift from localStorage on mount and whenever date or employeeId changes
   useEffect(() => {
@@ -89,6 +110,16 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
   }, [employeeId, date]);
   
   const handleShiftSelect = useCallback((shiftType: ShiftType) => {
+    // On holidays, prevent manual assignments
+    if (isHoliday && shiftType === "Arbeit") {
+      toast({
+        title: "Nicht möglich",
+        description: "Keine Zuweisung an Feiertagen möglich.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Full-time employees can always be assigned to any day
     if (!isFullTime && shiftType !== null && !isPreferredDay && !isFlexible) {
       toast({
@@ -110,7 +141,16 @@ const ShiftCell: React.FC<ShiftCellProps> = ({
     // Then dispatch events
     const action = shiftType !== null ? 'add' : 'remove';
     dispatchShiftEvent(employeeId, date, shiftType, action, previousShiftType);
-  }, [shift, employeeId, date, isPreferredDay, isFlexible, isFullTime, toast]);
+  }, [shift, employeeId, date, isPreferredDay, isFlexible, isFullTime, toast, isHoliday]);
+  
+  // For holidays, disable the cell and show "Frei" status
+  if (isHoliday) {
+    return (
+      <div className="h-10 flex items-center justify-center bg-red-50 text-sm text-gray-500 border border-gray-200">
+        Frei (Feiertag)
+      </div>
+    );
+  }
   
   // For part-time employees who are not flexible and it's not a preferred day, show unavailable cell
   if (!isFullTime && !isFlexible && !isPreferredDay) {

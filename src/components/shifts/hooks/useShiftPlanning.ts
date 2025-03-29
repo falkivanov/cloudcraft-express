@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
+import { isWorkday } from "../utils/planning/date-utils";
 
 export const useShiftPlanning = () => {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -20,6 +21,14 @@ export const useShiftPlanning = () => {
   
   // Funktion zum Finalisieren des Dienstplans
   const handleFinalizeSchedule = useCallback(() => {
+    // Prüfen, ob der morgige Tag ein Arbeitstag ist (kein Wochenende und kein Feiertag)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Log für Debugging
+    console.log('handleFinalizeSchedule - tomorrow:', tomorrow);
+    console.log('handleFinalizeSchedule - isWorkday:', isWorkday(tomorrow));
+    
     setIsScheduleFinalized(true);
     
     // Speichere den finalisierten Status im localStorage
