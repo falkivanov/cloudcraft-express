@@ -23,9 +23,11 @@ import {
 } from "./helpers/logging";
 import {
   prioritizeDaysForRebalancing,
-  findOptimalSourceDays,
-  calculateStaffingImbalanceRatio
+  findOptimalSourceDays
 } from "./helpers/day-prioritization";
+import {
+  calculateStaffingImbalanceRatio
+} from "./helpers/staffing-calculations";
 
 export function runBalanceForecastPass(
   sortedEmployees: Employee[],
