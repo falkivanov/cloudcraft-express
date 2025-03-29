@@ -4,16 +4,10 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { de } from "date-fns/locale";
 import RequiredEmployeesCell from "./RequiredEmployeesCell";
 import FinalizeDayButton from "./FinalizeDayButton";
+import { isWeekend } from "@/components/shifts/utils/planning/date-utils"; // Wir werden diese Utility-Funktion importieren
 
 interface ScheduleTableHeaderProps {
-  weekDays: Date[];
-  requiredEmployees: Record<number, number>;
-  scheduledEmployees: Record<string, number>;
-  onRequiredChange: (dayIndex: number, value: string) => void;
-  formatDateKey: (date: Date) => string;
-  finalizedDays: string[];
-  onFinalizeDay: (dateKey: string) => void;
-  tomorrowDate: Date | null;
+  // ... bestehende Props
 }
 
 const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
@@ -39,6 +33,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const isTomorrowDate = tomorrowDate ? dateKey === formatDateKey(tomorrowDate) : false;
           const isFinalized = finalizedDays.includes(dateKey);
           
+          // Fügen wir eine Prüfung für Arbeitstage hinzu
+          const isWorkDay = !isWeekend(day);
+          
           return (
             <th key={day.toString()} className="p-3 text-center border-l">
               <div className="font-medium">
@@ -58,8 +55,8 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 onRequiredChange={(value) => onRequiredChange(index, value)}
               />
               
-              {/* Nur für morgigen Tag anzeigen */}
-              {isTomorrowDate && (
+              {/* Nur für morgigen Tag anzeigen und nur für Arbeitstage */}
+              {isTomorrowDate && isWorkDay && (
                 <div className="mt-2">
                   <FinalizeDayButton
                     date={day}
