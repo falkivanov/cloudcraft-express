@@ -3,7 +3,7 @@ import React from "react";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
-import { isTomorrow, format } from "date-fns";
+import { isTomorrow, format, addDays, isWeekend } from "date-fns";
 
 interface ScheduleTableProps {
   weekDays: Date[];
@@ -36,15 +36,36 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   getScheduledEmployeesForDay,
   setShowNextDaySchedule
 }) => {
-  // Einfach den morgen Tag finden (ohne Überprüfung auf scheduled employees)
-  const tomorrowIndex = weekDays.findIndex(day => isTomorrow(day));
-  const tomorrow = tomorrowIndex !== -1 ? weekDays[tomorrowIndex] : null;
+  // Finde den nächsten Arbeitstag (nicht am Wochenende)
+  const findNextWorkday = () => {
+    const today = new Date();
+    let nextDay = addDays(today, 1); // Beginne mit morgen
+    
+    // Wenn der nächste Tag ein Wochenende ist, überspringe zum Montag
+    if (isWeekend(nextDay)) {
+      // Montag finden (wenn heute Samstag ist, dann +2, wenn heute Sonntag ist, dann +1)
+      const daysUntilMonday = nextDay.getDay() === 0 ? 1 : 2; // 0 = Sonntag
+      nextDay = addDays(today, daysUntilMonday);
+    }
+    
+    return nextDay;
+  };
+  
+  // Berechne den nächsten Arbeitstag
+  const nextWorkday = findNextWorkday();
+  
+  // Finde den Index dieses Tages in unserer Woche
+  const nextWorkdayIndex = weekDays.findIndex(day => 
+    day.getDate() === nextWorkday.getDate() && 
+    day.getMonth() === nextWorkday.getMonth() && 
+    day.getFullYear() === nextWorkday.getFullYear()
+  );
   
   // Für Debug-Zwecke loggen wir alle relevanten Daten
-  console.log('Tomorrow date:', tomorrow ? format(tomorrow, 'yyyy-MM-dd') : 'None found');
+  console.log('Next workday:', nextWorkday ? format(nextWorkday, 'yyyy-MM-dd') : 'None found');
+  console.log('Next workday index in weekDays:', nextWorkdayIndex);
   console.log('All weekDays:', weekDays.map(d => format(d, 'yyyy-MM-dd')));
   console.log('Today is:', format(new Date(), 'yyyy-MM-dd'));
-  console.log('Is tomorrow check:', weekDays.map(d => ({ date: format(d, 'yyyy-MM-dd'), isTomorrow: isTomorrow(d) })));
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -57,7 +78,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           formatDateKey={formatDateKey}
           finalizedDays={finalizedDays}
           onFinalizeDay={onFinalizeDay}
-          tomorrowDate={tomorrow}
+          tomorrowDate={nextWorkdayIndex !== -1 ? weekDays[nextWorkdayIndex] : null}
         />
         <tbody>
           {filteredEmployees.map((employee) => (
