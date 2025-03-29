@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { createAutomaticPlan } from "../utils/planning";
 import { dispatchShiftEvent } from "../utils/shift-utils";
 import { Employee } from "@/types/employee";
@@ -81,7 +81,7 @@ export const useAutoPlanningActions = ({
         toast({
           title: "Warnung: Nicht genug Mitarbeiter",
           description: `Es werden insgesamt ${totalRequired} Schichten benötigt, aber maximal ${maxPossibleShifts} können durch die verfügbaren Mitarbeiter abgedeckt werden.`,
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive" since "warning" is not a valid variant
         });
       }
       

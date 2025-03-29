@@ -5,12 +5,7 @@ import { ShiftPlan } from "../../types";
 import { balanceEmployeeDistribution } from "./balance-employee-distribution";
 import { ensureFullWorkingDays } from "./ensure-full-working-days";
 import { aggressiveRebalancing } from "./aggressive-rebalancing";
-import { 
-  prioritizeWeekendStaffing,
-  prioritizeDaysForRebalancing,
-  findOptimalSourceDays,
-  calculateStaffingImbalanceRatio
-} from "./helpers/employee-assignment";
+import { prioritizeWeekendStaffing } from "./helpers/employee-assignment";
 import {
   identifyStaffingImbalances,
   identifyDaysWithExtraStaff,
@@ -26,6 +21,11 @@ import {
 import {
   logFinalStaffingStats
 } from "./helpers/logging";
+import {
+  prioritizeDaysForRebalancing,
+  findOptimalSourceDays,
+  calculateStaffingImbalanceRatio
+} from "./helpers/day-prioritization";
 
 export function runBalanceForecastPass(
   sortedEmployees: Employee[],
@@ -110,16 +110,16 @@ export function runBalanceForecastPass(
   
   // PHASE 5: Critical inspection - focus especially on weekend days
   // Weekend days get special treatment in our staffing algorithms
-  const weekendDays = weekDays.filter((_, index) => index >= 5);
-  const criticalWeekendDays = weekendDays.map((day, index) => {
-    const dayIndex = index + 5; // 5 = Saturday, 6 = Sunday
-    const required = requiredEmployees[dayIndex] || 0;
-    const filled = filledPositions[dayIndex];
-    
-    if (filled < required) {
-      const shortage = required - filled;
-      // Flag as critical even with small shortages on weekends
-      return { dayIndex, shortage, isCritical: true };
+  const criticalWeekendDays = weekendIndices.map(dayIndex => {
+    if (dayIndex < weekDays.length) {
+      const required = requiredEmployees[dayIndex] || 0;
+      const filled = filledPositions[dayIndex];
+      
+      if (filled < required) {
+        const shortage = required - filled;
+        // Flag as critical even with small shortages on weekends
+        return { dayIndex, shortage, isCritical: true };
+      }
     }
     return null;
   }).filter(Boolean);
@@ -157,11 +157,13 @@ export function runBalanceForecastPass(
   }
   
   // PHASE 6: Advanced rebalancing - only if we still have significant imbalances
-  const weekendShortage = weekendDays.reduce((total, day, index) => {
-    const dayIndex = index + 5;
-    const required = requiredEmployees[dayIndex] || 0;
-    const filled = filledPositions[dayIndex];
-    return total + (required > filled ? required - filled : 0);
+  const weekendShortage = weekendIndices.reduce((total, dayIndex) => {
+    if (dayIndex < weekDays.length) {
+      const required = requiredEmployees[dayIndex] || 0;
+      const filled = filledPositions[dayIndex];
+      return total + (required > filled ? required - filled : 0);
+    }
+    return total;
   }, 0);
   
   if (weekendShortage > 0) {
@@ -178,7 +180,7 @@ export function runBalanceForecastPass(
     // Calculate the variance in staffing ratios
     const ratios = staffingImbalances.map(day => day.ratio).filter(r => !isNaN(r) && isFinite(r));
     const avgRatio = ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
-    const weekendRatios = staffingImbalances.slice(5).map(day => day.ratio);
+    const weekendRatios = staffingImbalances.filter(day => day.dayIndex >= 5).map(day => day.ratio);
     const hasSignificantWeekendImbalance = weekendRatios.some(r => r < 0.7); // If weekend is below 70% staffed
     
     if (hasSignificantWeekendImbalance) {
