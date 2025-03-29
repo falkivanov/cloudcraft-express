@@ -4,7 +4,13 @@ import { format, isToday, isTomorrow, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 import RequiredEmployeesCell from "./RequiredEmployeesCell";
 import FinalizeDayButton from "./FinalizeDayButton";
-import { isWeekend, findNextWorkday, isSameDay } from "@/components/shifts/utils/planning/date-utils";
+import { 
+  isWeekend, 
+  findNextWorkday, 
+  isSameDay, 
+  isPublicHoliday
+} from "@/components/shifts/utils/planning/date-utils";
+import { getHolidayName, getSelectedBundesland } from "@/components/shifts/utils/planning/holidays-utils";
 
 interface ScheduleTableHeaderProps {
   weekDays: Date[];
@@ -29,6 +35,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
 }) => {
   // Berechne den nächsten Arbeitstag
   const nextWorkday = findNextWorkday();
+  const bundesland = getSelectedBundesland();
   
   // Console-Log zur Fehlersuche
   console.log('ScheduleTableHeader - Current date:', new Date().toISOString());
@@ -50,11 +57,16 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           // Ist dieser Tag der nächste Arbeitstag?
           const isNextWorkday = isSameDay(day, nextWorkday);
           
+          // Prüfen, ob es sich um einen Feiertag handelt
+          const isHoliday = isPublicHoliday(day);
+          const holidayName = isHoliday ? getHolidayName(day, bundesland) : null;
+          
           // Debug-Log für die Prüfung
           console.log(`Day ${format(day, "dd.MM.")} isNextWorkday:`, isNextWorkday);
+          console.log(`Day ${format(day, "dd.MM.")} isHoliday:`, isHoliday, holidayName);
           
           const isFinalized = finalizedDays.includes(dateKey);
-          const isWorkDay = !isWeekend(day);
+          const isWorkDay = !isWeekend(day) && !isHoliday;
           
           return (
             <th key={day.toString()} className="p-3 text-center border-l">
@@ -64,11 +76,20 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
               <div className="text-sm font-normal">
                 {format(day, "dd.MM.", { locale: de })}
               </div>
+              
+              {/* Anzeige von Feiertagen */}
+              {isHoliday && holidayName && (
+                <div className="text-xs text-red-600 font-medium mt-1 mb-1">
+                  {holidayName}
+                </div>
+              )}
+              
               {isFinalized && (
                 <div className="text-xs text-green-600 font-medium mt-1 mb-2">
                   ✓ Finalisiert
                 </div>
               )}
+              
               <RequiredEmployeesCell
                 requiredCount={requiredCount}
                 scheduledCount={scheduledCount}

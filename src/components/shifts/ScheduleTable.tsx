@@ -3,7 +3,11 @@ import React from "react";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
-import { findNextWorkday } from "@/components/shifts/utils/planning/date-utils";
+import { 
+  findNextWorkday, 
+  isPublicHoliday
+} from "@/components/shifts/utils/planning/date-utils";
+import { getHolidayName, getSelectedBundesland } from "@/components/shifts/utils/planning/holidays-utils";
 
 interface ScheduleTableProps {
   weekDays: Date[];
@@ -38,11 +42,21 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 }) => {
   // Berechne den nächsten Arbeitstag
   const nextWorkday = findNextWorkday();
+  const bundesland = getSelectedBundesland();
+  
+  // Prüfe auf Feiertage in der angezeigten Woche
+  const holidaysInWeek = weekDays
+    .filter(day => isPublicHoliday(day))
+    .map(day => ({
+      date: day,
+      name: getHolidayName(day, bundesland)
+    }));
   
   // Debug-Information
   console.log('ScheduleTable - Next workday:', nextWorkday.toISOString());
   console.log('ScheduleTable - Week days:', weekDays.map(d => d.toISOString()));
   console.log('ScheduleTable - Finalized days:', finalizedDays);
+  console.log('ScheduleTable - Holidays in week:', holidaysInWeek);
   
   return (
     <div className="border rounded-lg overflow-hidden">

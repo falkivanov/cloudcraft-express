@@ -1,6 +1,7 @@
 
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { isHoliday, getSelectedBundesland } from "./holidays-utils";
 
 // Returns day of week abbreviation (Mo, Di, etc.)
 export const getDayAbbreviation = (date: Date): string => {
@@ -13,12 +14,18 @@ export const isWeekend = (date: Date): boolean => {
   return day === 0 || day === 6; // 0 = Sonntag, 6 = Samstag
 };
 
-// Prüft, ob ein Tag ein Arbeitstag ist (kein Wochenende)
-export const isWorkday = (date: Date): boolean => {
-  return !isWeekend(date);
+// Feiertagsprüfung basierend auf dem ausgewählten Bundesland
+export const isPublicHoliday = (date: Date): boolean => {
+  const bundesland = getSelectedBundesland();
+  return isHoliday(date, bundesland);
 };
 
-// Findet den nächsten Arbeitstag (nicht am Wochenende)
+// Prüft, ob ein Tag ein Arbeitstag ist (kein Wochenende und kein Feiertag)
+export const isWorkday = (date: Date): boolean => {
+  return !isWeekend(date) && !isPublicHoliday(date);
+};
+
+// Findet den nächsten Arbeitstag (nicht am Wochenende und kein Feiertag)
 export const findNextWorkday = (baseDate: Date = new Date()): Date => {
   // Kopie des Datums erstellen, um das Original nicht zu verändern
   const baseCopy = new Date(baseDate);
@@ -31,40 +38,26 @@ export const findNextWorkday = (baseDate: Date = new Date()): Date => {
   console.log('findNextWorkday - baseDate:', baseCopy);
   console.log('findNextWorkday - tomorrow:', tomorrow);
   console.log('findNextWorkday - tomorrow is weekend?', isWeekend(tomorrow));
+  console.log('findNextWorkday - tomorrow is holiday?', isPublicHoliday(tomorrow));
   
-  // Wenn morgen ein Werktag ist, gib morgen zurück
-  if (!isWeekend(tomorrow)) {
+  // Wenn morgen ein Werktag ist (kein Wochenende und kein Feiertag), gib morgen zurück
+  if (isWorkday(tomorrow)) {
     console.log('findNextWorkday - returning tomorrow');
     return tomorrow;
   }
   
-  // Wenn morgen ein Wochenende ist, berechne den nächsten Montag
-  const nextMonday = new Date(baseCopy);
+  // Wenn morgen kein Werktag ist, suche den nächsten Werktag
+  let nextWorkday = new Date(tomorrow);
   
-  // Wenn heute Freitag (5) ist, dann +3 Tage bis Montag
-  // Wenn heute Samstag (6) ist, dann +2 Tage bis Montag
-  // Wenn heute Sonntag (0) ist, dann +1 Tag bis Montag
-  let daysUntilMonday;
-  const dayOfWeek = baseCopy.getDay();
-  
-  if (dayOfWeek === 5) { // Freitag
-    daysUntilMonday = 3;
-  } else if (dayOfWeek === 6) { // Samstag
-    daysUntilMonday = 2;
-  } else if (dayOfWeek === 0) { // Sonntag
-    daysUntilMonday = 1;
-  } else {
-    // Für alle anderen Tage, wenn morgen Wochenende ist (muss Freitag sein)
-    daysUntilMonday = 3;
+  // Erhöhe das Datum, bis ein Werktag gefunden wird
+  let maxIterations = 10; // Sicherheitsbegrenzung
+  while (!isWorkday(nextWorkday) && maxIterations > 0) {
+    nextWorkday.setDate(nextWorkday.getDate() + 1);
+    maxIterations--;
   }
   
-  nextMonday.setDate(baseCopy.getDate() + daysUntilMonday);
-  
-  console.log('findNextWorkday - current day of week:', dayOfWeek);
-  console.log('findNextWorkday - days until Monday:', daysUntilMonday);
-  console.log('findNextWorkday - returning nextMonday:', nextMonday);
-  
-  return nextMonday;
+  console.log('findNextWorkday - found next workday:', nextWorkday);
+  return nextWorkday;
 };
 
 // Hilfsfunktion zum Vergleichen von Datumswerten

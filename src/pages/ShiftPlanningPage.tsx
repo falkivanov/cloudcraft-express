@@ -1,8 +1,9 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ShiftPlanningHeader from "@/components/shifts/ShiftPlanningHeader";
 import ShiftScheduleContent from "@/components/shifts/ShiftScheduleContent";
 import VehicleAssignmentContent from "@/components/shifts/VehicleAssignmentContent";
+import RegionSettings from "@/components/shifts/settings/RegionSettings";
 import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
 import { Container } from "@/components/ui/container";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -72,6 +73,7 @@ const ShiftPlanningPage = () => {
       
       {activeTab === "schedule" && <ShiftScheduleContent />}
       {activeTab === "vehicles" && <VehicleAssignmentContent isEnabled={isScheduleFinalized} />}
+      {activeTab === "settings" && <RegionSettings />}
     </Container>
   );
 };
