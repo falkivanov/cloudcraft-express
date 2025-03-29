@@ -1,10 +1,10 @@
 
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
-import { ShiftPlan } from "../types";
-import { hasSpecialShift } from "../shift-status";
-import { canEmployeeWorkOnDay } from "../employee-availability";
-import { isWorkday, isPublicHoliday } from "../date-utils";
+import { ShiftPlan } from "./types";
+import { hasSpecialShift } from "./shift-status";
+import { canEmployeeWorkOnDay } from "./employee-availability";
+import { isWorkday, isPublicHoliday } from "./date-utils";
 
 // Sets "Frei" status for all available employees who weren't assigned to work
 export function setFreeStatusForAvailableEmployees(
