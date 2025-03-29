@@ -1,15 +1,16 @@
+
 import { Employee } from "@/types/employee";
 import { ShiftAssignment } from "@/types/shift";
 import { ShiftPlan } from "../../types";
 import { balanceEmployeeDistribution } from "./balance-employee-distribution";
 import { ensureFullWorkingDays } from "./ensure-full-working-days";
 import { aggressiveRebalancing } from "./aggressive-rebalancing";
-import { prioritizeWeekendStaffing } from './helpers/employee-assignment';
 import { 
+  prioritizeWeekendStaffing,
   prioritizeDaysForRebalancing,
   findOptimalSourceDays,
   calculateStaffingImbalanceRatio
-} from "./helpers/employee-movement";
+} from "./helpers/employee-assignment";
 import {
   identifyStaffingImbalances,
   identifyDaysWithExtraStaff,
@@ -109,7 +110,7 @@ export function runBalanceForecastPass(
   
   // PHASE 5: Critical inspection - focus especially on weekend days
   // Weekend days get special treatment in our staffing algorithms
-  const weekendDays = weekDays.slice(5);
+  const weekendDays = weekDays.filter((_, index) => index >= 5);
   const criticalWeekendDays = weekendDays.map((day, index) => {
     const dayIndex = index + 5; // 5 = Saturday, 6 = Sunday
     const required = requiredEmployees[dayIndex] || 0;

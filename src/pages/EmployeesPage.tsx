@@ -5,22 +5,30 @@ import EmployeePageContent from "@/components/employees/EmployeePageContent";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Container } from "@/components/ui/container";
 import { Employee } from "@/types/employee";
+import { loadFromStorage, STORAGE_KEYS } from "@/utils/storageUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
+  const { toast } = useToast();
   
   // Load employees from localStorage on initial load
   useEffect(() => {
-    try {
-      const savedEmployees = localStorage.getItem('employees');
-      if (savedEmployees) {
-        setLoadedEmployees(JSON.parse(savedEmployees));
-      }
-    } catch (error) {
-      console.error('Error loading employees from localStorage:', error);
+    const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES, undefined, initialEmployees);
+    
+    if (savedEmployees && savedEmployees.length > 0) {
+      setLoadedEmployees(savedEmployees);
+      
+      // Show a toast to confirm data was loaded
+      toast({
+        title: "Daten geladen",
+        description: `${savedEmployees.length} Mitarbeiter wurden erfolgreich geladen.`,
+      });
+    } else {
+      setLoadedEmployees(initialEmployees);
     }
-  }, []);
+  }, [toast]);
 
   return (
     <Container className="py-8">
