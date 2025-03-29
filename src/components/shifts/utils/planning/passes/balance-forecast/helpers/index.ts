@@ -6,6 +6,11 @@ export * from './staffing-imbalance';
 export * from './employee-utilization';
 export * from './advanced-rebalancing';
 export * from './logging';
+export * from './staffing-calculations';
+export * from './day-prioritization';
+export * from './employee-reassignment';
+export * from './underfilled-days';
+export * from './overfilled-days';
 
 // Export weekend prioritization with a specific name to avoid conflicts
 import { prioritizeForWeekendAssignment as prioritizeEmployeesForWeekend } from './weekend-prioritization';
@@ -18,10 +23,3 @@ export {
   getAssignedDaysCount,
   createEmployeeAssignmentsMap
 } from './weekend-balancing';
-
-// Re-export from employee-movement sub-files
-export * from './staffing-calculations';
-export * from './day-prioritization';
-export * from './employee-reassignment';
-export * from './underfilled-days';
-export * from './overfilled-days';
