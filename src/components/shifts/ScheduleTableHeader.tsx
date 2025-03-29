@@ -75,8 +75,8 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 onRequiredChange={(value) => onRequiredChange(index, value)}
               />
               
-              {/* Der Finalize-Button sollte für den nächsten Arbeitstag angezeigt werden */}
-              {isNextWorkday && !isFinalized && (
+              {/* Zeige den Finalisierungs-Button nur für den nächsten Arbeitstag an und nur wenn er noch nicht finalisiert ist */}
+              {isNextWorkday && !isFinalized && isWorkDay && (
                 <div className="mt-2">
                   <FinalizeDayButton
                     date={day}

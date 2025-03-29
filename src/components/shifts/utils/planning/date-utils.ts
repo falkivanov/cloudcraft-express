@@ -20,12 +20,15 @@ export const isWorkday = (date: Date): boolean => {
 
 // Findet den nächsten Arbeitstag (nicht am Wochenende)
 export const findNextWorkday = (baseDate: Date = new Date()): Date => {
+  // Kopie des Datums erstellen, um das Original nicht zu verändern
+  const baseCopy = new Date(baseDate);
+  
   // Starte mit dem morgigen Tag
-  const tomorrow = new Date(baseDate);
-  tomorrow.setDate(baseDate.getDate() + 1);
+  const tomorrow = new Date(baseCopy);
+  tomorrow.setDate(baseCopy.getDate() + 1);
   
   // Debug log
-  console.log('findNextWorkday - baseDate:', baseDate);
+  console.log('findNextWorkday - baseDate:', baseCopy);
   console.log('findNextWorkday - tomorrow:', tomorrow);
   console.log('findNextWorkday - tomorrow is weekend?', isWeekend(tomorrow));
   
@@ -35,11 +38,29 @@ export const findNextWorkday = (baseDate: Date = new Date()): Date => {
     return tomorrow;
   }
   
-  // Sonst finde den nächsten Montag
-  const nextMonday = new Date(baseDate);
-  const daysUntilMonday = (tomorrow.getDay() === 0) ? 1 : 2; // Wenn morgen Sonntag ist, dann +1, sonst +2
-  nextMonday.setDate(baseDate.getDate() + daysUntilMonday);
+  // Wenn morgen ein Wochenende ist, berechne den nächsten Montag
+  const nextMonday = new Date(baseCopy);
   
+  // Wenn heute Freitag (5) ist, dann +3 Tage bis Montag
+  // Wenn heute Samstag (6) ist, dann +2 Tage bis Montag
+  // Wenn heute Sonntag (0) ist, dann +1 Tag bis Montag
+  let daysUntilMonday;
+  const dayOfWeek = baseCopy.getDay();
+  
+  if (dayOfWeek === 5) { // Freitag
+    daysUntilMonday = 3;
+  } else if (dayOfWeek === 6) { // Samstag
+    daysUntilMonday = 2;
+  } else if (dayOfWeek === 0) { // Sonntag
+    daysUntilMonday = 1;
+  } else {
+    // Für alle anderen Tage, wenn morgen Wochenende ist (muss Freitag sein)
+    daysUntilMonday = 3;
+  }
+  
+  nextMonday.setDate(baseCopy.getDate() + daysUntilMonday);
+  
+  console.log('findNextWorkday - current day of week:', dayOfWeek);
   console.log('findNextWorkday - days until Monday:', daysUntilMonday);
   console.log('findNextWorkday - returning nextMonday:', nextMonday);
   
