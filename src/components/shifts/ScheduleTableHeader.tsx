@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
 import { de } from "date-fns/locale";
@@ -11,7 +10,7 @@ import {
   isPublicHoliday,
   isWorkday
 } from "@/components/shifts/utils/planning/date-utils";
-import { getHolidayName, getSelectedBundesland } from "@/components/shifts/utils/planning/holidays-utils";
+import { getHolidayName, getSelectedBundesland } from "@/components/shifts/utils/planning/holidays";
 
 interface ScheduleTableHeaderProps {
   weekDays: Date[];

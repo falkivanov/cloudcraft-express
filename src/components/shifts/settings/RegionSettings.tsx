@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bundesland, bundeslandLabels, getSelectedBundesland, saveSelectedBundesland } from "../utils/planning/holidays-utils";
+import { Bundesland, bundeslandLabels, getSelectedBundesland, saveSelectedBundesland } from "../utils/planning/holidays";
 import { useToast } from "@/hooks/use-toast";
 
 const RegionSettings: React.FC = () => {
