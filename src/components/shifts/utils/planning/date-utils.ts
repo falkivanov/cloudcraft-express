@@ -20,6 +20,7 @@ export const isWorkday = (date: Date): boolean => {
 
 // Findet den nächsten Arbeitstag (nicht am Wochenende)
 export const findNextWorkday = (baseDate: Date = new Date()): Date => {
+  // Starte mit dem morgigen Tag
   const tomorrow = new Date(baseDate);
   tomorrow.setDate(baseDate.getDate() + 1);
   

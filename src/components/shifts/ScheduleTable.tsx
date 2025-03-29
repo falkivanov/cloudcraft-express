@@ -3,7 +3,7 @@ import React from "react";
 import ScheduleTableHeader from "./ScheduleTableHeader";
 import EmployeeRow from "./EmployeeRow";
 import { Employee } from "@/types/employee";
-import { isTomorrow, format, addDays, isWeekend } from "date-fns";
+import { findNextWorkday } from "@/components/shifts/utils/planning/date-utils";
 
 interface ScheduleTableProps {
   weekDays: Date[];
@@ -36,37 +36,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   getScheduledEmployeesForDay,
   setShowNextDaySchedule
 }) => {
-  // Finde den nächsten Arbeitstag (nicht am Wochenende)
-  const findNextWorkday = () => {
-    const today = new Date();
-    let nextDay = addDays(today, 1); // Beginne mit morgen
-    
-    // Wenn der nächste Tag ein Wochenende ist, überspringe zum Montag
-    if (isWeekend(nextDay)) {
-      // Montag finden (wenn heute Samstag ist, dann +2, wenn heute Sonntag ist, dann +1)
-      const daysUntilMonday = nextDay.getDay() === 0 ? 1 : 2; // 0 = Sonntag
-      nextDay = addDays(today, daysUntilMonday);
-    }
-    
-    return nextDay;
-  };
-  
   // Berechne den nächsten Arbeitstag
   const nextWorkday = findNextWorkday();
   
-  // Finde den Index dieses Tages in unserer Woche
-  const nextWorkdayIndex = weekDays.findIndex(day => 
-    day.getDate() === nextWorkday.getDate() && 
-    day.getMonth() === nextWorkday.getMonth() && 
-    day.getFullYear() === nextWorkday.getFullYear()
-  );
+  // Debug-Information
+  console.log('ScheduleTable - Next workday:', nextWorkday.toISOString());
+  console.log('ScheduleTable - Week days:', weekDays.map(d => d.toISOString()));
   
-  // Für Debug-Zwecke loggen wir alle relevanten Daten
-  console.log('Next workday:', nextWorkday ? format(nextWorkday, 'yyyy-MM-dd') : 'None found');
-  console.log('Next workday index in weekDays:', nextWorkdayIndex);
-  console.log('All weekDays:', weekDays.map(d => format(d, 'yyyy-MM-dd')));
-  console.log('Today is:', format(new Date(), 'yyyy-MM-dd'));
-
   return (
     <div className="border rounded-lg overflow-hidden">
       <table className="w-full border-collapse">
@@ -78,7 +54,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           formatDateKey={formatDateKey}
           finalizedDays={finalizedDays}
           onFinalizeDay={onFinalizeDay}
-          tomorrowDate={nextWorkdayIndex !== -1 ? weekDays[nextWorkdayIndex] : null}
+          tomorrowDate={nextWorkday}
         />
         <tbody>
           {filteredEmployees.map((employee) => (
