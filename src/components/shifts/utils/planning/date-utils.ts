@@ -24,15 +24,33 @@ export const findNextWorkday = (baseDate: Date = new Date()): Date => {
   const tomorrow = new Date(baseDate);
   tomorrow.setDate(baseDate.getDate() + 1);
   
+  // Debug log
+  console.log('findNextWorkday - baseDate:', baseDate);
+  console.log('findNextWorkday - tomorrow:', tomorrow);
+  console.log('findNextWorkday - tomorrow is weekend?', isWeekend(tomorrow));
+  
   // Wenn morgen ein Werktag ist, gib morgen zurück
   if (!isWeekend(tomorrow)) {
+    console.log('findNextWorkday - returning tomorrow');
     return tomorrow;
   }
   
   // Sonst finde den nächsten Montag
   const nextMonday = new Date(baseDate);
-  const daysUntilMonday = tomorrow.getDay() === 0 ? 1 : 2; // Wenn morgen Sonntag ist, dann +1, sonst +2
+  const daysUntilMonday = (tomorrow.getDay() === 0) ? 1 : 2; // Wenn morgen Sonntag ist, dann +1, sonst +2
   nextMonday.setDate(baseDate.getDate() + daysUntilMonday);
   
+  console.log('findNextWorkday - days until Monday:', daysUntilMonday);
+  console.log('findNextWorkday - returning nextMonday:', nextMonday);
+  
   return nextMonday;
+};
+
+// Hilfsfunktion zum Vergleichen von Datumswerten
+export const isSameDay = (date1: Date, date2: Date): boolean => {
+  return (
+    date1.getDate() === date2.getDate() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getFullYear() === date2.getFullYear()
+  );
 };

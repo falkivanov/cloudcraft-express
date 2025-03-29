@@ -42,6 +42,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   // Debug-Information
   console.log('ScheduleTable - Next workday:', nextWorkday.toISOString());
   console.log('ScheduleTable - Week days:', weekDays.map(d => d.toISOString()));
+  console.log('ScheduleTable - Finalized days:', finalizedDays);
   
   return (
     <div className="border rounded-lg overflow-hidden">

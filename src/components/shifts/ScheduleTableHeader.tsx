@@ -4,7 +4,7 @@ import { format, isToday, isTomorrow, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 import RequiredEmployeesCell from "./RequiredEmployeesCell";
 import FinalizeDayButton from "./FinalizeDayButton";
-import { isWeekend, findNextWorkday } from "@/components/shifts/utils/planning/date-utils";
+import { isWeekend, findNextWorkday, isSameDay } from "@/components/shifts/utils/planning/date-utils";
 
 interface ScheduleTableHeaderProps {
   weekDays: Date[];
@@ -31,9 +31,10 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   const nextWorkday = findNextWorkday();
   
   // Console-Log zur Fehlersuche
-  console.log('Current date:', new Date().toISOString());
-  console.log('Next workday calculated:', nextWorkday.toISOString());
-  console.log('Week days displayed:', weekDays.map(d => d.toISOString()));
+  console.log('ScheduleTableHeader - Current date:', new Date().toISOString());
+  console.log('ScheduleTableHeader - Next workday calculated:', nextWorkday.toISOString());
+  console.log('ScheduleTableHeader - Week days displayed:', weekDays.map(d => d.toISOString()));
+  console.log('ScheduleTableHeader - finalizedDays:', finalizedDays);
   
   return (
     <thead className="bg-muted">
@@ -47,14 +48,10 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const requiredCount = requiredEmployees[index];
           
           // Ist dieser Tag der nächste Arbeitstag?
-          const isNextWorkday = day.getDate() === nextWorkday.getDate() && 
-                              day.getMonth() === nextWorkday.getMonth() && 
-                              day.getFullYear() === nextWorkday.getFullYear();
+          const isNextWorkday = isSameDay(day, nextWorkday);
           
           // Debug-Log für die Prüfung
-          if (isNextWorkday) {
-            console.log('Found next workday in weekDays:', dateKey);
-          }
+          console.log(`Day ${format(day, "dd.MM.")} isNextWorkday:`, isNextWorkday);
           
           const isFinalized = finalizedDays.includes(dateKey);
           const isWorkDay = !isWeekend(day);
@@ -67,7 +64,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
               <div className="text-sm font-normal">
                 {format(day, "dd.MM.", { locale: de })}
               </div>
-              {isFinalized && isNextWorkday && (
+              {isFinalized && (
                 <div className="text-xs text-green-600 font-medium mt-1 mb-2">
                   ✓ Finalisiert
                 </div>
@@ -79,7 +76,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
               />
               
               {/* Der Finalize-Button sollte für den nächsten Arbeitstag angezeigt werden */}
-              {isNextWorkday && (
+              {isNextWorkday && !isFinalized && (
                 <div className="mt-2">
                   <FinalizeDayButton
                     date={day}
