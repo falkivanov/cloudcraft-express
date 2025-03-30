@@ -14,6 +14,17 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
   const relevantPages = [3, 4].filter(num => pageData[num]);
   const drivers: DriverKPI[] = [];
   
+  // Check if we have the DSP Weekly Summary heading as seen in the image
+  let isDspWeeklySummaryFound = false;
+  for (const pageNum of relevantPages) {
+    const pageText = pageData[pageNum]?.text || "";
+    if (pageText.includes("DSP WEEKLY SUMMARY")) {
+      console.log("Found DSP WEEKLY SUMMARY heading on page " + pageNum);
+      isDspWeeklySummaryFound = true;
+      break;
+    }
+  }
+  
   // Look for driver patterns in relevant pages
   for (const pageNum of relevantPages) {
     const page = pageData[pageNum];
@@ -51,108 +62,235 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
       rows.push([...currentRow].sort((a, b) => a.x - b.x));
     }
     
-    // Look for driver table headers to identify metric columns
-    const metricNames = ["Delivered", "DNR DPMO", "Contact Compliance", "POD", "DEX", "CE"];
-    let foundMetricColumns: {name: string, index: number}[] = [];
+    // Headers we expect based on the image
+    const expectedHeaders = ["Transporter ID", "Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+    let headerRow: any[] = [];
+    let headerIndexes: Record<string, number> = {};
     
-    // Search for table headers
+    // Look for header row
     for (const row of rows) {
-      const rowText = row.map(item => item.str).join(' ');
+      const rowText = row.map(item => item.str.trim()).join(' ');
       
-      // Check if this row might be a header row
-      let isHeaderRow = false;
-      let columnNames: {name: string, x: number}[] = [];
+      // Check if this row contains a significant number of expected headers
+      const headerMatches = expectedHeaders.filter(header => 
+        rowText.includes(header) || 
+        (header === "Transporter ID" && rowText.includes("Transporter")) ||
+        (header === "Contact Compliance" && rowText.includes("CC"))
+      );
       
-      for (const item of row) {
-        const text = item.str.trim();
-        // Check if this item matches any of our known metric names
-        const matchedMetric = metricNames.find(name => 
-          text.toLowerCase().includes(name.toLowerCase()) || 
-          (text === "CC" && "Contact Compliance".toLowerCase().includes("compliance"))
-        );
+      // If we found enough headers, mark this as the header row
+      if (headerMatches.length >= 3) {
+        console.log("Found header row with columns: " + rowText);
+        headerRow = row;
         
-        if (matchedMetric) {
-          isHeaderRow = true;
-          // Map "CC" to "Contact Compliance"
-          const actualName = text === "CC" ? "Contact Compliance" : matchedMetric;
-          columnNames.push({name: actualName, x: item.x});
+        // Map column positions to header names
+        for (let i = 0; i < row.length; i++) {
+          const headerText = row[i].str.trim();
+          
+          if (headerText === "Transporter ID" || headerText.includes("Transporter")) {
+            headerIndexes["Transporter ID"] = i;
+          } else if (headerText === "Delivered") {
+            headerIndexes["Delivered"] = i;
+          } else if (headerText === "DNR DPMO" || headerText === "DPMO") {
+            headerIndexes["DNR DPMO"] = i;
+          } else if (headerText === "POD") {
+            headerIndexes["POD"] = i;
+          } else if (headerText === "CC") {
+            headerIndexes["Contact Compliance"] = i;
+          } else if (headerText === "CE") {
+            headerIndexes["Customer Escalation"] = i;
+          } else if (headerText === "DEX") {
+            headerIndexes["DEX"] = i;
+          } else if (headerText === "DCR") {
+            headerIndexes["DCR"] = i;
+          }
         }
-      }
-      
-      if (isHeaderRow && columnNames.length > 0) {
-        console.log("Found header row with metrics:", columnNames.map(c => c.name).join(", "));
         
-        // Sort column names by x position
-        columnNames.sort((a, b) => a.x - b.x);
-        
-        // Store column indices (order-based)
-        foundMetricColumns = columnNames.map((col, idx) => ({name: col.name, index: idx}));
+        console.log("Header indexes:", headerIndexes);
         break;
       }
     }
     
-    // If we didn't find column headers, use default ordering
-    if (foundMetricColumns.length === 0) {
-      console.log("No column headers found, using default metrics");
-      foundMetricColumns = [
-        {name: "Delivered", index: 0},
-        {name: "DNR DPMO", index: 1},
-        {name: "Contact Compliance", index: 2}
-      ];
-    }
-    
-    // Process driver rows - look for rows with driver identifier and numeric values
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowText = row.map(item => item.str).join(' ');
+    // If we found header row, process data rows
+    if (Object.keys(headerIndexes).length > 0) {
+      console.log("Processing data rows using header information");
       
-      // Check for driver identifier patterns (TR-XXX or names)
-      const driverMatch = rowText.match(/TR[-\s]?\d+|[A-Z][a-z]+\s+[A-Z][a-z]+/);
-      if (driverMatch) {
-        const driverName = driverMatch[0];
-        
-        // Extract numeric values from this row
-        const values = extractNumericValues(rowText);
-        
-        // If we have numeric values, this is likely a driver row
-        if (values.length > 0) {
-          console.log(`Found driver: ${driverName} with ${values.length} metric values`);
+      // Skip header row and process data rows
+      let headerRowIndex = rows.indexOf(headerRow);
+      if (headerRowIndex >= 0) {
+        // Process rows after the header
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+          const row = rows[i];
           
-          const metrics = [];
+          // Skip if row is too short
+          if (row.length < 4) continue;
           
-          // Map values to metrics using the column order we found
-          for (let j = 0; j < Math.min(foundMetricColumns.length, values.length); j++) {
-            const metricInfo = foundMetricColumns[j];
-            const value = values[j];
+          // Get driver ID (Transporter ID)
+          const driverIdIndex = headerIndexes["Transporter ID"];
+          if (driverIdIndex !== undefined && driverIdIndex < row.length) {
+            const driverId = row[driverIdIndex].str.trim();
             
-            // Skip if value wasn't found
-            if (value === undefined) continue;
+            // Skip if driver ID is empty or doesn't match the expected pattern
+            if (!driverId || driverId.length < 3) continue;
             
-            // Determine unit and target based on metric name
-            const unit = metricInfo.name.includes("DPMO") ? "DPMO" : "%";
+            console.log(`Found driver ID: ${driverId}`);
             
-            // Set default target based on metric
-            let target = 100;
-            if (metricInfo.name.includes("DPMO")) target = 3000;
-            else if (metricInfo.name === "Contact Compliance") target = 95;
-            else if (metricInfo.name === "CE") target = 0;
+            // Collect metrics for this driver
+            const metrics = [];
             
-            metrics.push({
-              name: metricInfo.name,
-              value,
-              target,
-              unit,
-              status: determineStatus(metricInfo.name, value)
-            });
+            // Add Delivered metric if available
+            if (headerIndexes["Delivered"] !== undefined && headerIndexes["Delivered"] < row.length) {
+              const deliveredStr = row[headerIndexes["Delivered"]].str.trim();
+              const deliveredValue = parseFloat(deliveredStr.replace('%', ''));
+              
+              if (!isNaN(deliveredValue)) {
+                metrics.push({
+                  name: "Delivered",
+                  value: deliveredValue,
+                  target: 100,
+                  unit: "%",
+                  status: determineStatus("Delivered", deliveredValue)
+                });
+              }
+            }
+            
+            // Add DNR DPMO metric if available
+            if (headerIndexes["DNR DPMO"] !== undefined && headerIndexes["DNR DPMO"] < row.length) {
+              const dpmoStr = row[headerIndexes["DNR DPMO"]].str.trim();
+              const dpmoValue = parseInt(dpmoStr);
+              
+              if (!isNaN(dpmoValue)) {
+                metrics.push({
+                  name: "DNR DPMO",
+                  value: dpmoValue,
+                  target: 3000,
+                  unit: "DPMO",
+                  status: determineStatus("DNR DPMO", dpmoValue)
+                });
+              }
+            }
+            
+            // Add POD metric if available
+            if (headerIndexes["POD"] !== undefined && headerIndexes["POD"] < row.length) {
+              const podStr = row[headerIndexes["POD"]].str.trim();
+              const podValue = parseFloat(podStr.replace('%', ''));
+              
+              if (!isNaN(podValue)) {
+                metrics.push({
+                  name: "POD",
+                  value: podValue,
+                  target: 98,
+                  unit: "%",
+                  status: determineStatus("POD", podValue)
+                });
+              }
+            }
+            
+            // Add Contact Compliance metric if available
+            if (headerIndexes["Contact Compliance"] !== undefined && headerIndexes["Contact Compliance"] < row.length) {
+              const ccStr = row[headerIndexes["Contact Compliance"]].str.trim();
+              const ccValue = parseFloat(ccStr.replace('%', ''));
+              
+              if (!isNaN(ccValue)) {
+                metrics.push({
+                  name: "Contact Compliance",
+                  value: ccValue,
+                  target: 95,
+                  unit: "%",
+                  status: determineStatus("Contact Compliance", ccValue)
+                });
+              }
+            }
+            
+            // Only add driver if we found some metrics
+            if (metrics.length > 0) {
+              drivers.push({
+                name: driverId,
+                status: "active",
+                metrics
+              });
+            }
           }
+        }
+      }
+    } else if (isDspWeeklySummaryFound) {
+      // If we found the DSP WEEKLY SUMMARY heading but couldn't process the headers,
+      // try to extract the data in a different way
+      
+      // Look for rows with alphanumeric driver IDs (like A10PTF5T1G664)
+      for (const row of rows) {
+        const rowItems = row.map(item => item.str.trim());
+        const rowText = rowItems.join(' ');
+        
+        // Check if this row has an alphanumeric ID that looks like a driver ID
+        const driverIdMatch = rowItems[0]?.match(/^[A-Z][A-Z0-9]{8,}$/);
+        if (driverIdMatch && rowItems.length >= 5) {
+          const driverId = rowItems[0];
+          console.log(`Found driver with ID pattern: ${driverId}`);
           
-          // Only add driver if we found some metrics
-          if (metrics.length > 0) {
-            drivers.push({
-              name: driverName,
-              status: "active",
-              metrics
-            });
+          // Try to extract numeric values in the correct order
+          const numericValues = rowItems.slice(1).map(str => {
+            // Convert percentages to numbers
+            if (str.includes('%')) {
+              return parseFloat(str.replace('%', ''));
+            }
+            // Convert plain numbers
+            const num = parseFloat(str);
+            return isNaN(num) ? null : num;
+          }).filter(val => val !== null);
+          
+          if (numericValues.length >= 3) {
+            const metrics = [];
+            
+            // Add metrics based on position (following the DSP Weekly Summary format)
+            if (numericValues.length > 0) {
+              metrics.push({
+                name: "Delivered",
+                value: numericValues[1], // Delivered is typically in position 2
+                target: 100,
+                unit: "%",
+                status: determineStatus("Delivered", numericValues[1])
+              });
+            }
+            
+            if (numericValues.length > 2) {
+              metrics.push({
+                name: "DNR DPMO",
+                value: numericValues[2], // DNR DPMO is typically in position 3
+                target: 3000,
+                unit: "DPMO",
+                status: determineStatus("DNR DPMO", numericValues[2])
+              });
+            }
+            
+            if (numericValues.length > 3) {
+              metrics.push({
+                name: "POD",
+                value: numericValues[3], // POD is typically in position 4
+                target: 98,
+                unit: "%",
+                status: determineStatus("POD", numericValues[3])
+              });
+            }
+            
+            if (numericValues.length > 4) {
+              metrics.push({
+                name: "Contact Compliance",
+                value: numericValues[4], // CC is typically in position 5
+                target: 95,
+                unit: "%",
+                status: determineStatus("Contact Compliance", numericValues[4])
+              });
+            }
+            
+            // Add driver to list if we found metrics
+            if (metrics.length > 0) {
+              drivers.push({
+                name: driverId,
+                status: "active",
+                metrics
+              });
+            }
           }
         }
       }
