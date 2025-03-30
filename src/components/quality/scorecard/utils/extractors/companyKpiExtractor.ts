@@ -54,7 +54,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value,
         target: getDefaultTargetForKPI(name),
         unit,
-        trend: "neutral",
+        trend: "neutral" as "up" | "down" | "neutral", // Explicitly type as the union type
         status: determineStatus(name, value)
       });
     }
@@ -89,7 +89,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
               value,
               target: getDefaultTargetForKPI(existingKpi.name),
               unit: "%",
-              trend: "neutral",
+              trend: "neutral" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
               status: determineStatus(existingKpi.name, value)
             });
           }
@@ -117,7 +117,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
               value,
               target: 3000, // Default target for DPMO metrics
               unit: "DPMO",
-              trend: "neutral",
+              trend: "neutral" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
               status: determineStatus(kpiName, value)
             });
           }
@@ -135,7 +135,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value: 98.5,
         target: 98.0,
         unit: "%",
-        trend: "up",
+        trend: "up" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
         status: "fantastic" as KPIStatus
       },
       {
@@ -143,7 +143,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value: 2500,
         target: 3000,
         unit: "DPMO",
-        trend: "down",
+        trend: "down" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
         status: "great" as KPIStatus
       },
       {
@@ -151,7 +151,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value: 92,
         target: 95,
         unit: "%",
-        trend: "up",
+        trend: "up" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
         status: "fair" as KPIStatus
       },
       {
@@ -159,7 +159,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value: 96,
         target: 95,
         unit: "%",
-        trend: "up",
+        trend: "up" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
         status: "great" as KPIStatus
       },
       {
@@ -167,7 +167,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         value: 97,
         target: 98,
         unit: "%",
-        trend: "neutral",
+        trend: "neutral" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
         status: "fair" as KPIStatus
       }
     ];
