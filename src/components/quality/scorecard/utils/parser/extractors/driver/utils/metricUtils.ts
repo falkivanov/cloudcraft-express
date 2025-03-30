@@ -1,5 +1,5 @@
 
-import { determineStatus } from '../../../helpers/statusHelper';
+import { determineStatus } from '../../../../helpers/statusHelper';
 import { METRIC_NAMES, METRIC_TARGETS, METRIC_UNITS } from './metricDefinitions';
 
 type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
