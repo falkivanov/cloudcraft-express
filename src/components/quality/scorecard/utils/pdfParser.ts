@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from '../types';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
@@ -25,7 +26,7 @@ export const parseScorecardPDF = async (
   try {
     console.info("Starting PDF parsing for: ", filename);
     
-    // Extract week number from filename
+    // Extract week number from filename using the enhanced extractor
     const weekNum = extractWeekFromFilename(filename);
     console.info("Extracted week number:", weekNum);
     
@@ -42,6 +43,10 @@ export const parseScorecardPDF = async (
       extractionAttempts.push({method: "positional", ...positionalResult});
       
       if (positionalResult.success) {
+        // Make sure the week is set correctly based on filename
+        if (positionalResult.data && weekNum > 0) {
+          positionalResult.data.week = weekNum;
+        }
         console.log(`Positional extraction found ${positionalResult.data.driverKPIs?.length || 0} drivers`);
         return positionalResult.data!;
       }

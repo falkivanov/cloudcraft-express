@@ -22,6 +22,18 @@ Date.prototype.getWeek = function(): number {
  * @returns The extracted week number or current week
  */
 export const extractWeekFromFilename = (filename: string): number => {
-  const weekMatch = filename.match(/KW[_\s]*(\d+)/i);
-  return weekMatch && weekMatch[1] ? parseInt(weekMatch[1], 10) : new Date().getWeek();
+  // First try the "Week" pattern (e.g. "DE-MASC-DSU1-Week11-DSP-Scorecard-3.0.pdf")
+  const weekMatch = filename.match(/Week(\d+)/i);
+  if (weekMatch && weekMatch[1]) {
+    return parseInt(weekMatch[1], 10);
+  }
+  
+  // Then try the "KW" pattern (e.g. "Scorecard_KW12.pdf")
+  const kwMatch = filename.match(/KW[_\s]*(\d+)/i);
+  if (kwMatch && kwMatch[1]) {
+    return parseInt(kwMatch[1], 10);
+  }
+  
+  // If no pattern matches, return current week
+  return new Date().getWeek();
 };

@@ -14,13 +14,13 @@ export class ScorecardValidator extends BaseValidator {
       };
     }
 
-    // Extract KW information from filename
-    const weekMatch = this.file.name.match(/KW[_\s]*(\d+)/i);
+    // Extract KW/Week information from filename
+    const weekMatch = this.file.name.match(/Week(\d+)/i) || this.file.name.match(/KW[_\s]*(\d+)/i);
     let successMessage = this.getSuccessMessage();
     
     if (weekMatch && weekMatch[1]) {
       const extractedWeek = parseInt(weekMatch[1], 10);
-      console.log(`Detected KW ${extractedWeek} in filename`);
+      console.log(`Detected Week ${extractedWeek} in filename`);
       successMessage = `Datei "${this.file.name}" ausgewählt (KW ${extractedWeek})`;
     }
     

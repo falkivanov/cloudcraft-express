@@ -3,6 +3,7 @@ import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
 import { STORAGE_KEYS, addItemToHistory, saveToStorage } from "@/utils/storage";
+import { extractWeekFromFilename } from "@/components/quality/scorecard/utils/parser/weekUtils";
 
 /**
  * Process scorecard PDF files
@@ -59,6 +60,18 @@ export class ScorecardProcessor extends BaseFileProcessor {
             quality: scorecardData.companyKPIs.filter(kpi => kpi.category === "quality"),
             capacity: scorecardData.companyKPIs.filter(kpi => kpi.category === "capacity")
           };
+        }
+        
+        // Make sure week and year are correctly set based on filename
+        const extractedWeek = extractWeekFromFilename(this.file.name);
+        if (extractedWeek > 0) {
+          console.log(`Setting week number to ${extractedWeek} based on filename`);
+          scorecardData.week = extractedWeek;
+          
+          // If year is missing, use current year
+          if (!scorecardData.year) {
+            scorecardData.year = new Date().getFullYear();
+          }
         }
         
         // Store the extracted data in localStorage consistently
