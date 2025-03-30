@@ -1,8 +1,9 @@
 
 import { ScoreCardData } from "../../types";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
-import { parseWeekIdentifier } from "./weekIdentifier";
+import { parseWeekIdentifier, isDataAvailableForWeek } from "./weekIdentifier";
 import { getDataFunctionForWeek } from "./dataFetcher";
+import { getDummyScoreCardData } from "../../data/weeks";
 
 /**
  * Helper function to get the data based on selected week

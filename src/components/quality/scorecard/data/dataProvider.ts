@@ -10,6 +10,3 @@ export { getDataFunctionForWeek } from './utils/dataFetcher';
 export { getAllAvailableWeeks } from './utils/weeksDiscovery';
 export { getScorecardData, getPreviousWeekData } from './utils/dataProvider';
 export { getNextWeekIdentifier, getPreviousWeekIdentifier, hasNextWeekData } from './utils/adjacentWeeks';
-
-// Add import for needed function in adjacentWeeks.ts
-import { isDataAvailableForWeek } from './utils/weekIdentifier';
