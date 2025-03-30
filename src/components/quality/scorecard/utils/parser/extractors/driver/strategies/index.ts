@@ -146,3 +146,6 @@ export function extractDriversOrUseSampleData(text: string): DriverKPI[] {
   console.warn("No driver extraction methods succeeded, using sample data");
   return generateSampleDrivers();
 }
+
+// Export the functions needed by extractionStrategies.ts
+export { extractDriversByPage, tryAllExtractionStrategies };
