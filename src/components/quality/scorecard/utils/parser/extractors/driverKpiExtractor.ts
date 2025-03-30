@@ -1,5 +1,5 @@
 
-import { extractDriversOrUseSampleData } from './driver/extractionStrategies';
+import { extractDriversOrUseSampleData } from './driver/strategies';
 import { 
   extractDriverKPIsFromStructure, 
   extractDriverKPIsFromText,
