@@ -1,4 +1,3 @@
-
 /**
  * Extraction strategies for scorecard data
  */
@@ -9,7 +8,7 @@ import { extractScorecardData } from '../extractors/dataExtractor';
 import { extractStructuredScorecard } from './extractors/structuredExtractor';
 import { createSimpleScorecard } from './extractors/simpleExtractor';
 import { isValidScorecardData } from './validation/scoreCardValidator';
-import { STORAGE_KEYS, saveToStorage } from '@/utils/storageUtils';
+import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
 
 /**
  * Attempt positional extraction strategy

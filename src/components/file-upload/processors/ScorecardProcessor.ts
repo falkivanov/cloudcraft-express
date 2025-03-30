@@ -1,8 +1,7 @@
-
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
-import { STORAGE_KEYS, addItemToHistory, saveToStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, addItemToHistory, saveToStorage } from "@/utils/storage";
 
 /**
  * Process scorecard PDF files

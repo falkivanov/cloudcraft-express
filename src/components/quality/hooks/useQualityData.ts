@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { toast } from "sonner";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
 import { getPreviousWeekData } from "@/components/quality/scorecard/data/dataProvider";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 interface DriverComplianceData {
   name: string;
@@ -34,10 +33,8 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
-  // Load scorecard data
   const loadScoreCardData = () => {
     try {
-      // Try to load extracted data with consistent approach
       const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       
       if (extractedData) {
@@ -45,7 +42,6 @@ export const useQualityData = (pathname: string): QualityDataResult => {
           JSON.stringify(extractedData).substring(0, 100) + "...");
         setScoreCardData(extractedData);
         
-        // Load previous week data if available
         if (extractedData.week && extractedData.year) {
           const weekId = `week-${extractedData.week}-${extractedData.year}`;
           const previousData = getPreviousWeekData(weekId);
@@ -54,27 +50,23 @@ export const useQualityData = (pathname: string): QualityDataResult => {
           console.info(`Successfully loaded data for week ${extractedData.week}/${extractedData.year}`);
         }
       } else {
-        // Fallback to legacy approach if needed
         const legacyData = localStorage.getItem("extractedScorecardData");
         if (legacyData) {
           console.info("Using legacy extracted PDF data:", legacyData.substring(0, 100) + "...");
           const parsedData = JSON.parse(legacyData) as ScoreCardData;
           setScoreCardData(parsedData);
           
-          // Load previous week data if available
           if (parsedData.week && parsedData.year) {
             const weekId = `week-${parsedData.week}-${parsedData.year}`;
             const previousData = getPreviousWeekData(weekId);
             setPrevWeekScoreCardData(previousData);
           }
         } else {
-          // Fall back to test data if available
           const data = localStorage.getItem("scorecardData");
           if (data) {
             const parsedScorecard = JSON.parse(data);
             setScoreCardData(parsedScorecard);
             
-            // Try to load previous week data
             if (parsedScorecard.week && parsedScorecard.year) {
               const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
               const previousData = getPreviousWeekData(weekId);
@@ -95,7 +87,6 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     }
   };
 
-  // Clear scorecard data when it's removed
   const clearScorecardData = () => {
     setScoreCardData(null);
     setPrevWeekScoreCardData(null);
@@ -111,7 +102,6 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     
     if (pathname.includes("/quality/customer-contact")) {
       console.info("Loading customer contact data");
-      // Don't use test data, only try to load from localStorage
       const data = localStorage.getItem("customerContactData");
       setCustomerContactData(data);
       
@@ -146,13 +136,11 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     setDataLoaded(true);
   };
 
-  // Load data when path changes
   useEffect(() => {
     console.info("QualityPage: Path changed to", pathname);
     loadData();
   }, [pathname]);
   
-  // Listen for changes to localStorage
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if ((event.key === "extractedScorecardData" || event.key === STORAGE_KEYS.EXTRACTED_SCORECARD_DATA) 
@@ -164,7 +152,6 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Also add a manual event listener for updates within the same window
     const handleScoreCardUpdatedEvent = () => {
       if (pathname.includes("/quality/scorecard")) {
         console.info("Custom event detected: Scorecard data changed");

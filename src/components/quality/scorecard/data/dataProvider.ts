@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from "../types";
 import { 
   getWeek6Data, 
@@ -9,7 +8,7 @@ import {
   getWeek11Data,
   getDummyScoreCardData 
 } from "./weekData";
-import { STORAGE_KEYS, loadFromStorage, saveToStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage, saveToStorage } from "@/utils/storage";
 
 /**
  * Parse a week identifier string into week number and year

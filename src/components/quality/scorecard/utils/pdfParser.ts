@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../types';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
@@ -9,7 +8,7 @@ import {
   attemptTextBasedExtraction,
   createFallbackData
 } from './parser/extractionStrategies';
-import { STORAGE_KEYS, saveToStorage } from '@/utils/storageUtils';
+import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
 
 /**
  * Parse a scorecard PDF and extract data

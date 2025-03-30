@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 import { Employee } from "@/types/employee";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 

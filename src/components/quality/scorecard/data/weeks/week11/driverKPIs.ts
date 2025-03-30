@@ -1,6 +1,5 @@
-
 import { DriverKPI, ScoreCardData } from "../../../types";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 export const getDriverKPIs = (): DriverKPI[] => {
   // Use a consistent approach to check for data

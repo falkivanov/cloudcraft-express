@@ -1,6 +1,5 @@
-
 import { toast } from "sonner";
-import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storage";
 
 export interface ProcessOptions {
   showToasts?: boolean;

@@ -4,7 +4,7 @@ import { initialVehicles } from "@/data/sampleVehicleData";
 import { useVehicleFilter } from "@/hooks/useVehicleFilter";
 import { useVehicleOperations } from "@/hooks/useVehicleOperations";
 import { Vehicle } from "@/types/vehicle";
-import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storage";
 import { toast } from "sonner";
 
 export const useVehicleData = () => {

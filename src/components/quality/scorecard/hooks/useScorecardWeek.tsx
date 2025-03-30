@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { parseWeekIdentifier, isDataAvailableForWeek } from "../data";
 import { ScoreCardData } from "../types";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
   // Initialize with an empty week indicator

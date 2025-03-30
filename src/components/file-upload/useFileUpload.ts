@@ -1,10 +1,9 @@
-
 import { useState, useRef } from "react";
 import { validateFile } from "./utils/fileValidator";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { processFile } from "./FileProcessor";
-import { STORAGE_KEYS } from "@/utils/storageUtils";
+import { STORAGE_KEYS } from "@/utils/storage";
 
 export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
