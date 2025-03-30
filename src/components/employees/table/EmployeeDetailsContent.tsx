@@ -72,6 +72,22 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
             <p>{employee.telegramUsername || "-"}</p>
           </div>
         </div>
+
+        <div className="flex items-start gap-2">
+          <Phone className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Telefon</p>
+            <p>{employee.phone}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <IdCard className="h-4 w-4 mt-1 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">E-Mail</p>
+            <p>{employee.email}</p>
+          </div>
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -156,13 +172,19 @@ const EmployeeDetailsContent: React.FC<EmployeeDetailsContentProps> = ({
           </div>
         </div>
         
-        <div className="flex items-start gap-2">
-          <Phone className="h-4 w-4 mt-1 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Telefon</p>
-            <p>{employee.phone}</p>
+        {(employee.mentorFirstName || employee.mentorLastName) && (
+          <div className="flex items-start gap-2">
+            <IdCard className="h-4 w-4 mt-1 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Mentor</p>
+              <p>
+                {[employee.mentorFirstName, employee.mentorLastName]
+                  .filter(Boolean)
+                  .join(" ") || "-"}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       <div className="col-span-1 md:col-span-2 pt-4 flex justify-end gap-2">
