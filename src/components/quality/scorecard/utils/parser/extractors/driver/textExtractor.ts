@@ -62,32 +62,32 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
     console.log(`Found ${trMatches.length} TR-pattern matches as last resort`);
     
     // Create simple drivers for each TR match
-    const simpleDrivers = trMatches.map((match, index) => {
+    const simpleDrivers: DriverKPI[] = trMatches.map((match, index) => {
       const driverId = match[0].trim();
       return {
         name: driverId,
-        status: "active" as const,
+        status: "active",
         metrics: [
           {
             name: "Delivered",
             value: 95 + (index % 5),
             target: 0,
             unit: "",
-            status: "good" as const
+            status: "great" // Changed from "good" to "great"
           },
           {
             name: "DCR",
             value: 97 + (index % 3),
             target: 98.5,
             unit: "%",
-            status: ((97 + (index % 3)) >= 98.5) ? "great" as const : "fair" as const
+            status: ((97 + (index % 3)) >= 98.5) ? "great" : "fair" // Changed to use allowed values
           },
           {
             name: "DNR DPMO",
             value: 1500 - (index * 100),
             target: 1500,
             unit: "DPMO",
-            status: "good" as const
+            status: "great" // Changed from "good" to "great"
           }
         ]
       };
@@ -101,3 +101,4 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
   console.warn("No driver KPIs found in text, using sample data");
   return generateSampleDrivers();
 };
+
