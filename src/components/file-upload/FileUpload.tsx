@@ -102,7 +102,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
         )}
         
         {selectedCategory === "scorecard" && (
-          <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+          <Alert variant="warning" className="bg-blue-50 text-blue-800 border-blue-200">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Hinweis zur Scorecard-Verarbeitung</AlertTitle>
             <AlertDescription>
