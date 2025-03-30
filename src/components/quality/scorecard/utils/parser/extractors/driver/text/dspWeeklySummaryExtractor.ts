@@ -3,6 +3,8 @@ import { DriverKPI } from '../../../../../types';
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { extractNumeric } from '../structural/valueExtractor';
 
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
 /**
  * Extract drivers from a DSP Weekly Summary formatted text
  */
@@ -85,7 +87,7 @@ export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] =>
             value: 0,
             target: metricTargets[validValuesCount],
             unit: metricUnits[validValuesCount],
-            status: "none"
+            status: "none" as MetricStatus
           });
         } else {
           const numValue = extractNumeric(value);

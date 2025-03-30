@@ -3,6 +3,8 @@ import { DriverKPI } from '../../../../../types';
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { extractNumeric } from '../structural/valueExtractor';
 
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
 /**
  * Extract drivers by processing the text content line by line
  */
@@ -62,15 +64,16 @@ export const extractDriversLineByLine = (text: string): DriverKPI[] => {
               value: 0,
               target: metricTargets[i],
               unit: metricUnits[i],
-              status: "none"
+              status: "none" as MetricStatus
             });
           } else {
+            const numericValue = extractNumeric(value);
             metrics.push({
               name: metricNames[i],
-              value: extractNumeric(value),
+              value: numericValue,
               target: metricTargets[i],
               unit: metricUnits[i],
-              status: determineStatus(metricNames[i], extractNumeric(value))
+              status: determineStatus(metricNames[i], numericValue)
             });
           }
         }

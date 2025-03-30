@@ -3,6 +3,8 @@ import { DriverKPI } from '../../../../../types';
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { extractNumeric } from '../structural/valueExtractor';
 
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
 /**
  * Extract drivers from text using a flexible pattern matching approach
  */
@@ -66,7 +68,7 @@ export const extractDriversWithFlexiblePattern = (text: string): DriverKPI[] => 
             value: 0,
             target: metricTargets[validValuesCount],
             unit: metricUnits[validValuesCount],
-            status: "none"
+            status: "none" as MetricStatus
           });
         } else {
           // Skip if not a valid numeric value

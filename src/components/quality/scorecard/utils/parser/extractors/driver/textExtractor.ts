@@ -211,7 +211,7 @@ function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
         let metricValue = 0;
         let target = 0;
         let unit = "";
-        let status = "fair";
+        let status: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance" = "fair";
         
         switch (metricName) {
           case "Delivered":
@@ -263,7 +263,7 @@ function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
           value: metricValue,
           target,
           unit,
-          status: status as any
+          status
         });
       }
     });
