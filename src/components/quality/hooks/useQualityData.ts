@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { toast } from "sonner";
@@ -32,23 +33,14 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
-  // Clear demo data on first mount, keep extracted data
-  useEffect(() => {
-    // Don't clear extractedScorecardData since it's uploaded data
-    localStorage.removeItem('customerContactData');
-    localStorage.removeItem('scorecardData');
-    localStorage.removeItem('concessionsData');
-    localStorage.removeItem('mentorData');
-    
-    console.info("Test data cleared");
-  }, []);
-  
+  // Load scorecard data
   const loadScoreCardData = () => {
     try {
-      // Try to load extracted data first
+      // Try to load extracted data first - IMPORTANT: Force refresh by not using cached state
       const extractedData = localStorage.getItem("extractedScorecardData");
+      
       if (extractedData) {
-        console.info("Using extracted PDF data from localStorage");
+        console.info("Using extracted PDF data from localStorage:", extractedData.substring(0, 100) + "...");
         const parsedData = JSON.parse(extractedData) as ScoreCardData;
         setScoreCardData(parsedData);
         
@@ -57,11 +49,12 @@ export const useQualityData = (pathname: string): QualityDataResult => {
           const weekId = `week-${parsedData.week}-${parsedData.year}`;
           const previousData = getPreviousWeekData(weekId);
           setPrevWeekScoreCardData(previousData);
+          
+          console.info(`Successfully loaded data for week ${parsedData.week}/${parsedData.year}`);
         }
         
         // Show toast if there's real data loaded
         if (parsedData.week && parsedData.year) {
-          console.info("Using week", parsedData.week, "from scorecard data");
           toast.success(`Scorecard Daten für KW ${parsedData.week}/${parsedData.year} geladen`, {
             id: "scorecard-data-loaded",
             duration: 3000,
@@ -143,15 +136,28 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   
   // Listen for changes to localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
-      if (pathname.includes("/quality/scorecard")) {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "extractedScorecardData" && pathname.includes("/quality/scorecard")) {
+        console.info("Storage event detected: Scorecard data changed");
         loadScoreCardData();
       }
     };
     
     window.addEventListener('storage', handleStorageChange);
+    
+    // Also add a manual event listener for updates within the same window
+    const handleCustomEvent = () => {
+      if (pathname.includes("/quality/scorecard")) {
+        console.info("Custom event detected: Scorecard data changed");
+        loadScoreCardData();
+      }
+    };
+    
+    window.addEventListener('scorecardDataUpdated', handleCustomEvent);
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('scorecardDataUpdated', handleCustomEvent);
     };
   }, [pathname]);
 

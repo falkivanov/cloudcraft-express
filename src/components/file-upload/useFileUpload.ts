@@ -34,8 +34,8 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
       try {
         console.log(`Uploading ${selectedCategory} file: ${file.name}`);
         
-        // Process the file using the utility function
-        processFile(file, file.type, selectedCategory);
+        // Process the file using the async utility function
+        await processFile(file, file.type, selectedCategory);
         
         // Reset file input after successful upload
         setFile(null);
@@ -60,6 +60,11 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
               }
             );
           }, 1500);
+        }
+        
+        // Call the onFileUpload callback if provided
+        if (onFileUpload) {
+          onFileUpload(file, file.type, selectedCategory);
         }
         
       } catch (error) {

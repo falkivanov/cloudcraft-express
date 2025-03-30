@@ -10,13 +10,8 @@ import {
 import { Container } from "@/components/ui/container";
 import UploadHistoryTab from "@/components/file-upload/UploadHistoryTab";
 import UploadInstructions from "@/components/file-upload/UploadInstructions";
-import { processFile } from "@/components/file-upload/FileProcessor";
 
 const FileUploadPage: React.FC = () => {
-  const handleFileUpload = (file: File, type: string, category: string) => {
-    processFile(file, type, category);
-  };
-
   return (
     <Container>
       <h1 className="text-3xl font-bold mb-6">Datei-Uploads</h1>
@@ -28,7 +23,7 @@ const FileUploadPage: React.FC = () => {
         </TabsList>
         <TabsContent value="upload" className="mt-6">
           <UploadInstructions />
-          <FileUpload onFileUpload={handleFileUpload} />
+          <FileUpload />
         </TabsContent>
         <TabsContent value="history" className="mt-6">
           <UploadHistoryTab />

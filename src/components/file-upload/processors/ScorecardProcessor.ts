@@ -2,6 +2,7 @@
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
+import { addItemToHistory } from "@/utils/fileUploadHistory";
 
 /**
  * Process scorecard PDF files
@@ -17,7 +18,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
     console.info(`Processing scorecard file: ${this.file.name}`);
     
     try {
-      // Clear any existing data first
+      // Clear any existing data first to ensure we don't have stale data
       localStorage.removeItem("scorecard_week");
       localStorage.removeItem("scorecard_year");
       localStorage.removeItem("scorecard_data");
@@ -57,13 +58,15 @@ export class ScorecardProcessor extends BaseFileProcessor {
           location: scorecardData.location,
           isReal: !scorecardData.isSampleData // Flag to indicate if data was actually extracted
         });
+        
+        // Dispatch a custom event to notify that scorecard data has been updated
+        // This helps with updating the UI when data changes within the same window
+        window.dispatchEvent(new Event('scorecardDataUpdated'));
+        
+        return true;
       } else {
         throw new Error("Keine Daten konnten aus der PDF-Datei extrahiert werden.");
       }
-      
-      // Call the base class's default processing to handle file upload callback
-      this.processDefault(showToasts);
-      return true;
     } catch (error) {
       console.error("Error processing scorecard:", error);
       if (showToasts) {
@@ -78,5 +81,20 @@ export class ScorecardProcessor extends BaseFileProcessor {
     } finally {
       this.setProcessing(false);
     }
+  }
+  
+  /**
+   * Add file upload to history with additional metadata
+   */
+  private addToUploadHistory(file: File, type: string, category: string, metadata: any = {}): void {
+    const historyItem = {
+      name: file.name,
+      type: type,
+      timestamp: new Date().toISOString(),
+      category: category,
+      ...metadata
+    };
+    
+    addItemToHistory(historyItem);
   }
 }
