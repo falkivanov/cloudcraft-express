@@ -27,8 +27,8 @@ export class ScorecardProcessor extends BaseFileProcessor {
       const arrayBuffer = await this.file.arrayBuffer();
       
       console.log("Starting PDF parsing...");
-      // Process the PDF file - pass only the expected 3 arguments
-      const scorecardData = await parseScorecardPDF(arrayBuffer, this.file.name);
+      // Process the PDF file with detailed logging enabled
+      const scorecardData = await parseScorecardPDF(arrayBuffer, this.file.name, true);
       
       if (scorecardData) {
         console.log("Successfully extracted scorecard data:", scorecardData);
@@ -54,7 +54,8 @@ export class ScorecardProcessor extends BaseFileProcessor {
         this.addToUploadHistory(this.file, "pdf", "scorecard", {
           week: scorecardData.week,
           year: scorecardData.year,
-          location: scorecardData.location
+          location: scorecardData.location,
+          isReal: !scorecardData.isSampleData // Flag to indicate if data was actually extracted
         });
       } else {
         throw new Error("Keine Daten konnten aus der PDF-Datei extrahiert werden.");

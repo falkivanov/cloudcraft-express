@@ -14,6 +14,11 @@ export const loadPDFDocument = async (pdfData: ArrayBuffer) => {
   console.info("Loading PDF document");
   
   try {
+    // Check if data is a valid buffer
+    if (!pdfData || pdfData.byteLength === 0) {
+      throw new PDFParseError('Leere oder ungültige PDF-Daten', 'INVALID_DATA');
+    }
+    
     // Load the PDF document
     const loadingTask = pdfjs.getDocument({ data: pdfData });
     
@@ -54,8 +59,25 @@ export const extractTextFromPDF = async (pdf: any) => {
     // Extract text from all pages for better context
     for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
       const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const text = content.items.map((item: any) => item.str).join(' ');
+      const content = await page.getTextContent({normalizeWhitespace: true});
+      
+      // Improved text extraction with line breaks preservation
+      let lastY = -1;
+      let textItems = [];
+      
+      for (const item of content.items) {
+        if ('str' in item) {
+          const textItem = item as pdfjs.TextItem;
+          // Add line breaks when Y position changes significantly
+          if (lastY !== -1 && Math.abs(textItem.transform[5] - lastY) > 5) {
+            textItems.push('\n');
+          }
+          textItems.push(textItem.str);
+          lastY = textItem.transform[5];
+        }
+      }
+      
+      const text = textItems.join(' ').replace(/\s{2,}/g, ' ');
       pageTexts[i] = text;
       allText.push(text);
     }
@@ -67,7 +89,7 @@ export const extractTextFromPDF = async (pdf: any) => {
     const driverText = pageTexts[2] || '';
     
     // Combine text from all pages for context-aware extraction
-    const fullText = allText.join(' ');
+    const fullText = allText.join('\n\n');
     
     console.info("Successfully extracted text from PDF");
     return { companyText, driverText, fullText, pageTexts };
@@ -90,26 +112,29 @@ export const extractPDFContentWithPositions = async (pdf: any) => {
     for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 1.0 });
-      const textContent = await page.getTextContent();
+      const textContent = await page.getTextContent({normalizeWhitespace: true});
       
       // Get items with their positions for structural analysis
-      const items = textContent.items.map((item: any) => {
-        // Transform coordinates from PDF space to viewport space
-        const tx = pdfjs.Util.transform(
-          viewport.transform,
-          item.transform
-        );
-        
-        return {
-          str: item.str,
-          x: tx[4], // x-coordinate
-          y: tx[5], // y-coordinate
-          width: item.width,
-          height: item.height,
-          fontName: item.fontName
-        };
-      });
+      const items = textContent.items
+        .filter((item: any) => 'str' in item && item.str.trim() !== '')
+        .map((item: any) => {
+          // Transform coordinates from PDF space to viewport space
+          const tx = pdfjs.Util.transform(
+            viewport.transform,
+            item.transform
+          );
+          
+          return {
+            str: item.str.trim(),
+            x: tx[4], // x-coordinate
+            y: tx[5], // y-coordinate
+            width: item.width,
+            height: item.height,
+            fontName: item.fontName
+          };
+        });
       
+      // Enhanced sorting for more accurate structure reconstruction
       // Sort items by vertical position first, then by horizontal position
       const sortedItems = items.sort((a: any, b: any) => {
         // Group items into rows based on y-coordinate proximity
@@ -120,9 +145,37 @@ export const extractPDFContentWithPositions = async (pdf: any) => {
         return b.y - a.y; // Sort by y-coordinate (top to bottom)
       });
       
-      // Store page data
+      // Group items into logical rows for better structure reconstruction
+      const rows: any[][] = [];
+      let currentRow: any[] = [];
+      let lastY = -1;
+      
+      // Group items into rows
+      for (const item of sortedItems) {
+        if (lastY === -1 || Math.abs(item.y - lastY) < 5) {
+          // Same row
+          currentRow.push(item);
+        } else {
+          // New row
+          if (currentRow.length > 0) {
+            rows.push([...currentRow].sort((a, b) => a.x - b.x));
+            currentRow = [item];
+          } else {
+            currentRow = [item];
+          }
+        }
+        lastY = item.y;
+      }
+      
+      // Add the last row if it exists
+      if (currentRow.length > 0) {
+        rows.push([...currentRow].sort((a, b) => a.x - b.x));
+      }
+      
+      // Store page data with both items and rows
       result[i] = {
         items: sortedItems,
+        rows: rows,
         text: sortedItems.map((item: any) => item.str).join(' '),
         width: viewport.width,
         height: viewport.height

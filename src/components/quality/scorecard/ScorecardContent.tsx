@@ -1,61 +1,67 @@
 
-import React, { useState } from "react";
-import { ScoreCardData } from "./types";
-import NoDataMessage from "../NoDataMessage";
-import ScorecardWeekSelector from "./ScorecardWeekSelector";
-import { getScorecardData, getPreviousWeekData } from "./data";
-import UnavailableWeekMessage from "./components/UnavailableWeekMessage";
-import ScorecardTabsContent from "./components/ScorecardTabsContent";
-import { useScorecardWeek } from "./hooks/useScorecardWeek";
+import React from 'react';
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import ScorecardSummary from "./ScorecardSummary";
+import CompanyKPIs from "./CompanyKPIs";
+import DriverKPIs from "./DriverKPIs";
+import ScorecardTabsContent from './components/ScorecardTabsContent';
+import { ScoreCardData } from './types';
+import UnavailableWeekMessage from './components/UnavailableWeekMessage';
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
+  prevWeekData: ScoreCardData | null;
 }
 
-const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData }) => {
-  // Scorecard specific states
-  const [scorecardTab, setScorecardTab] = useState<string>("company");
+const ScorecardContent: React.FC<ScorecardContentProps> = ({ 
+  scorecardData, 
+  prevWeekData 
+}) => {
+  if (!scorecardData) {
+    return <UnavailableWeekMessage />;
+  }
   
-  // Handle week selection with custom hook
-  const { selectedWeek, setSelectedWeek, isUnavailableWeek } = useScorecardWeek(scorecardData);
-  
-  // Get data (either actual or dummy)
-  const data = getScorecardData(scorecardData, selectedWeek);
-  
-  // Get previous week's data for comparison
-  const previousWeekData = getPreviousWeekData(selectedWeek);
-
   return (
-    <div className="p-4 border rounded-lg bg-background w-full">
-      <div className="flex flex-col space-y-6 w-full">
-        {/* Week Selector - Always displayed at the top level */}
-        <div className="flex justify-end">
-          <ScorecardWeekSelector
-            selectedWeek={selectedWeek}
-            setSelectedWeek={setSelectedWeek}
+    <div>
+      {scorecardData.isSampleData && (
+        <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Achtung: Beispieldaten</AlertTitle>
+          <AlertDescription>
+            Die angezeigten Daten konnten nicht vollständig aus der PDF extrahiert werden und wurden teilweise 
+            mit Beispieldaten ergänzt. Die Daten entsprechen möglicherweise nicht der tatsächlichen Scorecard.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <ScorecardSummary 
+        location={scorecardData.location} 
+        week={scorecardData.week}
+        year={scorecardData.year}
+        overallScore={scorecardData.overallScore} 
+        overallStatus={scorecardData.overallStatus}
+        rank={scorecardData.rank}
+        rankNote={scorecardData.rankNote}
+        recommendedFocusAreas={scorecardData.recommendedFocusAreas}
+      />
+      
+      <Tabs defaultValue="overview" className="mt-6">
+        <ScorecardTabsContent />
+        <TabsContent value="overview" className="mt-6 space-y-8">
+          <CompanyKPIs 
+            companyKPIs={scorecardData.companyKPIs} 
+            previousWeekData={prevWeekData}
           />
-        </div>
-
-        {/* Content container */}
-        <div className="w-full min-h-[600px]">
-          {!data ? (
-            <NoDataMessage category="Scorecard" />
-          ) : isUnavailableWeek() ? (
-            <UnavailableWeekMessage 
-              selectedWeek={selectedWeek}
-              setSelectedWeek={setSelectedWeek}
-            />
-          ) : (
-            /* Tabs for company/driver KPIs */
-            <ScorecardTabsContent
-              data={data}
-              previousWeekData={previousWeekData}
-              scorecardTab={scorecardTab}
-              setScorecardTab={setScorecardTab}
-            />
-          )}
-        </div>
-      </div>
+        </TabsContent>
+        <TabsContent value="drivers" className="mt-6">
+          <DriverKPIs 
+            driverKPIs={scorecardData.driverKPIs}
+            previousWeekData={prevWeekData}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

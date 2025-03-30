@@ -36,6 +36,7 @@ export interface ScoreCardData {
   companyKPIs: ScorecardKPI[];
   driverKPIs: DriverKPI[];
   recommendedFocusAreas: string[];
+  isSampleData?: boolean; // Flag to indicate if data is sample data
   sectionRatings?: {
     complianceAndSafety: string;
     qualityAndSWC: string;
