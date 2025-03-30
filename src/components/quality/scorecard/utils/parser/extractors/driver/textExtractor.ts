@@ -1,4 +1,3 @@
-
 import { determineStatus } from '../../../helpers/statusHelper';
 import { generateSampleDrivers } from './sampleData';
 import { DriverKPI } from '../../../../types';
@@ -14,156 +13,227 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
   const dspWeeklySummaryPattern = /([A-Z0-9]{10,})\s+([\d.]+)\s+([\d.]+%?)\s+([\d]+)\s+([\d.]+%?)\s+([\d.]+%?)\s+([\d]+)\s+([\d.]+%?)/g;
   const dspMatches = Array.from(text.matchAll(dspWeeklySummaryPattern));
   
+  console.log(`DSP Weekly Summary pattern matches: ${dspMatches.length}`);
+  
   if (dspMatches && dspMatches.length > 0) {
     console.log(`Found ${dspMatches.length} drivers in DSP Weekly Summary format`);
     
     dspMatches.forEach(match => {
       const driverID = match[1].trim();
-      console.log(`Found driver ID: ${driverID}`);
+      console.log(`Found driver ID: ${driverID} with ${match.length} columns`);
       
       // Extract values, handling both numbers and percentages
       const extractNumeric = (str: string) => {
         return parseFloat(str.replace('%', '').replace(',', '.'));
       };
       
-      const delivered = extractNumeric(match[3] || "0");
-      const dnrDpmo = parseInt(match[4] || "0");
-      const podValue = extractNumeric(match[5] || "0");
-      const ccValue = extractNumeric(match[6] || "0");
+      // Create full metrics array based on all captured columns
+      const metrics = [];
       
-      // Create metrics using the values from the table
-      const metrics = [
-        {
+      // Route count (stops)
+      if (match[2]) {
+        metrics.push({
+          name: "Stops",
+          value: parseInt(match[2] || "0"),
+          target: 0, // No specific target for stops
+          unit: "",
+          status: "fantastic" as const
+        });
+      }
+      
+      // Delivered percentage
+      if (match[3]) {
+        const delivered = extractNumeric(match[3] || "0");
+        metrics.push({
           name: "Delivered",
           value: delivered,
           target: 100,
           unit: "%",
           status: determineStatus("Delivered", delivered)
-        },
-        {
+        });
+      }
+      
+      // DNR DPMO value
+      if (match[4]) {
+        const dnrDpmo = parseInt(match[4] || "0");
+        metrics.push({
           name: "DNR DPMO", 
           value: dnrDpmo,
           target: 3000, // Target for DNR DPMO
           unit: "DPMO",
           status: determineStatus("DNR DPMO", dnrDpmo)
-        },
-        {
+        });
+      }
+      
+      // POD percentage
+      if (match[5]) {
+        const podValue = extractNumeric(match[5] || "0");
+        metrics.push({
           name: "POD",
           value: podValue,
           target: 98,
           unit: "%",
           status: determineStatus("POD", podValue)
-        },
-        {
+        });
+      }
+      
+      // Contact Compliance percentage
+      if (match[6]) {
+        const ccValue = extractNumeric(match[6] || "0");
+        metrics.push({
           name: "Contact Compliance",
           value: ccValue,
           target: 95,
           unit: "%",
           status: determineStatus("Contact Compliance", ccValue)
-        }
-      ];
+        });
+      }
       
-      // Add driver to list
-      drivers.push({
-        name: driverID,
-        status: "active",
-        metrics
-      });
+      // Customer Escalations (CE)
+      if (match[7]) {
+        const ceValue = parseInt(match[7] || "0");
+        metrics.push({
+          name: "CE",
+          value: ceValue,
+          target: 0,
+          unit: "",
+          status: ceValue === 0 ? "fantastic" as const : "poor" as const
+        });
+      }
+      
+      // DEX percentage
+      if (match[8]) {
+        const dexValue = extractNumeric(match[8] || "0");
+        metrics.push({
+          name: "DEX",
+          value: dexValue,
+          target: 95,
+          unit: "%",
+          status: determineStatus("DEX", dexValue)
+        });
+      }
+      
+      // Add driver to list if we found some metrics
+      if (metrics.length > 0) {
+        drivers.push({
+          name: driverID,
+          status: "active",
+          metrics
+        });
+      }
     });
     
     if (drivers.length > 0) {
-      console.log(`Successfully extracted ${drivers.length} drivers from DSP Weekly Summary format`);
+      console.log(`Successfully extracted ${drivers.length} drivers from DSP Weekly Summary format with ${drivers[0]?.metrics.length || 0} metrics each`);
       return drivers;
     }
   }
   
-  // Try with a more specific tabular pattern (original pattern)
-  const driverTablePattern = /(TR[-\s]?\d+|[A-Z][a-z]+\s+[A-Z][a-z]+|[A-Z0-9]{8,})\s+([\d.]+%?)\s+([\d.]+%?)\s+([\d.]+%?)/g;
-  const tableMatches = Array.from(text.matchAll(driverTablePattern));
+  // If first pattern fails, try more flexible patterns with line breaks
+  const flexibleTablePattern = /([A-Z0-9]{10,})[\s\n]+(\d+)[\s\n]+([\d.]+%)[\s\n]+(\d+)[\s\n]+([\d.]+%)[\s\n]+([\d.]+%)[\s\n]+(\d+)[\s\n]+([\d.]+%)/g;
+  const flexMatches = Array.from(text.matchAll(flexibleTablePattern));
   
-  if (tableMatches && tableMatches.length > 0) {
-    console.log(`Found ${tableMatches.length} drivers in table format`);
+  console.log(`Flexible table pattern matches: ${flexMatches.length}`);
+  
+  if (flexMatches && flexMatches.length > 0) {
+    console.log(`Found ${flexMatches.length} drivers with flexible pattern`);
     
-    // Process each driver match from table
-    tableMatches.forEach(match => {
-      const driverName = match[1].trim();
-      console.log(`Found driver in table format: ${driverName}`);
+    flexMatches.forEach(match => {
+      const driverID = match[1].trim();
+      console.log(`Found driver with flexible pattern: ${driverID}`);
       
       // Extract values, handling both numbers and percentages
       const extractNumeric = (str: string) => {
         return parseFloat(str.replace('%', '').replace(',', '.'));
       };
       
-      const metrics = [
-        {
+      // Create metrics collection from all matched groups
+      const metrics = [];
+      
+      // Stops
+      if (match[2]) {
+        metrics.push({
+          name: "Stops",
+          value: parseInt(match[2]),
+          target: 0,
+          unit: "",
+          status: "fantastic" as const
+        });
+      }
+      
+      // Delivered %
+      if (match[3]) {
+        const delivered = extractNumeric(match[3]);
+        metrics.push({
           name: "Delivered",
-          value: extractNumeric(match[2]),
+          value: delivered,
           target: 100,
           unit: "%",
-          status: determineStatus("Delivered", extractNumeric(match[2]))
-        },
-        {
+          status: determineStatus("Delivered", delivered)
+        });
+      }
+      
+      // DNR DPMO
+      if (match[4]) {
+        const dnrDpmo = parseInt(match[4]);
+        metrics.push({
           name: "DNR DPMO", 
-          value: extractNumeric(match[3]),
+          value: dnrDpmo,
           target: 3000,
           unit: "DPMO",
-          status: determineStatus("DNR DPMO", extractNumeric(match[3]))
-        }
-      ];
+          status: determineStatus("DNR DPMO", dnrDpmo)
+        });
+      }
       
-      // Add a third metric if present
-      if (match[4]) {
+      // POD %
+      if (match[5]) {
+        const podValue = extractNumeric(match[5]);
+        metrics.push({
+          name: "POD",
+          value: podValue,
+          target: 98,
+          unit: "%",
+          status: determineStatus("POD", podValue)
+        });
+      }
+      
+      // Contact Compliance %
+      if (match[6]) {
+        const ccValue = extractNumeric(match[6]);
         metrics.push({
           name: "Contact Compliance",
-          value: extractNumeric(match[4]),
+          value: ccValue,
           target: 95,
           unit: "%",
-          status: determineStatus("Contact Compliance", extractNumeric(match[4]))
+          status: determineStatus("Contact Compliance", ccValue)
+        });
+      }
+      
+      // CE
+      if (match[7]) {
+        const ceValue = parseInt(match[7]);
+        metrics.push({
+          name: "CE",
+          value: ceValue,
+          target: 0,
+          unit: "",
+          status: ceValue === 0 ? "fantastic" as const : "poor" as const
+        });
+      }
+      
+      // DEX %
+      if (match[8]) {
+        const dexValue = extractNumeric(match[8]);
+        metrics.push({
+          name: "DEX",
+          value: dexValue,
+          target: 95,
+          unit: "%",
+          status: determineStatus("DEX", dexValue)
         });
       }
       
       // Add driver to list
-      drivers.push({
-        name: driverName,
-        status: "active",
-        metrics
-      });
-    });
-    
-    if (drivers.length > 0) {
-      return drivers;
-    }
-  }
-  
-  // If table formats fail, try a more flexible pattern for driver IDs with alphanumeric codes
-  const alphaNumericDriverPattern = /([A-Z0-9]{8,})[\s\n]+([\d.]+)[\s\n]+([\d.]+%?)[\s\n]+([\d]+)[\s\n]+/g;
-  const alphaNumericMatches = Array.from(text.matchAll(alphaNumericDriverPattern));
-  
-  if (alphaNumericMatches && alphaNumericMatches.length > 0) {
-    console.log(`Found ${alphaNumericMatches.length} drivers with alphanumeric IDs`);
-    
-    alphaNumericMatches.forEach(match => {
-      const driverID = match[1].trim();
-      console.log(`Found alphanumeric driver ID: ${driverID}`);
-      
-      // Create metrics based on the matched values
-      const metrics = [
-        {
-          name: "Delivered",
-          value: parseFloat(match[3].replace('%', '')),
-          target: 100,
-          unit: "%",
-          status: determineStatus("Delivered", parseFloat(match[3].replace('%', '')))
-        },
-        {
-          name: "DNR DPMO", 
-          value: parseInt(match[4]),
-          target: 3000,
-          unit: "DPMO",
-          status: determineStatus("DNR DPMO", parseInt(match[4]))
-        }
-      ];
-      
       drivers.push({
         name: driverID,
         status: "active",
@@ -172,6 +242,7 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
     });
     
     if (drivers.length > 0) {
+      console.log(`Successfully extracted ${drivers.length} drivers with flexible pattern`);
       return drivers;
     }
   }

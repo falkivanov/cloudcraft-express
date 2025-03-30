@@ -32,7 +32,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     // Skip if page doesn't exist
     if (!page) continue;
     
-    console.log(`Analyzing page ${pageNum} for driver data`);
+    console.log(`Analyzing page ${pageNum} for driver data with ${page.items?.length || 0} items`);
     
     // Group items by rows based on y-coordinate
     const rows: any[][] = [];
@@ -40,6 +40,11 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     let lastY = -1;
     
     // Sort items by y-coordinate (top to bottom)
+    if (!page.items || page.items.length === 0) {
+      console.warn(`No items found on page ${pageNum}`);
+      continue;
+    }
+    
     const sortedItems = [...page.items].sort((a, b) => b.y - a.y);
     
     // Group into rows
@@ -62,8 +67,20 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
       rows.push([...currentRow].sort((a, b) => a.x - b.x));
     }
     
-    // Headers we expect based on the image
-    const expectedHeaders = ["Transporter ID", "Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+    console.log(`Grouped ${sortedItems.length} items into ${rows.length} rows on page ${pageNum}`);
+    
+    // Headers we expect based on the provided image
+    const expectedHeaders = [
+      "Transporter ID", 
+      "Stops", 
+      "Delivered", 
+      "DNR DPMO", 
+      "POD", 
+      "CC", 
+      "CE", 
+      "DEX"
+    ];
+    
     let headerRow: any[] = [];
     let headerIndexes: Record<string, number> = {};
     
@@ -89,6 +106,8 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
           
           if (headerText === "Transporter ID" || headerText.includes("Transporter")) {
             headerIndexes["Transporter ID"] = i;
+          } else if (headerText === "Stops") {
+            headerIndexes["Stops"] = i;
           } else if (headerText === "Delivered") {
             headerIndexes["Delivered"] = i;
           } else if (headerText === "DNR DPMO" || headerText === "DPMO") {
@@ -122,7 +141,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
         for (let i = headerRowIndex + 1; i < rows.length; i++) {
           const row = rows[i];
           
-          // Skip if row is too short
+          // Skip if row is too short (less than 4 items is not a valid driver row)
           if (row.length < 4) continue;
           
           // Get driver ID (Transporter ID)
@@ -131,12 +150,31 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             const driverId = row[driverIdIndex].str.trim();
             
             // Skip if driver ID is empty or doesn't match the expected pattern
-            if (!driverId || driverId.length < 3) continue;
+            // In the image, the IDs appear to be alphanumeric with length around 10-12 chars
+            if (!driverId || driverId.length < 8) continue;
             
-            console.log(`Found driver ID: ${driverId}`);
+            console.log(`Found driver ID in structural analysis: ${driverId}`);
             
             // Collect metrics for this driver
             const metrics = [];
+            
+            // Process all metrics based on the header indexes
+            
+            // Stops (if available)
+            if (headerIndexes["Stops"] !== undefined && headerIndexes["Stops"] < row.length) {
+              const stopsStr = row[headerIndexes["Stops"]].str.trim();
+              const stopsValue = parseInt(stopsStr);
+              
+              if (!isNaN(stopsValue)) {
+                metrics.push({
+                  name: "Stops",
+                  value: stopsValue,
+                  target: 0, // No specific target
+                  unit: "",
+                  status: "fantastic" as const
+                });
+              }
+            }
             
             // Add Delivered metric if available
             if (headerIndexes["Delivered"] !== undefined && headerIndexes["Delivered"] < row.length) {
@@ -202,6 +240,38 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               }
             }
             
+            // Add Customer Escalation metric if available
+            if (headerIndexes["Customer Escalation"] !== undefined && headerIndexes["Customer Escalation"] < row.length) {
+              const ceStr = row[headerIndexes["Customer Escalation"]].str.trim();
+              const ceValue = parseInt(ceStr);
+              
+              if (!isNaN(ceValue)) {
+                metrics.push({
+                  name: "CE",
+                  value: ceValue,
+                  target: 0,
+                  unit: "",
+                  status: ceValue === 0 ? "fantastic" as const : "poor" as const
+                });
+              }
+            }
+            
+            // Add DEX metric if available
+            if (headerIndexes["DEX"] !== undefined && headerIndexes["DEX"] < row.length) {
+              const dexStr = row[headerIndexes["DEX"]].str.trim();
+              const dexValue = parseFloat(dexStr.replace('%', ''));
+              
+              if (!isNaN(dexValue)) {
+                metrics.push({
+                  name: "DEX",
+                  value: dexValue,
+                  target: 95,
+                  unit: "%",
+                  status: determineStatus("DEX", dexValue)
+                });
+              }
+            }
+            
             // Only add driver if we found some metrics
             if (metrics.length > 0) {
               drivers.push({
@@ -209,13 +279,15 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
                 status: "active",
                 metrics
               });
+              console.log(`Added driver ${driverId} with ${metrics.length} metrics`);
             }
           }
         }
       }
     } else if (isDspWeeklySummaryFound) {
       // If we found the DSP WEEKLY SUMMARY heading but couldn't process the headers,
-      // try to extract the data in a different way
+      // try to extract the data in a different way by looking for rows with the expected pattern
+      console.log("Trying alternative extraction due to DSP Weekly Summary heading but no header row");
       
       // Look for rows with alphanumeric driver IDs (like A10PTF5T1G664)
       for (const row of rows) {
@@ -226,7 +298,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
         const driverIdMatch = rowItems[0]?.match(/^[A-Z][A-Z0-9]{8,}$/);
         if (driverIdMatch && rowItems.length >= 5) {
           const driverId = rowItems[0];
-          console.log(`Found driver with ID pattern: ${driverId}`);
+          console.log(`Found driver with ID pattern: ${driverId}, row has ${rowItems.length} items`);
           
           // Try to extract numeric values in the correct order
           const numericValues = rowItems.slice(1).map(str => {
@@ -239,47 +311,89 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             return isNaN(num) ? null : num;
           }).filter(val => val !== null);
           
+          console.log(`Found ${numericValues.length} numeric values for driver ${driverId}: ${numericValues.join(', ')}`);
+          
           if (numericValues.length >= 3) {
             const metrics = [];
             
-            // Add metrics based on position (following the DSP Weekly Summary format)
+            // Map positions to metrics based on the expected order in the DSP Weekly Summary
+            // Expected order: Stops, Delivered%, DNR DPMO, POD%, CC%, CE, DEX%
+            
+            // Stops (if available)
             if (numericValues.length > 0) {
               metrics.push({
+                name: "Stops",
+                value: numericValues[0],
+                target: 0,
+                unit: "",
+                status: "fantastic" as const
+              });
+            }
+            
+            // Delivered percentage
+            if (numericValues.length > 1) {
+              metrics.push({
                 name: "Delivered",
-                value: numericValues[1], // Delivered is typically in position 2
+                value: numericValues[1],
                 target: 100,
                 unit: "%",
                 status: determineStatus("Delivered", numericValues[1])
               });
             }
             
+            // DNR DPMO
             if (numericValues.length > 2) {
               metrics.push({
                 name: "DNR DPMO",
-                value: numericValues[2], // DNR DPMO is typically in position 3
+                value: numericValues[2],
                 target: 3000,
                 unit: "DPMO",
                 status: determineStatus("DNR DPMO", numericValues[2])
               });
             }
             
+            // POD percentage
             if (numericValues.length > 3) {
               metrics.push({
                 name: "POD",
-                value: numericValues[3], // POD is typically in position 4
+                value: numericValues[3],
                 target: 98,
                 unit: "%",
                 status: determineStatus("POD", numericValues[3])
               });
             }
             
+            // Contact Compliance percentage
             if (numericValues.length > 4) {
               metrics.push({
                 name: "Contact Compliance",
-                value: numericValues[4], // CC is typically in position 5
+                value: numericValues[4],
                 target: 95,
                 unit: "%",
                 status: determineStatus("Contact Compliance", numericValues[4])
+              });
+            }
+            
+            // Customer Escalations (CE)
+            if (numericValues.length > 5) {
+              const ceValue = numericValues[5];
+              metrics.push({
+                name: "CE",
+                value: ceValue,
+                target: 0,
+                unit: "",
+                status: ceValue === 0 ? "fantastic" as const : "poor" as const
+              });
+            }
+            
+            // DEX percentage
+            if (numericValues.length > 6) {
+              metrics.push({
+                name: "DEX",
+                value: numericValues[6],
+                target: 95,
+                unit: "%",
+                status: determineStatus("DEX", numericValues[6])
               });
             }
             
@@ -290,6 +404,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
                 status: "active",
                 metrics
               });
+              console.log(`Added driver ${driverId} with ${metrics.length} metrics via alternative method`);
             }
           }
         }
@@ -306,9 +421,15 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
       pageData[pageNum]?.text || ""
     ).join("\n\n");
     
+    // Log text for debugging
+    console.log(`Combined text length for extraction: ${combinedText.length} chars`);
+    if (combinedText.length < 500) {
+      console.log(`Combined text for extraction: ${combinedText}`);
+    }
+    
     return extractDriverKPIsFromText(combinedText);
   }
   
-  console.log(`Successfully extracted ${drivers.length} drivers`);
+  console.log(`Successfully extracted ${drivers.length} drivers with structural analysis`);
   return drivers;
 };
