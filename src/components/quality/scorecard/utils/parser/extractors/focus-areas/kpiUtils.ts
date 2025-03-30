@@ -23,7 +23,7 @@ export function isLikelyKPI(text: string) {
     'compliance', 'rate', 'adoption', 'dpmo', 'capacity', 
     'reliability', 'delivery', 'received', 'photo', 'contact',
     'escalation', 'feedback', 'audit', 'mentor', 'safe', 'driving',
-    'hours', 'completion'
+    'hours', 'completion', 'dcr', 'dnr', 'pod'
   ];
   
   // Check if any keyword is part of the text
