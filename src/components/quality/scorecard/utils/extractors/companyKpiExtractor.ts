@@ -19,10 +19,13 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     // Standard Work Compliance
     { name: "Photo-On-Delivery", pattern: /(?:Photo[- ]On[- ]Delivery|POD)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
     { name: "Contact Compliance", pattern: /Contact\s+Compliance[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
+    { name: "Door to Door delivery", pattern: /(?:Door\s+to\s+Door|DTD)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
+    { name: "Right to Driver (RTD)", pattern: /(?:Right\s+to\s+Driver|RTD)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
     
     // Customer Experience KPIs
     { name: "Customer escalation DPMO", pattern: /(?:Customer\s+escalation|CSAT|Customer\s+Satisfaction)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)/i, unit: "DPMO" },
     { name: "Customer Delivery Feedback", pattern: /(?:Customer\s+Delivery\s+Feedback|CDF)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
+    { name: "Concessions DPMO", pattern: /(?:Concessions|Koncessions)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)/i, unit: "DPMO" },
     
     // Safety KPIs
     { name: "Vehicle Audit (VSA) Compliance", pattern: /(?:VSA|Vehicle\s+Audit)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%" },
@@ -61,7 +64,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
   });
   
   // If we detected some KPIs but not all, try to find more with a generic approach
-  if (kpis.length > 0 && kpis.length < 12) {
+  if (kpis.length > 0 && kpis.length < 16) {
     console.log(`Found ${kpis.length} KPIs, trying to find more with generic approach`);
     
     // Get the KPI names we've already found
@@ -92,6 +95,17 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
               trend: "neutral" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
               status: determineStatus(existingKpi.name, value)
             });
+          } else if (!foundKpiNames.some(name => name.includes(kpiName))) {
+            // If we couldn't match to a known KPI but it's not already in our list, add it as a new KPI
+            console.log(`Found new KPI with percent: ${kpiName} = ${value}%`);
+            kpis.push({
+              name: kpiName,
+              value,
+              target: 95, // Default target for percentage metrics
+              unit: "%",
+              trend: "neutral" as "up" | "down" | "neutral",
+              status: determineStatus(kpiName, value)
+            });
           }
         }
       });
@@ -118,6 +132,34 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
               target: 3000, // Default target for DPMO metrics
               unit: "DPMO",
               trend: "neutral" as "up" | "down" | "neutral", // Fixed: Explicitly type as union
+              status: determineStatus(kpiName, value)
+            });
+          }
+        }
+      });
+    }
+    
+    // Try to find KPI patterns with non-percentage numbers (like FICO scores)
+    const numberMatches = text.match(/([A-Za-z\s\(\)]+)[:\s]+(\d+(?:\.\d+)?)\s*(?!%|DPMO)/g);
+    if (numberMatches) {
+      numberMatches.forEach(match => {
+        const parts = match.match(/([A-Za-z\s\(\)]+)[:\s]+(\d+(?:\.\d+)?)/);
+        if (parts && parts.length >= 3) {
+          const kpiName = parts[1].trim();
+          const value = parseFloat(parts[2]);
+          
+          // Check if this KPI relates to scores or metrics without units
+          if (
+            (kpiName.includes('FICO') || kpiName.includes('Score') || kpiName.includes('Rate')) && 
+            !foundKpiNames.some(name => name.includes(kpiName))
+          ) {
+            console.log(`Found additional numeric KPI: ${kpiName} = ${value}`);
+            kpis.push({
+              name: kpiName,
+              value,
+              target: kpiName.includes('FICO') ? 800 : 100, // Default targets
+              unit: "",
+              trend: "neutral" as "up" | "down" | "neutral",
               status: determineStatus(kpiName, value)
             });
           }
@@ -180,6 +222,22 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     });
   }
   
-  console.log(`Final KPI count: ${kpis.length}`);
-  return kpis;
+  // Post-process KPIs to deduplicate and handle common variations
+  const processedKpis: ScorecardKPI[] = [];
+  const processedNames = new Set<string>();
+  
+  // First pass: normalize and deduplicate
+  kpis.forEach(kpi => {
+    // Normalize name for comparison (remove extra whitespace, lowercase)
+    const normalizedName = kpi.name.replace(/\s+/g, ' ').toLowerCase();
+    
+    // Skip if we've already added this KPI (by normalized name)
+    if (!processedNames.has(normalizedName)) {
+      processedNames.add(normalizedName);
+      processedKpis.push(kpi);
+    }
+  });
+  
+  console.log(`Final KPI count: ${processedKpis.length}`);
+  return processedKpis;
 };

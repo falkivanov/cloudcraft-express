@@ -1,61 +1,81 @@
-
 /**
- * Extract location from text content
+ * Extract location information from text
  */
 export const extractLocation = (text: string): string | null => {
-  // Look for location pattern (usually DSU1, DSU2, etc.)
-  const locationMatch = text.match(/DS[A-Z]\d+/g);
-  return locationMatch ? locationMatch[0] : null;
+  // Look for location pattern: DSX# or other station codes
+  const locationMatch = text.match(/\b(DS[A-Z]\d+|[A-Z]{3}\d+)\b/);
+  return locationMatch ? locationMatch[1] : null;
 };
 
 /**
- * Extract overall score from text content - improved with multiple patterns
+ * Extract overall score from text with enhanced pattern matching
  */
 export const extractOverallScore = (text: string): number | null => {
-  // Try multiple patterns to find the overall score
+  // Try various patterns for overall score
   const patterns = [
-    /Overall\s+Score[:\s]+(\d+)/i,
-    /Gesamtpunktzahl[:\s]+(\d+)/i,
-    /Total\s+Score[:\s]+(\d+)/i,
-    /Score[:\s]+(\d+)/i
+    /overall\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /total\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /scorecard\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /(\d{2,3}(?:\.\d+)?)\s*(?:%|points|score)/i  // Look for prominent percentages
   ];
   
+  // Try each pattern in order
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
-      return parseInt(match[1], 10);
+    if (match) {
+      return parseFloat(match[1]);
     }
   }
   
-  // Look for prominent numbers that might be the score
-  const prominentNumbers = text.match(/\b([7-9][0-9]|100)\b/g);
-  if (prominentNumbers && prominentNumbers.length > 0) {
-    // Use the first number in the range 70-100 as a possible score
-    return parseInt(prominentNumbers[0], 10);
+  // Alternative approach: find all percentages and take the most prominent (likely to be the overall score)
+  const percentMatches = text.match(/(\d{2,3}(?:\.\d+)?)\s*%/g);
+  if (percentMatches && percentMatches.length > 0) {
+    // Sort by length (longer numbers first) and then by value (larger numbers first)
+    const sortedMatches = percentMatches
+      .map(match => {
+        const value = parseFloat(match.replace(/[^0-9.]/g, ''));
+        return { match, value };
+      })
+      .sort((a, b) => {
+        // Prioritize values between 80 and 100 as they're likely to be overall scores
+        const aInRange = a.value >= 80 && a.value <= 100;
+        const bInRange = b.value >= 80 && b.value <= 100;
+        
+        if (aInRange && !bInRange) return -1;
+        if (!aInRange && bInRange) return 1;
+        
+        // Then sort by value (higher first)
+        return b.value - a.value;
+      });
+      
+    if (sortedMatches.length > 0) {
+      return sortedMatches[0].value;
+    }
   }
   
   return null;
 };
 
 /**
- * Extract overall status from text content - improved with more status keywords
+ * Determine overall status based on score
  */
-export const extractOverallStatus = (text: string): string | null => {
-  // Look for status keywords with broader patterns
-  const statuses = [
-    { pattern: /\b(fantastic|ausgezeichnet|excellent)\b/i, value: 'Fantastic' },
-    { pattern: /\b(great|sehr gut|very good)\b/i, value: 'Great' },
-    { pattern: /\b(fair|gut|good|okay)\b/i, value: 'Fair' },
-    { pattern: /\b(poor|schlecht|bad)\b/i, value: 'Poor' }
-  ];
+export const extractOverallStatus = (text: string): string => {
+  // Check text for status words
+  const statusMatches = {
+    fantastic: /fantastic|excellent|outstanding/i,
+    great: /great|good|well/i,
+    fair: /fair|average|okay/i,
+    poor: /poor|bad|needs\s+improvement/i
+  };
   
-  for (const status of statuses) {
-    if (text.match(status.pattern)) {
-      return status.value;
+  for (const [status, pattern] of Object.entries(statusMatches)) {
+    if (pattern.test(text)) {
+      return status.charAt(0).toUpperCase() + status.slice(1);
     }
   }
   
-  // Determine status based on any extracted score
+  // Otherwise determine based on score
   const score = extractOverallScore(text);
   if (score !== null) {
     if (score >= 95) return 'Fantastic';
@@ -64,26 +84,26 @@ export const extractOverallStatus = (text: string): string | null => {
     return 'Poor';
   }
   
-  return null;
+  return 'Fair'; // Default
 };
 
 /**
- * Extract rank from text content - improved with multiple patterns
+ * Extract rank information with enhanced pattern matching
  */
 export const extractRank = (text: string): number | null => {
-  // Try multiple patterns to find the rank
+  // Try various patterns for rank
   const patterns = [
-    /Rank[:\s]+(\d+)/i,
-    /Platz[:\s]+(\d+)/i,
-    /Position[:\s]+(\d+)/i,
-    /Ranked\s+(\d+)/i,
-    /\b(\d+)\s+von\s+\d+\b/i,  // "X von Y" pattern in German
-    /\b(\d+)\s+of\s+\d+\b/i    // "X of Y" pattern in English
+    /rank\s*:?\s*(\d+)/i,
+    /ranking\s*:?\s*(\d+)/i,
+    /position\s*:?\s*(\d+)/i,
+    /(\d+)(?:st|nd|rd|th)\s+(?:out of|among)/i,
+    /ranked\s+(\d+)/i
   ];
   
+  // Try each pattern in order
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match && match[1]) {
+    if (match) {
       return parseInt(match[1], 10);
     }
   }
@@ -92,92 +112,100 @@ export const extractRank = (text: string): number | null => {
 };
 
 /**
- * Extract rank change information - improved with more patterns
+ * Extract rank change information with enhanced detection
  */
-export const extractRankChange = (text: string): string | null => {
-  // Try multiple patterns for rank changes
-  const upPatterns = [
-    /up\s+(\d+)\s+places?/i,
-    /\+(\d+)\s+places?/i,
-    /verbessert\s+um\s+(\d+)/i,
-    /gestiegen\s+um\s+(\d+)/i
-  ];
-  
-  const downPatterns = [
-    /down\s+(\d+)\s+places?/i,
-    /-(\d+)\s+places?/i,
-    /verschlechtert\s+um\s+(\d+)/i,
-    /gefallen\s+um\s+(\d+)/i
-  ];
-  
-  // Check all up patterns
-  for (const pattern of upPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      return `Up ${match[1]} places from last week`;
-    }
+export const extractRankChange = (text: string): string => {
+  // Look for up/down patterns with numbers
+  const upMatch = text.match(/up\s+(\d+)(?:\s+places?|positions?)?/i);
+  if (upMatch) {
+    return `Up ${upMatch[1]} places from last week`;
   }
   
-  // Check all down patterns
-  for (const pattern of downPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      return `Down ${match[1]} places from last week`;
-    }
+  const downMatch = text.match(/down\s+(\d+)(?:\s+places?|positions?)?/i);
+  if (downMatch) {
+    return `Down ${downMatch[1]} places from last week`;
   }
   
-  return null;
+  // Check for improved/decreased language
+  if (/improved|better|higher/i.test(text)) {
+    return 'Improved from last week';
+  }
+  
+  if (/decreased|worse|lower/i.test(text)) {
+    return 'Decreased from last week';
+  }
+  
+  // Look for new rank indicators
+  if (/new\s+rank|first\s+time/i.test(text)) {
+    return 'New ranking this week';
+  }
+  
+  // Look for stable rank indicators
+  if (/same|stable|unchanged|maintained/i.test(text)) {
+    return 'Same position as last week';
+  }
+  
+  return ''; // No change information found
 };
 
 /**
- * Extract focus areas from text content - improved extraction logic
+ * Extract focus areas with enhanced detection
  */
 export const extractFocusAreas = (text: string): string[] => {
-  // Default focus areas if none found
-  const defaultAreas = ['Contact Compliance', 'DNR DPMO'];
-  
-  // Look for focus area sections with multiple patterns
-  const patterns = [
-    /focus\s+areas?:([^]*)(?=\n\n|\n[A-Z])/i,
-    /schwerpunkte:([^]*)(?=\n\n|\n[A-Z])/i,
-    /prioritäten:([^]*)(?=\n\n|\n[A-Z])/i,
-    /fokus:([^]*)(?=\n\n|\n[A-Z])/i
+  // Define patterns that might indicate focus areas sections
+  const focusSectionPatterns = [
+    /focus\s+areas?/i,
+    /areas\s+(?:of|for)\s+improvement/i,
+    /improve\s+(?:on|the)/i,
+    /action\s+items/i,
+    /priorit(?:y|ies)/i
   ];
   
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      // Split by bullet points, commas, or line breaks
-      const areas = match[1]
-        .split(/[•,\n-]/)
-        .map(area => area.trim())
-        .filter(area => area.length > 0);
+  // Try to find a section with focus areas
+  for (const pattern of focusSectionPatterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      // Get text after the match
+      const subsequentText = text.substring(match.index + match[0].length, match.index + match[0].length + 200);
       
-      if (areas.length > 0) {
-        return areas;
+      // Look for bullet points or numbered lists
+      const bulletItems = subsequentText.match(/(?:•|-|\d+\.|\*)\s*([A-Z][A-Za-z\s]+)(?:$|\n)/g);
+      if (bulletItems && bulletItems.length > 0) {
+        return bulletItems
+          .map(item => item.replace(/(?:•|-|\d+\.|\*)\s*/, '').trim())
+          .filter(item => item.length > 3);
+      }
+      
+      // Look for capitalized words that might be focus areas
+      const capitalizedItems = subsequentText.match(/([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*)/g);
+      if (capitalizedItems && capitalizedItems.length > 0) {
+        return capitalizedItems
+          .filter(item => item.length > 3 && !/^(The|And|With|Focus|Area|Priority|Action|Item)$/i.test(item))
+          .slice(0, 3); // Take max 3 items
       }
     }
   }
   
-  // Look for known KPI names in the text that might be focus areas
-  const commonKPIs = [
-    'Contact Compliance',
-    'DNR DPMO',
-    'Photo-On-Delivery',
-    'Delivery Completion Rate',
-    'FICO',
-    'Vehicle Audit',
-    'DVIC Compliance',
-    'Customer escalation'
+  // If no focus areas found, try to determine based on KPI performance
+  // Look for underperforming KPIs
+  const kpiPatterns = [
+    { name: "Contact Compliance", pattern: /Contact\s+Compliance[:\s]+(\d+(?:\.\d+)?)\s*%/i, threshold: 90 },
+    { name: "Photo-On-Delivery", pattern: /Photo[- ]On[- ]Delivery[:\s]+(\d+(?:\.\d+)?)\s*%/i, threshold: 90 },
+    { name: "DNR DPMO", pattern: /DNR[:\s]+(\d+(?:\.\d+)?)/i, threshold: 3000, higher: true }
   ];
   
-  const foundKPIs = commonKPIs.filter(kpi => 
-    text.includes(kpi) && text.indexOf(kpi) > text.length / 2
-  );
+  const potentialFocusAreas = [];
   
-  if (foundKPIs.length > 0) {
-    return foundKPIs.slice(0, 3); // Return up to 3 found KPIs
+  for (const { name, pattern, threshold, higher } of kpiPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const value = parseFloat(match[1]);
+      // Check if this KPI is underperforming (lower than threshold or higher for DPMO)
+      if ((higher && value > threshold) || (!higher && value < threshold)) {
+        potentialFocusAreas.push(name);
+      }
+    }
   }
   
-  return defaultAreas;
+  return potentialFocusAreas.length > 0 ? potentialFocusAreas : ['Contact Compliance', 'DNR DPMO'];
 };

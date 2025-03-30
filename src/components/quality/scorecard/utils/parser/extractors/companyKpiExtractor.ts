@@ -17,6 +17,13 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     { name: "DVIC Compliance", pattern: /DVIC|Daily\s+Vehicle/i, unit: "%" },
     { name: "Safe Driving Metric (FICO)", pattern: /FICO|Safe\s+Driving/i, unit: "" },
     { name: "Capacity Reliability", pattern: /Capacity\s+Reliability/i, unit: "%" },
+    { name: "Lost on Road (LoR) DPMO", pattern: /LoR|Lost\s+on\s+Road/i, unit: "DPMO" },
+    { name: "Door to Door delivery", pattern: /Door\s+to\s+Door|DTD/i, unit: "%" },
+    { name: "Right to Driver (RTD)", pattern: /Right\s+to\s+Driver|RTD/i, unit: "%" },
+    { name: "Customer Delivery Feedback", pattern: /Customer\s+Delivery\s+Feedback|CDF/i, unit: "%" },
+    { name: "Concessions DPMO", pattern: /Concessions|Koncessions/i, unit: "DPMO" },
+    { name: "Mentor Adoption Rate", pattern: /Mentor\s+Adoption/i, unit: "%" },
+    { name: "Working Hours Compliance (WHC)", pattern: /WHC|Working\s+Hours/i, unit: "%" },
   ];
   
   // Extracted KPIs will be stored here
@@ -57,17 +64,103 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
           const target = valueMatches.length > 1 ? valueMatches[targetIndex] : 
                          unit === "DPMO" ? 3000 : 95; // Default targets
           
-          extractedKPIs.push({
-            name,
-            value,
-            target,
-            unit,
-            trend: "neutral",
-            status: determineStatus(name, value)
-          });
+          // Check if we already have this KPI to avoid duplicates
+          if (!extractedKPIs.some(kpi => kpi.name === name)) {
+            extractedKPIs.push({
+              name,
+              value,
+              target,
+              unit,
+              trend: "neutral" as const,
+              status: determineStatus(name, value)
+            });
+          }
           
           // Break after finding the first valid value
           break;
+        }
+      }
+    }
+    
+    // Also try to find generic KPI patterns in rows
+    if (page.rows) {
+      for (const row of page.rows) {
+        const rowText = row.map((item: any) => item.str).join(' ');
+        
+        // Look for percentage patterns
+        const percentMatch = rowText.match(/([A-Za-z\s\(\)]+)(?:\s*:|:\s*)(\d+(?:\.\d+)?)\s*%/);
+        if (percentMatch) {
+          const kpiName = percentMatch[1].trim();
+          const value = parseFloat(percentMatch[2]);
+          
+          // Check if this matches a known KPI or is a new one
+          const knownKpi = kpiPatterns.find(({name}) => 
+            name.toLowerCase().includes(kpiName.toLowerCase()) || 
+            kpiName.toLowerCase().includes(name.toLowerCase().split(' ')[0])
+          );
+          
+          if (knownKpi && !extractedKPIs.some(kpi => kpi.name === knownKpi.name)) {
+            extractedKPIs.push({
+              name: knownKpi.name,
+              value,
+              target: 95, // Default target
+              unit: "%",
+              trend: "neutral" as const,
+              status: determineStatus(knownKpi.name, value)
+            });
+          }
+        }
+        
+        // Look for DPMO patterns
+        const dpmoMatch = rowText.match(/([A-Za-z\s\(\)]+)(?:\s*:|:\s*)(\d+)\s*(?:DPMO)?/);
+        if (dpmoMatch && (rowText.includes('DPMO') || rowText.includes('DNR') || rowText.includes('escalation'))) {
+          const kpiName = dpmoMatch[1].trim();
+          const value = parseInt(dpmoMatch[2], 10);
+          
+          // Check if this matches a known KPI or is a new one
+          const knownKpi = kpiPatterns.find(({name}) => 
+            name.toLowerCase().includes(kpiName.toLowerCase()) || 
+            kpiName.toLowerCase().includes(name.toLowerCase().split(' ')[0])
+          );
+          
+          if (knownKpi && !extractedKPIs.some(kpi => kpi.name === knownKpi.name)) {
+            extractedKPIs.push({
+              name: knownKpi.name,
+              value,
+              target: 3000, // Default target for DPMO
+              unit: "DPMO",
+              trend: "neutral" as const,
+              status: determineStatus(knownKpi.name, value)
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Look for overall score and rank on the first page
+  const page1 = pageData[1];
+  if (page1) {
+    // Extract overall score
+    const overallScoreItems = page1.items.filter((item: any) => 
+      /overall\s+score|total\s+score|scorecard\s+score/i.test(item.str)
+    );
+    
+    if (overallScoreItems.length > 0) {
+      // Score is likely nearby
+      for (const item of overallScoreItems) {
+        const nearbyItems = page1.items.filter((otherItem: any) => 
+          Math.abs(item.y - otherItem.y) < 20 && otherItem.x > item.x
+        );
+        
+        // Look for percentage or numbers
+        const scoreMatch = nearbyItems
+          .map((item: any) => item.str.match(/(\d+(?:\.\d+)?)/))
+          .filter(Boolean)[0];
+        
+        if (scoreMatch) {
+          console.log(`Found overall score: ${scoreMatch[1]}`);
+          // We would store this in page metadata
         }
       }
     }
@@ -81,7 +174,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         value: 98.5,
         target: 98.0,
         unit: "%",
-        trend: "up",
+        trend: "up" as const,
         status: "fantastic" as const
       },
       {
@@ -89,7 +182,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         value: 2500,
         target: 3000,
         unit: "DPMO",
-        trend: "down",
+        trend: "down" as const,
         status: "great" as const
       },
       {
@@ -97,7 +190,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         value: 92,
         target: 95,
         unit: "%",
-        trend: "up",
+        trend: "up" as const,
         status: "fair" as const
       }
     ];
