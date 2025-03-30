@@ -1,10 +1,10 @@
+
 /**
  * Extraction strategies for scorecard data
  */
 
 import { ScoreCardData } from '../../types';
 import { extractPDFContentWithPositions, extractTextFromPDF } from './pdf';
-import { loadPDFDocument } from './pdf';
 import { extractScorecardData } from '../extractors/dataExtractor';
 import { extractStructuredScorecard } from './extractors/structuredExtractor';
 import { createSimpleScorecard } from './extractors/simpleExtractor';
@@ -37,10 +37,8 @@ export const attemptPositionalExtraction = async (
       // Add flag to indicate real extracted data
       const resultData = {...structuredData, isSampleData: false};
       
-      // Save the extracted data to localStorage
+      // Save the extracted data to localStorage using both approaches for maximum compatibility
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-      
-      // Keep backward compatibility but use the SAME object reference
       localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
       
       return { success: true, data: resultData };
@@ -84,10 +82,8 @@ export const attemptTextBasedExtraction = async (
       // Add flag to indicate real extracted data
       const resultData = {...parsedData, isSampleData: false};
       
-      // Save the extracted data to localStorage
+      // Save using both approaches for maximum compatibility
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-      
-      // Keep backward compatibility but use the SAME object reference
       localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
       
       return { success: true, data: resultData };
@@ -110,11 +106,9 @@ export const createFallbackData = (weekNum: number): ScoreCardData => {
   const data = createSimpleScorecard(weekNum);
   console.info("Generated fallback data for week", weekNum);
   
-  // Save the sample data to localStorage
+  // Save using both approaches for maximum compatibility
   const resultData = {...data, isSampleData: true};
   saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-  
-  // Keep backward compatibility but use the SAME object reference
   localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
   
   return resultData;

@@ -69,7 +69,7 @@ export const parseScorecardPDF = async (
       const data = await getSampleDataWithWeek(weekNum);
       console.info("Using sample data due to PDF processing error");
       
-      // Save the sample data consistently
+      // Save the sample data consistently using both methods
       const resultData = {...data, isSampleData: true};
       
       // Store data in both locations
@@ -85,7 +85,7 @@ export const parseScorecardPDF = async (
     const data = await getSampleDataWithWeek(weekNum);
     console.info("Using sample data due to general parsing error");
     
-    // Save the sample data consistently 
+    // Save the sample data consistently using both methods
     const resultData = {...data, isSampleData: true};
     
     // Store data in both locations

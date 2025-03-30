@@ -1,28 +1,24 @@
 
 import { DriverKPI } from "../../../types";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
 
 export const getDriverKPIs = (): DriverKPI[] => {
-  // Check for extracted driver data from both storage formats
+  // Use a consistent approach to check for data
   try {
-    const extractedData = localStorage.getItem("extractedScorecardData");
-    
-    if (extractedData) {
-      const parsedData = JSON.parse(extractedData);
-      if (parsedData && Array.isArray(parsedData.driverKPIs) && parsedData.driverKPIs.length > 0) {
-        // Always use the extracted driver data, even if it might be sample data
-        // This ensures we don't lose data after extraction
-        console.log(`Using ${parsedData.driverKPIs.length} extracted driver KPIs from legacy storage`);
-        return parsedData.driverKPIs;
-      }
+    // First check using the structured storage approach
+    const structuredData = loadFromStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+    if (structuredData && Array.isArray(structuredData.driverKPIs) && structuredData.driverKPIs.length > 0) {
+      console.log(`Using ${structuredData.driverKPIs.length} extracted driver KPIs from structured storage`);
+      return structuredData.driverKPIs;
     }
     
-    // If not found in legacy storage, check structured storage
-    const structuredData = localStorage.getItem("extractedScorecardData");
-    if (structuredData) {
-      const parsedStructured = JSON.parse(structuredData);
-      if (parsedStructured && Array.isArray(parsedStructured.driverKPIs) && parsedStructured.driverKPIs.length > 0) {
-        console.log(`Using ${parsedStructured.driverKPIs.length} extracted driver KPIs from structured storage`);
-        return parsedStructured.driverKPIs;
+    // Fallback to legacy direct localStorage approach
+    const legacyData = localStorage.getItem("extractedScorecardData");
+    if (legacyData) {
+      const parsedData = JSON.parse(legacyData);
+      if (parsedData && Array.isArray(parsedData.driverKPIs) && parsedData.driverKPIs.length > 0) {
+        console.log(`Using ${parsedData.driverKPIs.length} extracted driver KPIs from legacy storage`);
+        return parsedData.driverKPIs;
       }
     }
   } catch (error) {
