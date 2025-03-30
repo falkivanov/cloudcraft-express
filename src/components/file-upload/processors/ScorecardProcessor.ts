@@ -19,9 +19,6 @@ export class ScorecardProcessor extends BaseFileProcessor {
     console.info(`Processing scorecard file: ${this.file.name}`);
     
     try {
-      // Clear any existing data first to ensure we don't have stale data
-      this.clearExistingScorecardData();
-      
       // Read file as ArrayBuffer for PDF.js processing
       const arrayBuffer = await this.file.arrayBuffer();
       
@@ -74,11 +71,14 @@ export class ScorecardProcessor extends BaseFileProcessor {
           }
         }
         
-        // Store the extracted data in localStorage consistently
+        // Store the extracted data in localStorage - IMPORTANT: store as current scorecard
         saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, scorecardData);
-        
-        // Also store for backward compatibility - USE THE SAME OBJECT
         localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
+        
+        // STORE WEEK-SPECIFIC DATA to preserve all uploaded weeks
+        const weekKey = `scorecard_data_week_${scorecardData.week}_${scorecardData.year}`;
+        saveToStorage(weekKey, scorecardData);
+        console.log(`Saved week-specific data with key: ${weekKey}`);
         
         // Also store week information separately for easier access
         if (scorecardData.week && scorecardData.year) {
@@ -131,6 +131,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
   
   /**
    * Clear existing scorecard data from localStorage
+   * (only clear the current view data, not the week-specific data)
    */
   private clearExistingScorecardData(): void {
     localStorage.removeItem("scorecard_week");

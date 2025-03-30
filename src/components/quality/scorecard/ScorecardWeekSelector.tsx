@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 import { ScoreCardData } from "./types";
-import { parseWeekIdentifier, isDataAvailableForWeek } from "./data";
+import { parseWeekIdentifier, isDataAvailableForWeek, getAllAvailableWeeks } from "./data";
 
 interface ScorecardWeekSelectorProps {
   selectedWeek: string;
@@ -53,85 +53,37 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
   
   const loadAvailableWeeks = () => {
     try {
-      // Get all uploaded scorecards from history
-      const uploadHistory = loadFromStorage<any[]>("file-upload-history") || [];
-      const scorecardUploads = uploadHistory.filter(
-        (item) => item.category === "scorecard" && item.week && item.year
-      );
+      // Get all available weeks using the new helper function
+      const weeks = getAllAvailableWeeks();
       
-      // Get extracted data from storage
+      // Get extracted data from storage for marking "current" week
       const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
-      
-      // Combine all available weeks
-      const weeks = new Map<string, {
-        id: string;
-        label: string;
-        weekNum: number;
-        year: number;
-        isLatest?: boolean;
-      }>();
-      
-      // Add sample data weeks (hardcoded weeks 6-11)
-      for (let weekNum = 6; weekNum <= 11; weekNum++) {
-        if (isDataAvailableForWeek(weekNum, 2025)) {
-          const weekId = `week-${weekNum}-2025`;
-          weeks.set(weekId, {
-            id: weekId,
-            label: `KW ${weekNum}/2025 (Beispiel)`,
-            weekNum: weekNum,
-            year: 2025
-          });
-        }
-      }
-      
-      // Add uploaded scorecard weeks from history
-      scorecardUploads.forEach(upload => {
-        const weekId = `week-${upload.week}-${upload.year}`;
-        weeks.set(weekId, {
-          id: weekId,
-          label: `KW ${upload.week}/${upload.year}`,
-          weekNum: upload.week,
-          year: upload.year,
-          isLatest: false
-        });
-      });
       
       // Mark currently extracted data as latest
       if (extractedData && extractedData.week && extractedData.year) {
         const extractedWeekId = `week-${extractedData.week}-${extractedData.year}`;
-        const existingData = weeks.get(extractedWeekId);
+        const existingWeekIndex = weeks.findIndex(w => w.id === extractedWeekId);
         
-        if (existingData) {
-          weeks.set(extractedWeekId, {
-            ...existingData,
-            label: `KW ${extractedData.week}/${extractedData.year} (aktuell)`,
-            isLatest: true
-          });
+        if (existingWeekIndex >= 0) {
+          weeks[existingWeekIndex].label = `KW ${extractedData.week}/${extractedData.year} (aktuell)`;
         } else {
-          weeks.set(extractedWeekId, {
+          weeks.unshift({
             id: extractedWeekId,
             label: `KW ${extractedData.week}/${extractedData.year} (aktuell)`,
             weekNum: extractedData.week,
-            year: extractedData.year,
-            isLatest: true
+            year: extractedData.year
           });
         }
       }
       
-      // Convert to array and sort by year and week (newest first)
-      let weeksArray = Array.from(weeks.values()).sort((a, b) => {
-        if (a.year !== b.year) return b.year - a.year;
-        return b.weekNum - a.weekNum;
-      });
-      
       // If we have weeks, update the state
-      if (weeksArray.length > 0) {
-        setAvailableWeeks(weeksArray);
+      if (weeks.length > 0) {
+        setAvailableWeeks(weeks);
         
         // If current selection is not valid, select the latest week
         const parsedWeek = parseWeekIdentifier(selectedWeek);
-        if (!parsedWeek || !weeksArray.some(w => w.id === selectedWeek)) {
-          const latestWeek = weeksArray.find(w => w.isLatest === true) || weeksArray[0];
+        if (!parsedWeek || !weeks.some(w => w.id === selectedWeek)) {
+          const latestWeek = weeks.find(w => w.label.includes("aktuell")) || weeks[0];
           setSelectedWeek(latestWeek.id);
         }
       } else {
