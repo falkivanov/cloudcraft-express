@@ -1,3 +1,4 @@
+
 /**
  * Extract location information from text
  */
@@ -11,17 +12,43 @@ export const extractLocation = (text: string): string | null => {
  * Extract overall score from text with enhanced pattern matching
  */
 export const extractOverallScore = (text: string): number | null => {
-  // Try various patterns for overall score
-  const patterns = [
-    /overall\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
-    /total\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
-    /scorecard\s+score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
-    /score\s*:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
-    /(\d{2,3}(?:\.\d+)?)\s*(?:%|points|score)/i  // Look for prominent percentages
+  // First, look specifically for "Overall Score" on page 2
+  const overallScorePatterns = [
+    /Overall\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /Overall\s+Score\s+of:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /Scorecard\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /Total\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
   ];
   
-  // Try each pattern in order
-  for (const pattern of patterns) {
+  // Try each overall score pattern
+  for (const pattern of overallScorePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseFloat(match[1]);
+    }
+  }
+  
+  // Next look for patterns where overall score is mentioned near percentage
+  const nearbyPatterns = [
+    /Overall(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
+    /Score(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
+    /Total(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
+  ];
+  
+  // Try nearby patterns
+  for (const pattern of nearbyPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseFloat(match[1]);
+    }
+  }
+  
+  // Try to find patterns like "XX% Overall"
+  const percentFirstPatterns = [
+    /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:Overall|Total|Scorecard)/i,
+  ];
+  
+  for (const pattern of percentFirstPatterns) {
     const match = text.match(pattern);
     if (match) {
       return parseFloat(match[1]);
@@ -38,9 +65,9 @@ export const extractOverallScore = (text: string): number | null => {
         return { match, value };
       })
       .sort((a, b) => {
-        // Prioritize values between 80 and 100 as they're likely to be overall scores
-        const aInRange = a.value >= 80 && a.value <= 100;
-        const bInRange = b.value >= 80 && b.value <= 100;
+        // Prioritize values between 70 and 100 as they're likely to be overall scores
+        const aInRange = a.value >= 70 && a.value <= 100;
+        const bInRange = b.value >= 70 && b.value <= 100;
         
         if (aInRange && !bInRange) return -1;
         if (!aInRange && bInRange) return 1;
@@ -91,17 +118,58 @@ export const extractOverallStatus = (text: string): string => {
  * Extract rank information with enhanced pattern matching
  */
 export const extractRank = (text: string): number | null => {
-  // Try various patterns for rank
-  const patterns = [
-    /rank\s*:?\s*(\d+)/i,
-    /ranking\s*:?\s*(\d+)/i,
-    /position\s*:?\s*(\d+)/i,
-    /(\d+)(?:st|nd|rd|th)\s+(?:out of|among)/i,
-    /ranked\s+(\d+)/i
+  // First, try to find the exact rank patterns
+  const exactRankPatterns = [
+    /Overall\s+Rank:?\s*(\d+)/i,
+    /Rank:?\s*(\d+)/i,
+    /Ranked:?\s*(\d+)/i,
+    /Position:?\s*(\d+)/i,
   ];
   
   // Try each pattern in order
-  for (const pattern of patterns) {
+  for (const pattern of exactRankPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  // Try looking for patterns where rank is mentioned with ordinal indicators
+  const ordinalPatterns = [
+    /(\d+)(?:st|nd|rd|th)\s+(?:place|position|rank)/i,
+    /placed\s+(\d+)(?:st|nd|rd|th)/i,
+    /ranked\s+(\d+)(?:st|nd|rd|th)/i
+  ];
+  
+  for (const pattern of ordinalPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  // Look for the pattern "rank X out of Y"
+  const rankOutOfPatterns = [
+    /rank\s+(\d+)\s+out\s+of\s+\d+/i,
+    /ranked\s+(\d+)\s+out\s+of\s+\d+/i,
+    /position\s+(\d+)\s+out\s+of\s+\d+/i
+  ];
+  
+  for (const pattern of rankOutOfPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  // Try more generic patterns with numbers near rank-related words
+  const nearbyRankPatterns = [
+    /rank(?:\s+[\w\s]+){0,3}:?\s*(\d+)/i,
+    /position(?:\s+[\w\s]+){0,3}:?\s*(\d+)/i,
+    /(\d+)(?:\s+[\w\s]+){0,3}\s+rank/i
+  ];
+  
+  for (const pattern of nearbyRankPatterns) {
     const match = text.match(pattern);
     if (match) {
       return parseInt(match[1], 10);
@@ -158,7 +226,8 @@ export const extractFocusAreas = (text: string): string[] => {
     /areas\s+(?:of|for)\s+improvement/i,
     /improve\s+(?:on|the)/i,
     /action\s+items/i,
-    /priorit(?:y|ies)/i
+    /priorit(?:y|ies)/i,
+    /recommended/i
   ];
   
   // Try to find a section with focus areas
@@ -166,22 +235,30 @@ export const extractFocusAreas = (text: string): string[] => {
     const match = pattern.exec(text);
     if (match) {
       // Get text after the match
-      const subsequentText = text.substring(match.index + match[0].length, match.index + match[0].length + 200);
+      const subsequentText = text.substring(match.index + match[0].length, match.index + match[0].length + 300);
       
       // Look for bullet points or numbered lists
-      const bulletItems = subsequentText.match(/(?:•|-|\d+\.|\*)\s*([A-Z][A-Za-z\s]+)(?:$|\n)/g);
+      const bulletItems = subsequentText.match(/(?:•|-|\d+\.|\*|\+|>)\s*([A-Za-z][A-Za-z\s\/\&\.,]+)(?:$|\n)/g);
       if (bulletItems && bulletItems.length > 0) {
         return bulletItems
-          .map(item => item.replace(/(?:•|-|\d+\.|\*)\s*/, '').trim())
+          .map(item => item.replace(/(?:•|-|\d+\.|\*|\+|>)\s*/, '').trim())
           .filter(item => item.length > 3);
       }
       
-      // Look for capitalized words that might be focus areas
-      const capitalizedItems = subsequentText.match(/([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)*)/g);
+      // Look for capitalized phrases that might be focus areas
+      const capitalizedItems = subsequentText.match(/([A-Z][A-Za-z\s\/\&\.,]+(?:[A-Z][A-Za-z\s\/\&\.,]+)*)/g);
       if (capitalizedItems && capitalizedItems.length > 0) {
         return capitalizedItems
           .filter(item => item.length > 3 && !/^(The|And|With|Focus|Area|Priority|Action|Item)$/i.test(item))
           .slice(0, 3); // Take max 3 items
+      }
+      
+      // If no structured format, try to extract sentences or phrases
+      const sentences = subsequentText.split(/[.!?]\s+/);
+      if (sentences.length > 0) {
+        return sentences
+          .filter(s => s.trim().length > 10 && s.trim().length < 100)
+          .slice(0, 2);
       }
     }
   }

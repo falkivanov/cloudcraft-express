@@ -19,18 +19,53 @@ export const extractScorecardData = (
   driverText: string, 
   weekNum: number
 ): ScoreCardData => {
-  // Default template with empty values
+  console.log("Extracting scorecard data from text");
+  console.log("Company text sample:", companyText.substring(0, 150));
+  
+  // Look for location information
+  const location = extractLocation(companyText) || 'DSU1';
+  console.log("Extracted location:", location);
+  
+  // Extract overall score with improved extraction
+  const overallScore = extractOverallScore(companyText);
+  console.log("Extracted overall score:", overallScore);
+  
+  // Get the rank with improved extraction
+  const rank = extractRank(companyText);
+  console.log("Extracted rank:", rank);
+  
+  // Get the rank change note
+  const rankNote = extractRankChange(companyText);
+  console.log("Extracted rank note:", rankNote);
+  
+  // Extract KPIs from company text (usually page 2)
+  const companyKPIs = extractCompanyKPIs(companyText);
+  console.log(`Extracted ${companyKPIs.length} company KPIs`);
+  
+  // Extract driver metrics
+  const driverKPIs = extractDriverKPIs(driverText);
+  console.log(`Extracted ${driverKPIs.length} driver KPIs`);
+  
+  // Extract focus areas
+  const focusAreas = extractFocusAreas(companyText);
+  console.log("Extracted focus areas:", focusAreas);
+  
+  // Determine status based on overall score
+  const overallStatus = extractOverallStatus(companyText);
+  console.log("Determined overall status:", overallStatus);
+  
+  // Default template with extracted values and fallbacks
   const data: ScoreCardData = {
     week: weekNum,
     year: new Date().getFullYear(),
-    location: extractLocation(companyText) || 'DSU1',
-    overallScore: extractOverallScore(companyText) || 85,
-    overallStatus: extractOverallStatus(companyText) || 'Great',
-    rank: extractRank(companyText) || 5,
-    rankNote: extractRankChange(companyText) || 'Up 2 places from last week',
-    companyKPIs: extractCompanyKPIs(companyText),
-    driverKPIs: extractDriverKPIs(driverText),
-    recommendedFocusAreas: extractFocusAreas(companyText),
+    location: location,
+    overallScore: overallScore || 85,
+    overallStatus: overallStatus,
+    rank: rank || 5,
+    rankNote: rankNote || 'Up 2 places from last week',
+    companyKPIs: companyKPIs,
+    driverKPIs: driverKPIs,
+    recommendedFocusAreas: focusAreas,
   };
   
   return data;
