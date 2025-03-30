@@ -3,7 +3,7 @@ import { DriverKPI } from '../../../../../types';
 import { extractDriverKPIsFromStructure } from '../structuralExtractor';
 import { extractDriverKPIsFromText } from '../textExtractor';
 import { extractDriversByPage } from './pageProcessing';
-import { extractDriversWithEnhancedPattern } from '../text/enhancedPatternExtractor';
+import { extractDriversWithEnhancedPatterns } from '../text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from '../text/lineBasedExtractor';
 
 /**
@@ -44,7 +44,7 @@ export function tryAllExtractionStrategies(text: string): DriverKPI[] {
   
   // Strategy 4: Enhanced pattern matching
   if (extractedDrivers.length < 3) {
-    const driversFromEnhancedPattern = extractDriversWithEnhancedPattern(text);
+    const driversFromEnhancedPattern = extractDriversWithEnhancedPatterns(text);
     if (driversFromEnhancedPattern.length > 0) {
       console.log(`Found ${driversFromEnhancedPattern.length} drivers using enhanced pattern matching`);
       extractedDrivers = [...extractedDrivers, ...driversFromEnhancedPattern];
