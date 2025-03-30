@@ -37,6 +37,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
       : <ArrowUp className="h-3 w-3 text-green-500" />
   } : null;
 
+  // Log the data for debugging
   console.log("Rendering scorecard summary with data:", {
     overallScore: data.overallScore,
     overallStatus: data.overallStatus,
