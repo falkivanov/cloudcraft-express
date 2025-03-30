@@ -30,7 +30,9 @@ const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
       {driver.metrics.map((metric) => (
         <MetricCell 
           key={metric.name} 
-          metric={metric} 
+          metricName={metric.name}
+          value={metric.value}
+          unit={metric.unit || ""}
         />
       ))}
     </TableRow>
