@@ -37,6 +37,14 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
       : <ArrowUp className="h-3 w-3 text-green-500" />
   } : null;
 
+  console.log("Rendering scorecard summary with data:", {
+    overallScore: data.overallScore,
+    overallStatus: data.overallStatus,
+    rank: data.rank,
+    rankNote: data.rankNote,
+    location: data.location
+  });
+
   return (
     <div className="mt-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -53,7 +61,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
 
         {/* Rank */}
         <SummaryCard
-          title="Rank at DSU1"
+          title={`Rank at ${data.location}`}
           icon={<Award className="h-4 w-4 mr-2 text-primary" />}
           value={data.rank}
           statusColorClass={getRankColorClass(data.rank)}

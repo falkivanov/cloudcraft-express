@@ -1,4 +1,3 @@
-
 /**
  * Extract location information from text
  */
@@ -12,12 +11,14 @@ export const extractLocation = (text: string): string | null => {
  * Extract overall score from text with enhanced pattern matching
  */
 export const extractOverallScore = (text: string): number | null => {
-  // First, look specifically for "Overall Score" on page 2
+  // First, try to find score patterns specifically labeled as "Overall Score"
   const overallScorePatterns = [
     /Overall\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
     /Overall\s+Score\s+of:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
     /Scorecard\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
     /Total\s+Score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /Overall(?:\s+[^:]*):?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
+    /Score(?:\s+[^:]*):?\s*(\d{1,3}(?:\.\d+)?)\s*%?/i,
   ];
   
   // Try each overall score pattern
@@ -28,59 +29,51 @@ export const extractOverallScore = (text: string): number | null => {
     }
   }
   
-  // Next look for patterns where overall score is mentioned near percentage
-  const nearbyPatterns = [
-    /Overall(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
-    /Score(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
-    /Total(?:\s+[\w\s]+){0,5}:?\s*(\d{1,3}(?:\.\d+)?)\s*%/i,
+  // Try looking for patterns where a number is followed by a % sign
+  // and is near words like "score", "overall", "total", etc.
+  const scoreContextPatterns = [
+    /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:overall|total|score)/i,
+    /(\d{1,3}(?:\.\d+)?)\s*points?\s*(?:overall|total|score)/i,
+    /score\s*(?:of|is|=)?\s*(\d{1,3}(?:\.\d+)?)/i,
+    /(\d{1,3}(?:\.\d+)?)\s*(?:points?|score)/i,
   ];
   
-  // Try nearby patterns
-  for (const pattern of nearbyPatterns) {
+  for (const pattern of scoreContextPatterns) {
     const match = text.match(pattern);
     if (match) {
       return parseFloat(match[1]);
     }
   }
   
-  // Try to find patterns like "XX% Overall"
-  const percentFirstPatterns = [
-    /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:Overall|Total|Scorecard)/i,
-  ];
-  
-  for (const pattern of percentFirstPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      return parseFloat(match[1]);
-    }
-  }
-  
-  // Alternative approach: find all percentages and take the most prominent (likely to be the overall score)
-  const percentMatches = text.match(/(\d{2,3}(?:\.\d+)?)\s*%/g);
+  // Look for numbers in specific ranges that are likely to be overall scores
+  // (typically between 0-100 for percentages)
+  const percentMatches = text.match(/(\d{1,3}(?:\.\d+)?)\s*%/g);
   if (percentMatches && percentMatches.length > 0) {
-    // Sort by length (longer numbers first) and then by value (larger numbers first)
-    const sortedMatches = percentMatches
-      .map(match => {
-        const value = parseFloat(match.replace(/[^0-9.]/g, ''));
-        return { match, value };
-      })
-      .sort((a, b) => {
-        // Prioritize values between 70 and 100 as they're likely to be overall scores
-        const aInRange = a.value >= 70 && a.value <= 100;
-        const bInRange = b.value >= 70 && b.value <= 100;
-        
-        if (aInRange && !bInRange) return -1;
-        if (!aInRange && bInRange) return 1;
-        
-        // Then sort by value (higher first)
-        return b.value - a.value;
-      });
-      
-    if (sortedMatches.length > 0) {
-      return sortedMatches[0].value;
+    // Look for scores in the range that's likely to be an overall score (e.g., 60-100)
+    const scores = percentMatches
+      .map(match => parseFloat(match.replace(/[^0-9.]/g, '')))
+      .filter(value => value >= 50 && value <= 100) // Most overall scores fall in this range
+      .sort((a, b) => b - a); // Sort descending
+    
+    if (scores.length > 0) {
+      return scores[0]; // Return the highest score in the expected range
     }
   }
   
+  // If no percentage found, look for standalone numbers that might be scores
+  const potentialScores = text.match(/\b(\d{1,3}(?:\.\d+)?)\b/g);
+  if (potentialScores && potentialScores.length > 0) {
+    const scores = potentialScores
+      .map(match => parseFloat(match))
+      .filter(value => value >= 50 && value <= 100) // Filter to likely score range
+      .sort((a, b) => b - a); // Sort descending
+    
+    if (scores.length > 0) {
+      return scores[0]; // Return the highest score in the expected range
+    }
+  }
+  
+  console.warn("Could not extract overall score from text");
   return null;
 };
 
@@ -118,64 +111,67 @@ export const extractOverallStatus = (text: string): string => {
  * Extract rank information with enhanced pattern matching
  */
 export const extractRank = (text: string): number | null => {
-  // First, try to find the exact rank patterns
-  const exactRankPatterns = [
-    /Overall\s+Rank:?\s*(\d+)/i,
-    /Rank:?\s*(\d+)/i,
-    /Ranked:?\s*(\d+)/i,
-    /Position:?\s*(\d+)/i,
+  // First look for direct rank mentions
+  const rankPatterns = [
+    /(?:overall\s+)?rank(?:ing)?:?\s*(?:is|=|-)?\s*(\d+)/i,
+    /ranked(?:\s+at)?:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+    /position:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+    /(?:#|no\.|number)\s*(\d+)\s*(?:rank|position)/i,
+    /(\d+)(?:st|nd|rd|th)\s+(?:rank|place|position)/i,
+    /rank(?:ed)?(?:\s+[^0-9]{0,20})?\s*(\d+)/i,
+    /station\s+rank(?:ing)?:?\s*(\d+)/i,
+    /rank(?:ing)?\s+(?:among|of|in)\s+stations:?\s*(\d+)/i,
   ];
   
-  // Try each pattern in order
-  for (const pattern of exactRankPatterns) {
+  // Try each rank pattern
+  for (const pattern of rankPatterns) {
     const match = text.match(pattern);
     if (match) {
-      return parseInt(match[1], 10);
+      const rank = parseInt(match[1], 10);
+      // Validate the rank (typically between 1-100)
+      if (rank > 0 && rank < 100) {
+        return rank;
+      }
     }
   }
   
-  // Try looking for patterns where rank is mentioned with ordinal indicators
+  // Look for "out of" patterns (e.g., "rank 5 out of 20")
+  const outOfPatterns = [
+    /rank(?:ed)?(?:\s+at)?\s*(?:#|no\.|number)?\s*(\d+)\s+out\s+of\s+\d+/i,
+    /position(?:\s+at)?\s*(?:#|no\.|number)?\s*(\d+)\s+out\s+of\s+\d+/i,
+    /(\d+)(?:st|nd|rd|th)\s+out\s+of\s+\d+/i,
+  ];
+  
+  for (const pattern of outOfPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const rank = parseInt(match[1], 10);
+      if (rank > 0 && rank < 100) {
+        return rank;
+      }
+    }
+  }
+  
+  // Look for ordinal indicators
   const ordinalPatterns = [
-    /(\d+)(?:st|nd|rd|th)\s+(?:place|position|rank)/i,
-    /placed\s+(\d+)(?:st|nd|rd|th)/i,
-    /ranked\s+(\d+)(?:st|nd|rd|th)/i
+    /(\d+)(?:st|nd|rd|th)/i,
   ];
   
   for (const pattern of ordinalPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      return parseInt(match[1], 10);
+    const matches = text.matchAll(new RegExp(pattern, 'gi'));
+    for (const match of matches) {
+      // Only consider if nearby context suggests rank
+      const context = text.substring(Math.max(0, match.index! - 30), Math.min(text.length, match.index! + 30));
+      if (/rank|position|place|standing/i.test(context)) {
+        const rank = parseInt(match[1], 10);
+        if (rank > 0 && rank < 100) {
+          return rank;
+        }
+      }
     }
   }
   
-  // Look for the pattern "rank X out of Y"
-  const rankOutOfPatterns = [
-    /rank\s+(\d+)\s+out\s+of\s+\d+/i,
-    /ranked\s+(\d+)\s+out\s+of\s+\d+/i,
-    /position\s+(\d+)\s+out\s+of\s+\d+/i
-  ];
-  
-  for (const pattern of rankOutOfPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-  }
-  
-  // Try more generic patterns with numbers near rank-related words
-  const nearbyRankPatterns = [
-    /rank(?:\s+[\w\s]+){0,3}:?\s*(\d+)/i,
-    /position(?:\s+[\w\s]+){0,3}:?\s*(\d+)/i,
-    /(\d+)(?:\s+[\w\s]+){0,3}\s+rank/i
-  ];
-  
-  for (const pattern of nearbyRankPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-  }
-  
+  console.warn("Could not extract rank from text");
   return null;
 };
 

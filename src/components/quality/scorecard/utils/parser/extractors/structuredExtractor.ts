@@ -17,13 +17,73 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   const currentYear = new Date().getFullYear();
   
   // Extract possible location from title or header (usually on page 1)
+  // Look specifically for station codes in common formats
   const locationPattern = /DS[A-Z]\d+|[A-Z]{3}\d+/g;
-  const locationMatches = pageData[1]?.text.match(locationPattern);
-  const location = locationMatches ? locationMatches[0] : 'DSU1';
+  const locationMatches = [];
   
-  // Extract overall score (usually a prominent number on page 1)
-  const scoreMatches = pageData[1]?.text.match(/(\d{2,3})(\s*%|\s*points|\s*score)/i);
-  const overallScore = scoreMatches ? parseInt(scoreMatches[1], 10) : 85;
+  // Search all pages for location
+  for (let i = 1; i <= Object.keys(pageData).length; i++) {
+    if (pageData[i]?.text) {
+      const matches = pageData[i].text.match(locationPattern);
+      if (matches) locationMatches.push(...matches);
+    }
+  }
+  
+  const location = locationMatches.length > 0 ? locationMatches[0] : 'DSU1';
+  
+  // Extract overall score - try to find it on every page with focus on page 2
+  let overallScore = 0;
+  
+  // First check page 2 which usually has this information
+  if (pageData[2]?.text) {
+    // Try to find score with various patterns
+    const scorePatterns = [
+      /(?:overall|total)\s+score:?\s*(\d{1,3}(?:\.\d+)?)/i,
+      /score:?\s*(\d{1,3}(?:\.\d+)?)/i,
+      /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:overall|score)/i,
+      /(\d{1,3}(?:\.\d+)?)\s*(?:points?|score)/i
+    ];
+    
+    for (const pattern of scorePatterns) {
+      const match = pageData[2].text.match(pattern);
+      if (match) {
+        overallScore = parseFloat(match[1]);
+        break;
+      }
+    }
+    
+    // If not found, try to extract numbers followed by % sign that might be the score
+    if (overallScore === 0) {
+      const percentMatches = pageData[2].text.match(/(\d{1,3}(?:\.\d+)?)\s*%/g);
+      if (percentMatches && percentMatches.length > 0) {
+        // Filter for numbers that are likely to be overall scores (typically between 60-100)
+        const scores = percentMatches
+          .map(match => parseFloat(match.replace(/[^0-9.]/g, '')))
+          .filter(score => score >= 50 && score <= 100)
+          .sort((a, b) => b - a); // Sort descending
+        
+        if (scores.length > 0) {
+          overallScore = scores[0];
+        }
+      }
+    }
+  }
+  
+  // If not found on page 2, check page 1
+  if (overallScore === 0 && pageData[1]?.text) {
+    const scoreMatch = pageData[1].text.match(/(\d{1,3}(?:\.\d+)?)\s*%/);
+    if (scoreMatch) {
+      const candidate = parseFloat(scoreMatch[1]);
+      if (candidate >= 50 && candidate <= 100) {
+        overallScore = candidate;
+      }
+    }
+  }
+  
+  // Fallback if still no score found
+  if (overallScore === 0) {
+    overallScore = 85; // Default value
+  }
   
   // Determine status based on score
   let overallStatus = 'Fair';
@@ -31,18 +91,49 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   else if (overallScore >= 85) overallStatus = 'Great';
   else if (overallScore < 75) overallStatus = 'Poor';
   
-  // Extract rank information
-  const rankMatches = pageData[1]?.text.match(/rank\D*(\d+)/i);
-  const rank = rankMatches ? parseInt(rankMatches[1], 10) : 5;
-  
-  // Try to find rank change information
+  // Extract rank information - focus on page 2
+  let rank = 0;
   let rankNote = '';
-  if (pageData[1]?.text.match(/up\s+(\d+)/i)) {
-    const upMatch = pageData[1]?.text.match(/up\s+(\d+)/i);
-    rankNote = upMatch ? `Up ${upMatch[1]} places from last week` : '';
-  } else if (pageData[1]?.text.match(/down\s+(\d+)/i)) {
-    const downMatch = pageData[1]?.text.match(/down\s+(\d+)/i);
-    rankNote = downMatch ? `Down ${downMatch[1]} places from last week` : '';
+  
+  if (pageData[2]?.text) {
+    // Try various patterns for rank
+    const rankPatterns = [
+      /rank(?:ing)?:?\s*(?:is|=|-)?\s*(\d+)/i,
+      /ranked(?:\s+at)?:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+      /position:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+      /(\d+)(?:st|nd|rd|th)\s+(?:rank|place|position)/i,
+      /rank(?:ed)?(?:\s+[^0-9]{0,20})?\s*(\d+)/i,
+    ];
+    
+    for (const pattern of rankPatterns) {
+      const match = pageData[2].text.match(pattern);
+      if (match) {
+        rank = parseInt(match[1], 10);
+        break;
+      }
+    }
+    
+    // Look for rank change indicators
+    if (pageData[2].text.match(/up\s+(\d+)/i)) {
+      const upMatch = pageData[2].text.match(/up\s+(\d+)/i);
+      rankNote = `Up ${upMatch[1]} places from last week`;
+    } else if (pageData[2].text.match(/down\s+(\d+)/i)) {
+      const downMatch = pageData[2].text.match(/down\s+(\d+)/i);
+      rankNote = `Down ${downMatch[1]} places from last week`;
+    }
+  }
+  
+  // Check page 1 if rank not found on page 2
+  if (rank === 0 && pageData[1]?.text) {
+    const rankMatch = pageData[1].text.match(/rank(?:ing)?[:\s]+(\d+)/i);
+    if (rankMatch) {
+      rank = parseInt(rankMatch[1], 10);
+    }
+  }
+  
+  // Fall back to default if no rank found
+  if (rank === 0) {
+    rank = 5; // Default value
   }
   
   // Extract company KPIs by looking for specific patterns across all pages
@@ -54,6 +145,30 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   // Extract focus areas - usually found in a specific section
   const focusAreas = extractFocusAreasFromStructure(pageData);
   
+  // Look for recommended focus areas on page 2
+  let recommendedFocusAreas = focusAreas;
+  if (recommendedFocusAreas.length === 0) {
+    // Try to identify focus areas from underperforming KPIs
+    recommendedFocusAreas = companyKPIs
+      .filter(kpi => kpi.status === 'poor' || kpi.status === 'fair')
+      .slice(0, 3)
+      .map(kpi => kpi.name);
+    
+    if (recommendedFocusAreas.length === 0) {
+      recommendedFocusAreas = ['Contact Compliance', 'DNR DPMO'];
+    }
+  }
+  
+  // Create categorized KPIs
+  const categorizedKPIs = {
+    safety: companyKPIs.filter(kpi => kpi.category === "safety"),
+    compliance: companyKPIs.filter(kpi => kpi.category === "compliance"),
+    customer: companyKPIs.filter(kpi => kpi.category === "customer"),
+    standardWork: companyKPIs.filter(kpi => kpi.category === "standardWork"),
+    quality: companyKPIs.filter(kpi => kpi.category === "quality"),
+    capacity: companyKPIs.filter(kpi => kpi.category === "capacity")
+  };
+  
   return {
     week: weekNum,
     year: currentYear,
@@ -63,7 +178,8 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
     rank,
     rankNote,
     companyKPIs,
+    categorizedKPIs,
     driverKPIs,
-    recommendedFocusAreas: focusAreas.length > 0 ? focusAreas : ['Contact Compliance', 'DNR DPMO'],
+    recommendedFocusAreas,
   };
 };
