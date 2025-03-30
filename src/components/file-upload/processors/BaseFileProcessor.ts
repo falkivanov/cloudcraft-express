@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 export interface ProcessOptions {
@@ -58,6 +59,7 @@ export abstract class BaseFileProcessor {
   
   /**
    * Add file to upload history in localStorage
+   * Changed from private to protected so subclasses can use it
    */
   protected addToUploadHistory(file: File, type: string, category: string, metadata?: any): void {
     try {

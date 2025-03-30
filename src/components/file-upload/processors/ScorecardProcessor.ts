@@ -85,8 +85,9 @@ export class ScorecardProcessor extends BaseFileProcessor {
   
   /**
    * Add file upload to history with additional metadata
+   * Changed from private to protected to match base class
    */
-  private addToUploadHistory(file: File, type: string, category: string, metadata: any = {}): void {
+  protected addToUploadHistory(file: File, type: string, category: string, metadata: any = {}): void {
     const historyItem = {
       name: file.name,
       type: type,

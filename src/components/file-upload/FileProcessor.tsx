@@ -1,131 +1,105 @@
 
 import { toast } from "sonner";
-import { addItemToHistory } from "@/utils/fileUploadHistory";
-import { ScorecardProcessor } from "./processors/ScorecardProcessor";
-import { CustomerContactProcessor } from "./processors/CustomerContactProcessor";
-import { ConcessionsProcessor } from "./processors/ConcessionsProcessor";
-import { MentorProcessor } from "./processors/MentorProcessor";
-import { GenericProcessor } from "./processors/GenericProcessor";
-
-interface FileUploadItem {
-  name: string;
-  type: string;
-  timestamp: string;
-  category: string;
-}
+import { getCategoryInfo } from "./fileCategories";
+import { FileProcessorFactory } from "./processors/FileProcessorFactory";
+import { ProcessOptions } from "./processors/BaseFileProcessor";
 
 /**
- * Process an uploaded file based on its type and category
+ * Unified FileProcessor class that handles all file types
  */
-export const processFile = async (file: File, type: string, category: string): Promise<void> => {
-  console.log(`Processing ${category} file:`, file);
+export class FileProcessor {
+  private file: File;
+  private category: string;
+  private onFileUpload?: (file: File, type: string, category: string) => void;
+  private processing: boolean = false;
   
-  try {
-    // Create the appropriate processor based on category
-    if (category === "scorecard") {
-      const processor = new ScorecardProcessor(file);
-      await processor.process();
-    } else if (category === "customerContact") {
-      const processor = new CustomerContactProcessor(file);
-      await processor.process();
-    } else if (category === "concessions") {
-      const processor = new ConcessionsProcessor(file);
-      await processor.process();
-    } else if (category === "mentor") {
-      const processor = new MentorProcessor(file);
-      await processor.process();
-    } else {
-      // Use generic processor for other types
-      const processor = new GenericProcessor(file, category);
-      await processor.process();
+  constructor(
+    file: File, 
+    category: string, 
+    onFileUpload?: (file: File, type: string, category: string) => void
+  ) {
+    this.file = file;
+    this.category = category;
+    this.onFileUpload = onFileUpload;
+  }
+
+  /**
+   * Get the currently processing state
+   */
+  public isProcessing(): boolean {
+    return this.processing;
+  }
+
+  /**
+   * Set the processing state
+   */
+  public setProcessing(value: boolean): void {
+    this.processing = value;
+  }
+  
+  /**
+   * Process the file according to its category
+   */
+  public async process(options: ProcessOptions = {}): Promise<boolean> {
+    const { showToasts = true } = options;
+    
+    if (!this.file) {
+      if (showToasts) toast.error("Bitte wählen Sie zuerst eine Datei aus");
+      return false;
     }
     
-    // Log successful upload to history
-    const newItem: FileUploadItem = {
-      name: file.name,
-      type: type,
-      timestamp: new Date().toISOString(),
-      category: category
-    };
+    const categoryInfo = getCategoryInfo(this.category);
+    if (!categoryInfo) {
+      if (showToasts) toast.error("Ungültige Kategorie ausgewählt");
+      return false;
+    }
     
-    addItemToHistory(newItem);
-  } catch (error) {
-    console.error(`Error processing ${category} file:`, error);
-    toast.error(`Fehler bei der Verarbeitung der ${category} Datei`, {
-      description: error instanceof Error ? error.message : `Unbekannter Fehler beim Verarbeiten von ${file.name}`,
-    });
-    throw error;
+    this.processing = true;
+    console.info(`Processing ${this.category} file: ${this.file.name}`);
+    
+    try {
+      // Create the appropriate processor using the factory
+      const processor = FileProcessorFactory.createProcessor(
+        this.file,
+        this.category,
+        (value: boolean) => this.setProcessing(value),
+        this.onFileUpload
+      );
+      
+      // Process the file
+      console.log(`Starting processing of ${this.category} file with processor`);
+      await processor.process(options);
+      console.info(`Successfully processed ${this.category} file: ${this.file.name}`);
+      
+      // Redirect to the appropriate page based on file category
+      if (this.category === "scorecard" && showToasts) {
+        toast.success(
+          "Scorecard erfolgreich verarbeitet. Möchten Sie die Daten jetzt ansehen?",
+          {
+            action: {
+              label: "Ja",
+              onClick: () => {
+                window.location.href = "/quality/scorecard";
+              }
+            },
+            duration: 10000,
+          }
+        );
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error processing file:", error);
+      let errorMessage = 'Unbekannter Fehler';
+      
+      if (error instanceof Error) {
+        errorMessage = `Fehler beim Verarbeiten der Datei: ${error.message}`;
+      }
+      
+      if (showToasts) toast.error(errorMessage);
+      return false;
+    } finally {
+      this.processing = false;
+    }
   }
-};
-
-/**
- * Determine the appropriate file reader method based on file type and category
- */
-export const getFileReaderMethod = (file: File, type: string, category: string): 'readAsArrayBuffer' | 'readAsText' => {
-  if ((type === "excel" || category === "concessions" || category === "mentor") && file.type.includes('excel')) {
-    return 'readAsArrayBuffer';
-  } else if (type === "html" || category === "customerContact") {
-    return 'readAsText';
-  } else if (type === "pdf" && (category === "pod" || category === "scorecard")) {
-    return 'readAsArrayBuffer';
-  }
-  
-  // Default to text for unknown types
-  return 'readAsText';
-};
-
-/**
- * Process the content after file is read
- */
-export const processFileContent = (
-  result: string | ArrayBuffer, 
-  file: File, 
-  type: string, 
-  category: string
-): void => {
-  if (category === "customerContact" && type === "html") {
-    localStorage.setItem("customerContactData", result as string);
-    toast.success(
-      `Customer Contact Datei erfolgreich verarbeitet: ${file.name}`,
-      {
-        description: `Wochendaten wurden aktualisiert`,
-      }
-    );
-  } else if (category === "pod") {
-    localStorage.setItem("podData", JSON.stringify({
-      content: result,
-      type: type,
-      fileName: file.name
-    }));
-    toast.success(
-      `POD Datei erfolgreich verarbeitet: ${file.name}`,
-      {
-        description: `POD-Daten wurden aktualisiert`,
-      }
-    );
-  } else if (category === "concessions") {
-    localStorage.setItem("concessionsData", JSON.stringify({
-      content: result,
-      type: type,
-      fileName: file.name
-    }));
-    toast.success(
-      `Concessions Datei erfolgreich verarbeitet: ${file.name}`,
-      {
-        description: `Concessions-Daten wurden aktualisiert`,
-      }
-    );
-  } else if (category === "mentor") {
-    localStorage.setItem("mentorData", JSON.stringify({
-      content: result,
-      type: type,
-      fileName: file.name
-    }));
-    toast.success(
-      `Mentor Datei erfolgreich verarbeitet: ${file.name}`,
-      {
-        description: `Mentor-Daten wurden aktualisiert`,
-      }
-    );
-  }
-};
+}
