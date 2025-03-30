@@ -38,11 +38,11 @@ export const extractDriversLineByLine = (text: string): DriverKPI[] => {
       
       console.log(`Found potential driver line: ${line}`);
       
-      // Try to extract all numbers from this line
-      const numbers = line.match(/[\d,.]+%?/g) || [];
+      // Try to extract all numbers and dash symbols from this line
+      const valueMatches = line.match(/[\d,.]+%?|-/g) || [];
       
-      if (numbers.length >= 3) {  // Reduced from 7 to 3 minimum metrics
-        console.log(`Extracted ${numbers.length} metrics for driver ${driverId}`);
+      if (valueMatches.length >= 3) {  // Reduced from 7 to 3 minimum metrics
+        console.log(`Extracted ${valueMatches.length} metrics for driver ${driverId}`);
         
         // Create base metrics
         const metrics = [];
@@ -52,15 +52,27 @@ export const extractDriversLineByLine = (text: string): DriverKPI[] => {
         const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
         const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
         
-        // Add metrics based on available numbers
-        for (let i = 0; i < Math.min(numbers.length, metricNames.length); i++) {
-          metrics.push({
-            name: metricNames[i],
-            value: extractNumeric(numbers[i]),
-            target: metricTargets[i],
-            unit: metricUnits[i],
-            status: determineStatus(metricNames[i], extractNumeric(numbers[i]))
-          });
+        // Add metrics based on available values
+        for (let i = 0; i < Math.min(valueMatches.length, metricNames.length); i++) {
+          const value = valueMatches[i];
+          // Handle dash case
+          if (value === "-") {
+            metrics.push({
+              name: metricNames[i],
+              value: 0,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: "none"
+            });
+          } else {
+            metrics.push({
+              name: metricNames[i],
+              value: extractNumeric(value),
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: determineStatus(metricNames[i], extractNumeric(value))
+            });
+          }
         }
         
         drivers.push({

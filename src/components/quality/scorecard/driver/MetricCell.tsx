@@ -1,30 +1,45 @@
 
-import React from "react";
-import { TableCell } from "@/components/ui/table";
-import { formatValue, getMetricColorClass } from "./utils";
+import React from 'react';
+import { TableCell } from '@/components/ui/table';
+import { getMetricColorClass } from './utils';
 
 interface MetricCellProps {
-  metric: {
-    name: string;
-    value: number;
-    target: number;
-    unit?: string;
-    status?: string;
-  };
+  metricName: string;
+  value: number;
+  unit: string;
 }
 
-const MetricCell: React.FC<MetricCellProps> = ({ metric }) => {
-  // Get the appropriate color class based on metric name and value
-  const colorClass = getMetricColorClass(metric.name, metric.value);
+const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
+  // Special handling for metrics that represent "-" in the source data
+  if (value === 0 && metricName === "CC" && unit === "%") {
+    return (
+      <TableCell className="text-gray-500">-</TableCell>
+    );
+  }
   
-  // Don't append unit if the name already contains "DPMO" and the unit is "DPMO"
-  const showUnit = !(metric.name.includes("DPMO") && metric.unit === "DPMO");
+  // Format the value according to metric type
+  let displayValue: string;
+  
+  if (metricName === "Delivered" && !unit) {
+    // For absolute delivery numbers, no special formatting
+    displayValue = value.toString();
+  } else if (unit === "%") {
+    // Format percentages with 2 decimal places
+    displayValue = value.toFixed(2) + "%";
+  } else if (metricName === "DNR DPMO") {
+    // For DPMO values, round to whole numbers
+    displayValue = Math.round(value).toString();
+  } else if (metricName === "CE" && value === 0) {
+    // For CE with value 0, it's a good thing
+    displayValue = "0";
+  } else {
+    // Default formatting
+    displayValue = value.toString();
+  }
   
   return (
-    <TableCell className="py-2 px-3 text-center">
-      <span className={colorClass}>
-        {formatValue(metric.value, metric.unit || "")}{showUnit ? metric.unit : ""}
-      </span>
+    <TableCell className={getMetricColorClass(metricName, value)}>
+      {displayValue}
     </TableCell>
   );
 };

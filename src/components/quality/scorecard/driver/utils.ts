@@ -15,7 +15,7 @@ export const getStatusClass = (status: string | undefined) => {
     case "poor":
       return "bg-red-100 text-red-600";
     case "none":
-      return "bg-blue-100 text-blue-600";
+      return "bg-gray-200 text-gray-500";
     default:
       return "bg-gray-100 text-gray-500";
   }
@@ -23,6 +23,11 @@ export const getStatusClass = (status: string | undefined) => {
 
 // Get the appropriate color class based on metric name and value
 export const getMetricColorClass = (metricName: string, value: number): string => {
+  // Special case for metrics with value 0 and status "none" (representing "-" in the data)
+  if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE") {
+    return "text-gray-400";
+  }
+  
   switch (metricName) {
     case "DCR":
       if (value >= 99.5) return "text-blue-600 font-semibold";
@@ -40,6 +45,8 @@ export const getMetricColorClass = (metricName: string, value: number): string =
       return "text-red-500 font-semibold";
       
     case "Contact Compliance":
+    case "CC":
+      if (value === 0) return "text-gray-400"; // For "-" value
       if (value >= 99) return "text-blue-600 font-semibold";
       if (value >= 94) return "text-orange-500 font-semibold";
       return "text-red-500 font-semibold";
@@ -113,6 +120,12 @@ export const calculateDriverScore = (driver: DriverKPI) => {
     
     if (!weight) return;
     
+    // Skip "-" values (represented as value 0 with status "none") for CC
+    if (metricName === "CC" && metric.status === "none" && metric.value === 0) {
+      // Don't add to maxPossibleScore as this metric is not applicable
+      return;
+    }
+    
     maxPossibleScore += weight;
     let points = 0;
     
@@ -133,6 +146,7 @@ export const calculateDriverScore = (driver: DriverKPI) => {
         break;
       
       case "CC":
+        if (metric.status === "none") break; // Skip if it's a "-" value
         if (metric.value >= 99) points = weight;
         else if (metric.value >= 94) points = weight * 0.5;
         break;

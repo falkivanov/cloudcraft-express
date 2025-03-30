@@ -1,157 +1,119 @@
+
 import { DriverKPI } from '../../../../../types';
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { extractNumeric } from '../structural/valueExtractor';
 
 /**
- * Extract drivers from the DSP Weekly Summary table format
+ * Extract drivers from a DSP Weekly Summary formatted text
  */
 export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] => {
+  console.log("Trying DSP Weekly Summary extraction approach");
+  
+  if (!text.includes("DSP WEEKLY SUMMARY") && !text.includes("TRANSPORTER ID")) {
+    console.log("Text does not appear to be a DSP Weekly Summary");
+    return [];
+  }
+  
   const drivers: DriverKPI[] = [];
   
-  // First check if the text contains the DSP Weekly Summary header
-  const hasDSPWeeklySummary = /DSP\s+WEEKLY\s+SUMMARY/i.test(text);
-  console.log(`Text contains DSP Weekly Summary header: ${hasDSPWeeklySummary}`);
+  // Look for the header row first
+  const headerRowPattern = /TRANSPORTER\s+ID|Driver\s+ID|TR\s+ID/i;
+  const headerRowMatch = text.match(headerRowPattern);
   
-  // Multiple patterns to match different DSP Weekly Summary formats
-  const patterns = [
-    // Standard format with 7-8 columns
-    /([A-Z0-9]{5,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g,
-    
-    // Alternative format with fewer columns (at least 4)
-    /([A-Z0-9]{5,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g,
-    
-    // TR-format pattern with numbers
-    /(TR[-\s]?\d{3,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g
-  ];
+  if (!headerRowMatch) {
+    console.log("Could not find header row in DSP Weekly Summary");
+    return [];
+  }
   
-  let totalMatches = 0;
+  // Split text into lines and find the header line
+  const lines = text.split(/\r?\n/);
+  let headerLineIndex = -1;
   
-  // Try each pattern
-  for (const pattern of patterns) {
-    const matches = Array.from(text.matchAll(pattern));
-    totalMatches += matches.length;
-    console.log(`Pattern matches: ${matches.length}`);
-    
-    if (matches && matches.length > 0) {
-      console.log(`Found ${matches.length} drivers with pattern`);
-      
-      matches.forEach(match => {
-        const driverID = match[1].trim();
-        
-        // Skip if it's likely a header row
-        if (driverID.toLowerCase().includes('transporter') || 
-            driverID.toLowerCase() === 'id' ||
-            driverID.toLowerCase().includes('driver')) {
-          return;
-        }
-        
-        console.log(`Processing driver ID: ${driverID} with ${match.length} columns`);
-        
-        // Create metrics array
-        const metrics = [];
-        
-        // Delivered value
-        if (match[2]) {
-          metrics.push({
-            name: "Delivered",
-            value: extractNumeric(match[2]),
-            target: 0,
-            unit: "",
-            status: determineStatus("Delivered", extractNumeric(match[2]))
-          });
-        }
-        
-        // DCR percentage
-        if (match[3]) {
-          const dcr = extractNumeric(match[3]);
-          metrics.push({
-            name: "DCR",
-            value: dcr,
-            target: 98.5,
-            unit: "%",
-            status: determineStatus("DCR", dcr)
-          });
-        }
-        
-        // DNR DPMO value
-        if (match[4]) {
-          const dnrDpmo = extractNumeric(match[4]);
-          metrics.push({
-            name: "DNR DPMO", 
-            value: dnrDpmo,
-            target: 1500,
-            unit: "DPMO",
-            status: determineStatus("DNR DPMO", dnrDpmo)
-          });
-        }
-        
-        // Add optional metrics if available
-        if (match[5]) {
-          const podValue = extractNumeric(match[5]);
-          metrics.push({
-            name: "POD",
-            value: podValue,
-            target: 98,
-            unit: "%",
-            status: determineStatus("POD", podValue)
-          });
-        }
-        
-        if (match[6]) {
-          const ccValue = extractNumeric(match[6]);
-          metrics.push({
-            name: "CC",
-            value: ccValue,
-            target: 95,
-            unit: "%",
-            status: determineStatus("Contact Compliance", ccValue)
-          });
-        }
-        
-        if (match[7]) {
-          const ceValue = extractNumeric(match[7]);
-          metrics.push({
-            name: "CE",
-            value: ceValue,
-            target: 0,
-            unit: "",
-            status: ceValue === 0 ? "fantastic" as const : "poor" as const
-          });
-        }
-        
-        if (match[8]) {
-          const dexValue = extractNumeric(match[8]);
-          metrics.push({
-            name: "DEX",
-            value: dexValue,
-            target: 95,
-            unit: "%",
-            status: determineStatus("DEX", dexValue)
-          });
-        }
-        
-        // Only add driver if we have at least some metrics
-        if (metrics.length > 0) {
-          // Check if this driver ID already exists (avoid duplicates)
-          const existingDriverIndex = drivers.findIndex(d => d.name === driverID);
-          
-          if (existingDriverIndex === -1) {
-            // New driver, add to list
-            drivers.push({
-              name: driverID,
-              status: "active",
-              metrics
-            });
-            console.log(`Added new driver ${driverID} with ${metrics.length} metrics`);
-          } else {
-            // Existing driver, possibly merge metrics if new ones found
-            console.log(`Driver ${driverID} already exists, skipping`);
-          }
-        }
-      });
+  for (let i = 0; i < lines.length; i++) {
+    if (headerRowPattern.test(lines[i])) {
+      headerLineIndex = i;
+      break;
     }
   }
   
-  console.log(`DSP Weekly Summary extraction total matches: ${totalMatches}, unique drivers: ${drivers.length}`);
+  if (headerLineIndex === -1) {
+    console.log("Could not locate header line index");
+    return [];
+  }
+  
+  console.log(`Found header at line ${headerLineIndex}: ${lines[headerLineIndex]}`);
+  
+  // Process driver rows after the header
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.length < 5) continue;
+    
+    // Common patterns for driver IDs
+    const driverIdPattern = /([A-Z][A-Z0-9]{5,}|TR[-\s]?\d{3,}|[A-Z]{3}\d{5,})/;
+    const idMatch = line.match(driverIdPattern);
+    
+    if (!idMatch) continue;
+    
+    const driverId = idMatch[1].trim();
+    console.log(`Found potential driver ID in DSP summary: ${driverId}`);
+    
+    // Extract values - numbers and dashes
+    const valuesPattern = /([\d,.]+%?|-|\b\d+\b)/g;
+    const values = line.match(valuesPattern) || [];
+    
+    // Skip the first match if it's part of the ID
+    const valueStartIndex = (driverId.match(/\d+/)) ? 1 : 0;
+    
+    if (values.length >= 3 + valueStartIndex) {
+      console.log(`Found ${values.length} values for ${driverId}`);
+      
+      // Define metric names and targets
+      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+      const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+      const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+      
+      const metrics = [];
+      let validValuesCount = 0;
+      
+      for (let j = valueStartIndex; j < values.length && validValuesCount < metricNames.length; j++) {
+        const value = values[j];
+        
+        // Handle dash case
+        if (value === "-") {
+          metrics.push({
+            name: metricNames[validValuesCount],
+            value: 0,
+            target: metricTargets[validValuesCount],
+            unit: metricUnits[validValuesCount],
+            status: "none"
+          });
+        } else {
+          const numValue = extractNumeric(value);
+          if (isNaN(numValue)) continue;
+          
+          metrics.push({
+            name: metricNames[validValuesCount],
+            value: numValue,
+            target: metricTargets[validValuesCount],
+            unit: metricUnits[validValuesCount],
+            status: determineStatus(metricNames[validValuesCount], numValue)
+          });
+        }
+        
+        validValuesCount++;
+      }
+      
+      if (metrics.length >= 3) {
+        drivers.push({
+          name: driverId,
+          status: "active",
+          metrics
+        });
+        console.log(`Added driver ${driverId} with ${metrics.length} metrics from DSP summary`);
+      }
+    }
+  }
+  
+  console.log(`Found ${drivers.length} drivers in DSP Weekly Summary format`);
   return drivers;
 }

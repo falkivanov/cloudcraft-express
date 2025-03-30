@@ -101,4 +101,3 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
   console.warn("No driver KPIs found in text, using sample data");
   return generateSampleDrivers();
 };
-
