@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { getCategoryInfo } from "../fileCategories";
 import { FileProcessorFactory } from "./FileProcessorFactory";
 import { ProcessOptions } from "./BaseFileProcessor";
+import { STORAGE_KEYS } from "@/utils/storageUtils";
 
 /**
  * Unified FileProcessor class that handles all file types

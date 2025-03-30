@@ -18,7 +18,9 @@ export const STORAGE_KEYS = {
   VEHICLE_ASSIGNMENTS_PREFIX: "vehicleAssignments",
   VEHICLE_ASSIGNMENT_HISTORY: "vehicleAssignmentHistory",
   IS_SCHEDULE_FINALIZED: "isScheduleFinalized",
-  OVERRIDE_FINALIZED: "overrideFinalized"
+  OVERRIDE_FINALIZED: "overrideFinalized",
+  EXTRACTED_SCORECARD_DATA: "extractedScorecardData",
+  FILE_UPLOAD_HISTORY: "fileUploadHistory"
 };
 
 /**

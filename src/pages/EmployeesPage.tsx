@@ -5,7 +5,7 @@ import EmployeePageContent from "@/components/employees/EmployeePageContent";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Container } from "@/components/ui/container";
 import { Employee } from "@/types/employee";
-import { loadFromStorage, STORAGE_KEYS } from "@/utils/storageUtils";
+import { loadFromStorage, saveToStorage, STORAGE_KEYS } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
 
 const EmployeesPage = () => {

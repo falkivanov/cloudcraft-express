@@ -9,6 +9,7 @@ import {
   getWeek11Data,
   getDummyScoreCardData 
 } from "./weekData";
+import { STORAGE_KEYS, loadFromStorage, saveToStorage } from "@/utils/storageUtils";
 
 /**
  * Parse a week identifier string into week number and year
@@ -34,10 +35,9 @@ export const parseWeekIdentifier = (weekId: string): { weekNum: number; year: nu
 export const isDataAvailableForWeek = (weekNum: number, year: number): boolean => {
   // First check if we have extracted data from PDF
   try {
-    const extractedData = localStorage.getItem("extractedScorecardData");
+    const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
-      const parsedData = JSON.parse(extractedData) as ScoreCardData;
-      if (parsedData.week === weekNum && parsedData.year === year) {
+      if (extractedData.week === weekNum && extractedData.year === year) {
         return true;
       }
     }
@@ -62,11 +62,10 @@ export const isDataAvailableForWeek = (weekNum: number, year: number): boolean =
 export const getDataFunctionForWeek = (weekNum: number, year: number): (() => ScoreCardData) => {
   // First check for extracted data
   try {
-    const extractedData = localStorage.getItem("extractedScorecardData");
+    const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
-      const parsedData = JSON.parse(extractedData) as ScoreCardData;
-      if (parsedData.week === weekNum && parsedData.year === year) {
-        return () => parsedData;
+      if (extractedData.week === weekNum && extractedData.year === year) {
+        return () => extractedData;
       }
     }
   } catch (e) {
@@ -104,20 +103,19 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
   
   // Check for extracted data from PDF
   try {
-    const extractedData = localStorage.getItem("extractedScorecardData");
+    const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
-      const parsedData = JSON.parse(extractedData) as ScoreCardData;
-      console.log("Using extracted PDF data for scorecard", parsedData);
+      console.log("Using extracted PDF data for scorecard", extractedData);
       
       // If no specific week is selected, use this data
       if (!selectedWeek) {
-        return parsedData;
+        return extractedData;
       }
       
       // If a week is selected, check if it matches our extracted data
       const parsedWeek = parseWeekIdentifier(selectedWeek);
-      if (parsedWeek && parsedWeek.weekNum === parsedData.week && parsedWeek.year === parsedData.year) {
-        return parsedData;
+      if (parsedWeek && parsedWeek.weekNum === extractedData.week && parsedWeek.year === extractedData.year) {
+        return extractedData;
       }
     }
   } catch (e) {

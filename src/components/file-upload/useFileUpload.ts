@@ -4,6 +4,7 @@ import { validateFile } from "./utils/fileValidator";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { processFile } from "./FileProcessor";
+import { STORAGE_KEYS } from "@/utils/storageUtils";
 
 export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
@@ -61,12 +62,6 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
             );
           }, 1500);
         }
-        
-        // Call the onFileUpload callback if provided
-        if (onFileUpload) {
-          onFileUpload(file, file.type, selectedCategory);
-        }
-        
       } catch (error) {
         console.error("Error in file upload:", error);
         toast.error("Ein Fehler ist aufgetreten", {

@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from '../types';
 import { extractScorecardData } from './extractors/dataExtractor';
 import { PDFParseError } from './parser/PDFParseError';
@@ -12,6 +13,7 @@ import {
   createSimpleScorecard,
   extractStructuredScorecard
 } from './parser/extractors/simpleExtractor';
+import { STORAGE_KEYS, saveToStorage } from '@/utils/storageUtils';
 
 /**
  * Parse a scorecard PDF and extract data
@@ -58,7 +60,12 @@ export const parseScorecardPDF = async (
           extractionAttempts.push({method: "positional", success: true, data: structuredData});
           
           // Add flag to indicate real extracted data
-          return {...structuredData, isSampleData: false};
+          const resultData = {...structuredData, isSampleData: false};
+          
+          // Save the extracted data to localStorage
+          saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+          
+          return resultData;
         } else {
           extractionAttempts.push({
             method: "positional", 
@@ -94,7 +101,12 @@ export const parseScorecardPDF = async (
           extractionAttempts.push({method: "text-based", success: true, data: parsedData});
           
           // Add flag to indicate real extracted data
-          return {...parsedData, isSampleData: false};
+          const resultData = {...parsedData, isSampleData: false};
+          
+          // Save the extracted data to localStorage
+          saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+          
+          return resultData;
         } else {
           extractionAttempts.push({
             method: "text-based", 
@@ -116,13 +128,23 @@ export const parseScorecardPDF = async (
       // If we get here, all extraction methods failed - use sample data but mark it as such
       const data = createSimpleScorecard(weekNum);
       console.info("Generated fallback data for week", weekNum);
-      return {...data, isSampleData: true};
+      
+      // Save the sample data to localStorage
+      const resultData = {...data, isSampleData: true};
+      saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+      
+      return resultData;
     } catch (error) {
       console.error('Error with PDF document:', error);
       // Use sample data as fallback but mark it as sample data
       const data = await getSampleDataWithWeek(weekNum);
       console.info("Using sample data due to PDF processing error");
-      return {...data, isSampleData: true};
+      
+      // Save the sample data to localStorage
+      const resultData = {...data, isSampleData: true};
+      saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+      
+      return resultData;
     }
   } catch (error) {
     console.error('Error parsing PDF:', error);
@@ -130,7 +152,12 @@ export const parseScorecardPDF = async (
     // Use sample data as fallback but mark it as sample data
     const data = await getSampleDataWithWeek(weekNum);
     console.info("Using sample data due to general parsing error");
-    return {...data, isSampleData: true};
+    
+    // Save the sample data to localStorage
+    const resultData = {...data, isSampleData: true};
+    saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+    
+    return resultData;
   }
 };
 

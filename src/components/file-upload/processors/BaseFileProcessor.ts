@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
 
 export interface ProcessOptions {
   showToasts?: boolean;
@@ -63,7 +64,7 @@ export abstract class BaseFileProcessor {
    */
   protected addToUploadHistory(file: File, type: string, category: string, metadata?: any): void {
     try {
-      const historyJSON = localStorage.getItem('fileUploadHistory');
+      const historyJSON = localStorage.getItem(STORAGE_KEYS.FILE_UPLOAD_HISTORY);
       const history = historyJSON ? JSON.parse(historyJSON) : [];
       
       const historyItem = {
@@ -82,7 +83,7 @@ export abstract class BaseFileProcessor {
       
       // Keep only the latest 100 entries
       const trimmedHistory = history.slice(0, 100);
-      localStorage.setItem('fileUploadHistory', JSON.stringify(trimmedHistory));
+      saveToStorage(STORAGE_KEYS.FILE_UPLOAD_HISTORY, trimmedHistory);
     } catch (error) {
       console.error("Error adding to upload history:", error);
     }

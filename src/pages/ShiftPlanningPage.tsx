@@ -7,6 +7,7 @@ import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
 import { Container } from "@/components/ui/container";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
 
 const ShiftPlanningPage = () => {
   const { toast } = useToast();
@@ -15,10 +16,9 @@ const ShiftPlanningPage = () => {
   // Show confirmation message when page is loaded and shifts are restored
   useEffect(() => {
     try {
-      const shiftsMapData = localStorage.getItem('shiftsMap');
+      const shiftsMapData = loadFromStorage(STORAGE_KEYS.SHIFTS_MAP);
       if (shiftsMapData) {
-        const shiftsObject = JSON.parse(shiftsMapData);
-        const shiftsCount = Object.keys(shiftsObject).length;
+        const shiftsCount = Object.keys(shiftsMapData).length;
         
         if (shiftsCount > 0) {
           console.log(`Restored ${shiftsCount} shift assignments from previous session`);
@@ -33,27 +33,11 @@ const ShiftPlanningPage = () => {
     }
   }, [toast]);
   
-  // Listen for day finalized events, but don't automatically switch tabs
-  useEffect(() => {
-    const handleDayFinalized = (event: Event) => {
-      // We don't want to automatically switch to vehicles tab anymore
-      console.log("Day finalized event detected, but not switching tabs automatically");
-      
-      // Instead we let the ShiftScheduleContent handle the tab change internally
-    };
-    
-    window.addEventListener('dayFinalized', handleDayFinalized);
-    
-    return () => {
-      window.removeEventListener('dayFinalized', handleDayFinalized);
-    };
-  }, []);
-  
   // Load the finalized status from localStorage when component mounts
   useEffect(() => {
     try {
-      const savedIsScheduleFinalized = localStorage.getItem('isScheduleFinalized');
-      if (savedIsScheduleFinalized && JSON.parse(savedIsScheduleFinalized)) {
+      const savedIsScheduleFinalized = loadFromStorage<boolean>(STORAGE_KEYS.IS_SCHEDULE_FINALIZED);
+      if (savedIsScheduleFinalized) {
         console.log("Schedule is already finalized, enabling vehicle tab");
       }
     } catch (error) {

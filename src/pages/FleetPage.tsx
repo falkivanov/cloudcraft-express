@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Container } from "@/components/ui/container";
+import { toast } from "sonner";
 
 const FleetPage = () => {
   const [isNewVehicleDialogOpen, setIsNewVehicleDialogOpen] = useState(false);
@@ -45,6 +46,11 @@ const FleetPage = () => {
   // Output the number of vehicles to verify data is loaded
   useEffect(() => {
     console.log('FleetPage rendering with vehicles:', vehicles.length);
+    
+    // Show a toast if vehicles are loaded
+    if (vehicles.length > 0) {
+      toast.success(`${vehicles.length} Fahrzeuge geladen`);
+    }
   }, [vehicles]);
 
   const handleStatusFilterChange = (newStatusFilter: "all" | "active" | "workshop") => {
