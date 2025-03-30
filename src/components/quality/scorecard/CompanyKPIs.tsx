@@ -33,34 +33,77 @@ const KPI_CATEGORIES = {
   capacity: [
     "Next Day Capacity Reliability",
     "Capacity Reliability"
-  ]
+  ],
+  other: [] // For any KPIs that don't match the predefined categories
 };
 
 const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
-  // Group the KPIs by category using our consistent definition above
-  const safetyKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.safety.some(name => kpi.name.includes(name))
-  );
+  // Group the KPIs by category
+  const categorizedKPIs = {
+    safety: [] as any[],
+    compliance: [] as any[],
+    customer: [] as any[],
+    quality: [] as any[],
+    standardWork: [] as any[],
+    capacity: [] as any[],
+    other: [] as any[]
+  };
   
-  const complianceKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.compliance.some(name => kpi.name.includes(name))
-  );
+  // Function to check if a KPI name contains or matches any of the category keywords
+  const matchesCategory = (kpiName: string, categoryKeywords: string[]): boolean => {
+    return categoryKeywords.some(keyword => 
+      kpiName.toLowerCase().includes(keyword.toLowerCase()) ||
+      keyword.toLowerCase().includes(kpiName.split(' ')[0].toLowerCase())
+    );
+  };
   
-  const customerKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.customer.some(name => kpi.name.includes(name))
-  );
+  // Categorize each KPI
+  companyKPIs.forEach(kpi => {
+    let categorized = false;
+    
+    // Try to categorize based on predefined categories
+    for (const [category, keywords] of Object.entries(KPI_CATEGORIES)) {
+      if (category !== 'other' && matchesCategory(kpi.name, keywords)) {
+        categorizedKPIs[category as keyof typeof categorizedKPIs].push(kpi);
+        categorized = true;
+        break;
+      }
+    }
+    
+    // If not categorized, put in 'other'
+    if (!categorized) {
+      categorizedKPIs.other.push(kpi);
+    }
+  });
   
-  const qualityKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.quality.some(name => kpi.name.includes(name))
-  );
+  // Move KPIs from 'other' to appropriate categories based on keywords if possible
+  const keywordMap = {
+    safety: ['safe', 'safety', 'speeding', 'accident', 'incident', 'mentor'],
+    quality: ['quality', 'dcr', 'dnr', 'lor', 'delivery', 'received'],
+    customer: ['customer', 'csat', 'satisfaction', 'escalation', 'feedback'],
+    compliance: ['compliance', 'audit', 'boc', 'breach', 'hours', 'whc', 'cas'],
+    standardWork: ['standard', 'photo', 'pod', 'contact', 'attempt'],
+    capacity: ['capacity', 'reliability', 'next day']
+  };
   
-  const standardWorkKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.standardWork.some(name => kpi.name.includes(name))
-  );
+  const remainingOther = [...categorizedKPIs.other];
+  categorizedKPIs.other = [];
   
-  const capacityKPIs = companyKPIs.filter(kpi => 
-    KPI_CATEGORIES.capacity.some(name => kpi.name.includes(name))
-  );
+  remainingOther.forEach(kpi => {
+    let categorized = false;
+    
+    for (const [category, keywords] of Object.entries(keywordMap)) {
+      if (keywords.some(keyword => kpi.name.toLowerCase().includes(keyword))) {
+        categorizedKPIs[category as keyof typeof categorizedKPIs].push(kpi);
+        categorized = true;
+        break;
+      }
+    }
+    
+    if (!categorized) {
+      categorizedKPIs.other.push(kpi);
+    }
+  });
 
   return (
     <div className="w-full mx-auto">
@@ -72,13 +115,39 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
         )}
       </div>
       
+      {/* Display the total number of KPIs */}
+      <div className="mb-4 text-sm text-gray-600">
+        Zeige {companyKPIs.length} KPIs im Scorecard
+      </div>
+      
       {/* Render each KPI category */}
-      <CategoryTable title="Sicherheit" kpis={safetyKPIs} previousWeekData={previousWeekData} />
-      <CategoryTable title="Compliance" kpis={complianceKPIs} previousWeekData={previousWeekData} />
-      <CategoryTable title="Kundenerfahrung" kpis={customerKPIs} previousWeekData={previousWeekData} />
-      <CategoryTable title="Qualität" kpis={qualityKPIs} previousWeekData={previousWeekData} />
-      <CategoryTable title="Standard Work" kpis={standardWorkKPIs} previousWeekData={previousWeekData} />
-      <CategoryTable title="Kapazität" kpis={capacityKPIs} previousWeekData={previousWeekData} />
+      {categorizedKPIs.safety.length > 0 && (
+        <CategoryTable title="Sicherheit" kpis={categorizedKPIs.safety} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.compliance.length > 0 && (
+        <CategoryTable title="Compliance" kpis={categorizedKPIs.compliance} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.customer.length > 0 && (
+        <CategoryTable title="Kundenerfahrung" kpis={categorizedKPIs.customer} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.quality.length > 0 && (
+        <CategoryTable title="Qualität" kpis={categorizedKPIs.quality} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.standardWork.length > 0 && (
+        <CategoryTable title="Standard Work" kpis={categorizedKPIs.standardWork} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.capacity.length > 0 && (
+        <CategoryTable title="Kapazität" kpis={categorizedKPIs.capacity} previousWeekData={previousWeekData} />
+      )}
+      
+      {categorizedKPIs.other.length > 0 && (
+        <CategoryTable title="Weitere KPIs" kpis={categorizedKPIs.other} previousWeekData={previousWeekData} />
+      )}
     </div>
   );
 };

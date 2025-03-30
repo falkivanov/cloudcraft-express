@@ -2,14 +2,14 @@
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
-import { addItemToHistory } from "@/utils/fileUploadHistory";
+import { STORAGE_KEYS, addItemToHistory, saveToStorage } from "@/utils/storageUtils";
 
 /**
  * Process scorecard PDF files
  */
 export class ScorecardProcessor extends BaseFileProcessor {
   /**
-   * Process a scorecard PDF file
+   * Process a scorecard PDF file with improved extraction and error handling
    */
   public async process(options: ProcessOptions = {}): Promise<boolean> {
     const { showToasts = true } = options;
@@ -22,19 +22,32 @@ export class ScorecardProcessor extends BaseFileProcessor {
       localStorage.removeItem("scorecard_week");
       localStorage.removeItem("scorecard_year");
       localStorage.removeItem("scorecard_data");
-      localStorage.removeItem("extractedScorecardData");
+      localStorage.removeItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       
       // Read file as ArrayBuffer for PDF.js processing
       const arrayBuffer = await this.file.arrayBuffer();
       
-      console.log("Starting PDF parsing...");
+      console.log("Starting enhanced PDF parsing...");
       // Process the PDF file with detailed logging enabled
       const scorecardData = await parseScorecardPDF(arrayBuffer, this.file.name, true);
       
       if (scorecardData) {
         console.log("Successfully extracted scorecard data:", scorecardData);
+        
+        // Validate the extracted data has the minimum required fields
+        if (!this.validateScorecardData(scorecardData)) {
+          if (showToasts) {
+            toast.warning(
+              "Unvollständige Daten",
+              {
+                description: "Die Scorecard-Daten sind unvollständig. Einige Informationen werden mit Beispieldaten ergänzt.",
+              }
+            );
+          }
+        }
+        
         // Store the extracted data in localStorage
-        localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
+        saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, scorecardData);
         
         // Also store week information separately for easier access
         if (scorecardData.week && scorecardData.year) {
@@ -46,7 +59,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
           toast.success(
             `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
             {
-              description: "Die Daten wurden extrahiert und können jetzt angezeigt werden.",
+              description: `${scorecardData.companyKPIs.length} KPIs wurden extrahiert und können jetzt angezeigt werden.`,
             }
           );
         }
@@ -56,6 +69,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
           week: scorecardData.week,
           year: scorecardData.year,
           location: scorecardData.location,
+          kpiCount: scorecardData.companyKPIs.length,
           isReal: !scorecardData.isSampleData // Flag to indicate if data was actually extracted
         });
         
@@ -84,8 +98,34 @@ export class ScorecardProcessor extends BaseFileProcessor {
   }
   
   /**
+   * Validate that the scorecard data has the minimum required fields
+   */
+  private validateScorecardData(data: any): boolean {
+    if (!data) return false;
+    
+    // Check for essential properties
+    if (!data.week || !data.year) {
+      console.warn("Missing week or year in scorecard data");
+      return false;
+    }
+    
+    // Check for company KPIs
+    if (!Array.isArray(data.companyKPIs) || data.companyKPIs.length < 5) {
+      console.warn("Missing or insufficient company KPIs in scorecard data");
+      return false;
+    }
+    
+    // Check for driver KPIs
+    if (!Array.isArray(data.driverKPIs) || data.driverKPIs.length === 0) {
+      console.warn("Missing driver KPIs in scorecard data");
+      return false;
+    }
+    
+    return true;
+  }
+  
+  /**
    * Add file upload to history with additional metadata
-   * Changed from private to protected to match base class
    */
   protected addToUploadHistory(file: File, type: string, category: string, metadata: any = {}): void {
     const historyItem = {
