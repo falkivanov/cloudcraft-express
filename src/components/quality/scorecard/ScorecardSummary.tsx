@@ -1,19 +1,27 @@
 
 import React from "react";
 import { LineChart, Award, ArrowUp, ArrowDown } from "lucide-react";
-import { ScoreCardData } from "./types";
-import SummaryCard from "./summary/SummaryCard";
-import FocusAreasCard from "./summary/FocusAreasCard";
 import { 
   getStatusColorClass, 
   getRankColorClass, 
   getRankChangeInfo, 
   getMetricChange 
 } from "./summary/utils";
+import SummaryCard from "./summary/SummaryCard";
+import FocusAreasCard from "./summary/FocusAreasCard";
 
 interface ScorecardSummaryProps {
-  data: ScoreCardData;
-  previousWeekData: ScoreCardData | null;
+  data: {
+    week: number;
+    year: number;
+    location: string;
+    overallScore: number;
+    overallStatus: string;
+    rank: number;
+    rankNote?: string;
+    recommendedFocusAreas: string[];
+  };
+  previousWeekData: any | null;
 }
 
 const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekData }) => {

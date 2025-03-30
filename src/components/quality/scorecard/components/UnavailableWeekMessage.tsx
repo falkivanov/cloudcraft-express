@@ -2,8 +2,8 @@
 import React from "react";
 
 interface UnavailableWeekMessageProps {
-  selectedWeek: string;
-  setSelectedWeek: (value: string) => void;
+  selectedWeek?: string;
+  setSelectedWeek?: (value: string) => void;
 }
 
 const UnavailableWeekMessage: React.FC<UnavailableWeekMessageProps> = ({

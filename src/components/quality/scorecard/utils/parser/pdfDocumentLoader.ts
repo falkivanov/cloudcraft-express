@@ -67,7 +67,7 @@ export const extractTextFromPDF = async (pdf: any) => {
       
       for (const item of content.items) {
         if ('str' in item) {
-          const textItem = item as pdfjs.TextItem;
+          const textItem = item as any; // Use any to avoid typescript error
           // Add line breaks when Y position changes significantly
           if (lastY !== -1 && Math.abs(textItem.transform[5] - lastY) > 5) {
             textItems.push('\n');

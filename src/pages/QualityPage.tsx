@@ -10,6 +10,7 @@ import { parseCustomerContactData } from "@/components/quality/utils/parseCustom
 import QualityTabs from "@/components/quality/QualityTabs";
 import { toast } from "sonner";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
+import { getPreviousWeekData } from "@/components/quality/scorecard/data/dataProvider";
 
 interface DriverComplianceData {
   name: string;
@@ -24,6 +25,7 @@ const QualityPage = () => {
   const pathname = location.pathname;
   const [customerContactData, setCustomerContactData] = useState<string | null>(null);
   const [scorecardData, setScoreCardData] = useState<ScoreCardData | null>(null);
+  const [prevWeekScoreCardData, setPrevWeekScoreCardData] = useState<ScoreCardData | null>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [mentorData, setMentorData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
@@ -68,6 +70,13 @@ const QualityPage = () => {
         const parsedData = JSON.parse(extractedData) as ScoreCardData;
         setScoreCardData(parsedData);
         
+        // Load previous week data if available
+        if (parsedData.week && parsedData.year) {
+          const weekId = `week-${parsedData.week}-${parsedData.year}`;
+          const previousData = getPreviousWeekData(weekId);
+          setPrevWeekScoreCardData(previousData);
+        }
+        
         // Show toast if there's real data loaded
         if (parsedData.week && parsedData.year) {
           console.info("Using week", parsedData.week, "from scorecard data");
@@ -82,9 +91,17 @@ const QualityPage = () => {
         if (data) {
           const parsedScorecard = JSON.parse(data);
           setScoreCardData(parsedScorecard);
+          
+          // Try to load previous week data
+          if (parsedScorecard.week && parsedScorecard.year) {
+            const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
+            const previousData = getPreviousWeekData(weekId);
+            setPrevWeekScoreCardData(previousData);
+          }
         } else {
           console.info("No scorecard data found in localStorage");
           setScoreCardData(null);
+          setPrevWeekScoreCardData(null);
         }
       }
     } catch (error) {
@@ -146,7 +163,7 @@ const QualityPage = () => {
     }
     
     if (pathname.includes("/quality/scorecard")) {
-      return <ScorecardContent scorecardData={scorecardData} />;
+      return <ScorecardContent scorecardData={scorecardData} prevWeekData={prevWeekScoreCardData} />;
     } else if (pathname.includes("/quality/customer-contact")) {
       return (
         <CustomerContactContent 
