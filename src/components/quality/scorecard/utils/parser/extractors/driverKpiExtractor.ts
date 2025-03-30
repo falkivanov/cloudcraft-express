@@ -36,157 +36,125 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
     return driversFromText;
   }
   
-  // If text extraction failed, try to find at least driver IDs
-  console.warn("Text extraction found too few drivers, trying to extract IDs");
+  // Direct PDF text pattern matching for driver data tables
+  console.log("Attempting direct extraction from raw text");
   
-  // Enhanced extraction for finding driver IDs
-  const enhancedDriverIdPatterns = [
-    /\b([A-Z0-9]{10,})\b/g,  // Amazon-style IDs (at least 10 alphanumeric chars)
-    /\b(TR[-\s]?\d{3,})\b/g, // TR-pattern IDs
-    /\b([A-Z]\d{5,}[A-Z0-9]*)\b/g // Other common driver ID patterns
-  ];
-  
-  const potentialDriverIds = new Set<string>();
-  
-  // Try each pattern and collect unique IDs
-  enhancedDriverIdPatterns.forEach(pattern => {
-    const matches = Array.from(text.matchAll(pattern));
-    matches.forEach(match => {
-      if (match[1] && match[1].length >= 8) { // Minimum length for a valid ID
-        potentialDriverIds.add(match[1].trim());
-      }
-    });
-  });
-  
-  console.log(`Found ${potentialDriverIds.size} potential driver IDs using enhanced patterns`);
-  
-  // Try to extract numerical values that might be associated with these IDs
+  // Pattern matching for driver data in tabular format
+  // This looks for patterns like: TR123456 98.5% 1200 97.2% 95.0% 0 98.1%
+  const driverTablePattern = /\b([A-Z0-9]{6,}|TR[-\s]?\d{3,})\s+([\d.,]+)%?\s+([\d.,]+)%?\s+([\d.,]+)%?\s+([\d.,]+)%?\s+([\d.,]+)%?\s+([\d.,]+)%?/g;
+  let match;
   const extractedDrivers: DriverKPI[] = [];
   
-  if (potentialDriverIds.size > 0) {
-    // Look for lines containing the driver IDs and extract values
-    const lines = text.split('\n');
+  // Test the pattern on the input text
+  console.log("Looking for driver table patterns in text");
+  
+  const matches = Array.from(text.matchAll(driverTablePattern));
+  if (matches.length > 0) {
+    console.log(`Found ${matches.length} driver matches in table format`);
     
-    Array.from(potentialDriverIds).forEach(driverId => {
-      // Find lines containing this driver ID
-      for (const line of lines) {
-        if (line.includes(driverId)) {
-          // Extract all numbers from this line
-          const numericValues = line.match(/(\d+\.?\d*|\d*\.\d+)/g) || [];
+    for (const match of matches) {
+      const driverId = match[1].trim();
+      
+      // Clean and convert metrics values
+      const metricValues = [
+        parseFloat(match[2].replace(',', '.')),
+        parseFloat(match[3].replace(',', '.')),
+        parseFloat(match[4].replace(',', '.')),
+        parseFloat(match[5].replace(',', '.')),
+        parseFloat(match[6].replace(',', '.')),
+        parseFloat(match[7].replace(',', '.'))
+      ];
+      
+      // Map to proper metrics with names
+      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+      const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+      const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+      
+      const metrics = [];
+      
+      // Create metrics with values from the pattern match
+      for (let i = 0; i < Math.min(metricValues.length, metricNames.length - 1); i++) {
+        metrics.push({
+          name: metricNames[i],
+          value: metricValues[i],
+          target: metricTargets[i],
+          unit: metricUnits[i],
+          status: determineMetricStatus(metricNames[i], metricValues[i]) as MetricStatus
+        });
+      }
+      
+      // Add DEX with placeholder if not found
+      if (metricValues.length < 7) {
+        metrics.push({
+          name: "DEX",
+          value: 95,
+          target: 95,
+          unit: "%",
+          status: "great" as MetricStatus
+        });
+      }
+      
+      extractedDrivers.push({
+        name: driverId,
+        status: "active",
+        metrics
+      });
+    }
+  } else {
+    console.log("No table patterns found, trying line extraction");
+    
+    // If table pattern didn't work, try line-by-line extraction
+    const lines = text.split('\n');
+    const driverLinePattern = /\b([A-Z0-9]{6,}|TR[-\s]?\d{3,})\b/;
+    
+    for (const line of lines) {
+      const driverMatch = line.match(driverLinePattern);
+      if (driverMatch) {
+        const driverId = driverMatch[1];
+        
+        // Extract all numbers from the line
+        const numbers = line.match(/(\d+\.\d+|\d+,\d+|\d+)/g) || [];
+        if (numbers.length >= 3) {
+          const metrics = [];
+          const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+          const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+          const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
           
-          if (numericValues.length >= 3) {
-            // If we found at least 3 numeric values, assume they're metrics
-            const metrics = [];
+          // Map found numbers to metrics
+          for (let i = 0; i < Math.min(numbers.length, metricNames.length); i++) {
+            const value = parseFloat(numbers[i].replace(',', '.'));
+            metrics.push({
+              name: metricNames[i],
+              value: value,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: determineMetricStatus(metricNames[i], value) as MetricStatus
+            });
+          }
+          
+          if (metrics.length > 0) {
+            extractedDrivers.push({
+              name: driverId,
+              status: "active",
+              metrics
+            });
             
-            // Map the first 7 values to standard metrics (or fewer if less than 7 were found)
-            const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-            const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
-            const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
-            
-            // Add each found value as a metric
-            for (let i = 0; i < Math.min(numericValues.length, metricNames.length); i++) {
-              const value = parseFloat(numericValues[i]);
-              metrics.push({
-                name: metricNames[i],
-                value: value,
-                target: metricTargets[i],
-                unit: metricUnits[i],
-                status: determineMetricStatus(metricNames[i], value) as MetricStatus
-              });
-            }
-            
-            if (metrics.length > 0) {
-              extractedDrivers.push({
-                name: driverId,
-                status: "active",
-                metrics
-              });
-              
-              // Found metrics for this driver, so move on to the next driver
-              break;
-            }
+            // Found metrics for this driver, so continue to the next line
+            continue;
           }
         }
       }
-    });
-    
-    // If we found metrics for at least one driver
-    if (extractedDrivers.length > 0) {
-      console.log(`Created ${extractedDrivers.length} drivers with real metrics`);
-      
-      // Ensure all drivers have all standard metrics
-      const enhancedDrivers = extractedDrivers.map((driver, index) => {
-        const metrics = [...driver.metrics];
-        const metricNames = metrics.map(m => m.name);
-        
-        // Add any missing metrics
-        ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].forEach(metricName => {
-          if (!metricNames.includes(metricName)) {
-            // Create a new metric with default values 
-            let value = 0;
-            let target = 0;
-            let unit = "";
-            
-            switch (metricName) {
-              case "Delivered":
-                value = 900 + (index % 10) * 50;
-                target = 0;
-                unit = "";
-                break;
-              case "DCR":
-                value = 98 + (index % 3);
-                target = 98.5;
-                unit = "%";
-                break;
-              case "DNR DPMO":
-                value = 1500 - (index * 50) % 1000;
-                target = 1500;
-                unit = "DPMO";
-                break;
-              case "POD":
-                value = 97 + (index % 3);
-                target = 98;
-                unit = "%";
-                break;
-              case "CC":
-                value = 95 + (index % 5);
-                target = 95;
-                unit = "%";
-                break;
-              case "CE":
-                value = index % 5 === 0 ? 1 : 0;
-                target = 0;
-                unit = "";
-                break;
-              case "DEX":
-                value = 94 + (index % 6);
-                target = 95;
-                unit = "%";
-                break;
-            }
-            
-            metrics.push({
-              name: metricName,
-              value,
-              target,
-              unit,
-              status: determineMetricStatus(metricName, value) as MetricStatus
-            });
-          }
-        });
-        
-        return {
-          ...driver,
-          metrics
-        };
-      });
-      
-      return enhancedDrivers;
     }
   }
   
-  // If all else fails, use sample data
-  console.warn("Text extraction found too few drivers, using sample data as fallback");
+  // If we found drivers with the direct extraction approach
+  if (extractedDrivers.length > 1) {
+    console.log(`Successfully extracted ${extractedDrivers.length} drivers with direct pattern matching`);
+    return extractedDrivers;
+  }
+  
+  // If we get here, all extraction methods failed - use sample data
+  console.warn("All extraction methods failed, using sample data");
   return generateSampleDrivers();
 };
 
