@@ -91,25 +91,35 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   else if (overallScore >= 85) overallStatus = 'Great';
   else if (overallScore < 75) overallStatus = 'Poor';
   
-  // Extract rank information - focus on page 2
+  // Extract rank information - focus on page 2 with specific pattern "Rank at (Station): X"
   let rank = 0;
   let rankNote = '';
   
   if (pageData[2]?.text) {
-    // Try various patterns for rank
-    const rankPatterns = [
-      /rank(?:ing)?:?\s*(?:is|=|-)?\s*(\d+)/i,
-      /ranked(?:\s+at)?:?\s*(?:#|no\.|number)?\s*(\d+)/i,
-      /position:?\s*(?:#|no\.|number)?\s*(\d+)/i,
-      /(\d+)(?:st|nd|rd|th)\s+(?:rank|place|position)/i,
-      /rank(?:ed)?(?:\s+[^0-9]{0,20})?\s*(\d+)/i,
-    ];
+    // Try the specific pattern mentioned "Rank at (Station): X"
+    const rankStationPattern = /Rank\s+at\s+(?:\([^)]*\)|[^:]*):?\s*(\d+)/i;
+    const rankStationMatch = pageData[2].text.match(rankStationPattern);
     
-    for (const pattern of rankPatterns) {
-      const match = pageData[2].text.match(pattern);
-      if (match) {
-        rank = parseInt(match[1], 10);
-        break;
+    if (rankStationMatch) {
+      rank = parseInt(rankStationMatch[1], 10);
+      console.log("Found rank with 'Rank at' pattern:", rank);
+    } else {
+      // Try various other patterns for rank if specific pattern not found
+      const rankPatterns = [
+        /rank(?:ing)?:?\s*(?:is|=|-)?\s*(\d+)/i,
+        /ranked(?:\s+at)?:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+        /position:?\s*(?:#|no\.|number)?\s*(\d+)/i,
+        /(\d+)(?:st|nd|rd|th)\s+(?:rank|place|position)/i,
+        /rank(?:ed)?(?:\s+[^0-9]{0,20})?\s*(\d+)/i,
+      ];
+      
+      for (const pattern of rankPatterns) {
+        const match = pageData[2].text.match(pattern);
+        if (match) {
+          rank = parseInt(match[1], 10);
+          console.log("Found rank with alternative pattern:", rank, pattern);
+          break;
+        }
       }
     }
     

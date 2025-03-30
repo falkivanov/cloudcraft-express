@@ -42,7 +42,8 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
     overallStatus: data.overallStatus,
     rank: data.rank,
     rankNote: data.rankNote,
-    location: data.location
+    location: data.location,
+    focusAreas: data.recommendedFocusAreas
   });
 
   return (
