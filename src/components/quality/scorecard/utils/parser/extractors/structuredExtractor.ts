@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../../../types';
 import { extractWeekFromFilename } from '../weekUtils';
 import { extractCompanyKPIsFromStructure } from './companyKpiExtractor';
@@ -154,7 +153,7 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   let driverKPIs = extractDriverKPIsFromStructure(pageData);
   
   // If structural extraction didn't find many drivers, try text-based extraction
-  if (driverKPIs.length <= 1) {
+  if (driverKPIs.length < 10) {
     console.log("Structural extraction found few drivers, trying text-based extraction");
     
     // Combine all page texts for better context
@@ -165,11 +164,11 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
     const textExtractedDrivers = extractDriverKPIsFromText(combinedText);
     
     // If text extraction found more drivers, use those instead
-    if (textExtractedDrivers.length > driverKPIs.length) {
-      console.log(`Text-based extraction found more drivers (${textExtractedDrivers.length}) than structural (${driverKPIs.length}), using text-based results`);
+    if (textExtractedDrivers.length >= 10 || textExtractedDrivers.length > driverKPIs.length * 2) {
+      console.log(`Text-based extraction found ${textExtractedDrivers.length} drivers (vs. ${driverKPIs.length} from structural), using text-based results`);
       driverKPIs = textExtractedDrivers;
     } else {
-      console.log(`Structural extraction (${driverKPIs.length} drivers) still better than text-based (${textExtractedDrivers.length} drivers)`);
+      console.log(`Keeping structural extraction (${driverKPIs.length} drivers) since text-based only found ${textExtractedDrivers.length} drivers`);
     }
   }
   

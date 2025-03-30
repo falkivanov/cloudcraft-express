@@ -4,13 +4,16 @@ import { DriverKPIsProps } from "./types";
 import DriverTable from "./driver/DriverTable";
 import { calculateDriverScore } from "./driver/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, AlertTriangle } from "lucide-react";
+import { InfoIcon, AlertTriangle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs,
   previousWeekData
 }) => {
+  const navigate = useNavigate();
+  
   // Filter only active drivers
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
 
@@ -22,12 +25,17 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
 
   // Show an info message if we suspect the data is sample data or problematic
   const isSuspectedSampleData = 
-    (driverKPIs.length <= 2 && 
+    (driverKPIs.length <= 3 && 
     driverKPIs.some(d => ["TR-001", "TR-002"].includes(d.name))) ||
     driverKPIs.length === 0;
 
   // Determine if we have too few drivers (likely extraction issue)
   const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 10;
+  
+  // Handle navigation to upload page
+  const handleUploadClick = () => {
+    navigate("/upload");
+  };
 
   return (
     <div className="space-y-4">
@@ -44,7 +52,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
-          <AlertDescription className="space-y-2">
+          <AlertDescription className="space-y-3">
             <p>
               Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
               {driverKPIs.length === 0 ? 
@@ -54,10 +62,22 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                 " Es wurden nur einige Beispielfahrer gefunden."}
             </p>
             <p>
-              Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Die Daten auf Seite 3 scheinen 
-              nicht korrekt erkannt worden zu sein. Wenn das Problem weiterhin besteht, könnte das Format 
-              der PDF nicht vollständig unterstützt werden.
+              Dies kann verschiedene Ursachen haben:
             </p>
+            <ul className="list-disc ml-5 space-y-1">
+              <li>Das Format der Fahrertabelle wird nicht korrekt erkannt</li>
+              <li>Die Fahrer-IDs sind in einem nicht erkannten Format</li>
+              <li>Die PDF-Struktur ist ungewöhnlich</li>
+            </ul>
+            <p>
+              Sie können eine neue PDF mit einem klareren Format hochladen:
+            </p>
+            <div className="pt-2">
+              <Button variant="outline" onClick={handleUploadClick} className="flex items-center gap-2">
+                <Upload size={16} />
+                Neue PDF hochladen
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -67,6 +87,10 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       ) : (
         <div className="py-8 text-center text-gray-500 border rounded-md">
           <p className="mb-4">Keine Fahrerdaten verfügbar</p>
+          <Button variant="outline" onClick={handleUploadClick} className="flex items-center gap-2">
+            <Upload size={16} />
+            PDF hochladen
+          </Button>
         </div>
       )}
     </div>
