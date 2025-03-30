@@ -27,7 +27,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
       const arrayBuffer = await this.file.arrayBuffer();
       
       console.log("Starting PDF parsing...");
-      // Process the PDF file
+      // Process the PDF file - pass only the expected 3 arguments
       const scorecardData = await parseScorecardPDF(arrayBuffer, this.file.name);
       
       if (scorecardData) {

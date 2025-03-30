@@ -59,17 +59,24 @@ export abstract class BaseFileProcessor {
   /**
    * Add file to upload history in localStorage
    */
-  protected addToUploadHistory(file: File, type: string, category: string): void {
+  protected addToUploadHistory(file: File, type: string, category: string, metadata?: any): void {
     try {
       const historyJSON = localStorage.getItem('fileUploadHistory');
       const history = historyJSON ? JSON.parse(historyJSON) : [];
       
-      history.unshift({
+      const historyItem = {
         name: file.name,
         type: type,
         timestamp: new Date().toISOString(),
         category: category
-      });
+      };
+
+      // Add metadata if provided
+      if (metadata) {
+        Object.assign(historyItem, { metadata });
+      }
+      
+      history.unshift(historyItem);
       
       // Keep only the latest 100 entries
       const trimmedHistory = history.slice(0, 100);
