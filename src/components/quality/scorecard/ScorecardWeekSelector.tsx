@@ -8,8 +8,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
-import { ScoreCardData } from "../types";
-import { parseWeekIdentifier, isDataAvailableForWeek } from "../data";
+import { ScoreCardData } from "./types";
+import { parseWeekIdentifier, isDataAvailableForWeek } from "./data";
 
 interface ScorecardWeekSelectorProps {
   selectedWeek: string;
