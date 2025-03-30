@@ -8,116 +8,150 @@ import { extractNumeric } from '../structural/valueExtractor';
 export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] => {
   const drivers: DriverKPI[] = [];
   
-  // Pattern specifically for the DSP Weekly Summary table format
-  // Format in PDF: TransporterID Delivered DCR DNR_DPMO POD CC CE DEX
-  const dspWeeklySummaryPattern = /([A-Z0-9]{10,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+%?)\s+([\d,\.]+)\s+([\d,\.]+%?)/g;
-  const dspMatches = Array.from(text.matchAll(dspWeeklySummaryPattern));
+  // First check if the text contains the DSP Weekly Summary header
+  const hasDSPWeeklySummary = /DSP\s+WEEKLY\s+SUMMARY/i.test(text);
+  console.log(`Text contains DSP Weekly Summary header: ${hasDSPWeeklySummary}`);
   
-  console.log(`DSP Weekly Summary pattern matches: ${dspMatches.length}`);
-  
-  if (dspMatches && dspMatches.length > 0) {
-    console.log(`Found ${dspMatches.length} drivers in DSP Weekly Summary format`);
+  // Multiple patterns to match different DSP Weekly Summary formats
+  const patterns = [
+    // Standard format with 7-8 columns
+    /([A-Z0-9]{5,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g,
     
-    dspMatches.forEach(match => {
-      const driverID = match[1].trim();
-      console.log(`Found driver ID: ${driverID} with ${match.length} columns`);
+    // Alternative format with fewer columns (at least 4)
+    /([A-Z0-9]{5,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g,
+    
+    // TR-format pattern with numbers
+    /(TR[-\s]?\d{3,})\s+([\d,\.]+)\s+([\d,\.]+%?)\s+([\d,\.]+)(?:\s+([\d,\.]+%?))?/g
+  ];
+  
+  let totalMatches = 0;
+  
+  // Try each pattern
+  for (const pattern of patterns) {
+    const matches = Array.from(text.matchAll(pattern));
+    totalMatches += matches.length;
+    console.log(`Pattern matches: ${matches.length}`);
+    
+    if (matches && matches.length > 0) {
+      console.log(`Found ${matches.length} drivers with pattern`);
       
-      // Create full metrics array based on all captured columns
-      const metrics = [];
-      
-      // Delivered value (keep original name from PDF)
-      if (match[2]) {
-        metrics.push({
-          name: "Delivered",
-          value: extractNumeric(match[2] || "0"),
-          target: 0,
-          unit: "",
-          status: determineStatus("Delivered", extractNumeric(match[2] || "0"))
-        });
-      }
-      
-      // DCR percentage (keep original name from PDF)
-      if (match[3]) {
-        const dcr = extractNumeric(match[3] || "0");
-        metrics.push({
-          name: "DCR",
-          value: dcr,
-          target: 98.5,
-          unit: "%",
-          status: determineStatus("DCR", dcr)
-        });
-      }
-      
-      // DNR DPMO value
-      if (match[4]) {
-        const dnrDpmo = extractNumeric(match[4] || "0");
-        metrics.push({
-          name: "DNR DPMO", 
-          value: dnrDpmo,
-          target: 1500,
-          unit: "DPMO",
-          status: determineStatus("DNR DPMO", dnrDpmo)
-        });
-      }
-      
-      // POD percentage
-      if (match[5]) {
-        const podValue = extractNumeric(match[5] || "0");
-        metrics.push({
-          name: "POD",
-          value: podValue,
-          target: 98,
-          unit: "%",
-          status: determineStatus("POD", podValue)
-        });
-      }
-      
-      // CC percentage (Contact Compliance)
-      if (match[6]) {
-        const ccValue = extractNumeric(match[6] || "0");
-        metrics.push({
-          name: "CC",
-          value: ccValue,
-          target: 95,
-          unit: "%",
-          status: determineStatus("Contact Compliance", ccValue)
-        });
-      }
-      
-      // CE (Customer Escalations)
-      if (match[7]) {
-        const ceValue = extractNumeric(match[7] || "0");
-        metrics.push({
-          name: "CE",
-          value: ceValue,
-          target: 0,
-          unit: "",
-          status: ceValue === 0 ? "fantastic" as const : "poor" as const
-        });
-      }
-      
-      // DEX percentage
-      if (match[8]) {
-        const dexValue = extractNumeric(match[8] || "0");
-        metrics.push({
-          name: "DEX",
-          value: dexValue,
-          target: 95,
-          unit: "%",
-          status: determineStatus("DEX", dexValue)
-        });
-      }
-      
-      // Add driver to list if we found some metrics
-      if (metrics.length > 0) {
-        drivers.push({
-          name: driverID,
-          status: "active",
-          metrics
-        });
-      }
-    });
+      matches.forEach(match => {
+        const driverID = match[1].trim();
+        
+        // Skip if it's likely a header row
+        if (driverID.toLowerCase().includes('transporter') || 
+            driverID.toLowerCase() === 'id' ||
+            driverID.toLowerCase().includes('driver')) {
+          return;
+        }
+        
+        console.log(`Processing driver ID: ${driverID} with ${match.length} columns`);
+        
+        // Create metrics array
+        const metrics = [];
+        
+        // Delivered value
+        if (match[2]) {
+          metrics.push({
+            name: "Delivered",
+            value: extractNumeric(match[2]),
+            target: 0,
+            unit: "",
+            status: determineStatus("Delivered", extractNumeric(match[2]))
+          });
+        }
+        
+        // DCR percentage
+        if (match[3]) {
+          const dcr = extractNumeric(match[3]);
+          metrics.push({
+            name: "DCR",
+            value: dcr,
+            target: 98.5,
+            unit: "%",
+            status: determineStatus("DCR", dcr)
+          });
+        }
+        
+        // DNR DPMO value
+        if (match[4]) {
+          const dnrDpmo = extractNumeric(match[4]);
+          metrics.push({
+            name: "DNR DPMO", 
+            value: dnrDpmo,
+            target: 1500,
+            unit: "DPMO",
+            status: determineStatus("DNR DPMO", dnrDpmo)
+          });
+        }
+        
+        // Add optional metrics if available
+        if (match[5]) {
+          const podValue = extractNumeric(match[5]);
+          metrics.push({
+            name: "POD",
+            value: podValue,
+            target: 98,
+            unit: "%",
+            status: determineStatus("POD", podValue)
+          });
+        }
+        
+        if (match[6]) {
+          const ccValue = extractNumeric(match[6]);
+          metrics.push({
+            name: "CC",
+            value: ccValue,
+            target: 95,
+            unit: "%",
+            status: determineStatus("Contact Compliance", ccValue)
+          });
+        }
+        
+        if (match[7]) {
+          const ceValue = extractNumeric(match[7]);
+          metrics.push({
+            name: "CE",
+            value: ceValue,
+            target: 0,
+            unit: "",
+            status: ceValue === 0 ? "fantastic" as const : "poor" as const
+          });
+        }
+        
+        if (match[8]) {
+          const dexValue = extractNumeric(match[8]);
+          metrics.push({
+            name: "DEX",
+            value: dexValue,
+            target: 95,
+            unit: "%",
+            status: determineStatus("DEX", dexValue)
+          });
+        }
+        
+        // Only add driver if we have at least some metrics
+        if (metrics.length > 0) {
+          // Check if this driver ID already exists (avoid duplicates)
+          const existingDriverIndex = drivers.findIndex(d => d.name === driverID);
+          
+          if (existingDriverIndex === -1) {
+            // New driver, add to list
+            drivers.push({
+              name: driverID,
+              status: "active",
+              metrics
+            });
+            console.log(`Added new driver ${driverID} with ${metrics.length} metrics`);
+          } else {
+            // Existing driver, possibly merge metrics if new ones found
+            console.log(`Driver ${driverID} already exists, skipping`);
+          }
+        }
+      });
+    }
   }
   
+  console.log(`DSP Weekly Summary extraction total matches: ${totalMatches}, unique drivers: ${drivers.length}`);
   return drivers;
 }

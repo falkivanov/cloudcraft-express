@@ -11,24 +11,57 @@ export const extractDriversLineByLine = (text: string): DriverKPI[] => {
   const lines = text.split(/\r?\n/);
   const drivers: DriverKPI[] = [];
   
+  // First, identify potential driver ID patterns
+  const driverIdPatterns = [
+    /^([A-Z][A-Z0-9]{5,})/,         // Standard Amazon driver ID (e.g., ABCD123456)
+    /^(TR[-\s]?\d{3,})/,             // TR pattern with optional dash (e.g., TR-001)
+    /^([A-Z]{3}\d{5,})/              // Three letters followed by numbers (e.g., ABC12345)
+  ];
+  
   for (const line of lines) {
-    const driverIdMatch = line.match(/^([A-Z0-9]{10,})/);
-    if (driverIdMatch) {
-      const driverId = driverIdMatch[1].trim();
+    let driverId = null;
+    
+    // Try all driver ID patterns
+    for (const pattern of driverIdPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        driverId = match[1].trim();
+        break;
+      }
+    }
+    
+    if (driverId) {
+      // Skip if it's likely a header row or doesn't look like a driver ID
+      if (driverId.toLowerCase().includes('transporter') || driverId.toLowerCase() === 'id') {
+        continue;
+      }
+      
+      console.log(`Found potential driver line: ${line}`);
       
       // Try to extract all numbers from this line
       const numbers = line.match(/[\d,.]+%?/g) || [];
-      if (numbers.length >= 7) {
-        // Map numbers to metrics
-        const metrics = [
-          { name: "Delivered", value: extractNumeric(numbers[0]), target: 0, unit: "", status: determineStatus("Delivered", extractNumeric(numbers[0])) },
-          { name: "DCR", value: extractNumeric(numbers[1]), target: 98.5, unit: "%", status: determineStatus("DCR", extractNumeric(numbers[1])) },
-          { name: "DNR DPMO", value: extractNumeric(numbers[2]), target: 1500, unit: "DPMO", status: determineStatus("DNR DPMO", extractNumeric(numbers[2])) },
-          { name: "POD", value: extractNumeric(numbers[3]), target: 98, unit: "%", status: determineStatus("POD", extractNumeric(numbers[3])) },
-          { name: "CC", value: extractNumeric(numbers[4]), target: 95, unit: "%", status: determineStatus("Contact Compliance", extractNumeric(numbers[4])) },
-          { name: "CE", value: extractNumeric(numbers[5]), target: 0, unit: "", status: extractNumeric(numbers[5]) === 0 ? "fantastic" as const : "poor" as const },
-          { name: "DEX", value: extractNumeric(numbers[6]), target: 95, unit: "%", status: determineStatus("DEX", extractNumeric(numbers[6])) }
-        ];
+      
+      if (numbers.length >= 3) {  // Reduced from 7 to 3 minimum metrics
+        console.log(`Extracted ${numbers.length} metrics for driver ${driverId}`);
+        
+        // Create base metrics
+        const metrics = [];
+        
+        // Map available numbers to metrics based on their likely position
+        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+        
+        // Add metrics based on available numbers
+        for (let i = 0; i < Math.min(numbers.length, metricNames.length); i++) {
+          metrics.push({
+            name: metricNames[i],
+            value: extractNumeric(numbers[i]),
+            target: metricTargets[i],
+            unit: metricUnits[i],
+            status: determineStatus(metricNames[i], extractNumeric(numbers[i]))
+          });
+        }
         
         drivers.push({
           name: driverId,
@@ -36,7 +69,7 @@ export const extractDriversLineByLine = (text: string): DriverKPI[] => {
           metrics
         });
         
-        console.log(`Added driver ${driverId} from line-based extraction`);
+        console.log(`Added driver ${driverId} with ${metrics.length} metrics from line-based extraction`);
       }
     }
   }

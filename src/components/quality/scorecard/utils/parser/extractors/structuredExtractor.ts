@@ -2,9 +2,10 @@
 import { ScoreCardData } from '../../../types';
 import { extractWeekFromFilename } from '../weekUtils';
 import { extractCompanyKPIsFromStructure } from './companyKpiExtractor';
-import { extractDriverKPIsFromStructure } from './driverKpiExtractor';
+import { extractDriverKPIsFromStructure } from './driver/structural/structuralExtractor';
 import { extractFocusAreasFromStructure } from './focus-areas';
 import { extractNumericValues } from './valueExtractor';
+import { extractDriverKPIsFromText } from './driver/textExtractor';
 
 /**
  * Extract scorecard data from a PDF based on structural analysis
@@ -149,8 +150,28 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   // Extract company KPIs by looking for specific patterns across all pages
   const companyKPIs = extractCompanyKPIsFromStructure(pageData);
   
-  // Extract driver KPIs from typically page 3 and 4
-  const driverKPIs = extractDriverKPIsFromStructure(pageData);
+  // Try multiple methods to extract driver KPIs and combine the results
+  let driverKPIs = extractDriverKPIsFromStructure(pageData);
+  
+  // If structural extraction didn't find many drivers, try text-based extraction
+  if (driverKPIs.length <= 1) {
+    console.log("Structural extraction found few drivers, trying text-based extraction");
+    
+    // Combine all page texts for better context
+    const combinedText = Object.values(pageData)
+      .map(page => page.text || "")
+      .join("\n\n");
+    
+    const textExtractedDrivers = extractDriverKPIsFromText(combinedText);
+    
+    // If text extraction found more drivers, use those instead
+    if (textExtractedDrivers.length > driverKPIs.length) {
+      console.log(`Text-based extraction found more drivers (${textExtractedDrivers.length}) than structural (${driverKPIs.length}), using text-based results`);
+      driverKPIs = textExtractedDrivers;
+    } else {
+      console.log(`Structural extraction (${driverKPIs.length} drivers) still better than text-based (${textExtractedDrivers.length} drivers)`);
+    }
+  }
   
   // Extract focus areas - usually found in a specific section
   const focusAreas = extractFocusAreasFromStructure(pageData);

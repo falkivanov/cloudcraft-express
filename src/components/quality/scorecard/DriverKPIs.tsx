@@ -4,7 +4,8 @@ import { DriverKPIsProps } from "./types";
 import DriverTable from "./driver/DriverTable";
 import { calculateDriverScore } from "./driver/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs,
@@ -19,31 +20,50 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     return { ...driver, score };
   });
 
-  // Show an info message if we suspect the data is sample data
+  // Show an info message if we suspect the data is sample data or problematic
   const isSuspectedSampleData = 
-    driverKPIs.length === 2 && 
+    (driverKPIs.length === 2 && 
     driverKPIs[0]?.name === "TR-001" && 
-    driverKPIs[1]?.name === "TR-002";
+    driverKPIs[1]?.name === "TR-002") ||
+    driverKPIs.length === 0 ||
+    driverKPIs.length === 1;  // Added check for only one driver
 
   return (
     <div className="space-y-4">
       {/* Section header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
+        <div className="text-sm text-gray-500">
+          {driversWithScores.length} Fahrer gefunden
+        </div>
       </div>
       
-      {isSuspectedSampleData && (
-        <Alert className="mb-4 bg-blue-50 border-blue-200">
-          <InfoIcon className="h-4 w-4 text-blue-600" />
-          <AlertTitle>Hinweis zu Daten</AlertTitle>
-          <AlertDescription>
-            Die angezeigten Fahrerdaten konnten nicht aus der PDF extrahiert werden. 
-            Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch.
+      {isSuspectedSampleData ? (
+        <Alert className="mb-4 bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
+              {driverKPIs.length === 0 ? 
+                " Es wurden keine Fahrer gefunden." : 
+                ` Es ${driverKPIs.length === 1 ? "wurde nur ein Fahrer" : "wurden nur Standard-Beispielfahrer"} gefunden.`}
+            </p>
+            <p>
+              Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Wenn das Problem weiterhin besteht, 
+              könnte das Format der PDF nicht vollständig unterstützt werden.
+            </p>
           </AlertDescription>
         </Alert>
-      )}
+      ) : null}
       
-      <DriverTable drivers={driversWithScores} />
+      {driversWithScores.length > 0 ? (
+        <DriverTable drivers={driversWithScores} />
+      ) : (
+        <div className="py-8 text-center text-gray-500 border rounded-md">
+          <p className="mb-4">Keine Fahrerdaten verfügbar</p>
+        </div>
+      )}
     </div>
   );
 };
