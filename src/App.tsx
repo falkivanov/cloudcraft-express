@@ -11,6 +11,7 @@ import EmployeesPage from "./pages/EmployeesPage";
 import FleetPage from "./pages/FleetPage";
 import QualityPage from "./pages/QualityPage";
 import ShiftPlanningPage from "./pages/ShiftPlanningPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -37,14 +38,14 @@ const App = () => (
               <Route path="/quality/concessions" element={<QualityPage />} />
               <Route path="/quality/mentor" element={<QualityPage />} />
               
-              {/* Neue Schichtplanungs-Route */}
+              {/* Schichtplanungs-Route */}
               <Route path="/shifts" element={<ShiftPlanningPage />} />
               
               {/* Redirect von der alten Scorecard-Route zur neuen Qualitätsseite */}
               <Route path="/scorecard" element={<Navigate to="/quality/scorecard" replace />} />
               
-              <Route path="/finance" element={<div className="p-8"><h1 className="text-3xl font-bold">Finanzen</h1></div>} />
-              <Route path="/settings" element={<div className="p-8"><h1 className="text-3xl font-bold">Einstellungen</h1></div>} />
+              {/* Einstellungs-Route */}
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

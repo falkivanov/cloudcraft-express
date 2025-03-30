@@ -1,13 +1,11 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "@/hooks/use-toast";
-import { isWorkday } from "../utils/planning/date-utils";
+import { useState, useEffect } from "react";
 
 export const useShiftPlanning = () => {
-  const [activeTab, setActiveTab] = useState("schedule");
-  const [isScheduleFinalized, setIsScheduleFinalized] = useState(false);
+  // Only 'schedule' and 'vehicles' tabs remain
+  const [activeTab, setActiveTab] = useState<string>("schedule");
+  const [isScheduleFinalized, setIsScheduleFinalized] = useState<boolean>(false);
   
-  // Lade den finalisierten Status aus dem localStorage beim Mounten der Komponente
+  // Load the schedule finalized status from localStorage when component mounts
   useEffect(() => {
     try {
       const savedIsScheduleFinalized = localStorage.getItem('isScheduleFinalized');
@@ -19,43 +17,25 @@ export const useShiftPlanning = () => {
     }
   }, []);
   
-  // Funktion zum Finalisieren des Dienstplans
-  const handleFinalizeSchedule = useCallback(() => {
-    // Prüfen, ob der morgige Tag ein Arbeitstag ist (kein Wochenende und kein Feiertag)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Log für Debugging
-    console.log('handleFinalizeSchedule - tomorrow:', tomorrow);
-    console.log('handleFinalizeSchedule - isWorkday:', isWorkday(tomorrow));
-    
+  // Handle finalizing the schedule
+  const handleFinalizeSchedule = () => {
     setIsScheduleFinalized(true);
-    
-    // Speichere den finalisierten Status im localStorage
     localStorage.setItem('isScheduleFinalized', JSON.stringify(true));
     
-    // Zeige Toast-Benachrichtigung
-    toast({
-      title: "Dienstplan finalisiert",
-      description: "Der Dienstplan wurde erfolgreich finalisiert. Sie können jetzt die Fahrzeugzuweisung vornehmen.",
+    // Dispatch an event to notify other components
+    const event = new CustomEvent('scheduleFinalized', {
+      detail: { isFinalized: true }
     });
+    window.dispatchEvent(event);
     
-    // Optional: Automatisch zur Fahrzeugzuweisung wechseln
+    // Switch to the vehicles tab
     setActiveTab("vehicles");
-  }, []);
-  
-  // Funktion zum Zurücksetzen des finalisierten Status (für Tests oder Entwicklung)
-  const resetScheduleFinalized = useCallback(() => {
-    setIsScheduleFinalized(false);
-    localStorage.setItem('isScheduleFinalized', JSON.stringify(false));
-  }, []);
+  };
   
   return {
     activeTab,
     setActiveTab,
     isScheduleFinalized,
-    setIsScheduleFinalized,
-    handleFinalizeSchedule,
-    resetScheduleFinalized
+    handleFinalizeSchedule
   };
 };
