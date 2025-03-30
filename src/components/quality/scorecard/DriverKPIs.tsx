@@ -26,6 +26,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     driverKPIs.some(d => ["TR-001", "TR-002"].includes(d.name))) ||
     driverKPIs.length === 0;
 
+  // Determine if we have too few drivers (likely extraction issue)
+  const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 10;
+
   return (
     <div className="space-y-4">
       {/* Section header */}
@@ -37,7 +40,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || driverKPIs.length <= 1) ? (
+      {(isSuspectedSampleData || hasTooFewDrivers) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -46,17 +49,18 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
               {driverKPIs.length === 0 ? 
                 " Es wurden keine Fahrer gefunden." : 
-                driverKPIs.length === 1 ?
-                " Es wurde nur ein Fahrer gefunden." :
+                driverKPIs.length < 10 ?
+                ` Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.` :
                 " Es wurden nur einige Beispielfahrer gefunden."}
             </p>
             <p>
-              Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Wenn das Problem weiterhin besteht, 
-              könnte das Format der PDF nicht vollständig unterstützt werden.
+              Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Die Daten auf Seite 3 scheinen 
+              nicht korrekt erkannt worden zu sein. Wenn das Problem weiterhin besteht, könnte das Format 
+              der PDF nicht vollständig unterstützt werden.
             </p>
           </AlertDescription>
         </Alert>
-      ) : null}
+      )}
       
       {driversWithScores.length > 0 ? (
         <DriverTable drivers={driversWithScores} />
