@@ -6,13 +6,20 @@ import { extractNumericValues } from './valueExtractor';
  * Extract driver KPIs from structural analysis of the PDF
  */
 export const extractDriverKPIsFromStructure = (pageData: Record<number, any>) => {
-  // We'll focus on pages 2 and 3 which typically contain driver data
-  const relevantPages = [2, 3].filter(num => pageData[num]);
+  console.log("Extracting driver KPIs with structural analysis");
+  
+  // We'll focus on pages 3 and 4 which typically contain driver data
+  const relevantPages = [3, 4].filter(num => pageData[num]);
   const drivers = [];
   
   // Look for driver patterns in relevant pages
   for (const pageNum of relevantPages) {
     const page = pageData[pageNum];
+    
+    // Skip if page doesn't exist
+    if (!page) continue;
+    
+    console.log(`Analyzing page ${pageNum} for driver data`);
     
     // Group items by rows based on y-coordinate
     const rows: any[][] = [];
@@ -42,7 +49,57 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>) =>
       rows.push([...currentRow].sort((a, b) => a.x - b.x));
     }
     
-    // Look for driver patterns in rows
+    // Look for driver table headers to identify metric columns
+    const metricNames = ["Delivered", "DNR DPMO", "Contact Compliance", "POD", "DEX", "CE"];
+    let foundMetricColumns: {name: string, index: number}[] = [];
+    
+    // Search for table headers
+    for (const row of rows) {
+      const rowText = row.map(item => item.str).join(' ');
+      
+      // Check if this row might be a header row
+      let isHeaderRow = false;
+      let columnNames: {name: string, x: number}[] = [];
+      
+      for (const item of row) {
+        const text = item.str.trim();
+        // Check if this item matches any of our known metric names
+        const matchedMetric = metricNames.find(name => 
+          text.toLowerCase().includes(name.toLowerCase()) || 
+          (text === "CC" && "Contact Compliance".toLowerCase().includes("compliance"))
+        );
+        
+        if (matchedMetric) {
+          isHeaderRow = true;
+          // Map "CC" to "Contact Compliance"
+          const actualName = text === "CC" ? "Contact Compliance" : matchedMetric;
+          columnNames.push({name: actualName, x: item.x});
+        }
+      }
+      
+      if (isHeaderRow && columnNames.length > 0) {
+        console.log("Found header row with metrics:", columnNames.map(c => c.name).join(", "));
+        
+        // Sort column names by x position
+        columnNames.sort((a, b) => a.x - b.x);
+        
+        // Store column indices (order-based)
+        foundMetricColumns = columnNames.map((col, idx) => ({name: col.name, index: idx}));
+        break;
+      }
+    }
+    
+    // If we didn't find column headers, use default ordering
+    if (foundMetricColumns.length === 0) {
+      console.log("No column headers found, using default metrics");
+      foundMetricColumns = [
+        {name: "Delivered", index: 0},
+        {name: "DNR DPMO", index: 1},
+        {name: "Contact Compliance", index: 2}
+      ];
+    }
+    
+    // Process driver rows - look for rows with driver identifier and numeric values
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rowText = row.map(item => item.str).join(' ');
@@ -52,42 +109,38 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>) =>
       if (driverMatch) {
         const driverName = driverMatch[0];
         
-        // Look for metrics in this row and next rows
-        const metrics = [];
-        const metricsToFind = ["Delivered", "DNR DPMO", "Contact Compliance"];
+        // Extract numeric values from this row
+        const values = extractNumericValues(rowText);
         
-        // Check current row for metrics
-        const currentRowValues = extractNumericValues(rowText);
-        
-        // Also check the next row for more metrics
-        let nextRowValues = [];
-        if (i + 1 < rows.length) {
-          const nextRowText = rows[i + 1].map(item => item.str).join(' ');
-          nextRowValues = extractNumericValues(nextRowText);
-        }
-        
-        // Combine values from current and next row
-        const allValues = [...currentRowValues, ...nextRowValues];
-        
-        // Map values to metrics
-        if (allValues.length > 0) {
-          for (let j = 0; j < Math.min(metricsToFind.length, allValues.length); j++) {
-            const metricName = metricsToFind[j];
-            const value = allValues[j];
+        // If we have numeric values, this is likely a driver row
+        if (values.length > 0) {
+          console.log(`Found driver: ${driverName} with ${values.length} metric values`);
+          
+          const metrics = [];
+          
+          // Map values to metrics using the column order we found
+          for (let j = 0; j < Math.min(foundMetricColumns.length, values.length); j++) {
+            const metricInfo = foundMetricColumns[j];
+            const value = values[j];
             
-            // Determine unit based on metric name
-            const unit = metricName.includes("DPMO") ? "DPMO" : "%";
+            // Skip if value wasn't found
+            if (value === undefined) continue;
+            
+            // Determine unit and target based on metric name
+            const unit = metricInfo.name.includes("DPMO") ? "DPMO" : "%";
             
             // Set default target based on metric
-            const target = metricName.includes("DPMO") ? 3000 : 
-                         metricName === "Delivered" ? 100 : 95;
+            let target = 100;
+            if (metricInfo.name.includes("DPMO")) target = 3000;
+            else if (metricInfo.name === "Contact Compliance") target = 95;
+            else if (metricInfo.name === "CE") target = 0;
             
             metrics.push({
-              name: metricName,
+              name: metricInfo.name,
               value,
               target,
               unit,
-              status: determineStatus(metricName, value)
+              status: determineStatus(metricInfo.name, value)
             });
           }
           
@@ -104,29 +157,115 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>) =>
     }
   }
   
-  // If we didn't find any drivers, return default data
+  // If we didn't find any drivers with the structural approach, fall back to regex-based extraction
   if (drivers.length === 0) {
-    return [
-      {
-        name: "TR-001",
-        status: "active",
-        metrics: [
-          { name: "Delivered", value: 98, target: 100, unit: "%", status: "great" as const },
-          { name: "DNR DPMO", value: 2500, target: 3000, unit: "DPMO", status: "great" as const },
-          { name: "Contact Compliance", value: 92, target: 95, unit: "%", status: "fair" as const }
-        ]
-      },
-      {
-        name: "TR-002",
-        status: "active",
-        metrics: [
-          { name: "Delivered", value: 99, target: 100, unit: "%", status: "fantastic" as const },
-          { name: "DNR DPMO", value: 2000, target: 3000, unit: "DPMO", status: "fantastic" as const },
-          { name: "Contact Compliance", value: 96, target: 95, unit: "%", status: "fantastic" as const }
-        ]
-      }
-    ];
+    console.log("No drivers found with structural analysis, trying text-based extraction");
+    
+    // Try to extract based on text patterns from all pages
+    const combinedText = relevantPages.map(pageNum => 
+      pageData[pageNum]?.text || ""
+    ).join("\n\n");
+    
+    return extractDriverKPIsFromText(combinedText);
   }
   
+  console.log(`Successfully extracted ${drivers.length} drivers`);
   return drivers;
+};
+
+/**
+ * Extract driver KPIs from text content using regex patterns
+ */
+const extractDriverKPIsFromText = (text: string) => {
+  console.log("Extracting driver KPIs from text content");
+  const drivers = [];
+  
+  // Regular expression to find driver sections - looking for patterns like:
+  // TR-123 or Driver Name followed by metrics
+  const driverPattern = /(?:TR-\d+|[A-Z][a-z]+\s+[A-Z][a-z]+)[\s\n]+(?:\d+[\.\,]\d+|\d+)%?\s+(?:\d+[\.\,]\d+|\d+)%?/g;
+  const driverMatches = text.match(driverPattern);
+  
+  if (!driverMatches || driverMatches.length === 0) {
+    console.warn("No driver KPIs found in text, using sample data");
+    // Return sample data if no drivers found
+    return generateSampleDrivers();
+  }
+  
+  // Process each driver match
+  driverMatches.forEach(match => {
+    // Extract driver ID or name
+    const nameMatch = match.match(/^(TR-\d+|[A-Z][a-z]+\s+[A-Z][a-z]+)/);
+    if (!nameMatch) return;
+    
+    const driverName = nameMatch[1];
+    console.log(`Found driver: ${driverName}`);
+    
+    // Extract numerical metrics that follow the name
+    const metricMatches = match.match(/(\d+(?:[.,]\d+)?)/g);
+    if (!metricMatches || metricMatches.length < 2) return;
+    
+    // Create metrics based on the numbers found
+    const metrics = [
+      {
+        name: "Delivered",
+        value: parseFloat(metricMatches[0].replace(',', '.')),
+        target: 100,
+        unit: "%",
+        status: determineStatus("Delivered", parseFloat(metricMatches[0].replace(',', '.')))
+      },
+      {
+        name: "DNR DPMO", 
+        value: parseFloat(metricMatches[1].replace(',', '.')),
+        target: 3000,
+        unit: "DPMO",
+        status: determineStatus("DNR DPMO", parseFloat(metricMatches[1].replace(',', '.')))
+      }
+    ];
+    
+    // Add more metrics if available
+    if (metricMatches.length > 2) {
+      metrics.push({
+        name: "Contact Compliance",
+        value: parseFloat(metricMatches[2].replace(',', '.')),
+        target: 95,
+        unit: "%",
+        status: determineStatus("Contact Compliance", parseFloat(metricMatches[2].replace(',', '.')))
+      });
+    }
+    
+    // Add driver to list
+    drivers.push({
+      name: driverName,
+      status: "active",
+      metrics
+    });
+  });
+  
+  return drivers;
+};
+
+/**
+ * Generate sample driver data when extraction fails
+ */
+const generateSampleDrivers = () => {
+  return [
+    {
+      name: "TR-001",
+      status: "active",
+      metrics: [
+        { name: "Delivered", value: 98, target: 100, unit: "%", status: "great" as const },
+        { name: "DNR DPMO", value: 2500, target: 3000, unit: "DPMO", status: "great" as const },
+        { name: "Contact Compliance", value: 92, target: 95, unit: "%", status: "fair" as const }
+      ]
+    },
+    {
+      name: "TR-002",
+      status: "active",
+      metrics: [
+        { name: "Delivered", value: 99, target: 100, unit: "%", status: "fantastic" as const },
+        { name: "DNR DPMO", value: 2000, target: 3000, unit: "DPMO", status: "fantastic" as const },
+        { name: "Contact Compliance", value: 96, target: 95, unit: "%", status: "fantastic" as const }
+      ]
+    }
+  ];
 };

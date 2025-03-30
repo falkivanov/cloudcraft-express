@@ -30,6 +30,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
       
       if (scorecardData) {
         console.log("Successfully extracted scorecard data:", scorecardData);
+        console.log(`Extracted ${scorecardData.driverKPIs?.length || 0} driver KPIs`);
         
         // Validate the extracted data has the minimum required fields
         if (!this.validateScorecardData(scorecardData)) {
@@ -71,7 +72,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
           toast.success(
             `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
             {
-              description: `${scorecardData.companyKPIs.length} KPIs wurden extrahiert und können jetzt angezeigt werden.`,
+              description: `${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden extrahiert.`,
             }
           );
         }
@@ -82,6 +83,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
           year: scorecardData.year,
           location: scorecardData.location,
           kpiCount: scorecardData.companyKPIs.length,
+          driverCount: scorecardData.driverKPIs.length,
           isReal: !scorecardData.isSampleData // Flag to indicate if data was actually extracted
         });
         

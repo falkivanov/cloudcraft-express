@@ -43,6 +43,7 @@ export const parseScorecardPDF = async (
       extractionAttempts.push({method: "positional", ...positionalResult});
       
       if (positionalResult.success) {
+        console.log(`Positional extraction found ${positionalResult.data.driverKPIs?.length || 0} drivers`);
         return positionalResult.data!;
       }
       
@@ -51,6 +52,7 @@ export const parseScorecardPDF = async (
       extractionAttempts.push({method: "text-based", ...textBasedResult});
       
       if (textBasedResult.success) {
+        console.log(`Text-based extraction found ${textBasedResult.data.driverKPIs?.length || 0} drivers`);
         return textBasedResult.data!;
       }
       

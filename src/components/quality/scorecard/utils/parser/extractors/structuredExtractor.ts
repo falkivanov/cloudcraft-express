@@ -149,7 +149,7 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   // Extract company KPIs by looking for specific patterns across all pages
   const companyKPIs = extractCompanyKPIsFromStructure(pageData);
   
-  // Extract driver KPIs from typically page 2 or 3
+  // Extract driver KPIs from typically page 3 and 4
   const driverKPIs = extractDriverKPIsFromStructure(pageData);
   
   // Extract focus areas - usually found in a specific section

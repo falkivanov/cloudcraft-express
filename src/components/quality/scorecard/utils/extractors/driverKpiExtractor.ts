@@ -37,17 +37,17 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
     const metrics = [
       {
         name: "Delivered",
-        value: parseInt(metricMatches[0], 10),
+        value: parseFloat(metricMatches[0].replace(',', '.')),
         target: 100,
         unit: "%",
-        status: determineStatus("Delivered", parseInt(metricMatches[0], 10))
+        status: determineStatus("Delivered", parseFloat(metricMatches[0].replace(',', '.')))
       },
       {
         name: "DNR DPMO", 
-        value: parseInt(metricMatches[1], 10),
+        value: parseFloat(metricMatches[1].replace(',', '.')),
         target: 3000,
         unit: "DPMO",
-        status: determineStatus("DNR DPMO", parseInt(metricMatches[1], 10))
+        status: determineStatus("DNR DPMO", parseFloat(metricMatches[1].replace(',', '.')))
       }
     ];
     
@@ -55,10 +55,10 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
     if (metricMatches.length > 2) {
       metrics.push({
         name: "Contact Compliance",
-        value: parseInt(metricMatches[2], 10),
+        value: parseFloat(metricMatches[2].replace(',', '.')),
         target: 95,
         unit: "%",
-        status: determineStatus("Contact Compliance", parseInt(metricMatches[2], 10))
+        status: determineStatus("Contact Compliance", parseFloat(metricMatches[2].replace(',', '.')))
       });
     }
     

@@ -21,6 +21,7 @@ export const extractScorecardData = (
 ): ScoreCardData => {
   console.log("Extracting scorecard data from text");
   console.log("Company text sample:", companyText.substring(0, 150));
+  console.log("Driver text sample:", driverText.substring(0, 150));
   
   // Look for location information
   const location = extractLocation(companyText) || 'DSU1';
@@ -42,7 +43,7 @@ export const extractScorecardData = (
   const companyKPIs = extractCompanyKPIs(companyText);
   console.log(`Extracted ${companyKPIs.length} company KPIs`);
   
-  // Extract driver metrics
+  // Extract driver metrics from driver text (usually page 3)
   const driverKPIs = extractDriverKPIs(driverText);
   console.log(`Extracted ${driverKPIs.length} driver KPIs`);
   
