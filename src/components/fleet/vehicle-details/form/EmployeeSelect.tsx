@@ -57,4 +57,10 @@ const EmployeeSelect = ({ employeeId, onEmployeeSelect }: EmployeeSelectProps) =
   );
 };
 
+// Export the list of employees so it can be used in other components
+export const getEmployees = () => {
+  const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
+  return savedEmployees && savedEmployees.length > 0 ? savedEmployees : initialEmployees;
+};
+
 export default EmployeeSelect;

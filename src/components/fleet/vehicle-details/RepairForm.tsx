@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { employees } from "./form/EmployeeSelect";
+import { getEmployees } from "./form/EmployeeSelect";
 import RepairDatesSection from "./form/RepairDatesSection";
 import RepairDetailsSection from "./form/RepairDetailsSection";
 import RepairCauseSection from "./form/RepairCauseSection";
@@ -38,6 +38,7 @@ interface RepairFormProps {
 
 const RepairForm = ({ newRepair, setNewRepair, onCancel, onSubmit }: RepairFormProps) => {
   const { toast } = useToast();
+  const employees = getEmployees();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
