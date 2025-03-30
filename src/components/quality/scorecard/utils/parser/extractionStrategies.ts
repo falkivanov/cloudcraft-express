@@ -4,7 +4,8 @@
  */
 
 import { ScoreCardData } from '../../types';
-import { extractPDFContentWithPositions, extractTextFromPDF } from './pdfDocumentLoader';
+import { extractPDFContentWithPositions, extractTextFromPDF } from './pdf';
+import { loadPDFDocument } from './pdf';
 import { extractScorecardData } from '../extractors/dataExtractor';
 import { extractStructuredScorecard } from './extractors/structuredExtractor';
 import { createSimpleScorecard } from './extractors/simpleExtractor';
