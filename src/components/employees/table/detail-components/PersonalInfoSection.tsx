@@ -1,6 +1,6 @@
 
 import React from "react";
-import { IdCard, CalendarDays, MapPin, Phone, MessageCircle } from "lucide-react";
+import { IdCard, CalendarDays, MapPin, Phone, MessageCircle, Mail } from "lucide-react";
 import DetailItem from "./DetailItem";
 import { Employee } from "@/types/employee";
 import { formatDate } from "@/utils/dateUtils";
@@ -57,7 +57,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({ employee }) =
       />
 
       <DetailItem
-        icon={IdCard}
+        icon={Mail}
         label="E-Mail"
         value={employee.email}
       />
