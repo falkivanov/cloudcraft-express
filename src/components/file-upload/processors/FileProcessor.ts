@@ -67,8 +67,25 @@ export class FileProcessor {
       );
       
       // Process the file
+      console.log(`Starting processing of ${this.category} file with processor`);
       await processor.process(options);
       console.info(`Successfully processed ${this.category} file: ${this.file.name}`);
+      
+      // Redirect to the appropriate page based on file category
+      if (this.category === "scorecard" && showToasts) {
+        toast.success(
+          "Scorecard erfolgreich verarbeitet. Möchten Sie die Daten jetzt ansehen?",
+          {
+            action: {
+              label: "Ja",
+              onClick: () => {
+                window.location.href = "/quality/scorecard";
+              }
+            },
+            duration: 10000,
+          }
+        );
+      }
       
       return true;
     } catch (error) {

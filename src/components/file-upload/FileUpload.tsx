@@ -13,6 +13,8 @@ import DropZone from "./DropZone";
 import UploadButton from "./UploadButton";
 import { useFileUpload } from "./useFileUpload";
 import { getCategoryInfo } from "./fileCategories";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface FileUploadProps {
   onFileUpload?: (file: File, type: string, category: string) => void;
@@ -69,6 +71,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
             {selectedCategory === "scorecard" && (
               <div className="mt-2 text-xs text-amber-600">
                 <p>Das System extrahiert automatisch KPIs, Scores und Fahrerdaten aus dem PDF.</p>
+                <p className="mt-1">Tipp: Benennen Sie Ihre Datei mit "KW" und der Wochennummer (z.B. "Scorecard_KW12.pdf"), damit die Woche automatisch erkannt wird.</p>
               </div>
             )}
             
@@ -96,6 +99,16 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
               </div>
             )}
           </div>
+        )}
+        
+        {selectedCategory === "scorecard" && (
+          <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Hinweis zur Scorecard-Verarbeitung</AlertTitle>
+            <AlertDescription>
+              Nach dem Hochladen werden die Daten automatisch extrahiert und können anschließend unter "Qualität → Scorecard" angezeigt werden.
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
       <CardFooter className="flex justify-end">

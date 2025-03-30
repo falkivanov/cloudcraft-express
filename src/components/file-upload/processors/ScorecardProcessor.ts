@@ -1,6 +1,7 @@
 
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
+import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
 
 /**
  * Process scorecard PDF files
@@ -22,28 +23,42 @@ export class ScorecardProcessor extends BaseFileProcessor {
       localStorage.removeItem("scorecard_data");
       localStorage.removeItem("extractedScorecardData");
       
-      // Store the file content for actual processing
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        console.log("Scorecard file loaded, ready for processing");
-      };
-      fileReader.readAsArrayBuffer(this.file);
+      // Read file as ArrayBuffer for PDF.js processing
+      const arrayBuffer = await this.file.arrayBuffer();
       
-      if (showToasts) {
-        toast.success(
-          `Scorecard Datei hochgeladen`,
-          {
-            description: "Die Datei wurde hochgeladen und kann jetzt verarbeitet werden.",
-          }
-        );
+      console.log("Starting PDF parsing...");
+      // Process the PDF file
+      const scorecardData = await parseScorecardPDF(arrayBuffer, this.file.name);
+      
+      if (scorecardData) {
+        console.log("Successfully extracted scorecard data:", scorecardData);
+        // Store the extracted data in localStorage
+        localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
+        
+        if (showToasts) {
+          toast.success(
+            `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
+            {
+              description: "Die Daten wurden extrahiert und können jetzt angezeigt werden.",
+            }
+          );
+        }
+      } else {
+        throw new Error("Keine Daten konnten aus der PDF-Datei extrahiert werden.");
       }
       
+      // Call the base class's default processing to handle file upload callback
       this.processDefault(showToasts);
       return true;
     } catch (error) {
       console.error("Error processing scorecard:", error);
       if (showToasts) {
-        toast.error("Fehler bei der Verarbeitung der Scorecard");
+        toast.error(
+          "Fehler bei der Verarbeitung der Scorecard",
+          {
+            description: error instanceof Error ? error.message : "Unbekannter Fehler",
+          }
+        );
       }
       throw error;
     } finally {

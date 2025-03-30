@@ -16,6 +16,8 @@ export class FileProcessorFactory {
     setProcessing: (processing: boolean) => void,
     onFileUpload?: (file: File, type: string, category: string) => void
   ): BaseFileProcessor {
+    console.log(`Creating processor for category: ${category} and file: ${file.name}`);
+    
     switch (category) {
       case "scorecard":
         return new ScorecardProcessor(file, category, setProcessing, onFileUpload);
