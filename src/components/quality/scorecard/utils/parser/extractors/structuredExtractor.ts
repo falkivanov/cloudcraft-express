@@ -3,7 +3,7 @@ import { ScoreCardData } from '../../../types';
 import { extractWeekFromFilename } from '../weekUtils';
 import { extractCompanyKPIsFromStructure } from './companyKpiExtractor';
 import { extractDriverKPIsFromStructure } from './driverKpiExtractor';
-import { extractFocusAreasFromStructure } from './focusAreasExtractor';
+import { extractFocusAreasFromStructure } from './focus-areas';
 import { extractNumericValues } from './valueExtractor';
 
 /**

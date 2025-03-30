@@ -1,5 +1,14 @@
 
 /**
+ * Main focus areas extractor that coordinates the extraction process
+ */
+import { extractAreasFromItems } from './itemExtractor';
+import { groupItemsByVerticalProximity } from './groupingUtils';
+import { cleanFocusAreas } from './cleaningUtils';
+import { isLikelyKPI } from './kpiUtils';
+import { getFallbackFocusAreas } from './fallbackUtils';
+
+/**
  * Extract focus areas from PDF content
  */
 export const extractFocusAreasFromStructure = (pageData: Record<number, any>) => {
@@ -127,123 +136,3 @@ export const extractFocusAreasFromStructure = (pageData: Record<number, any>) =>
   console.log("Could not find focus areas, using fallback");
   return getFallbackFocusAreas();
 };
-
-/**
- * Extracts focus areas from a list of PDF items
- */
-function extractAreasFromItems(items: any[]) {
-  const potentialAreas = [];
-  
-  for (const item of items) {
-    const text = item.str.trim();
-    
-    // Skip very short strings or pure numbers
-    if (text.length < 3 || /^\d+$/.test(text) || /^[0-9.]+%$/.test(text)) {
-      continue;
-    }
-    
-    // Look for bullet points, numbers, or KPI-like text
-    if (
-      /^[•\-*]/.test(text) || // Starts with bullet
-      /^\d+\./.test(text) ||  // Numbered list
-      /^[A-Z]/.test(text) ||  // Starts with capital letter
-      isLikelyKPI(text)       // Resembles a KPI name
-    ) {
-      // Clean up the text
-      let cleanText = text
-        .replace(/^[•\-*\d\.]+\s*/, '') // Remove bullets or numbers
-        .replace(/^\s*–\s*/, '')        // Remove dashes
-        .replace(/%.*$/, '')            // Remove percentage and anything after
-        .trim();
-      
-      // Skip common words that aren't focus areas
-      if (
-        cleanText.length > 3 && 
-        !/^(the|and|area|focus|priority|action|item)$/i.test(cleanText) &&
-        !potentialAreas.includes(cleanText)
-      ) {
-        potentialAreas.push(cleanText);
-        console.log("Added potential focus area:", cleanText);
-      }
-    }
-  }
-  
-  return potentialAreas;
-}
-
-/**
- * Group items that are close to each other vertically
- */
-function groupItemsByVerticalProximity(items: any[]) {
-  const groups: any[][] = [];
-  let currentGroup: any[] = [];
-  let lastY = -1;
-  
-  // Sort by y-position (top to bottom)
-  const sortedItems = [...items].sort((a, b) => b.y - a.y);
-  
-  for (const item of sortedItems) {
-    if (lastY === -1 || Math.abs(item.y - lastY) < 20) {
-      // Items close together go in the same group
-      currentGroup.push(item);
-    } else {
-      // Start a new group
-      if (currentGroup.length > 0) {
-        groups.push(currentGroup);
-      }
-      currentGroup = [item];
-    }
-    lastY = item.y;
-  }
-  
-  // Add the last group if it has items
-  if (currentGroup.length > 0) {
-    groups.push(currentGroup);
-  }
-  
-  return groups;
-}
-
-/**
- * Clean and limit focus areas to the top 3
- */
-function cleanFocusAreas(areas: string[]) {
-  // Remove duplicates and limit to 3
-  return [...new Set(areas)]
-    .filter(area => isLikelyKPI(area))
-    .slice(0, 3);
-}
-
-/**
- * Check if text resembles a KPI name
- */
-function isLikelyKPI(text: string) {
-  if (!text) return false;
-  
-  // Clean the text
-  const cleanText = text.trim().toLowerCase();
-  
-  // Skip percentage values or status words
-  if (/^\d+%$/.test(cleanText) || 
-      /^(good|great|fair|poor|fantastic)$/i.test(cleanText)) {
-    return false;
-  }
-  
-  // Common KPI keywords
-  const kpiKeywords = [
-    'compliance', 'rate', 'adoption', 'dpmo', 'capacity', 
-    'reliability', 'delivery', 'received', 'photo', 'contact',
-    'escalation', 'feedback', 'audit', 'mentor', 'safe', 'driving',
-    'hours', 'completion'
-  ];
-  
-  // Check if any keyword is part of the text
-  return kpiKeywords.some(keyword => cleanText.includes(keyword));
-}
-
-/**
- * Return fallback focus areas when extraction fails
- */
-function getFallbackFocusAreas() {
-  return ['Contact Compliance', 'DNR DPMO', 'Photo-On-Delivery'];
-}
