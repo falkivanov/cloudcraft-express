@@ -1,16 +1,10 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Dummy-Daten für Mitarbeiter - In einer realen Anwendung würden diese aus einer API kommen
-const employees = [
-  { id: "1", name: "Max Mustermann" },
-  { id: "2", name: "Anna Schmidt" },
-  { id: "3", name: "Thomas Müller" },
-  { id: "4", name: "Lisa Weber" },
-  { id: "5", name: "Michael Fischer" },
-];
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { Employee } from "@/types/employee";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 
 interface EmployeeSelectProps {
   employeeId?: string;
@@ -18,6 +12,29 @@ interface EmployeeSelectProps {
 }
 
 const EmployeeSelect = ({ employeeId, onEmployeeSelect }: EmployeeSelectProps) => {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  
+  // Lade die Mitarbeiterdaten aus dem localStorage
+  useEffect(() => {
+    const loadEmployees = () => {
+      try {
+        const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
+        if (savedEmployees && Array.isArray(savedEmployees) && savedEmployees.length > 0) {
+          console.log("EmployeeSelect loaded employees:", savedEmployees.length);
+          setEmployees(savedEmployees);
+        } else {
+          console.log("EmployeeSelect using sample employees");
+          setEmployees(initialEmployees);
+        }
+      } catch (error) {
+        console.error("Error loading employees for select:", error);
+        setEmployees(initialEmployees);
+      }
+    };
+    
+    loadEmployees();
+  }, []);
+  
   return (
     <div className="space-y-2">
       <Label htmlFor="caused-by-employee">Verursacht durch</Label>
@@ -40,5 +57,4 @@ const EmployeeSelect = ({ employeeId, onEmployeeSelect }: EmployeeSelectProps) =
   );
 };
 
-export { employees };
 export default EmployeeSelect;

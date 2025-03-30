@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Employee } from "@/types/employee";
 import { processEmployees } from "../utils/employee-processor";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
 
 /**
  * Hook to synchronize employee data across tabs and handle beforeunload
@@ -15,12 +16,13 @@ export const useEmployeeStorageSync = (
     const handleBeforeUnload = () => {
       try {
         // Set a timestamp for data verification
-        localStorage.setItem('dataTimestamp', Date.now().toString());
+        saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
         
         // Ensure employee data is saved
         if (employees.length > 0) {
           const processedEmployees = processEmployees(employees);
-          localStorage.setItem('employees', JSON.stringify(processedEmployees));
+          saveToStorage(STORAGE_KEYS.EMPLOYEES, processedEmployees);
+          console.log("Saved employees to localStorage before unload:", employees.length);
         }
       } catch (error) {
         console.error('Error saving employees to localStorage before unload:', error);
@@ -38,7 +40,7 @@ export const useEmployeeStorageSync = (
     const handleStorageChange = (e: StorageEvent | Event) => {
       // If it's a StorageEvent, check the key
       if (e instanceof StorageEvent) {
-        if (e.key === 'employees' && e.newValue) {
+        if (e.key === STORAGE_KEYS.EMPLOYEES && e.newValue) {
           try {
             const updatedEmployees = JSON.parse(e.newValue);
             if (updatedEmployees && Array.isArray(updatedEmployees) && updatedEmployees.length > 0) {
@@ -53,13 +55,10 @@ export const useEmployeeStorageSync = (
       } else {
         // If it's a generic event (for within the same tab)
         try {
-          const savedEmployees = localStorage.getItem('employees');
-          if (savedEmployees) {
-            const parsedEmployees = JSON.parse(savedEmployees);
-            if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
-              const processedEmployees = processEmployees(parsedEmployees);
-              setEmployees(processedEmployees);
-            }
+          const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
+          if (savedEmployees && Array.isArray(savedEmployees) && savedEmployees.length > 0) {
+            const processedEmployees = processEmployees(savedEmployees);
+            setEmployees(processedEmployees);
           }
         } catch (error) {
           console.error('Error handling internal storage event:', error);

@@ -4,6 +4,8 @@ import { initialVehicles } from "@/data/sampleVehicleData";
 import { useVehicleFilter } from "@/hooks/useVehicleFilter";
 import { useVehicleOperations } from "@/hooks/useVehicleOperations";
 import { Vehicle } from "@/types/vehicle";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { toast } from "sonner";
 
 export const useVehicleData = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -14,22 +16,18 @@ export const useVehicleData = () => {
   useEffect(() => {
     const loadVehiclesFromStorage = () => {
       try {
-        // Überprüfe, ob ein Zeitstempel existiert, um zu bestätigen, dass die Daten gültig sind
-        const dataTimestamp = localStorage.getItem('dataTimestamp');
+        const savedVehicles = loadFromStorage<Vehicle[]>(STORAGE_KEYS.VEHICLES);
         
-        const savedVehicles = localStorage.getItem('vehicles');
-        console.log('Loading vehicles from localStorage');
-        
-        if (savedVehicles) {
-          const parsedVehicles = JSON.parse(savedVehicles);
-          if (parsedVehicles && Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
-            console.log('Found saved vehicles:', parsedVehicles.length);
-            setLoadedVehicles(parsedVehicles);
-            
-            // Nach erfolgreichem Laden, einen neuen Zeitstempel setzen
-            localStorage.setItem('dataTimestamp', Date.now().toString());
-            return; // Erfolgreich geladen
-          }
+        if (savedVehicles && Array.isArray(savedVehicles) && savedVehicles.length > 0) {
+          console.log('Found saved vehicles:', savedVehicles.length);
+          setLoadedVehicles(savedVehicles);
+          
+          // Nach erfolgreichem Laden, einen neuen Zeitstempel setzen
+          saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+          
+          // Benachrichtigung über geladene Daten
+          toast.success(`${savedVehicles.length} Fahrzeuge geladen`);
+          return; // Erfolgreich geladen
         }
         
         // Wenn keine gültigen gespeicherten Daten vorhanden sind oder Parsing fehlschlägt
@@ -37,17 +35,30 @@ export const useVehicleData = () => {
         setLoadedVehicles(initialVehicles);
         
         // Initialdaten im localStorage speichern
-        localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
-        localStorage.setItem('dataTimestamp', Date.now().toString());
+        saveToStorage(STORAGE_KEYS.VEHICLES, initialVehicles);
+        saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+        
+        // Benachrichtigung über Beispieldaten
+        toast.info("Beispieldaten für Fahrzeuge geladen", {
+          description: "Es wurden keine gespeicherten Daten gefunden."
+        });
       } catch (error) {
         console.error('Error loading vehicles from localStorage:', error);
         setLoadedVehicles(initialVehicles);
+        
         // Bei Fehler auch die Initialdaten speichern
         try {
-          localStorage.setItem('vehicles', JSON.stringify(initialVehicles));
-          localStorage.setItem('dataTimestamp', Date.now().toString());
+          saveToStorage(STORAGE_KEYS.VEHICLES, initialVehicles);
+          saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+          
+          toast.warning("Fehler beim Laden der Fahrzeugdaten", {
+            description: "Beispieldaten wurden geladen."
+          });
         } catch (storageError) {
           console.error('Error saving fallback vehicle data:', storageError);
+          toast.error("Probleme mit dem Speicherzugriff", {
+            description: "Daten können nicht gespeichert werden."
+          });
         }
       } finally {
         setIsInitialized(true);
@@ -60,11 +71,11 @@ export const useVehicleData = () => {
     const handleBeforeUnload = () => {
       try {
         // Setze einen Zeitstempel für die Datenüberprüfung
-        localStorage.setItem('dataTimestamp', Date.now().toString());
+        saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
         
         // Stelle sicher, dass die Fahrzeugdaten gespeichert sind
         if (vehicles.length > 0) {
-          localStorage.setItem('vehicles', JSON.stringify(vehicles));
+          saveToStorage(STORAGE_KEYS.VEHICLES, vehicles);
         }
       } catch (error) {
         console.error('Error saving vehicles to localStorage before unload:', error);
@@ -107,7 +118,7 @@ export const useVehicleData = () => {
     const handleStorageChange = (e: StorageEvent | Event) => {
       // Wenn es ein StorageEvent ist, überprüfe den Key
       if (e instanceof StorageEvent) {
-        if (e.key === 'vehicles' && e.newValue) {
+        if (e.key === STORAGE_KEYS.VEHICLES && e.newValue) {
           console.log('Vehicle data changed in another tab');
           try {
             const updatedVehicles = JSON.parse(e.newValue);
@@ -122,12 +133,9 @@ export const useVehicleData = () => {
       } else {
         // Wenn es ein generisches Event ist (für innerhalb des gleichen Tabs)
         try {
-          const savedVehicles = localStorage.getItem('vehicles');
-          if (savedVehicles) {
-            const parsedVehicles = JSON.parse(savedVehicles);
-            if (parsedVehicles && Array.isArray(parsedVehicles) && parsedVehicles.length > 0) {
-              setVehicles(parsedVehicles);
-            }
+          const savedVehicles = loadFromStorage<Vehicle[]>(STORAGE_KEYS.VEHICLES);
+          if (savedVehicles && Array.isArray(savedVehicles) && savedVehicles.length > 0) {
+            setVehicles(savedVehicles);
           }
         } catch (error) {
           console.error('Error handling internal storage event:', error);

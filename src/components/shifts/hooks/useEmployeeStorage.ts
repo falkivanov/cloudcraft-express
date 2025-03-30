@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { Employee } from "@/types/employee";
 import { initialEmployees } from "@/data/sampleEmployeeData";
-import { processEmployees, filterAndProcessEmployees } from "../utils/employee-processor";
+import { processEmployees } from "../utils/employee-processor";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { toast } from "sonner";
 
 /**
  * Hook to handle loading employees from localStorage
@@ -17,21 +19,20 @@ export const useEmployeeStorage = (initialEmployeesData: Employee[] = []) => {
   useEffect(() => {
     const loadEmployeesFromStorage = () => {
       try {
-        const dataTimestamp = localStorage.getItem('dataTimestamp');
-        const savedEmployees = localStorage.getItem('employees');
+        const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
         
-        if (savedEmployees) {
-          const parsedEmployees = JSON.parse(savedEmployees);
-          console.log('Loaded employees from localStorage for shift planning:', parsedEmployees.length);
+        if (savedEmployees && Array.isArray(savedEmployees) && savedEmployees.length > 0) {
+          console.log('Loaded employees from localStorage for shift planning:', savedEmployees.length);
           
-          if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
-            const processedEmployees = processEmployees(parsedEmployees);
-            setEmployees(processedEmployees);
-            
-            // Set a timestamp after successful loading
-            localStorage.setItem('dataTimestamp', Date.now().toString());
-            return; // Successfully loaded
-          }
+          const processedEmployees = processEmployees(savedEmployees);
+          setEmployees(processedEmployees);
+          
+          // Set a timestamp after successful loading
+          saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+          
+          // Show a toast confirming successful data loading
+          toast.success(`${savedEmployees.length} Mitarbeiter geladen`);
+          return; // Successfully loaded
         }
         
         console.log('No valid employees in localStorage, using fallback data');
@@ -40,9 +41,14 @@ export const useEmployeeStorage = (initialEmployeesData: Employee[] = []) => {
         
         setEmployees(processedEmployees);
         
-        // Save to localStorage
-        localStorage.setItem('employees', JSON.stringify(processedEmployees));
-        localStorage.setItem('dataTimestamp', Date.now().toString());
+        // Save fallback data to localStorage
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, processedEmployees);
+        saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+        
+        // Notify user about using sample data
+        toast.info("Beispieldaten für Mitarbeiter geladen", {
+          description: "Es wurden keine gespeicherten Daten gefunden."
+        });
       } catch (error) {
         console.error('Error loading employees from localStorage:', error);
         
@@ -54,10 +60,17 @@ export const useEmployeeStorage = (initialEmployeesData: Employee[] = []) => {
         
         // Try to save the sample data
         try {
-          localStorage.setItem('employees', JSON.stringify(processedEmployees));
-          localStorage.setItem('dataTimestamp', Date.now().toString());
+          saveToStorage(STORAGE_KEYS.EMPLOYEES, processedEmployees);
+          saveToStorage(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
+          
+          toast.warning("Fehler beim Laden der Mitarbeiterdaten", {
+            description: "Beispieldaten wurden geladen."
+          });
         } catch (storageError) {
           console.error('Error saving fallback employee data:', storageError);
+          toast.error("Probleme mit dem Speicherzugriff", {
+            description: "Daten können nicht gespeichert werden."
+          });
         }
       }
     };
