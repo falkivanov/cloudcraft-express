@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../types';
 import { extractScorecardData } from './extractors/dataExtractor';
 import { PDFParseError } from './parser/PDFParseError';
@@ -12,7 +11,7 @@ import {
 import { 
   createSimpleScorecard,
   extractStructuredScorecard
-} from './parser/simpleExtractor';
+} from './parser/extractors/simpleExtractor';
 
 /**
  * Parse a scorecard PDF and extract data
