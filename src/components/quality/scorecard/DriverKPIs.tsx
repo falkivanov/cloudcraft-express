@@ -22,11 +22,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
 
   // Show an info message if we suspect the data is sample data or problematic
   const isSuspectedSampleData = 
-    (driverKPIs.length === 2 && 
-    driverKPIs[0]?.name === "TR-001" && 
-    driverKPIs[1]?.name === "TR-002") ||
-    driverKPIs.length === 0 ||
-    driverKPIs.length === 1;  // Added check for only one driver
+    (driverKPIs.length <= 2 && 
+    driverKPIs.some(d => ["TR-001", "TR-002"].includes(d.name))) ||
+    driverKPIs.length === 0;
 
   return (
     <div className="space-y-4">
@@ -38,7 +36,8 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         </div>
       </div>
       
-      {isSuspectedSampleData ? (
+      {/* Show warning if few drivers or sample data detected */}
+      {(isSuspectedSampleData || driverKPIs.length <= 1) ? (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -47,7 +46,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
               {driverKPIs.length === 0 ? 
                 " Es wurden keine Fahrer gefunden." : 
-                ` Es ${driverKPIs.length === 1 ? "wurde nur ein Fahrer" : "wurden nur Standard-Beispielfahrer"} gefunden.`}
+                driverKPIs.length === 1 ?
+                " Es wurde nur ein Fahrer gefunden." :
+                " Es wurden nur einige Beispielfahrer gefunden."}
             </p>
             <p>
               Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Wenn das Problem weiterhin besteht, 

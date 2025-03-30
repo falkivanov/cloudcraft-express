@@ -1,3 +1,4 @@
+
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
@@ -40,6 +41,11 @@ export class ScorecardProcessor extends BaseFileProcessor {
                 description: "Die Scorecard-Daten sind unvollständig. Einige Informationen werden mit Beispieldaten ergänzt.",
               }
             );
+          }
+          
+          // If we didn't extract enough driver KPIs, mark it as sample data
+          if (!scorecardData.driverKPIs || scorecardData.driverKPIs.length <= 1) {
+            scorecardData.isSampleData = true;
           }
         }
         
