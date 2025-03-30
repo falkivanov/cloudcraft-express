@@ -3,12 +3,14 @@ import { useState, useRef } from "react";
 import { validateFile } from "./utils/fileValidator";
 import { FileProcessor } from "./processors/FileProcessor";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const useFileUpload = (onFileUpload?: (file: File, type: string, category: string) => void) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("scorecard");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const validateAndSetFile = (selectedFile: File) => {
     const isValid = validateFile(selectedFile, selectedCategory);
@@ -50,7 +52,7 @@ export const useFileUpload = (onFileUpload?: (file: File, type: string, category
                   action: {
                     label: "Ja",
                     onClick: () => {
-                      window.location.href = "/quality/scorecard";
+                      navigate("/quality/scorecard");
                     }
                   },
                   duration: 10000,

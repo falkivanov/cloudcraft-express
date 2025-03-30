@@ -1,57 +1,81 @@
-
 import { toast } from "sonner";
-import { getCategoryInfo } from "../fileCategories";
 
 export interface ProcessOptions {
   showToasts?: boolean;
 }
 
 /**
- * Base processor class with common functionality
+ * Base class for all file processors
  */
 export abstract class BaseFileProcessor {
   protected file: File;
   protected category: string;
-  protected setProcessingState: (processing: boolean) => void;
+  protected setProcessing: (processing: boolean) => void;
   protected onFileUpload?: (file: File, type: string, category: string) => void;
   
   constructor(
     file: File, 
-    category: string,
+    category: string, 
     setProcessing: (processing: boolean) => void,
     onFileUpload?: (file: File, type: string, category: string) => void
   ) {
     this.file = file;
     this.category = category;
-    this.setProcessingState = setProcessing;
+    this.setProcessing = setProcessing;
     this.onFileUpload = onFileUpload;
   }
-
+  
   /**
-   * Set the processing state
+   * Main processing method to be implemented by all processors
    */
-  public setProcessing(value: boolean): void {
-    this.setProcessingState(value);
+  public abstract process(options?: ProcessOptions): Promise<boolean>;
+  
+  /**
+   * Default processing that happens for all file types
+   */
+  protected processDefault(showToasts: boolean = true): void {
+    // Determine file type from name
+    const fileType = this.file.name.split('.').pop()?.toLowerCase() || '';
+    
+    // Call the callback if it exists
+    if (this.onFileUpload) {
+      this.onFileUpload(this.file, fileType, this.category);
+    }
+    
+    // Generic success message if none was shown by the specific processor
+    if (showToasts) {
+      toast.success(
+        `Datei erfolgreich hochgeladen: ${this.file.name}`,
+        {
+          description: `Die Daten wurden verarbeitet und gespeichert.`,
+        }
+      );
+    }
+    
+    // Add to upload history
+    this.addToUploadHistory(this.file, fileType, this.category);
   }
   
   /**
-   * Process the file according to its category - to be implemented by subclasses
+   * Add file to upload history in localStorage
    */
-  public abstract process(options: ProcessOptions): Promise<boolean>;
-  
-  /**
-   * Default processing for file types that don't need special handling
-   */
-  protected processDefault(showToasts: boolean): void {
-    const categoryInfo = getCategoryInfo(this.category);
-    
-    if (showToasts && categoryInfo) {
-      toast.success(`Datei "${this.file.name}" erfolgreich als ${categoryInfo.name} hochgeladen`);
-    }
-    
-    if (this.onFileUpload) {
-      const fileType = categoryInfo?.expectedType || "unknown";
-      this.onFileUpload(this.file, fileType, this.category);
+  protected addToUploadHistory(file: File, type: string, category: string): void {
+    try {
+      const historyJSON = localStorage.getItem('fileUploadHistory');
+      const history = historyJSON ? JSON.parse(historyJSON) : [];
+      
+      history.unshift({
+        name: file.name,
+        type: type,
+        timestamp: new Date().toISOString(),
+        category: category
+      });
+      
+      // Keep only the latest 100 entries
+      const trimmedHistory = history.slice(0, 100);
+      localStorage.setItem('fileUploadHistory', JSON.stringify(trimmedHistory));
+    } catch (error) {
+      console.error("Error adding to upload history:", error);
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FileUpload from "@/components/file-upload/FileUpload";
 import {
   Tabs,
@@ -9,34 +9,55 @@ import {
 import { toast } from "sonner";
 import { Container } from "@/components/ui/container";
 
+interface UploadHistoryItem {
+  name: string;
+  type: string;
+  timestamp: string;
+  category: string;
+}
+
 const FileUploadPage = () => {
-  const [uploadHistory, setUploadHistory] = useState<{
-    name: string;
-    type: string;
-    timestamp: Date;
-    category: string;
-  }[]>([]);
+  const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const historyJSON = localStorage.getItem('fileUploadHistory');
+      if (historyJSON) {
+        const history = JSON.parse(historyJSON);
+        setUploadHistory(history);
+      }
+    } catch (error) {
+      console.error("Error loading upload history:", error);
+    }
+  }, []);
 
   const handleFileUpload = (file: File, type: string, category: string) => {
     console.log(`Processing ${category} file:`, file);
     
-    // Add to upload history first so user gets immediate feedback
-    setUploadHistory(prev => [
-      {
-        name: file.name,
-        type: type,
-        timestamp: new Date(),
-        category: category
-      },
-      ...prev
-    ]);
+    const newItem = {
+      name: file.name,
+      type: type,
+      timestamp: new Date().toISOString(),
+      category: category
+    };
     
-    // File Reader zum Verarbeiten der Datei
+    setUploadHistory(prev => [newItem, ...prev]);
+    
+    try {
+      const historyJSON = localStorage.getItem('fileUploadHistory');
+      const history = historyJSON ? JSON.parse(historyJSON) : [];
+      history.unshift(newItem);
+      
+      const trimmedHistory = history.slice(0, 100);
+      localStorage.setItem('fileUploadHistory', JSON.stringify(trimmedHistory));
+    } catch (error) {
+      console.error("Error updating upload history:", error);
+    }
+    
     const reader = new FileReader();
     
     reader.onload = (e) => {
       if (e.target?.result) {
-        // Dateiinhalt in LocalStorage speichern für die entsprechende Kategorie
         if (category === "customerContact" && type === "html") {
           localStorage.setItem("customerContactData", e.target.result as string);
           toast.success(
@@ -70,8 +91,6 @@ const FileUploadPage = () => {
             }
           );
         }
-        
-        // Note: scorecard processing is fully handled by useFileUpload hook
       }
     };
     
@@ -86,7 +105,6 @@ const FileUploadPage = () => {
     } else if (type === "pdf" && category === "pod") {
       reader.readAsArrayBuffer(file);
     }
-    // Skip reading Scorecard here since it's handled by useFileUpload
   };
 
   const getCategoryDisplayName = (categoryId: string) => {
@@ -106,6 +124,15 @@ const FileUploadPage = () => {
       case "pod": return "bg-purple-100 text-purple-800";
       case "concessions": return "bg-orange-100 text-orange-800";
       default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString();
+    } catch (error) {
+      return dateString;
     }
   };
 
@@ -156,7 +183,7 @@ const FileUploadPage = () => {
                           </span>
                         </td>
                         <td className="p-3 uppercase">{item.type}</td>
-                        <td className="p-3">{item.timestamp.toLocaleString()}</td>
+                        <td className="p-3">{formatDate(item.timestamp)}</td>
                       </tr>
                     ))}
                   </tbody>

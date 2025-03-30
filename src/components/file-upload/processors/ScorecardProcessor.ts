@@ -1,4 +1,3 @@
-
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
@@ -43,6 +42,9 @@ export class ScorecardProcessor extends BaseFileProcessor {
             }
           );
         }
+
+        // Add to file upload history
+        this.addToUploadHistory(this.file, "pdf", "scorecard");
       } else {
         throw new Error("Keine Daten konnten aus der PDF-Datei extrahiert werden.");
       }

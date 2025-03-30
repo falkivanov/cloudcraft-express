@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
@@ -8,6 +7,7 @@ import ScorecardContent from "@/components/quality/scorecard/ScorecardContent";
 import MentorContent from "@/components/quality/MentorContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import QualityTabs from "@/components/quality/QualityTabs";
+import { toast } from "sonner";
 
 interface DriverComplianceData {
   name: string;
@@ -27,20 +27,15 @@ const QualityPage = () => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
-  // Clear ALL quality and test data on component mount
+  // Only clear demo data on first mount, keep extracted data
   useEffect(() => {
-    // Clear all localStorage items
-    localStorage.clear();
-    
-    // Specifically remove all quality-related items to be sure
+    // Don't clear extractedScorecardData since it's uploaded data
     localStorage.removeItem('customerContactData');
     localStorage.removeItem('scorecardData');
-    localStorage.removeItem('extractedScorecardData');
     localStorage.removeItem('concessionsData');
     localStorage.removeItem('mentorData');
-    localStorage.removeItem('employees');
     
-    console.info("All test data and localStorage cleared");
+    console.info("Test data cleared");
   }, []);
   
   useEffect(() => {
@@ -49,7 +44,7 @@ const QualityPage = () => {
   }, [pathname]);
   
   const loadData = () => {
-    console.info("QualityPage: Initial data load");
+    console.info("QualityPage: Loading data");
     setDataLoaded(false);
     
     if (pathname.includes("/quality/customer-contact")) {
@@ -69,7 +64,12 @@ const QualityPage = () => {
         const extractedData = localStorage.getItem("extractedScorecardData");
         if (extractedData) {
           console.info("Using extracted PDF data from localStorage");
-          setScoreCardData(JSON.parse(extractedData));
+          const parsedData = JSON.parse(extractedData);
+          setScoreCardData(parsedData);
+          toast.success(`Scorecard Daten für KW ${parsedData.week}/${parsedData.year} geladen`, {
+            id: "scorecard-data-loaded",
+            duration: 3000,
+          });
         } else {
           const data = localStorage.getItem("scorecardData");
           if (data) {
@@ -79,6 +79,9 @@ const QualityPage = () => {
         }
       } catch (error) {
         console.error("Error parsing scorecard data:", error);
+        toast.error("Fehler beim Laden der Scorecard-Daten", {
+          description: "Bitte laden Sie die Scorecard-Datei erneut hoch."
+        });
       }
     } else if (pathname.includes("/quality/concessions")) {
       try {
