@@ -69,9 +69,12 @@ export const parseScorecardPDF = async (
       const data = await getSampleDataWithWeek(weekNum);
       console.info("Using sample data due to PDF processing error");
       
-      // Save the sample data to localStorage
+      // Save the sample data consistently
       const resultData = {...data, isSampleData: true};
+      
+      // Store data in both locations
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+      localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
       
       return resultData;
     }
@@ -82,9 +85,12 @@ export const parseScorecardPDF = async (
     const data = await getSampleDataWithWeek(weekNum);
     console.info("Using sample data due to general parsing error");
     
-    // Save the sample data to localStorage
+    // Save the sample data consistently 
     const resultData = {...data, isSampleData: true};
+    
+    // Store data in both locations
     saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+    localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
     
     return resultData;
   }

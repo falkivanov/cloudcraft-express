@@ -1,4 +1,3 @@
-
 /**
  * Extraction strategies for scorecard data
  */
@@ -40,6 +39,9 @@ export const attemptPositionalExtraction = async (
       
       // Save the extracted data to localStorage
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+      
+      // Keep backward compatibility but use the SAME object reference
+      localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
       
       return { success: true, data: resultData };
     } else {
@@ -85,6 +87,9 @@ export const attemptTextBasedExtraction = async (
       // Save the extracted data to localStorage
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
       
+      // Keep backward compatibility but use the SAME object reference
+      localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
+      
       return { success: true, data: resultData };
     } else {
       return { success: false, error: "Data validation failed" };
@@ -108,6 +113,9 @@ export const createFallbackData = (weekNum: number): ScoreCardData => {
   // Save the sample data to localStorage
   const resultData = {...data, isSampleData: true};
   saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
+  
+  // Keep backward compatibility but use the SAME object reference
+  localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
   
   return resultData;
 };

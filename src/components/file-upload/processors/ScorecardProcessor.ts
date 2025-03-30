@@ -56,10 +56,10 @@ export class ScorecardProcessor extends BaseFileProcessor {
           };
         }
         
-        // Store the extracted data in localStorage
+        // Store the extracted data in localStorage consistently
         saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, scorecardData);
         
-        // Also store for backward compatibility
+        // Also store for backward compatibility - USE THE SAME OBJECT
         localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
         
         // Also store week information separately for easier access

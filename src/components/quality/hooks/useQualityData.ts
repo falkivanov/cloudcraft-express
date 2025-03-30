@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { toast } from "sonner";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
 import { getPreviousWeekData } from "@/components/quality/scorecard/data/dataProvider";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
 
 interface DriverComplianceData {
   name: string;
@@ -35,39 +37,54 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   // Load scorecard data
   const loadScoreCardData = () => {
     try {
-      // Try to load extracted data first - IMPORTANT: Force refresh by not using cached state
-      const extractedData = localStorage.getItem("extractedScorecardData");
+      // Try to load extracted data with consistent approach
+      const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       
       if (extractedData) {
-        console.info("Using extracted PDF data from localStorage:", extractedData.substring(0, 100) + "...");
-        const parsedData = JSON.parse(extractedData) as ScoreCardData;
-        setScoreCardData(parsedData);
+        console.info("Using extracted PDF data from storage:", 
+          JSON.stringify(extractedData).substring(0, 100) + "...");
+        setScoreCardData(extractedData);
         
         // Load previous week data if available
-        if (parsedData.week && parsedData.year) {
-          const weekId = `week-${parsedData.week}-${parsedData.year}`;
+        if (extractedData.week && extractedData.year) {
+          const weekId = `week-${extractedData.week}-${extractedData.year}`;
           const previousData = getPreviousWeekData(weekId);
           setPrevWeekScoreCardData(previousData);
           
-          console.info(`Successfully loaded data for week ${parsedData.week}/${parsedData.year}`);
+          console.info(`Successfully loaded data for week ${extractedData.week}/${extractedData.year}`);
         }
       } else {
-        // Fall back to test data if available
-        const data = localStorage.getItem("scorecardData");
-        if (data) {
-          const parsedScorecard = JSON.parse(data);
-          setScoreCardData(parsedScorecard);
+        // Fallback to legacy approach if needed
+        const legacyData = localStorage.getItem("extractedScorecardData");
+        if (legacyData) {
+          console.info("Using legacy extracted PDF data:", legacyData.substring(0, 100) + "...");
+          const parsedData = JSON.parse(legacyData) as ScoreCardData;
+          setScoreCardData(parsedData);
           
-          // Try to load previous week data
-          if (parsedScorecard.week && parsedScorecard.year) {
-            const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
+          // Load previous week data if available
+          if (parsedData.week && parsedData.year) {
+            const weekId = `week-${parsedData.week}-${parsedData.year}`;
             const previousData = getPreviousWeekData(weekId);
             setPrevWeekScoreCardData(previousData);
           }
         } else {
-          console.info("No scorecard data found in localStorage");
-          setScoreCardData(null);
-          setPrevWeekScoreCardData(null);
+          // Fall back to test data if available
+          const data = localStorage.getItem("scorecardData");
+          if (data) {
+            const parsedScorecard = JSON.parse(data);
+            setScoreCardData(parsedScorecard);
+            
+            // Try to load previous week data
+            if (parsedScorecard.week && parsedScorecard.year) {
+              const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
+              const previousData = getPreviousWeekData(weekId);
+              setPrevWeekScoreCardData(previousData);
+            }
+          } else {
+            console.info("No scorecard data found in localStorage");
+            setScoreCardData(null);
+            setPrevWeekScoreCardData(null);
+          }
         }
       }
     } catch (error) {
@@ -89,7 +106,7 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   };
 
   const loadData = () => {
-    console.info("QualityPage: Loading data");
+    console.info("QualityPage: Loading data for path:", pathname);
     setDataLoaded(false);
     
     if (pathname.includes("/quality/customer-contact")) {
@@ -138,7 +155,8 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   // Listen for changes to localStorage
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "extractedScorecardData" && pathname.includes("/quality/scorecard")) {
+      if ((event.key === "extractedScorecardData" || event.key === STORAGE_KEYS.EXTRACTED_SCORECARD_DATA) 
+          && pathname.includes("/quality/scorecard")) {
         console.info("Storage event detected: Scorecard data changed");
         loadScoreCardData();
       }

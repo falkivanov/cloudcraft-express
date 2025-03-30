@@ -33,11 +33,20 @@ export const parseWeekIdentifier = (weekId: string): { weekNum: number; year: nu
  * @returns Boolean indicating if data is available
  */
 export const isDataAvailableForWeek = (weekNum: number, year: number): boolean => {
-  // First check if we have extracted data from PDF
+  // First check if we have extracted data from PDF - consistent approach
   try {
     const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
       if (extractedData.week === weekNum && extractedData.year === year) {
+        return true;
+      }
+    }
+    
+    // Fallback to legacy approach if needed
+    const legacyData = localStorage.getItem("extractedScorecardData");
+    if (legacyData) {
+      const parsedData = JSON.parse(legacyData);
+      if (parsedData && parsedData.week === weekNum && parsedData.year === year) {
         return true;
       }
     }
@@ -60,12 +69,21 @@ export const isDataAvailableForWeek = (weekNum: number, year: number): boolean =
  * @returns Function to retrieve data for the specified week
  */
 export const getDataFunctionForWeek = (weekNum: number, year: number): (() => ScoreCardData) => {
-  // First check for extracted data
+  // First check for extracted data - consistent approach
   try {
     const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
       if (extractedData.week === weekNum && extractedData.year === year) {
         return () => extractedData;
+      }
+    }
+    
+    // Fallback to legacy approach
+    const legacyData = localStorage.getItem("extractedScorecardData");
+    if (legacyData) {
+      const parsedData = JSON.parse(legacyData);
+      if (parsedData && parsedData.week === weekNum && parsedData.year === year) {
+        return () => parsedData;
       }
     }
   } catch (e) {
@@ -101,11 +119,11 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
     return scorecardData;
   }
   
-  // Check for extracted data from PDF
+  // Check for extracted data from PDF - consistent approach first
   try {
     const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
-      console.log("Using extracted PDF data for scorecard", extractedData);
+      console.log("Using extracted PDF data for scorecard from structured storage", extractedData);
       
       // If no specific week is selected, use this data
       if (!selectedWeek) {
@@ -116,6 +134,24 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
       const parsedWeek = parseWeekIdentifier(selectedWeek);
       if (parsedWeek && parsedWeek.weekNum === extractedData.week && parsedWeek.year === extractedData.year) {
         return extractedData;
+      }
+    }
+    
+    // Fallback to legacy approach
+    const legacyData = localStorage.getItem("extractedScorecardData");
+    if (legacyData) {
+      const parsedData = JSON.parse(legacyData);
+      console.log("Using extracted PDF data for scorecard from legacy storage", parsedData);
+      
+      // If no specific week is selected, use this data
+      if (!selectedWeek) {
+        return parsedData;
+      }
+      
+      // If a week is selected, check if it matches our extracted data
+      const parsedWeek = parseWeekIdentifier(selectedWeek);
+      if (parsedWeek && parsedWeek.weekNum === parsedData.week && parsedWeek.year === parsedData.year) {
+        return parsedData;
       }
     }
   } catch (e) {
