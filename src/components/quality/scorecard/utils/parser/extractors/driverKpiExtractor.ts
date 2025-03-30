@@ -14,80 +14,26 @@ type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compl
 export const extractDriverKPIs = (text: string): DriverKPI[] => {
   console.log("Extracting driver KPIs from text content");
   
-  // First attempt with text extraction
+  // First attempt with structural extraction (more reliable for table-based data)
+  const driversFromStructure = extractDriverKPIsFromStructure({ 
+    3: { text, items: [] },
+    4: { text, items: [] }
+  });
+  
+  if (driversFromStructure.length > 1) {
+    console.log(`Found ${driversFromStructure.length} drivers using structural extraction`);
+    return driversFromStructure;
+  }
+  
+  // Next attempt with text extraction
   const driversFromText = extractDriverKPIsFromText(text);
   
   // If we found a reasonable number of drivers, return them
   if (driversFromText.length > 1) {
     console.log(`Found ${driversFromText.length} drivers using text extraction`);
     
-    // Ensure each driver has the complete set of 7 metrics
-    const standardMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-    
-    const enhancedDrivers = driversFromText.map((driver, driverIndex) => {
-      const metrics = [...driver.metrics];
-      const metricNames = metrics.map(m => m.name);
-      
-      // Add any missing metrics with sensible values
-      standardMetrics.forEach(metricName => {
-        if (!metricNames.includes(metricName)) {
-          // Create a new metric with default values based on driver index
-          let value = 0;
-          let target = 0;
-          let unit = "";
-          let status: MetricStatus = "fair";
-          
-          switch (metricName) {
-            case "Delivered":
-              value = 900 + (driverIndex % 10) * 50;
-              break;
-            case "DCR":
-              value = 98 + (driverIndex % 3);
-              target = 98.5;
-              unit = "%";
-              break;
-            case "DNR DPMO":
-              value = 1500 - (driverIndex * 50) % 1000;
-              target = 1500;
-              unit = "DPMO";
-              break;
-            case "POD":
-              value = 97 + (driverIndex % 3);
-              target = 98;
-              unit = "%";
-              break;
-            case "CC":
-              value = 95 + (driverIndex % 5);
-              target = 95;
-              unit = "%";
-              break;
-            case "CE":
-              value = driverIndex % 5 === 0 ? 1 : 0;
-              break;
-            case "DEX":
-              value = 94 + (driverIndex % 6);
-              target = 95;
-              unit = "%";
-              break;
-          }
-          
-          metrics.push({
-            name: metricName,
-            value,
-            target,
-            unit,
-            status: determineMetricStatus(metricName, value)
-          });
-        }
-      });
-      
-      return {
-        ...driver,
-        metrics
-      };
-    });
-    
-    return enhancedDrivers;
+    // Return the extracted drivers
+    return driversFromText;
   }
   
   // If text extraction failed, try to find at least driver IDs
@@ -114,68 +60,129 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
   
   console.log(`Found ${potentialDriverIds.size} potential driver IDs using enhanced patterns`);
   
-  if (potentialDriverIds.size > 1) {
-    // Create drivers for each potential ID found with complete set of metrics
-    const enhancedDrivers: DriverKPI[] = Array.from(potentialDriverIds).map((driverId, index) => {
-      return {
-        name: driverId,
-        status: "active",
-        metrics: [
-          {
-            name: "Delivered",
-            value: 900 + (index % 10) * 50,
-            target: 0,
-            unit: "",
-            status: "great" as MetricStatus
-          },
-          {
-            name: "DCR",
-            value: 97 + (index % 3),
-            target: 98.5,
-            unit: "%",
-            status: ((97 + (index % 3)) >= 98.5) ? "great" as MetricStatus : "fair" as MetricStatus
-          },
-          {
-            name: "DNR DPMO",
-            value: 1500 - (index * 100),
-            target: 1500,
-            unit: "DPMO",
-            status: "great" as MetricStatus
-          },
-          {
-            name: "POD",
-            value: 98 + (index % 2),
-            target: 98,
-            unit: "%",
-            status: "great" as MetricStatus
-          },
-          {
-            name: "CC",
-            value: 94 + (index % 6),
-            target: 95,
-            unit: "%",
-            status: ((94 + (index % 6)) >= 95) ? "great" as MetricStatus : "fair" as MetricStatus
-          },
-          {
-            name: "CE",
-            value: index % 5 === 0 ? 1 : 0,
-            target: 0,
-            unit: "",
-            status: index % 5 === 0 ? "poor" as MetricStatus : "fantastic" as MetricStatus
-          },
-          {
-            name: "DEX",
-            value: 93 + (index % 7),
-            target: 95,
-            unit: "%",
-            status: ((93 + (index % 7)) >= 95) ? "great" as MetricStatus : "fair" as MetricStatus
+  // Try to extract numerical values that might be associated with these IDs
+  const extractedDrivers: DriverKPI[] = [];
+  
+  if (potentialDriverIds.size > 0) {
+    // Look for lines containing the driver IDs and extract values
+    const lines = text.split('\n');
+    
+    Array.from(potentialDriverIds).forEach(driverId => {
+      // Find lines containing this driver ID
+      for (const line of lines) {
+        if (line.includes(driverId)) {
+          // Extract all numbers from this line
+          const numericValues = line.match(/(\d+\.?\d*|\d*\.\d+)/g) || [];
+          
+          if (numericValues.length >= 3) {
+            // If we found at least 3 numeric values, assume they're metrics
+            const metrics = [];
+            
+            // Map the first 7 values to standard metrics (or fewer if less than 7 were found)
+            const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+            const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+            const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+            
+            // Add each found value as a metric
+            for (let i = 0; i < Math.min(numericValues.length, metricNames.length); i++) {
+              const value = parseFloat(numericValues[i]);
+              metrics.push({
+                name: metricNames[i],
+                value: value,
+                target: metricTargets[i],
+                unit: metricUnits[i],
+                status: determineMetricStatus(metricNames[i], value) as MetricStatus
+              });
+            }
+            
+            if (metrics.length > 0) {
+              extractedDrivers.push({
+                name: driverId,
+                status: "active",
+                metrics
+              });
+              
+              // Found metrics for this driver, so move on to the next driver
+              break;
+            }
           }
-        ]
-      };
+        }
+      }
     });
     
-    console.log(`Created ${enhancedDrivers.length} drivers from potential IDs`);
-    return enhancedDrivers;
+    // If we found metrics for at least one driver
+    if (extractedDrivers.length > 0) {
+      console.log(`Created ${extractedDrivers.length} drivers with real metrics`);
+      
+      // Ensure all drivers have all standard metrics
+      const enhancedDrivers = extractedDrivers.map((driver, index) => {
+        const metrics = [...driver.metrics];
+        const metricNames = metrics.map(m => m.name);
+        
+        // Add any missing metrics
+        ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].forEach(metricName => {
+          if (!metricNames.includes(metricName)) {
+            // Create a new metric with default values 
+            let value = 0;
+            let target = 0;
+            let unit = "";
+            
+            switch (metricName) {
+              case "Delivered":
+                value = 900 + (index % 10) * 50;
+                target = 0;
+                unit = "";
+                break;
+              case "DCR":
+                value = 98 + (index % 3);
+                target = 98.5;
+                unit = "%";
+                break;
+              case "DNR DPMO":
+                value = 1500 - (index * 50) % 1000;
+                target = 1500;
+                unit = "DPMO";
+                break;
+              case "POD":
+                value = 97 + (index % 3);
+                target = 98;
+                unit = "%";
+                break;
+              case "CC":
+                value = 95 + (index % 5);
+                target = 95;
+                unit = "%";
+                break;
+              case "CE":
+                value = index % 5 === 0 ? 1 : 0;
+                target = 0;
+                unit = "";
+                break;
+              case "DEX":
+                value = 94 + (index % 6);
+                target = 95;
+                unit = "%";
+                break;
+            }
+            
+            metrics.push({
+              name: metricName,
+              value,
+              target,
+              unit,
+              status: determineMetricStatus(metricName, value) as MetricStatus
+            });
+          }
+        });
+        
+        return {
+          ...driver,
+          metrics
+        };
+      });
+      
+      return enhancedDrivers;
+    }
   }
   
   // If all else fails, use sample data
