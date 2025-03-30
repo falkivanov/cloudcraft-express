@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { STORAGE_KEYS } from "@/utils/storageUtils";
 
 export interface UploadHistoryItem {
   name: string;
@@ -53,7 +54,17 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
     } else if (item.category === "mentor") {
       localStorage.removeItem("mentorData");
     } else if (item.category === "scorecard") {
-      // Here could be a more complex logic for Scorecard-data
+      // Remove all scorecard-related data from localStorage
+      localStorage.removeItem("scorecard_week");
+      localStorage.removeItem("scorecard_year");
+      localStorage.removeItem("scorecard_data");
+      localStorage.removeItem("scorecardData");
+      localStorage.removeItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+      localStorage.removeItem("extractedScorecardData");
+      
+      // Dispatch event to notify components that scorecard data has been removed
+      window.dispatchEvent(new Event('scorecardDataRemoved'));
+      console.log("Scorecard data removed from localStorage");
     }
     
     toast.success(`Datei ${item.name} erfolgreich gelöscht`, {

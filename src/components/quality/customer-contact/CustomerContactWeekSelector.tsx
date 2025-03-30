@@ -20,8 +20,20 @@ const CustomerContactWeekSelector: React.FC<CustomerContactWeekSelectorProps> = 
   // Define the available weeks for Customer Contact data
   const availableWeeks = [
     {
+      id: "week-13-2025",
+      label: "KW 13 (aktuell)",
+      weekNum: 13,
+      year: 2025,
+    },
+    {
+      id: "week-12-2025",
+      label: "KW 12",
+      weekNum: 12,
+      year: 2025,
+    },
+    {
       id: "week-11-2025",
-      label: "KW 11 (aktuell)",
+      label: "KW 11",
       weekNum: 11,
       year: 2025,
     },
@@ -29,18 +41,6 @@ const CustomerContactWeekSelector: React.FC<CustomerContactWeekSelectorProps> = 
       id: "week-10-2025",
       label: "KW 10",
       weekNum: 10,
-      year: 2025,
-    },
-    {
-      id: "week-9-2025",
-      label: "KW 9",
-      weekNum: 9,
-      year: 2025,
-    },
-    {
-      id: "week-8-2025",
-      label: "KW 8",
-      weekNum: 8,
       year: 2025,
     },
   ];

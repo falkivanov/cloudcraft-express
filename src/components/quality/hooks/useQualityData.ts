@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { toast } from "sonner";
@@ -52,14 +51,6 @@ export const useQualityData = (pathname: string): QualityDataResult => {
           
           console.info(`Successfully loaded data for week ${parsedData.week}/${parsedData.year}`);
         }
-        
-        // Show toast if there's real data loaded
-        if (parsedData.week && parsedData.year) {
-          toast.success(`Scorecard Daten für KW ${parsedData.week}/${parsedData.year} geladen`, {
-            id: "scorecard-data-loaded",
-            duration: 3000,
-          });
-        }
       } else {
         // Fall back to test data if available
         const data = localStorage.getItem("scorecardData");
@@ -85,6 +76,16 @@ export const useQualityData = (pathname: string): QualityDataResult => {
         description: "Bitte laden Sie die Scorecard-Datei erneut hoch."
       });
     }
+  };
+
+  // Clear scorecard data when it's removed
+  const clearScorecardData = () => {
+    setScoreCardData(null);
+    setPrevWeekScoreCardData(null);
+    console.info("Scorecard data cleared due to deletion event");
+    toast.info("Scorecard-Daten wurden gelöscht", {
+      description: "Die Scorecard-Daten wurden erfolgreich entfernt.",
+    });
   };
 
   const loadData = () => {
@@ -146,18 +147,27 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     window.addEventListener('storage', handleStorageChange);
     
     // Also add a manual event listener for updates within the same window
-    const handleCustomEvent = () => {
+    const handleScoreCardUpdatedEvent = () => {
       if (pathname.includes("/quality/scorecard")) {
         console.info("Custom event detected: Scorecard data changed");
         loadScoreCardData();
       }
     };
     
-    window.addEventListener('scorecardDataUpdated', handleCustomEvent);
+    const handleScoreCardRemovedEvent = () => {
+      if (pathname.includes("/quality/scorecard")) {
+        console.info("Custom event detected: Scorecard data removed");
+        clearScorecardData();
+      }
+    };
+    
+    window.addEventListener('scorecardDataUpdated', handleScoreCardUpdatedEvent);
+    window.addEventListener('scorecardDataRemoved', handleScoreCardRemovedEvent);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('scorecardDataUpdated', handleCustomEvent);
+      window.removeEventListener('scorecardDataUpdated', handleScoreCardUpdatedEvent);
+      window.removeEventListener('scorecardDataRemoved', handleScoreCardRemovedEvent);
     };
   }, [pathname]);
 

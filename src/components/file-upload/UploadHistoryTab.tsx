@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,12 +25,36 @@ const UploadHistoryTab: React.FC = () => {
   const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([]);
 
   useEffect(() => {
-    setUploadHistory(getUploadHistory());
+    const loadHistory = () => {
+      setUploadHistory(getUploadHistory());
+    };
+    
+    loadHistory();
+    
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'fileUploadHistory') {
+        loadHistory();
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('storage', loadHistory);
+    };
   }, []);
 
   const handleDeleteFile = (item: UploadHistoryItem, index: number) => {
     if (removeItemFromHistory(item, index)) {
       setUploadHistory(getUploadHistory());
+      
+      const currentPath = window.location.pathname;
+      if (
+        (item.category === "scorecard" && currentPath.includes("/quality/scorecard")) ||
+        (item.category === "customerContact" && currentPath.includes("/quality/customer-contact")) ||
+        (item.category === "concessions" && currentPath.includes("/quality/concessions")) ||
+        (item.category === "mentor" && currentPath.includes("/quality/mentor"))
+      ) {
+        window.dispatchEvent(new Event(`${item.category}DataRemoved`));
+      }
     }
   };
 

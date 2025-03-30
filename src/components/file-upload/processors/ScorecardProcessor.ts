@@ -1,4 +1,3 @@
-
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
@@ -19,10 +18,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
     
     try {
       // Clear any existing data first to ensure we don't have stale data
-      localStorage.removeItem("scorecard_week");
-      localStorage.removeItem("scorecard_year");
-      localStorage.removeItem("scorecard_data");
-      localStorage.removeItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+      this.clearExistingScorecardData();
       
       // Read file as ArrayBuffer for PDF.js processing
       const arrayBuffer = await this.file.arrayBuffer();
@@ -48,6 +44,9 @@ export class ScorecardProcessor extends BaseFileProcessor {
         
         // Store the extracted data in localStorage
         saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, scorecardData);
+        
+        // Also store for backward compatibility
+        localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
         
         // Also store week information separately for easier access
         if (scorecardData.week && scorecardData.year) {
@@ -95,6 +94,19 @@ export class ScorecardProcessor extends BaseFileProcessor {
     } finally {
       this.setProcessing(false);
     }
+  }
+  
+  /**
+   * Clear existing scorecard data from localStorage
+   */
+  private clearExistingScorecardData(): void {
+    localStorage.removeItem("scorecard_week");
+    localStorage.removeItem("scorecard_year");
+    localStorage.removeItem("scorecard_data");
+    localStorage.removeItem("scorecardData");
+    localStorage.removeItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+    localStorage.removeItem("extractedScorecardData");
+    console.log("Cleared existing scorecard data from localStorage");
   }
   
   /**
