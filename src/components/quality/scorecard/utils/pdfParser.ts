@@ -4,8 +4,15 @@ import { extractScorecardData } from './extractors/dataExtractor';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
 import { getSampleDataWithWeek } from './parser/sampleDataProvider';
-import { loadPDFDocument, extractTextFromPDF } from './parser/pdfDocumentLoader';
-import { createSimpleScorecard } from './parser/simpleExtractor';
+import { 
+  loadPDFDocument, 
+  extractTextFromPDF, 
+  extractPDFContentWithPositions 
+} from './parser/pdfDocumentLoader';
+import { 
+  createSimpleScorecard,
+  extractStructuredScorecard
+} from './parser/simpleExtractor';
 
 /**
  * Parse a scorecard PDF and extract data
@@ -16,7 +23,7 @@ import { createSimpleScorecard } from './parser/simpleExtractor';
 export const parseScorecardPDF = async (
   pdfData: ArrayBuffer,
   filename: string
-): Promise<ScoreCardData | null> => {
+): Promise<ScoreCardData> => {
   try {
     console.info("Starting PDF parsing for: ", filename);
     
@@ -28,50 +35,82 @@ export const parseScorecardPDF = async (
     try {
       const pdf = await loadPDFDocument(pdfData);
       
-      // For testing purposes, if the PDF doesn't have enough pages or content,
-      // we'll return sample data instead of failing
-      const useSimpleExtraction = true;
+      // Try the advanced positional extraction first
+      try {
+        console.info("Attempting positional extraction...");
+        const posData = await extractPDFContentWithPositions(pdf);
+        const structuredData = extractStructuredScorecard(posData, filename);
+        
+        // Validate the extracted data to ensure it has the minimum required fields
+        if (structuredData && isValidScorecardData(structuredData)) {
+          console.info("Successfully extracted data using positional analysis");
+          return structuredData;
+        }
+      } catch (e) {
+        console.warn("Positional extraction failed, falling back to text extraction", e);
+      }
       
-      if (useSimpleExtraction) {
-        // Use a simpler extraction method that doesn't rely on specific page content
+      // Fall back to regular text extraction
+      try {
+        // Extract text from PDF pages
+        const { companyText, driverText, fullText, pageTexts } = await extractTextFromPDF(pdf);
+        
+        // First try regular text-based extraction
+        console.info("Attempting text-based extraction...");
+        const parsedData = extractScorecardData(companyText, driverText, weekNum);
+        
+        // Validate the extracted data
+        if (parsedData && isValidScorecardData(parsedData)) {
+          console.info("Successfully parsed scorecard data for week", weekNum);
+          return parsedData;
+        } else {
+          throw new Error("Text-based extraction failed to produce valid data");
+        }
+      } catch (e) {
+        console.warn("Text extraction failed, using simple extraction", e);
+        
+        // If text-based extraction fails, use simple extraction
         console.info("Using simple extraction method");
         const data = createSimpleScorecard(weekNum);
         console.info("Generated sample data for week", weekNum);
-        localStorage.setItem("extractedScorecardData", JSON.stringify(data));
-        return data;
-      }
-      
-      // Check if PDF has enough pages
-      if (pdf.numPages < 2) {
-        console.warn('PDF has fewer than 2 pages, using sample data');
-        const data = await getSampleDataWithWeek(weekNum);
-        return data;
-      }
-      
-      // Extract text from PDF pages
-      const { companyText, driverText } = await extractTextFromPDF(pdf);
-      
-      // Parse the data
-      try {
-        const parsedData = extractScorecardData(companyText, driverText, weekNum);
-        console.info("Successfully parsed scorecard data for week", weekNum);
-        return parsedData;
-      } catch (error) {
-        console.error('Error parsing scorecard data:', error);
-        const data = await getSampleDataWithWeek(weekNum);
         return data;
       }
     } catch (error) {
-      // If there's an error processing the PDF, return sample data
       console.error('Error with PDF document:', error);
       const data = await getSampleDataWithWeek(weekNum);
+      console.info("Using sample data due to PDF processing error");
       return data;
     }
   } catch (error) {
     console.error('Error parsing PDF:', error);
-    // Return sample data instead of failing
     const weekNum = new Date().getWeek();
     const data = await getSampleDataWithWeek(weekNum);
+    console.info("Using sample data due to general parsing error");
     return data;
   }
+};
+
+/**
+ * Validate scorecard data to ensure it has the minimum required fields
+ * @param data Scorecard data to validate
+ * @returns Whether the data is valid
+ */
+const isValidScorecardData = (data: Partial<ScoreCardData>): boolean => {
+  // Check for required top-level properties
+  if (!data.week || !data.year || !data.location) {
+    return false;
+  }
+  
+  // Check for company KPIs
+  if (!Array.isArray(data.companyKPIs) || data.companyKPIs.length === 0) {
+    return false;
+  }
+  
+  // Check for driver KPIs
+  if (!Array.isArray(data.driverKPIs) || data.driverKPIs.length === 0) {
+    return false;
+  }
+  
+  // Data is valid if it passes all checks
+  return true;
 };

@@ -35,6 +35,12 @@ export class ScorecardProcessor extends BaseFileProcessor {
         // Store the extracted data in localStorage
         localStorage.setItem("extractedScorecardData", JSON.stringify(scorecardData));
         
+        // Also store week information separately for easier access
+        if (scorecardData.week && scorecardData.year) {
+          localStorage.setItem("scorecard_week", String(scorecardData.week));
+          localStorage.setItem("scorecard_year", String(scorecardData.year));
+        }
+        
         if (showToasts) {
           toast.success(
             `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
@@ -44,8 +50,12 @@ export class ScorecardProcessor extends BaseFileProcessor {
           );
         }
 
-        // Add to file upload history
-        this.addToUploadHistory(this.file, "pdf", "scorecard");
+        // Add to file upload history with extracted data information
+        this.addToUploadHistory(this.file, "pdf", "scorecard", {
+          week: scorecardData.week,
+          year: scorecardData.year,
+          location: scorecardData.location
+        });
       } else {
         throw new Error("Keine Daten konnten aus der PDF-Datei extrahiert werden.");
       }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
@@ -8,6 +9,7 @@ import MentorContent from "@/components/quality/MentorContent";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import QualityTabs from "@/components/quality/QualityTabs";
 import { toast } from "sonner";
+import { ScoreCardData } from "@/components/quality/scorecard/types";
 
 interface DriverComplianceData {
   name: string;
@@ -21,7 +23,7 @@ const QualityPage = () => {
   const location = useLocation();
   const pathname = location.pathname;
   const [customerContactData, setCustomerContactData] = useState<string | null>(null);
-  const [scorecardData, setScoreCardData] = useState<any>(null);
+  const [scorecardData, setScoreCardData] = useState<ScoreCardData | null>(null);
   const [concessionsData, setConcessionsData] = useState<any>(null);
   const [mentorData, setMentorData] = useState<any>(null);
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
@@ -38,10 +40,60 @@ const QualityPage = () => {
     console.info("Test data cleared");
   }, []);
   
+  // Listen for changes to localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (pathname.includes("/quality/scorecard")) {
+        loadScoreCardData();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [pathname]);
+  
   useEffect(() => {
     console.info("QualityPage: Path changed to", pathname);
     loadData();
   }, [pathname]);
+  
+  const loadScoreCardData = () => {
+    try {
+      // Try to load extracted data first
+      const extractedData = localStorage.getItem("extractedScorecardData");
+      if (extractedData) {
+        console.info("Using extracted PDF data from localStorage");
+        const parsedData = JSON.parse(extractedData) as ScoreCardData;
+        setScoreCardData(parsedData);
+        
+        // Show toast if there's real data loaded
+        if (parsedData.week && parsedData.year) {
+          console.info("Using week", parsedData.week, "from scorecard data");
+          toast.success(`Scorecard Daten für KW ${parsedData.week}/${parsedData.year} geladen`, {
+            id: "scorecard-data-loaded",
+            duration: 3000,
+          });
+        }
+      } else {
+        // Fall back to test data if available
+        const data = localStorage.getItem("scorecardData");
+        if (data) {
+          const parsedScorecard = JSON.parse(data);
+          setScoreCardData(parsedScorecard);
+        } else {
+          console.info("No scorecard data found in localStorage");
+          setScoreCardData(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing scorecard data:", error);
+      toast.error("Fehler beim Laden der Scorecard-Daten", {
+        description: "Bitte laden Sie die Scorecard-Datei erneut hoch."
+      });
+    }
+  };
   
   const loadData = () => {
     console.info("QualityPage: Loading data");
@@ -60,29 +112,7 @@ const QualityPage = () => {
         console.info("Customer contact data loaded");
       }
     } else if (pathname.includes("/quality/scorecard")) {
-      try {
-        const extractedData = localStorage.getItem("extractedScorecardData");
-        if (extractedData) {
-          console.info("Using extracted PDF data from localStorage");
-          const parsedData = JSON.parse(extractedData);
-          setScoreCardData(parsedData);
-          toast.success(`Scorecard Daten für KW ${parsedData.week}/${parsedData.year} geladen`, {
-            id: "scorecard-data-loaded",
-            duration: 3000,
-          });
-        } else {
-          const data = localStorage.getItem("scorecardData");
-          if (data) {
-            const parsedScorecard = JSON.parse(data);
-            setScoreCardData(parsedScorecard);
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing scorecard data:", error);
-        toast.error("Fehler beim Laden der Scorecard-Daten", {
-          description: "Bitte laden Sie die Scorecard-Datei erneut hoch."
-        });
-      }
+      loadScoreCardData();
     } else if (pathname.includes("/quality/concessions")) {
       try {
         const data = localStorage.getItem("concessionsData");
