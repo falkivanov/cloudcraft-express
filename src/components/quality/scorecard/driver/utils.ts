@@ -24,7 +24,7 @@ export const getStatusClass = (status: string | undefined) => {
 // Get the appropriate color class based on metric name and value
 export const getMetricColorClass = (metricName: string, value: number): string => {
   // Special case for metrics with value 0 and status "none" (representing "-" in the data)
-  if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE") {
+  if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE" && metricName !== "Delivered") {
     return "text-gray-400";
   }
   
@@ -58,6 +58,11 @@ export const getMetricColorClass = (metricName: string, value: number): string =
       if (value >= 95) return "text-blue-600 font-semibold";
       if (value >= 90) return "text-orange-500 font-semibold";
       return "text-red-500 font-semibold";
+      
+    case "Delivered":
+      if (value >= 1000) return "text-blue-600 font-semibold";
+      if (value >= 800) return "text-orange-500 font-semibold";
+      return "text-gray-700";
       
     default:
       return "text-gray-700";

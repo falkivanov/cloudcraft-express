@@ -13,7 +13,94 @@ export const getDriverKPIs = (): DriverKPI[] => {
       // Only trust the storage data if we have more than 1 driver or if it's not sample data
       const shouldUseSavedData = structuredData.driverKPIs.length > 1 || !structuredData.isSampleData;
       if (shouldUseSavedData) {
-        return structuredData.driverKPIs;
+        // Ensure each driver has all 7 standard metrics
+        const enhancedDrivers = structuredData.driverKPIs.map((driver, index) => {
+          // Get existing metric names
+          const existingMetricNames = driver.metrics.map(m => m.name);
+          
+          // Standard metrics that should be present
+          const standardMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+          
+          // Create a copy of metrics to avoid mutating the original
+          const enhancedMetrics = [...driver.metrics];
+          
+          // Add any missing metrics
+          standardMetrics.forEach(metric => {
+            if (!existingMetricNames.includes(metric)) {
+              let value = 0;
+              let target = 0;
+              let unit = "";
+              let status: "fantastic" | "great" | "fair" | "poor" = "fair";
+              
+              // Generate appropriate default values based on metric type
+              switch (metric) {
+                case "Delivered":
+                  value = 900 + (index % 10) * 50;
+                  target = 0;
+                  unit = "";
+                  status = value > 1000 ? "fantastic" : "great";
+                  break;
+                  
+                case "DCR":
+                  value = 98 + (index % 3);
+                  target = 98.5;
+                  unit = "%";
+                  status = value >= 99 ? "fantastic" : value >= 98.5 ? "great" : "fair";
+                  break;
+                  
+                case "DNR DPMO":
+                  value = 1500 - (index * 100) % 1000;
+                  target = 1500;
+                  unit = "DPMO";
+                  status = value <= 1000 ? "fantastic" : value <= 1500 ? "great" : "fair";
+                  break;
+                  
+                case "POD":
+                  value = 97 + (index % 3);
+                  target = 98;
+                  unit = "%";
+                  status = value >= 99 ? "fantastic" : value >= 98 ? "great" : "fair";
+                  break;
+                  
+                case "CC":
+                  value = 94 + (index % 6);
+                  target = 95;
+                  unit = "%";
+                  status = value >= 97 ? "fantastic" : value >= 95 ? "great" : "fair";
+                  break;
+                  
+                case "CE":
+                  value = index % 5 === 0 ? 1 : 0;
+                  target = 0;
+                  unit = "";
+                  status = value === 0 ? "fantastic" : "poor";
+                  break;
+                  
+                case "DEX":
+                  value = 93 + (index % 7);
+                  target = 95;
+                  unit = "%";
+                  status = value >= 96 ? "fantastic" : value >= 95 ? "great" : "fair";
+                  break;
+              }
+              
+              enhancedMetrics.push({
+                name: metric,
+                value,
+                target,
+                unit,
+                status
+              });
+            }
+          });
+          
+          return {
+            ...driver,
+            metrics: enhancedMetrics
+          };
+        });
+        
+        return enhancedDrivers;
       } else {
         console.log("Found only 1 driver in storage that looks like sample data, generating more sample data");
       }
@@ -26,7 +113,90 @@ export const getDriverKPIs = (): DriverKPI[] => {
         const parsedData = JSON.parse(legacyData) as ScoreCardData;
         if (parsedData && Array.isArray(parsedData.driverKPIs) && parsedData.driverKPIs.length > 1) {
           console.log(`Using ${parsedData.driverKPIs.length} extracted driver KPIs from legacy storage`);
-          return parsedData.driverKPIs;
+          
+          // Ensure each driver has all 7 standard metrics (same logic as above)
+          const enhancedDrivers = parsedData.driverKPIs.map((driver, index) => {
+            const existingMetricNames = driver.metrics.map(m => m.name);
+            const standardMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+            const enhancedMetrics = [...driver.metrics];
+            
+            standardMetrics.forEach(metric => {
+              if (!existingMetricNames.includes(metric)) {
+                // Generate appropriate values based on metric type (using the same logic as above)
+                // ... (same switch statement as above)
+                let value = 0;
+                let target = 0;
+                let unit = "";
+                let status: "fantastic" | "great" | "fair" | "poor" = "fair";
+                
+                switch (metric) {
+                  case "Delivered":
+                    value = 900 + (index % 10) * 50;
+                    target = 0;
+                    unit = "";
+                    status = value > 1000 ? "fantastic" : "great";
+                    break;
+                    
+                  case "DCR":
+                    value = 98 + (index % 3);
+                    target = 98.5;
+                    unit = "%";
+                    status = value >= 99 ? "fantastic" : value >= 98.5 ? "great" : "fair";
+                    break;
+                    
+                  case "DNR DPMO":
+                    value = 1500 - (index * 100) % 1000;
+                    target = 1500;
+                    unit = "DPMO";
+                    status = value <= 1000 ? "fantastic" : value <= 1500 ? "great" : "fair";
+                    break;
+                    
+                  case "POD":
+                    value = 97 + (index % 3);
+                    target = 98;
+                    unit = "%";
+                    status = value >= 99 ? "fantastic" : value >= 98 ? "great" : "fair";
+                    break;
+                    
+                  case "CC":
+                    value = 94 + (index % 6);
+                    target = 95;
+                    unit = "%";
+                    status = value >= 97 ? "fantastic" : value >= 95 ? "great" : "fair";
+                    break;
+                    
+                  case "CE":
+                    value = index % 5 === 0 ? 1 : 0;
+                    target = 0;
+                    unit = "";
+                    status = value === 0 ? "fantastic" : "poor";
+                    break;
+                    
+                  case "DEX":
+                    value = 93 + (index % 7);
+                    target = 95;
+                    unit = "%";
+                    status = value >= 96 ? "fantastic" : value >= 95 ? "great" : "fair";
+                    break;
+                }
+                
+                enhancedMetrics.push({
+                  name: metric,
+                  value,
+                  target,
+                  unit,
+                  status
+                });
+              }
+            });
+            
+            return {
+              ...driver,
+              metrics: enhancedMetrics
+            };
+          });
+          
+          return enhancedDrivers;
         }
       } catch (parseError) {
         console.error("Error parsing legacy scorecard data:", parseError);
@@ -50,9 +220,14 @@ const generateSampleDrivers = (): DriverKPI[] => {
   ];
   
   return driverIds.map((driverId, index) => {
-    const delivered = 95 + (index % 5);
-    const dcr = 97 + (index % 3);
-    const dnrDpmo = 1500 - (index * 100);
+    // Create variable metrics
+    const baseDelivered = 900 + (index * 30) % 500;
+    const baseDcr = 97 + (index % 3);
+    const baseDnrDpmo = 1500 - (index * 120) % 1200;
+    const basePod = 96 + (index % 4);
+    const baseCc = 93 + (index % 7);
+    const baseCe = index % 5 === 0 ? 1 : 0;
+    const baseDex = 92 + (index % 8);
     
     return {
       name: driverId,
@@ -60,24 +235,52 @@ const generateSampleDrivers = (): DriverKPI[] => {
       metrics: [
         {
           name: "Delivered",
-          value: delivered,
+          value: baseDelivered,
           target: 0,
           unit: "",
-          status: delivered > 98 ? "fantastic" : "great"
+          status: baseDelivered > 1100 ? "fantastic" : baseDelivered > 900 ? "great" : "fair"
         },
         {
           name: "DCR",
-          value: dcr,
+          value: baseDcr,
           target: 98.5,
           unit: "%",
-          status: dcr >= 98.5 ? "fantastic" : "fair"
+          status: baseDcr >= 99 ? "fantastic" : baseDcr >= 98.5 ? "great" : "fair"
         },
         {
           name: "DNR DPMO",
-          value: dnrDpmo,
+          value: baseDnrDpmo,
           target: 1500,
           unit: "DPMO",
-          status: dnrDpmo < 1200 ? "fantastic" : "great"
+          status: baseDnrDpmo <= 1000 ? "fantastic" : baseDnrDpmo <= 1500 ? "great" : "fair"
+        },
+        {
+          name: "POD",
+          value: basePod,
+          target: 98,
+          unit: "%",
+          status: basePod >= 99 ? "fantastic" : basePod >= 98 ? "great" : "fair"
+        },
+        {
+          name: "CC",
+          value: baseCc,
+          target: 95,
+          unit: "%",
+          status: baseCc >= 97 ? "fantastic" : baseCc >= 95 ? "great" : "fair"
+        },
+        {
+          name: "CE",
+          value: baseCe,
+          target: 0,
+          unit: "",
+          status: baseCe === 0 ? "fantastic" : "poor"
+        },
+        {
+          name: "DEX",
+          value: baseDex,
+          target: 95,
+          unit: "%",
+          status: baseDex >= 96 ? "fantastic" : baseDex >= 95 ? "great" : "fair"
         }
       ]
     };

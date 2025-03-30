@@ -27,8 +27,13 @@ const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
     // Format percentages with 2 decimal places
     displayValue = value.toFixed(2) + "%";
   } else if (metricName === "DNR DPMO") {
-    // For DPMO values, round to whole numbers
-    displayValue = Math.round(value).toString();
+    // For DPMO values, round to whole numbers and handle negative values
+    if (value < 0) {
+      // If negative (which shouldn't happen but might due to parsing errors), show as positive
+      displayValue = Math.abs(Math.round(value)).toString();
+    } else {
+      displayValue = Math.round(value).toString();
+    }
   } else if (metricName === "CE" && value === 0) {
     // For CE with value 0, it's a good thing
     displayValue = "0";
@@ -37,8 +42,11 @@ const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
     displayValue = value.toString();
   }
   
+  // Use absolute value for color determination to avoid issues with negative values
+  const valueForColor = metricName === "DNR DPMO" ? Math.abs(value) : value;
+  
   return (
-    <TableCell className={getMetricColorClass(metricName, value)}>
+    <TableCell className={getMetricColorClass(metricName, valueForColor)}>
       {displayValue}
     </TableCell>
   );
