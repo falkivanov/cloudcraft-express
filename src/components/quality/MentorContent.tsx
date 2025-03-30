@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, CalendarIcon, UploadIcon } from "lucide-react";
@@ -11,7 +12,7 @@ interface MentorContentProps {
 }
 
 const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
-  if (!mentorData) {
+  if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return <NoDataMessage category="Mentor" />;
   }
 
