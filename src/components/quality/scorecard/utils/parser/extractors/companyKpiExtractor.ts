@@ -8,22 +8,37 @@ import { extractNumericValues } from './valueExtractor';
 export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) => {
   // Define the KPIs to look for
   const kpiPatterns = [
-    { name: "Delivery Completion Rate (DCR)", pattern: /DCR|Delivery\s+Completion/i, unit: "%" },
-    { name: "Delivered Not Received (DNR DPMO)", pattern: /DNR\s+DPMO|Delivered\s+Not\s+Received/i, unit: "DPMO" },
-    { name: "Photo-On-Delivery", pattern: /Photo[- ]On[- ]Delivery|POD/i, unit: "%" },
-    { name: "Contact Compliance", pattern: /Contact\s+Compliance/i, unit: "%" },
-    { name: "Customer escalation DPMO", pattern: /Customer\s+escalation|CSAT|Customer\s+Satisfaction/i, unit: "DPMO" },
-    { name: "Vehicle Audit (VSA) Compliance", pattern: /VSA|Vehicle\s+Audit/i, unit: "%" },
-    { name: "DVIC Compliance", pattern: /DVIC|Daily\s+Vehicle/i, unit: "%" },
-    { name: "Safe Driving Metric (FICO)", pattern: /FICO|Safe\s+Driving/i, unit: "" },
-    { name: "Capacity Reliability", pattern: /Capacity\s+Reliability/i, unit: "%" },
-    { name: "Lost on Road (LoR) DPMO", pattern: /LoR|Lost\s+on\s+Road/i, unit: "DPMO" },
-    { name: "Door to Door delivery", pattern: /Door\s+to\s+Door|DTD/i, unit: "%" },
-    { name: "Right to Driver (RTD)", pattern: /Right\s+to\s+Driver|RTD/i, unit: "%" },
-    { name: "Customer Delivery Feedback", pattern: /Customer\s+Delivery\s+Feedback|CDF/i, unit: "%" },
-    { name: "Concessions DPMO", pattern: /Concessions|Koncessions/i, unit: "DPMO" },
-    { name: "Mentor Adoption Rate", pattern: /Mentor\s+Adoption/i, unit: "%" },
-    { name: "Working Hours Compliance (WHC)", pattern: /WHC|Working\s+Hours/i, unit: "%" },
+    // Safety KPIs
+    { name: "Vehicle Audit (VSA) Compliance", pattern: /VSA|Vehicle\s+Audit/i, unit: "%", category: "safety" },
+    { name: "DVIC Compliance", pattern: /DVIC|Daily\s+Vehicle/i, unit: "%", category: "safety" },
+    { name: "Safe Driving Metric (FICO)", pattern: /FICO|Safe\s+Driving/i, unit: "", category: "safety" },
+    { name: "Speeding Event Rate (Per 100 Trips)", pattern: /Speeding|Speeding\s+Event/i, unit: "", category: "safety" },
+    { name: "Mentor Adoption Rate", pattern: /Mentor\s+Adoption/i, unit: "%", category: "safety" },
+    
+    // Compliance KPIs
+    { name: "Breach of Contract (BOC)", pattern: /BOC|Breach\s+of\s+Contract/i, unit: "", category: "compliance" },
+    { name: "Working Hours Compliance (WHC)", pattern: /WHC|Working\s+Hours/i, unit: "%", category: "compliance" },
+    { name: "Comprehensive Audit Score (CAS)", pattern: /CAS|Comprehensive\s+Audit/i, unit: "%", category: "compliance" },
+    
+    // Quality KPIs
+    { name: "Delivery Completion Rate (DCR)", pattern: /DCR|Delivery\s+Completion/i, unit: "%", category: "quality" },
+    { name: "Delivered Not Received (DNR DPMO)", pattern: /DNR\s+DPMO|Delivered\s+Not\s+Received/i, unit: "DPMO", category: "quality" },
+    { name: "Lost on Road (LoR) DPMO", pattern: /LoR|Lost\s+on\s+Road/i, unit: "DPMO", category: "quality" },
+    
+    // Standard Work Compliance KPIs
+    { name: "Photo-On-Delivery", pattern: /Photo[- ]On[- ]Delivery|POD/i, unit: "%", category: "standardWork" },
+    { name: "Contact Compliance", pattern: /Contact\s+Compliance/i, unit: "%", category: "standardWork" },
+    { name: "Door to Door delivery", pattern: /Door\s+to\s+Door|DTD/i, unit: "%", category: "standardWork" },
+    { name: "Right to Driver (RTD)", pattern: /Right\s+to\s+Driver|RTD/i, unit: "%", category: "standardWork" },
+    
+    // Customer Experience KPIs
+    { name: "Customer escalation DPMO", pattern: /Customer\s+escalation|CSAT|Customer\s+Satisfaction/i, unit: "DPMO", category: "customer" },
+    { name: "Customer Delivery Feedback", pattern: /Customer\s+Delivery\s+Feedback|CDF/i, unit: "%", category: "customer" },
+    { name: "Concessions DPMO", pattern: /Concessions|Koncessions/i, unit: "DPMO", category: "customer" },
+    
+    // Capacity KPIs
+    { name: "Capacity Reliability", pattern: /Capacity\s+Reliability/i, unit: "%", category: "capacity" },
+    { name: "Next Day Capacity Reliability", pattern: /Next\s+Day\s+Capacity/i, unit: "%", category: "capacity" },
   ];
   
   // Extracted KPIs will be stored here
@@ -34,7 +49,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     const page = pageData[pageNum];
     
     // Check each KPI pattern
-    for (const { name, pattern, unit } of kpiPatterns) {
+    for (const { name, pattern, unit, category } of kpiPatterns) {
       // Find items that match this KPI pattern
       const matchingItems = page.items.filter((item: any) => 
         pattern.test(item.str)
@@ -72,7 +87,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               target,
               unit,
               trend: "neutral" as const,
-              status: determineStatus(name, value)
+              status: determineStatus(name, value),
+              category: category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
           }
           
@@ -106,7 +122,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               target: 95, // Default target
               unit: "%",
               trend: "neutral" as const,
-              status: determineStatus(knownKpi.name, value)
+              status: determineStatus(knownKpi.name, value),
+              category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
           }
         }
@@ -130,37 +147,10 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               target: 3000, // Default target for DPMO
               unit: "DPMO",
               trend: "neutral" as const,
-              status: determineStatus(knownKpi.name, value)
+              status: determineStatus(knownKpi.name, value),
+              category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
           }
-        }
-      }
-    }
-  }
-  
-  // Look for overall score and rank on the first page
-  const page1 = pageData[1];
-  if (page1) {
-    // Extract overall score
-    const overallScoreItems = page1.items.filter((item: any) => 
-      /overall\s+score|total\s+score|scorecard\s+score/i.test(item.str)
-    );
-    
-    if (overallScoreItems.length > 0) {
-      // Score is likely nearby
-      for (const item of overallScoreItems) {
-        const nearbyItems = page1.items.filter((otherItem: any) => 
-          Math.abs(item.y - otherItem.y) < 20 && otherItem.x > item.x
-        );
-        
-        // Look for percentage or numbers
-        const scoreMatch = nearbyItems
-          .map((item: any) => item.str.match(/(\d+(?:\.\d+)?)/))
-          .filter(Boolean)[0];
-        
-        if (scoreMatch) {
-          console.log(`Found overall score: ${scoreMatch[1]}`);
-          // We would store this in page metadata
         }
       }
     }
@@ -175,7 +165,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         target: 98.0,
         unit: "%",
         trend: "up" as const,
-        status: "fantastic" as const
+        status: "fantastic" as const,
+        category: "quality" as const
       },
       {
         name: "Delivered Not Received (DNR DPMO)",
@@ -183,7 +174,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         target: 3000,
         unit: "DPMO",
         trend: "down" as const,
-        status: "great" as const
+        status: "great" as const,
+        category: "quality" as const
       },
       {
         name: "Contact Compliance",
@@ -191,7 +183,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         target: 95,
         unit: "%",
         trend: "up" as const,
-        status: "fair" as const
+        status: "fair" as const,
+        category: "standardWork" as const
       }
     ];
   }

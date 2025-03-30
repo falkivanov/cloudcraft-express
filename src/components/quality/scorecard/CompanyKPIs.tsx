@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CompanyKPIsProps } from "./types";
+import { CompanyKPIsProps, ScorecardKPI } from "./types";
 import CategoryTable from "./company/CategoryTable";
 
 // Define the KPI categories and their member KPIs to ensure consistency
@@ -40,13 +40,13 @@ const KPI_CATEGORIES = {
 const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
   // Group the KPIs by category
   const categorizedKPIs = {
-    safety: [] as any[],
-    compliance: [] as any[],
-    customer: [] as any[],
-    quality: [] as any[],
-    standardWork: [] as any[],
-    capacity: [] as any[],
-    other: [] as any[]
+    safety: [] as ScorecardKPI[],
+    compliance: [] as ScorecardKPI[],
+    customer: [] as ScorecardKPI[],
+    quality: [] as ScorecardKPI[],
+    standardWork: [] as ScorecardKPI[],
+    capacity: [] as ScorecardKPI[],
+    other: [] as ScorecardKPI[]
   };
   
   // Function to check if a KPI name contains or matches any of the category keywords
@@ -59,6 +59,12 @@ const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData
   
   // Categorize each KPI
   companyKPIs.forEach(kpi => {
+    // If KPI already has a category, use that
+    if (kpi.category) {
+      categorizedKPIs[kpi.category as keyof typeof categorizedKPIs].push(kpi);
+      return;
+    }
+    
     let categorized = false;
     
     // Try to categorize based on predefined categories

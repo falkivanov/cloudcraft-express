@@ -1,5 +1,5 @@
 
-import { ScoreCardData } from '../../types';
+import { ScoreCardData, ScorecardKPI } from '../../types';
 import { extractCompanyKPIs } from './companyKpiExtractor';
 import { extractDriverKPIs } from './driverKpiExtractor';
 import { 
@@ -54,6 +54,16 @@ export const extractScorecardData = (
   const overallStatus = extractOverallStatus(companyText);
   console.log("Determined overall status:", overallStatus);
   
+  // Categorize the KPIs
+  const categorizedKPIs = {
+    safety: companyKPIs.filter(kpi => kpi.category === "safety"),
+    compliance: companyKPIs.filter(kpi => kpi.category === "compliance"),
+    customer: companyKPIs.filter(kpi => kpi.category === "customer"),
+    standardWork: companyKPIs.filter(kpi => kpi.category === "standardWork"),
+    quality: companyKPIs.filter(kpi => kpi.category === "quality"),
+    capacity: companyKPIs.filter(kpi => kpi.category === "capacity")
+  };
+  
   // Default template with extracted values and fallbacks
   const data: ScoreCardData = {
     week: weekNum,
@@ -64,6 +74,7 @@ export const extractScorecardData = (
     rank: rank || 5,
     rankNote: rankNote || 'Up 2 places from last week',
     companyKPIs: companyKPIs,
+    categorizedKPIs: categorizedKPIs,
     driverKPIs: driverKPIs,
     recommendedFocusAreas: focusAreas,
   };

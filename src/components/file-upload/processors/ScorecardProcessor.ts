@@ -1,3 +1,4 @@
+
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { toast } from "sonner";
 import { parseScorecardPDF } from "@/components/quality/scorecard/utils/pdfParser";
@@ -40,6 +41,18 @@ export class ScorecardProcessor extends BaseFileProcessor {
               }
             );
           }
+        }
+        
+        // If categorizedKPIs is missing, create it from the companyKPIs
+        if (!scorecardData.categorizedKPIs && Array.isArray(scorecardData.companyKPIs)) {
+          scorecardData.categorizedKPIs = {
+            safety: scorecardData.companyKPIs.filter(kpi => kpi.category === "safety"),
+            compliance: scorecardData.companyKPIs.filter(kpi => kpi.category === "compliance"),
+            customer: scorecardData.companyKPIs.filter(kpi => kpi.category === "customer"),
+            standardWork: scorecardData.companyKPIs.filter(kpi => kpi.category === "standardWork"),
+            quality: scorecardData.companyKPIs.filter(kpi => kpi.category === "quality"),
+            capacity: scorecardData.companyKPIs.filter(kpi => kpi.category === "capacity")
+          };
         }
         
         // Store the extracted data in localStorage

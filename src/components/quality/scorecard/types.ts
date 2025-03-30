@@ -6,6 +6,7 @@ export interface ScorecardKPI {
   unit: string;
   trend: "up" | "down" | "neutral";
   status?: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+  category?: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity";
 }
 
 export interface DriverKPI {
@@ -34,6 +35,14 @@ export interface ScoreCardData {
   rank: number;
   rankNote?: string;
   companyKPIs: ScorecardKPI[];
+  categorizedKPIs?: {
+    safety: ScorecardKPI[];
+    compliance: ScorecardKPI[];
+    customer: ScorecardKPI[];
+    standardWork: ScorecardKPI[];
+    quality: ScorecardKPI[];
+    capacity: ScorecardKPI[];
+  };
   driverKPIs: DriverKPI[];
   recommendedFocusAreas: string[];
   isSampleData?: boolean; // Flag to indicate if data is sample data
