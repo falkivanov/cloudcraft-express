@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { UploadIcon, FileSpreadsheet, CalendarIcon } from "lucide-react";
+import { FileSpreadsheet, CalendarIcon, UploadIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorTable from "./mentor/MentorTable";
+import NoDataMessage from "./NoDataMessage";
 
 interface MentorContentProps {
   mentorData: any | null;
@@ -12,7 +13,7 @@ interface MentorContentProps {
 
 const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
   if (!mentorData) {
-    return renderNoDataMessage();
+    return <NoDataMessage category="Mentor" />;
   }
 
   return (
@@ -44,24 +45,6 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
           <MentorTable data={mentorData} />
         </CardContent>
       </Card>
-    </div>
-  );
-};
-
-// Helper function for "No data" message
-const renderNoDataMessage = () => {
-  return (
-    <div className="p-6 border rounded-lg bg-gray-50 text-center">
-      <p className="text-lg font-medium mb-3">Keine Mentor-Daten verfügbar</p>
-      <p className="text-muted-foreground mb-4">
-        Bitte laden Sie zuerst Mentor-Daten hoch, um diese hier anzuzeigen.
-      </p>
-      <Button asChild>
-        <Link to="/file-upload" className="flex items-center gap-2">
-          <UploadIcon className="h-4 w-4" />
-          <span>Zur Upload-Seite</span>
-        </Link>
-      </Button>
     </div>
   );
 };

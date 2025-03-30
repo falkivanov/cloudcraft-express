@@ -10,7 +10,7 @@ interface NoDataMessageProps {
 
 const NoDataMessage: React.FC<NoDataMessageProps> = ({ category }) => {
   return (
-    <div className="mt-6 p-6 border rounded-lg bg-gray-50 text-center">
+    <div className="p-6 border rounded-lg bg-gray-50 text-center">
       <p className="text-lg font-medium mb-3">Keine {category}-Daten verfügbar</p>
       <p className="text-muted-foreground mb-4">
         Bitte laden Sie zuerst eine Datei hoch, um die Daten hier anzuzeigen.
