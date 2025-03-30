@@ -52,7 +52,7 @@ const CustomerContactWeekSelector: React.FC<CustomerContactWeekSelectorProps> = 
         <SelectTrigger className="w-[180px] bg-white">
           <SelectValue placeholder="Woche auswählen" />
         </SelectTrigger>
-        <SelectContent className="bg-popover">
+        <SelectContent className="bg-white">
           {availableWeeks.map((week) => (
             <SelectItem key={week.id} value={week.id}>
               {week.label}

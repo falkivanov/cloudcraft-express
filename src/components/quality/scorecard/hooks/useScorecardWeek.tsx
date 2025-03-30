@@ -1,11 +1,16 @@
+
 import { useState, useEffect } from "react";
-import { parseWeekIdentifier, isDataAvailableForWeek } from "../data";
+import { parseWeekIdentifier, isDataAvailableForWeek, getScorecardData } from "../data";
 import { ScoreCardData } from "../types";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
-  // Initialize with an empty week indicator
-  const [selectedWeek, setSelectedWeek] = useState<string>("week-0-0");
+  // Initialize with an empty week indicator or with current data
+  const [selectedWeek, setSelectedWeek] = useState<string>(
+    scorecardData && scorecardData.week > 0
+      ? `week-${scorecardData.week}-${scorecardData.year}`
+      : "week-0-0"
+  );
   
   // Try to extract week number from data if it exists
   useEffect(() => {
@@ -29,6 +34,11 @@ export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
     }
   }, [scorecardData]);
 
+  // Load scorecard data for the selected week
+  const loadScorecardDataForWeek = (weekId: string): ScoreCardData | null => {
+    return getScorecardData(null, weekId);
+  };
+  
   // Check if selected week has available data
   const isUnavailableWeek = () => {
     const parsedWeek = parseWeekIdentifier(selectedWeek);
@@ -38,5 +48,10 @@ export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
     return !isDataAvailableForWeek(weekNum, year);
   };
 
-  return { selectedWeek, setSelectedWeek, isUnavailableWeek };
+  return { 
+    selectedWeek, 
+    setSelectedWeek, 
+    isUnavailableWeek,
+    loadScorecardDataForWeek
+  };
 };
