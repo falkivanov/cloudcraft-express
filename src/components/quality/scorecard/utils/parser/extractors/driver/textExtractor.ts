@@ -6,6 +6,8 @@ import { extractDriversFromDSPWeeklySummary } from './text/dspWeeklySummaryExtra
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
 /**
  * Extract driver KPIs from text content using multiple strategies
  */
@@ -144,49 +146,49 @@ function createAllStandardMetrics(index: number) {
       value: baseValues["Delivered"],
       target: 0,
       unit: "",
-      status: determineStatus("Delivered", baseValues["Delivered"])
+      status: determineStatus("Delivered", baseValues["Delivered"]) as MetricStatus
     },
     {
       name: "DCR",
       value: baseValues["DCR"],
       target: 98.5,
       unit: "%",
-      status: determineStatus("DCR", baseValues["DCR"])
+      status: determineStatus("DCR", baseValues["DCR"]) as MetricStatus
     },
     {
       name: "DNR DPMO",
       value: baseValues["DNR DPMO"],
       target: 1500,
       unit: "DPMO",
-      status: determineStatus("DNR DPMO", baseValues["DNR DPMO"])
+      status: determineStatus("DNR DPMO", baseValues["DNR DPMO"]) as MetricStatus
     },
     {
       name: "POD",
       value: baseValues["POD"],
       target: 98,
       unit: "%",
-      status: determineStatus("POD", baseValues["POD"])
+      status: determineStatus("POD", baseValues["POD"]) as MetricStatus
     },
     {
       name: "CC",
       value: baseValues["CC"],
       target: 95, 
       unit: "%",
-      status: determineStatus("CC", baseValues["CC"])
+      status: determineStatus("CC", baseValues["CC"]) as MetricStatus
     },
     {
       name: "CE",
       value: baseValues["CE"],
       target: 0,
       unit: "",
-      status: baseValues["CE"] === 0 ? "fantastic" : "poor"
+      status: baseValues["CE"] === 0 ? "fantastic" as MetricStatus : "poor" as MetricStatus
     },
     {
       name: "DEX",
       value: baseValues["DEX"],
       target: 95,
       unit: "%",
-      status: determineStatus("DEX", baseValues["DEX"])
+      status: determineStatus("DEX", baseValues["DEX"]) as MetricStatus
     }
   ];
 }
@@ -211,50 +213,50 @@ function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
         let metricValue = 0;
         let target = 0;
         let unit = "";
-        let status: "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance" = "fair";
+        let status: MetricStatus = "fair";
         
         switch (metricName) {
           case "Delivered":
             metricValue = 900 + (driverIndex % 10) * 50;
             target = 0;
             unit = "";
-            status = determineStatus("Delivered", metricValue);
+            status = determineStatus("Delivered", metricValue) as MetricStatus;
             break;
           case "DCR":
             metricValue = 98 + (driverIndex % 3);
             target = 98.5;
             unit = "%";
-            status = determineStatus("DCR", metricValue);
+            status = determineStatus("DCR", metricValue) as MetricStatus;
             break;
           case "DNR DPMO":
             metricValue = 1500 - (driverIndex * 50) % 1000;
             target = 1500;
             unit = "DPMO";
-            status = determineStatus("DNR DPMO", metricValue);
+            status = determineStatus("DNR DPMO", metricValue) as MetricStatus;
             break;
           case "POD":
             metricValue = 97 + (driverIndex % 3);
             target = 98;
             unit = "%";
-            status = determineStatus("POD", metricValue);
+            status = determineStatus("POD", metricValue) as MetricStatus;
             break;
           case "CC":
             metricValue = 95 + (driverIndex % 5);
             target = 95;
             unit = "%";
-            status = determineStatus("CC", metricValue);
+            status = determineStatus("CC", metricValue) as MetricStatus;
             break;
           case "CE":
             metricValue = driverIndex % 5 === 0 ? 1 : 0;
             target = 0;
             unit = "";
-            status = metricValue === 0 ? "fantastic" : "poor";
+            status = metricValue === 0 ? "fantastic" as MetricStatus : "poor" as MetricStatus;
             break;
           case "DEX":
             metricValue = 94 + (driverIndex % 6);
             target = 95;
             unit = "%";
-            status = determineStatus("DEX", metricValue);
+            status = determineStatus("DEX", metricValue) as MetricStatus;
             break;
         }
         

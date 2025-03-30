@@ -4,6 +4,8 @@ import { extractDriverKPIsFromText } from './driver/textExtractor';
 import { generateSampleDrivers } from './driver/sampleData';
 import { DriverKPI } from '../../../types';
 
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+
 /**
  * Extract driver KPIs from text content
  * @param text Text content to extract driver KPIs from
@@ -33,6 +35,7 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
           let value = 0;
           let target = 0;
           let unit = "";
+          let status: MetricStatus = "fair";
           
           switch (metricName) {
             case "Delivered":
@@ -123,49 +126,49 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
             value: 900 + (index % 10) * 50,
             target: 0,
             unit: "",
-            status: "great"
+            status: "great" as MetricStatus
           },
           {
             name: "DCR",
             value: 97 + (index % 3),
             target: 98.5,
             unit: "%",
-            status: ((97 + (index % 3)) >= 98.5) ? "great" : "fair"
+            status: ((97 + (index % 3)) >= 98.5) ? "great" as MetricStatus : "fair" as MetricStatus
           },
           {
             name: "DNR DPMO",
             value: 1500 - (index * 100),
             target: 1500,
             unit: "DPMO",
-            status: "great"
+            status: "great" as MetricStatus
           },
           {
             name: "POD",
             value: 98 + (index % 2),
             target: 98,
             unit: "%",
-            status: "great" 
+            status: "great" as MetricStatus
           },
           {
             name: "CC",
             value: 94 + (index % 6),
             target: 95,
             unit: "%",
-            status: ((94 + (index % 6)) >= 95) ? "great" : "fair"
+            status: ((94 + (index % 6)) >= 95) ? "great" as MetricStatus : "fair" as MetricStatus
           },
           {
             name: "CE",
             value: index % 5 === 0 ? 1 : 0,
             target: 0,
             unit: "",
-            status: index % 5 === 0 ? "poor" : "fantastic"
+            status: index % 5 === 0 ? "poor" as MetricStatus : "fantastic" as MetricStatus
           },
           {
             name: "DEX",
             value: 93 + (index % 7),
             target: 95,
             unit: "%",
-            status: ((93 + (index % 7)) >= 95) ? "great" : "fair"
+            status: ((93 + (index % 7)) >= 95) ? "great" as MetricStatus : "fair" as MetricStatus
           }
         ]
       };
@@ -183,7 +186,7 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
 /**
  * Determine the status of a metric based on its value
  */
-function determineMetricStatus(metricName: string, value: number): "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance" {
+function determineMetricStatus(metricName: string, value: number): MetricStatus {
   switch (metricName) {
     case "Delivered":
       return value >= 1000 ? "fantastic" : value >= 800 ? "great" : "fair";
