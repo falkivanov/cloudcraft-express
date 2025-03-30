@@ -3,7 +3,7 @@ import { parseCustomerContactData } from "@/components/quality/utils/parseCustom
 import { toast } from "sonner";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
 import { getPreviousWeekData } from "@/components/quality/scorecard/data/dataProvider";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
+import { STORAGE_KEYS, loadFromStorage, clearStorageItem } from "@/utils/storage";
 
 interface DriverComplianceData {
   name: string;
@@ -49,51 +49,66 @@ export const useQualityData = (pathname: string): QualityDataResult => {
           
           console.info(`Successfully loaded data for week ${extractedData.week}/${extractedData.year}`);
         }
-      } else {
-        const legacyData = localStorage.getItem("extractedScorecardData");
-        if (legacyData) {
-          console.info("Using legacy extracted PDF data:", legacyData.substring(0, 100) + "...");
-          const parsedData = JSON.parse(legacyData) as ScoreCardData;
-          setScoreCardData(parsedData);
-          
-          if (parsedData.week && parsedData.year) {
-            const weekId = `week-${parsedData.week}-${parsedData.year}`;
-            const previousData = getPreviousWeekData(weekId);
-            setPrevWeekScoreCardData(previousData);
-          }
-        } else {
-          const data = localStorage.getItem("scorecardData");
-          if (data) {
-            const parsedScorecard = JSON.parse(data);
-            setScoreCardData(parsedScorecard);
-            
-            if (parsedScorecard.week && parsedScorecard.year) {
-              const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
-              const previousData = getPreviousWeekData(weekId);
-              setPrevWeekScoreCardData(previousData);
-            }
-          } else {
-            console.info("No scorecard data found in localStorage");
-            setScoreCardData(null);
-            setPrevWeekScoreCardData(null);
-          }
+        return;
+      }
+      
+      const legacyData = localStorage.getItem("extractedScorecardData");
+      if (legacyData) {
+        console.info("Using legacy extracted PDF data:", legacyData.substring(0, 100) + "...");
+        const parsedData = JSON.parse(legacyData) as ScoreCardData;
+        setScoreCardData(parsedData);
+        
+        if (parsedData.week && parsedData.year) {
+          const weekId = `week-${parsedData.week}-${parsedData.year}`;
+          const previousData = getPreviousWeekData(weekId);
+          setPrevWeekScoreCardData(previousData);
         }
+        return;
+      }
+      
+      const data = localStorage.getItem("scorecardData");
+      if (data) {
+        const parsedScorecard = JSON.parse(data);
+        setScoreCardData(parsedScorecard);
+        
+        if (parsedScorecard.week && parsedScorecard.year) {
+          const weekId = `week-${parsedScorecard.week}-${parsedScorecard.year}`;
+          const previousData = getPreviousWeekData(weekId);
+          setPrevWeekScoreCardData(previousData);
+        }
+      } else {
+        console.info("No scorecard data found in localStorage");
+        setScoreCardData(null);
+        setPrevWeekScoreCardData(null);
       }
     } catch (error) {
       console.error("Error parsing scorecard data:", error);
       toast.error("Fehler beim Laden der Scorecard-Daten", {
         description: "Bitte laden Sie die Scorecard-Datei erneut hoch."
       });
+      
+      clearScorecardData();
     }
   };
 
   const clearScorecardData = () => {
     setScoreCardData(null);
     setPrevWeekScoreCardData(null);
+    
+    clearStorageItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+    localStorage.removeItem("extractedScorecardData");
+    localStorage.removeItem("scorecardData");
+    localStorage.removeItem("scorecard_week");
+    localStorage.removeItem("scorecard_year");
+    localStorage.removeItem("scorecard_data");
+    
     console.info("Scorecard data cleared due to deletion event");
-    toast.info("Scorecard-Daten wurden gelöscht", {
-      description: "Die Scorecard-Daten wurden erfolgreich entfernt.",
-    });
+    
+    if (pathname.includes("/quality/scorecard")) {
+      toast.info("Scorecard-Daten wurden gelöscht", {
+        description: "Die Scorecard-Daten wurden erfolgreich entfernt.",
+      });
+    }
   };
 
   const loadData = () => {
@@ -143,14 +158,13 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if ((event.key === "extractedScorecardData" || event.key === STORAGE_KEYS.EXTRACTED_SCORECARD_DATA) 
-          && pathname.includes("/quality/scorecard")) {
+      if ((event.key === STORAGE_KEYS.EXTRACTED_SCORECARD_DATA || 
+           event.key === "extractedScorecardData") && 
+          pathname.includes("/quality/scorecard")) {
         console.info("Storage event detected: Scorecard data changed");
         loadScoreCardData();
       }
     };
-    
-    window.addEventListener('storage', handleStorageChange);
     
     const handleScoreCardUpdatedEvent = () => {
       if (pathname.includes("/quality/scorecard")) {
@@ -166,6 +180,7 @@ export const useQualityData = (pathname: string): QualityDataResult => {
       }
     };
     
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('scorecardDataUpdated', handleScoreCardUpdatedEvent);
     window.addEventListener('scorecardDataRemoved', handleScoreCardRemovedEvent);
     

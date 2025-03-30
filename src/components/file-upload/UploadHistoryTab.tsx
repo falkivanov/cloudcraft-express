@@ -31,14 +31,16 @@ const UploadHistoryTab: React.FC = () => {
     
     loadHistory();
     
-    window.addEventListener('storage', (event) => {
+    const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'fileUploadHistory') {
         loadHistory();
       }
-    });
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      window.removeEventListener('storage', loadHistory);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -46,14 +48,20 @@ const UploadHistoryTab: React.FC = () => {
     if (removeItemFromHistory(item, index)) {
       setUploadHistory(getUploadHistory());
       
-      const currentPath = window.location.pathname;
-      if (
-        (item.category === "scorecard" && currentPath.includes("/quality/scorecard")) ||
-        (item.category === "customerContact" && currentPath.includes("/quality/customer-contact")) ||
-        (item.category === "concessions" && currentPath.includes("/quality/concessions")) ||
-        (item.category === "mentor" && currentPath.includes("/quality/mentor"))
-      ) {
-        window.dispatchEvent(new Event(`${item.category}DataRemoved`));
+      if (item.category === "scorecard") {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes("/quality/scorecard")) {
+          console.log("Reloading page to clear scorecard data from view");
+          window.location.reload();
+        } else {
+          window.dispatchEvent(new CustomEvent('scorecardDataRemoved'));
+        }
+      } else if (item.category === "customerContact" && window.location.pathname.includes("/quality/customer-contact")) {
+        window.dispatchEvent(new CustomEvent('customerContactDataRemoved'));
+      } else if (item.category === "concessions" && window.location.pathname.includes("/quality/concessions")) {
+        window.dispatchEvent(new CustomEvent('concessionsDataRemoved'));
+      } else if (item.category === "mentor" && window.location.pathname.includes("/quality/mentor")) {
+        window.dispatchEvent(new CustomEvent('mentorDataRemoved'));
       }
     }
   };

@@ -1,5 +1,6 @@
+
 import { toast } from "sonner";
-import { STORAGE_KEYS } from "@/utils/storage";
+import { STORAGE_KEYS, clearStorageItem } from "@/utils/storage";
 
 export interface UploadHistoryItem {
   name: string;
@@ -58,12 +59,29 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
       localStorage.removeItem("scorecard_year");
       localStorage.removeItem("scorecard_data");
       localStorage.removeItem("scorecardData");
-      localStorage.removeItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
+      
+      // Use the improved clearStorageItem function for consistent storage keys
+      clearStorageItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       localStorage.removeItem("extractedScorecardData");
       
+      // Remove week-specific data - find and remove all week-specific scorecard data
+      const year = new Date().getFullYear();
+      for (let week = 1; week <= 53; week++) {
+        const weekKey = `scorecard_data_week_${week}_${year}`;
+        clearStorageItem(weekKey);
+      }
+      
+      // Also check previous year (for December/January crossover)
+      const prevYear = year - 1;
+      for (let week = 50; week <= 53; week++) {
+        const weekKey = `scorecard_data_week_${week}_${prevYear}`;
+        clearStorageItem(weekKey);
+      }
+      
+      console.log("All scorecard data cleared from localStorage");
+      
       // Dispatch event to notify components that scorecard data has been removed
-      window.dispatchEvent(new Event('scorecardDataRemoved'));
-      console.log("Scorecard data removed from localStorage");
+      window.dispatchEvent(new CustomEvent('scorecardDataRemoved'));
     }
     
     toast.success(`Datei ${item.name} erfolgreich gelöscht`, {
