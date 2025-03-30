@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Employee } from "@/types/employee";
@@ -29,29 +28,24 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
     return new Date(dateString).toLocaleDateString('de-DE');
   };
 
-  // Get row background color based on status
   const getRowBackgroundColor = () => {
     if (employee.endDate === null) {
-      // For active employees, no special color
       return "";
     } else {
-      // For inactive employees, light gray background
       const daysSinceEnd = Math.floor(
         (new Date().getTime() - new Date(employee.endDate).getTime()) / (1000 * 60 * 60 * 24)
       );
       
       if (daysSinceEnd < 30) {
-        return "bg-orange-50"; // Recently inactive
+        return "bg-orange-50";
       }
-      return "bg-gray-50"; // Long inactive
+      return "bg-gray-50";
     }
   };
 
-  // Create Telegram link if username exists
   const telegramLink = employee.telegramUsername ? 
     `https://t.me/${employee.telegramUsername.replace('@', '')}` : null;
     
-  // Check if this is a full-time employee
   const isFullTimeEmployee = employee.workingDaysAWeek >= 5;
 
   return (
@@ -79,7 +73,7 @@ const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({
       <TableCell>
         {isFullTimeEmployee ? (
           <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
-            Vollzeit (flexibel)
+            Vollzeit
           </span>
         ) : (
           <div className="flex flex-wrap gap-1">
