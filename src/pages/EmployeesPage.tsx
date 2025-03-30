@@ -7,65 +7,74 @@ import { Container } from "@/components/ui/container";
 import { Employee } from "@/types/employee";
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast: shadcnToast } = useToast();
   
-  // Load employees from localStorage on initial load
+  // Verbessertes Laden von Mitarbeitern beim initialen Laden
   useEffect(() => {
-    // Try-catch block for robust error handling
+    console.log('EmployeesPage - Initialisieren und Laden der Mitarbeiterdaten');
+    setIsLoading(true);
+    
     try {
+      // Versuche, gespeicherte Mitarbeiter aus dem localStorage zu laden
       const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
       
       if (savedEmployees && savedEmployees.length > 0) {
-        console.log('EmployeesPage - Successfully loaded employees:', savedEmployees.length);
+        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', savedEmployees.length);
         setLoadedEmployees(savedEmployees);
         
-        // Show a toast to confirm data was loaded
-        toast({
-          title: "Daten geladen",
-          description: `${savedEmployees.length} Mitarbeiter wurden erfolgreich geladen.`,
+        // Toast-Nachricht zur Bestätigung des Ladens
+        toast(`${savedEmployees.length} Mitarbeiter geladen`, {
+          description: "Mitarbeiterdaten wurden erfolgreich geladen."
         });
       } else {
-        console.log('EmployeesPage - No stored employees found, using sample data');
+        console.log('EmployeesPage - Keine gespeicherten Mitarbeiter gefunden, verwende Beispieldaten');
         setLoadedEmployees(initialEmployees);
         
-        // Save initial employees to localStorage immediately
+        // Speichere Beispiel-Mitarbeiter sofort in localStorage
         saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
         
-        toast({
-          title: "Beispieldaten geladen",
-          description: "Es wurden keine gespeicherten Mitarbeiterdaten gefunden. Beispieldaten wurden geladen.",
+        toast("Beispieldaten geladen", {
+          description: "Es wurden keine gespeicherten Mitarbeiterdaten gefunden. Beispieldaten wurden geladen."
         });
       }
     } catch (error) {
-      console.error('EmployeesPage - Error loading employees:', error);
+      console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', error);
       setLoadedEmployees(initialEmployees);
       
-      // Save initial employees to localStorage as fallback
+      // Speichere Beispiel-Mitarbeiter in localStorage als Fallback
       saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
       
-      toast({
-        title: "Fehler beim Laden",
-        description: "Es gab ein Problem beim Laden der Mitarbeiterdaten. Beispieldaten wurden geladen.",
-        variant: "destructive",
+      toast.error("Fehler beim Laden der Daten", {
+        description: "Beispieldaten wurden stattdessen geladen."
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
-  // Ensure employees are saved whenever they change
+  // Stellen Sie sicher, dass Mitarbeiter gespeichert werden, wenn sie sich ändern
   useEffect(() => {
-    if (loadedEmployees.length > 0) {
+    if (loadedEmployees.length > 0 && !isLoading) {
       try {
         saveToStorage(STORAGE_KEYS.EMPLOYEES, loadedEmployees);
-        console.log('EmployeesPage - Saved employees to localStorage:', loadedEmployees.length);
+        console.log('EmployeesPage - Gespeicherte Mitarbeiter in localStorage:', loadedEmployees.length);
+        
+        // Custom Event auslösen, um andere Komponenten zu benachrichtigen
+        const event = new CustomEvent('employees-updated', { 
+          detail: { employees: loadedEmployees } 
+        });
+        window.dispatchEvent(event);
       } catch (error) {
-        console.error('EmployeesPage - Error saving employees:', error);
+        console.error('EmployeesPage - Fehler beim Speichern der Mitarbeiter:', error);
       }
     }
-  }, [loadedEmployees]);
+  }, [loadedEmployees, isLoading]);
 
   return (
     <Container className="py-8">
@@ -77,6 +86,7 @@ const EmployeesPage = () => {
         initialEmployees={loadedEmployees} 
         isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
         setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
+        isLoading={isLoading}
       />
     </Container>
   );

@@ -10,22 +10,26 @@ import EmployeeTabs from "./EmployeeTabs";
 import AddEmployeeDialog from "./AddEmployeeDialog";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { saveToStorage, loadFromStorage, STORAGE_KEYS } from "@/utils/storageUtils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface EmployeePageContentProps {
   initialEmployees: Employee[];
   isAddEmployeeDialogOpen?: boolean;
   setIsAddEmployeeDialogOpen?: (open: boolean) => void;
+  isLoading?: boolean;
 }
 
 const EmployeePageContent: React.FC<EmployeePageContentProps> = ({ 
   initialEmployees: propInitialEmployees,
   isAddEmployeeDialogOpen = false,
-  setIsAddEmployeeDialogOpen = () => {}
+  setIsAddEmployeeDialogOpen = () => {},
+  isLoading = false
 }) => {
   const [employees, setEmployees] = useState<Employee[]>(
     propInitialEmployees.length > 0 ? propInitialEmployees : initialEmployees
   );
-  const { toast } = useToast();
+  const { toast: shadcnToast } = useToast();
   const { setOpen } = useSidebar();
 
   const {
@@ -40,37 +44,47 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
-  // Synchronize with prop changes
+  // Synchronisiere mit Prop-Änderungen
   useEffect(() => {
     if (propInitialEmployees.length > 0) {
-      console.log('EmployeePageContent - Updating employees from props:', propInitialEmployees.length);
+      console.log('EmployeePageContent - Mitarbeiter aus Props aktualisieren:', propInitialEmployees.length);
       setEmployees(propInitialEmployees);
     }
   }, [propInitialEmployees]);
 
-  // Listen for storage events from other tabs
+  // Höre auf Speicherereignisse von anderen Tabs und auf benutzerdefinierte Ereignisse
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEYS.EMPLOYEES && e.newValue) {
         try {
           const parsedEmployees = JSON.parse(e.newValue);
           if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
-            console.log('EmployeePageContent - Updated employees from storage event:', parsedEmployees.length);
+            console.log('EmployeePageContent - Mitarbeiter aus Speicher-Ereignis aktualisiert:', parsedEmployees.length);
             setEmployees(parsedEmployees);
           }
         } catch (error) {
-          console.error('EmployeePageContent - Error parsing employees from storage event:', error);
+          console.error('EmployeePageContent - Fehler beim Parsen der Mitarbeiter aus Speicher-Ereignis:', error);
         }
       }
     };
     
+    const handleCustomEvent = (e: CustomEvent<{employees: Employee[]}>) => {
+      if (e.detail && e.detail.employees) {
+        console.log('EmployeePageContent - Aktualisierung durch Custom Event:', e.detail.employees.length);
+        setEmployees(e.detail.employees);
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('employees-updated', handleCustomEvent as EventListener);
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('employees-updated', handleCustomEvent as EventListener);
     };
   }, []);
 
-  // Fix pointer events issue
+  // Problem mit pointer-events beheben
   useEffect(() => {
     const handleMouseMove = () => {
       document.body.style.pointerEvents = 'auto';
@@ -90,12 +104,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     
     setEmployees(updatedEmployees);
     
-    // Save to localStorage immediately after update
+    // Sofort in localStorage speichern
     saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
     
-    toast({
-      title: "Mitarbeiter aktualisiert",
-      description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`,
+    toast("Mitarbeiter aktualisiert", {
+      description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`
     });
   };
 
@@ -103,14 +116,13 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     const updatedEmployees = [...employees, newEmployee];
     setEmployees(updatedEmployees);
     
-    // Save to localStorage immediately after adding
+    // Sofort in localStorage speichern
     saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
     
     setIsAddEmployeeDialogOpen(false);
     
-    toast({
-      title: "Mitarbeiter hinzugefügt",
-      description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`,
+    toast("Mitarbeiter hinzugefügt", {
+      description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`
     });
   };
 
@@ -118,14 +130,23 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     const updatedEmployees = [...employees, ...importedEmployees];
     setEmployees(updatedEmployees);
     
-    // Save to localStorage immediately after import
+    // Sofort in localStorage speichern
     saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
     
-    toast({
-      title: "Mitarbeiter importiert",
-      description: `${importedEmployees.length} Mitarbeiter wurden erfolgreich importiert.`,
+    toast("Mitarbeiter importiert", {
+      description: `${importedEmployees.length} Mitarbeiter wurden erfolgreich importiert.`
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background">
