@@ -103,3 +103,24 @@ export class FileProcessor {
     }
   }
 }
+
+/**
+ * Utility function to process a file using the FileProcessor
+ * 
+ * @param file The file to process
+ * @param fileType The file type
+ * @param category The file category
+ * @param options Processing options
+ * @returns A promise that resolves to a boolean indicating success
+ */
+export async function processFile(
+  file: File,
+  fileType: string,
+  category: string,
+  onFileUpload?: (file: File, type: string, category: string) => void,
+  options: ProcessOptions = {}
+): Promise<boolean> {
+  console.log(`Processing file using utility function: ${file.name}, category: ${category}`);
+  const processor = new FileProcessor(file, category, onFileUpload);
+  return await processor.process(options);
+}
