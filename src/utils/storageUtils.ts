@@ -24,15 +24,37 @@ export const STORAGE_KEYS = {
 };
 
 /**
+ * Checks if localStorage is available and working
+ * @returns boolean indicating if localStorage is available
+ */
+export function isStorageAvailable(): boolean {
+  try {
+    const testKey = 'storage-test';
+    localStorage.setItem(testKey, 'test');
+    const result = localStorage.getItem(testKey) === 'test';
+    localStorage.removeItem(testKey);
+    return result;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Saves data to localStorage with error handling and versioning
  * @param key Storage key
  * @param data Data to store
  * @returns boolean indicating success
  */
 export function saveToStorage<T>(key: string, data: T): boolean {
+  if (!isStorageAvailable()) {
+    console.error('localStorage is not available');
+    return false;
+  }
+  
   try {
     // Store the data
-    localStorage.setItem(key, JSON.stringify(data));
+    const jsonData = JSON.stringify(data);
+    localStorage.setItem(key, jsonData);
     
     // Update timestamp and version
     localStorage.setItem(STORAGE_KEYS.DATA_TIMESTAMP, Date.now().toString());
@@ -57,6 +79,11 @@ export function loadFromStorage<T>(
   validator?: z.ZodType<T>,
   fallback?: T
 ): T | null {
+  if (!isStorageAvailable()) {
+    console.error('localStorage is not available');
+    return fallback || null;
+  }
+  
   try {
     const savedData = localStorage.getItem(key);
     
@@ -81,6 +108,45 @@ export function loadFromStorage<T>(
   } catch (error) {
     console.error(`Error loading ${key} from localStorage:`, error);
     return fallback || null;
+  }
+}
+
+/**
+ * Clears a specific item from localStorage
+ * @param key Storage key to clear
+ * @returns boolean indicating success
+ */
+export function clearStorageItem(key: string): boolean {
+  if (!isStorageAvailable()) {
+    console.error('localStorage is not available');
+    return false;
+  }
+  
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error(`Error clearing ${key} from localStorage:`, error);
+    return false;
+  }
+}
+
+/**
+ * Clears all data in localStorage
+ * @returns boolean indicating success
+ */
+export function clearAllStorage(): boolean {
+  if (!isStorageAvailable()) {
+    console.error('localStorage is not available');
+    return false;
+  }
+  
+  try {
+    localStorage.clear();
+    return true;
+  } catch (error) {
+    console.error('Error clearing localStorage:', error);
+    return false;
   }
 }
 

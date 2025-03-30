@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { saveToStorage, STORAGE_KEYS } from "@/utils/storageUtils";
 
 interface EmployeeImportProps {
   onImportEmployees?: (employees: Employee[]) => void;
@@ -43,6 +44,28 @@ const EmployeeImport: React.FC<EmployeeImportProps> = ({ onImportEmployees }) =>
           variant: "destructive",
         });
         return;
+      }
+      
+      // Save to history
+      try {
+        // Update file upload history
+        const timestamp = Date.now();
+        const historyItem = {
+          name: file.name,
+          type: 'csv',
+          category: 'employees',
+          timestamp 
+        };
+        
+        // Get existing history
+        const historyString = localStorage.getItem(STORAGE_KEYS.FILE_UPLOAD_HISTORY);
+        const history = historyString ? JSON.parse(historyString) : [];
+        
+        // Add new item and save
+        history.push(historyItem);
+        localStorage.setItem(STORAGE_KEYS.FILE_UPLOAD_HISTORY, JSON.stringify(history));
+      } catch (historyError) {
+        console.error("Error updating upload history:", historyError);
       }
       
       // Call the onImportEmployees callback if provided

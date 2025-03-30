@@ -15,20 +15,57 @@ const EmployeesPage = () => {
   
   // Load employees from localStorage on initial load
   useEffect(() => {
-    const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES, undefined, initialEmployees);
-    
-    if (savedEmployees && savedEmployees.length > 0) {
-      setLoadedEmployees(savedEmployees);
+    // Try-catch block for robust error handling
+    try {
+      const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
       
-      // Show a toast to confirm data was loaded
-      toast({
-        title: "Daten geladen",
-        description: `${savedEmployees.length} Mitarbeiter wurden erfolgreich geladen.`,
-      });
-    } else {
+      if (savedEmployees && savedEmployees.length > 0) {
+        console.log('EmployeesPage - Successfully loaded employees:', savedEmployees.length);
+        setLoadedEmployees(savedEmployees);
+        
+        // Show a toast to confirm data was loaded
+        toast({
+          title: "Daten geladen",
+          description: `${savedEmployees.length} Mitarbeiter wurden erfolgreich geladen.`,
+        });
+      } else {
+        console.log('EmployeesPage - No stored employees found, using sample data');
+        setLoadedEmployees(initialEmployees);
+        
+        // Save initial employees to localStorage immediately
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
+        
+        toast({
+          title: "Beispieldaten geladen",
+          description: "Es wurden keine gespeicherten Mitarbeiterdaten gefunden. Beispieldaten wurden geladen.",
+        });
+      }
+    } catch (error) {
+      console.error('EmployeesPage - Error loading employees:', error);
       setLoadedEmployees(initialEmployees);
+      
+      // Save initial employees to localStorage as fallback
+      saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
+      
+      toast({
+        title: "Fehler beim Laden",
+        description: "Es gab ein Problem beim Laden der Mitarbeiterdaten. Beispieldaten wurden geladen.",
+        variant: "destructive",
+      });
     }
   }, [toast]);
+
+  // Ensure employees are saved whenever they change
+  useEffect(() => {
+    if (loadedEmployees.length > 0) {
+      try {
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, loadedEmployees);
+        console.log('EmployeesPage - Saved employees to localStorage:', loadedEmployees.length);
+      } catch (error) {
+        console.error('EmployeesPage - Error saving employees:', error);
+      }
+    }
+  }, [loadedEmployees]);
 
   return (
     <Container className="py-8">

@@ -40,22 +40,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
-  // Load employees from localStorage on component mount
+  // Synchronize with prop changes
   useEffect(() => {
-    const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES, undefined, 
-      propInitialEmployees.length > 0 ? propInitialEmployees : initialEmployees);
-    
-    if (savedEmployees && savedEmployees.length > 0) {
-      console.log('Loaded employees from localStorage:', savedEmployees.length);
-      setEmployees(savedEmployees);
-    } else if (propInitialEmployees.length > 0) {
-      console.log('Using prop initialEmployees as fallback');
+    if (propInitialEmployees.length > 0) {
+      console.log('EmployeePageContent - Updating employees from props:', propInitialEmployees.length);
       setEmployees(propInitialEmployees);
-      saveToStorage(STORAGE_KEYS.EMPLOYEES, propInitialEmployees);
-    } else {
-      console.log('Using sample initialEmployees as fallback');
-      setEmployees(initialEmployees);
-      saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
     }
   }, [propInitialEmployees]);
 
@@ -66,10 +55,11 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         try {
           const parsedEmployees = JSON.parse(e.newValue);
           if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+            console.log('EmployeePageContent - Updated employees from storage event:', parsedEmployees.length);
             setEmployees(parsedEmployees);
           }
         } catch (error) {
-          console.error('Error parsing employees from storage event:', error);
+          console.error('EmployeePageContent - Error parsing employees from storage event:', error);
         }
       }
     };
@@ -79,13 +69,6 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-
-  // Save employees to localStorage when they change
-  useEffect(() => {
-    if (employees.length > 0) {
-      saveToStorage(STORAGE_KEYS.EMPLOYEES, employees);
-    }
-  }, [employees]);
 
   // Fix pointer events issue
   useEffect(() => {
@@ -101,9 +84,14 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   }, [setOpen]);
 
   const handleUpdateEmployee = (updatedEmployee: Employee) => {
-    setEmployees(employees.map(emp => 
+    const updatedEmployees = employees.map(emp => 
       emp.id === updatedEmployee.id ? updatedEmployee : emp
-    ));
+    );
+    
+    setEmployees(updatedEmployees);
+    
+    // Save to localStorage immediately after update
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
     
     toast({
       title: "Mitarbeiter aktualisiert",
@@ -112,7 +100,12 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   };
 
   const handleAddEmployee = (newEmployee: Employee) => {
-    setEmployees([...employees, newEmployee]);
+    const updatedEmployees = [...employees, newEmployee];
+    setEmployees(updatedEmployees);
+    
+    // Save to localStorage immediately after adding
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+    
     setIsAddEmployeeDialogOpen(false);
     
     toast({
@@ -122,7 +115,16 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
   };
 
   const handleImportEmployees = (importedEmployees: Employee[]) => {
-    setEmployees(prevEmployees => [...prevEmployees, ...importedEmployees]);
+    const updatedEmployees = [...employees, ...importedEmployees];
+    setEmployees(updatedEmployees);
+    
+    // Save to localStorage immediately after import
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+    
+    toast({
+      title: "Mitarbeiter importiert",
+      description: `${importedEmployees.length} Mitarbeiter wurden erfolgreich importiert.`,
+    });
   };
 
   return (
