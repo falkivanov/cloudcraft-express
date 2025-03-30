@@ -1,143 +1,185 @@
 
 import { DriverKPI } from "../types";
 
-/**
- * Calculate a score for a driver based on their KPIs
- * @param driver DriverKPI object
- * @returns Score object with total score and rating
- */
-export const calculateDriverScore = (driver: DriverKPI) => {
-  // Initialize weights for different metrics
-  const weights = {
-    "Delivered": 0.25,
-    "DCR": 0.25,
-    "DNR DPMO": 0.25,
-    "POD": 0.05,
-    "CC": 0.1,
-    "CE": 0.05,
-    "DEX": 0.05
-  };
+// Function to get status badge styling
+export const getStatusClass = (status: string | undefined) => {
+  if (!status) return "bg-gray-100 text-gray-500";
   
-  let totalScore = 0;
-  let weightSum = 0;
-  
-  // Calculate weighted score based on metrics
-  driver.metrics.forEach(metric => {
-    const weight = weights[metric.name as keyof typeof weights] || 0;
-    
-    if (weight > 0) {
-      let score = 0;
-      
-      // Calculate score based on metric type
-      if (metric.name === "DNR DPMO") {
-        // For DNR DPMO, lower is better (inverse scale)
-        // Use absolute value in case of negative values
-        const value = Math.abs(metric.value);
-        if (value <= 500) score = 100;
-        else if (value <= 1000) score = 90;
-        else if (value <= 1500) score = 80;
-        else if (value <= 2000) score = 70;
-        else if (value <= 2500) score = 60;
-        else score = 50;
-      } else if (metric.name === "DCR" || metric.name === "POD") {
-        // For percentage metrics like DCR and POD
-        if (metric.value >= 99.5) score = 100;
-        else if (metric.value >= 99) score = 95;
-        else if (metric.value >= 98) score = 85;
-        else if (metric.value >= 97) score = 75;
-        else if (metric.value >= 96) score = 65;
-        else score = 55;
-      } else if (metric.name === "CC") {
-        // For Contact Compliance
-        if (metric.value >= 95) score = 100;
-        else if (metric.value >= 90) score = 90;
-        else if (metric.value >= 85) score = 80;
-        else if (metric.value >= 80) score = 70;
-        else score = 60;
-      } else if (metric.name === "Delivered") {
-        // For Delivered packages (raw count or percentage)
-        score = 90; // Default good score
-        
-        // If it's a percentage, use percentage-based scoring
-        if (metric.unit === "%") {
-          if (metric.value >= 98) score = 100;
-          else if (metric.value >= 95) score = 90;
-          else if (metric.value >= 90) score = 80;
-          else score = 70;
-        }
-      } else {
-        // Default scoring for other metrics
-        if (metric.status === "fantastic") score = 100;
-        else if (metric.status === "great") score = 90;
-        else if (metric.status === "fair") score = 75;
-        else if (metric.status === "poor") score = 60;
-        else score = 70; // Default
-      }
-      
-      totalScore += score * weight;
-      weightSum += weight;
-    }
-  });
-  
-  // Calculate final score
-  const finalScore = weightSum > 0 ? Math.round(totalScore / weightSum) : 75;
-  
-  // Determine rating and color
-  let rating: "gut" | "mittel" | "schlecht" = "mittel";
-  let color: string = "text-amber-500";
-  
-  if (finalScore >= 85) {
-    rating = "gut";
-    color = "text-green-600";
-  } else if (finalScore < 70) {
-    rating = "schlecht";
-    color = "text-red-600";
+  switch (status.toLowerCase()) {
+    case "fantastic":
+      return "bg-blue-100 text-blue-600";
+    case "great":
+      return "bg-yellow-100 text-yellow-600";
+    case "fair":
+      return "bg-orange-100 text-orange-600";
+    case "poor":
+      return "bg-red-100 text-red-600";
+    case "none":
+      return "bg-gray-200 text-gray-500";
+    default:
+      return "bg-gray-100 text-gray-500";
+  }
+};
+
+// Get the appropriate color class based on metric name and value
+export const getMetricColorClass = (metricName: string, value: number): string => {
+  // Special case for metrics with value 0 and status "none" (representing "-" in the data)
+  if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE") {
+    return "text-gray-400";
   }
   
+  switch (metricName) {
+    case "DCR":
+      if (value >= 99.5) return "text-blue-600 font-semibold";
+      if (value >= 98) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "DNR DPMO":
+      if (value <= 1000) return "text-blue-600 font-semibold";
+      if (value <= 1600) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "POD":
+      if (value >= 99) return "text-blue-600 font-semibold";
+      if (value >= 97) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "Contact Compliance":
+    case "CC":
+      if (value === 0) return "text-gray-400"; // For "-" value
+      if (value >= 99) return "text-blue-600 font-semibold";
+      if (value >= 94) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    case "CE":
+      return value === 0 ? "text-blue-600 font-semibold" : "text-red-500 font-semibold";
+      
+    case "DEX":
+      if (value >= 95) return "text-blue-600 font-semibold";
+      if (value >= 90) return "text-orange-500 font-semibold";
+      return "text-red-500 font-semibold";
+      
+    default:
+      return "text-gray-700";
+  }
+};
+
+// Find previous week's data for a driver
+export const getPreviousDriverData = (driverName: string, previousWeekData: any) => {
+  if (!previousWeekData) return null;
+  return previousWeekData.driverKPIs.find((d: DriverKPI) => d.name === driverName) || null;
+};
+
+// Get previous metric data
+export const getPreviousMetricData = (driverName: string, metricName: string, previousWeekData: any) => {
+  const prevDriver = getPreviousDriverData(driverName, previousWeekData);
+  if (!prevDriver) return null;
+  
+  return prevDriver.metrics.find(m => m.name === metricName) || null;
+};
+
+// Format value based on metric name
+export const formatValue = (value: number, unit: string) => {
+  return value;
+};
+
+// Function to calculate and format the change from previous week
+export const getChangeDisplay = (current: number, previousValue: number | null) => {
+  if (previousValue === null) return null;
+  
+  const difference = current - previousValue;
+  const isPositive = difference > 0;
+  
   return {
-    total: finalScore,
-    rating,
-    color
+    difference,
+    display: `${isPositive ? "+" : ""}${Math.round(difference)}`,
+    isPositive
   };
 };
 
-/**
- * Get the appropriate color class for a metric value
- */
-export const getMetricColorClass = (metricName: string, value: number): string => {
-  // Handle DNR DPMO (lower is better)
-  if (metricName === "DNR DPMO") {
-    const absValue = Math.abs(value); // Use absolute value
-    if (absValue <= 500) return "text-green-600";
-    if (absValue <= 1500) return "text-green-500";
-    if (absValue <= 3000) return "text-amber-500";
-    return "text-red-500";
+// Function to calculate driver score based on metrics and weightings
+export const calculateDriverScore = (driver: DriverKPI) => {
+  // Define weightings
+  const weightings = {
+    "DCR": 25,
+    "DNR DPMO": 25,
+    "POD": 6,
+    "Contact Compliance": 14,
+    "CC": 14,
+    "DEX": 14,
+    "CE": 16
+  };
+
+  let totalScore = 0;
+  let maxPossibleScore = 0;
+
+  driver.metrics.forEach(metric => {
+    // Handle both "Contact Compliance" and "CC" as the same metric
+    const metricName = metric.name === "Contact Compliance" ? "CC" : metric.name;
+    const weight = weightings[metricName as keyof typeof weightings] || 0;
+    
+    if (!weight) return;
+    
+    // Skip "-" values (represented as value 0 with status "none") for CC
+    if (metricName === "CC" && metric.status === "none" && metric.value === 0) {
+      // Don't add to maxPossibleScore as this metric is not applicable
+      return;
+    }
+    
+    maxPossibleScore += weight;
+    let points = 0;
+    
+    switch (metricName) {
+      case "DCR":
+        if (metric.value >= 99.5) points = weight;
+        else if (metric.value >= 98) points = weight * 0.5;
+        break;
+      
+      case "DNR DPMO":
+        if (metric.value <= 1000) points = weight;
+        else if (metric.value <= 1600) points = weight * 0.5;
+        break;
+      
+      case "POD":
+        if (metric.value >= 99) points = weight;
+        else if (metric.value >= 97) points = weight * 0.5;
+        break;
+      
+      case "CC":
+        if (metric.status === "none") break; // Skip if it's a "-" value
+        if (metric.value >= 99) points = weight;
+        else if (metric.value >= 94) points = weight * 0.5;
+        break;
+      
+      case "CE":
+        if (metric.value === 0) points = weight;
+        break;
+      
+      case "DEX":
+        if (metric.value >= 95) points = weight;
+        else if (metric.value >= 90) points = weight * 0.5;
+        break;
+    }
+    
+    totalScore += points;
+  });
+
+  const percentageScore = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
+  
+  let rating: "gut" | "mittel" | "schlecht" = "schlecht";
+  let color = "text-red-500";
+  
+  if (percentageScore >= 80) {
+    rating = "gut";
+    color = "text-blue-600";
+  } else if (percentageScore >= 50) {
+    rating = "mittel";
+    color = "text-orange-500";
   }
   
-  // Handle percentage metrics
-  if (metricName === "DCR" || metricName === "POD") {
-    if (value >= 99) return "text-green-600";
-    if (value >= 98) return "text-green-500";
-    if (value >= 97) return "text-amber-500";
-    return "text-red-500";
-  }
-  
-  // Handle Contact Compliance
-  if (metricName === "CC") {
-    if (value >= 95) return "text-green-600";
-    if (value >= 90) return "text-green-500";
-    if (value >= 85) return "text-amber-500";
-    return "text-red-500";
-  }
-  
-  // Handle Customer Experience
-  if (metricName === "CE") {
-    if (value === 0) return "text-green-600"; // 0 is good for CE
-    if (value <= 1) return "text-green-500";
-    if (value <= 2) return "text-amber-500";
-    return "text-red-500";
-  }
-  
-  // Default for other metrics
-  return "text-gray-700";
+  return {
+    total: percentageScore,
+    rating,
+    color
+  };
 };

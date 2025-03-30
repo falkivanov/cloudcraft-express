@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { DriverKPIsProps } from "./types";
 import DriverTable from "./driver/DriverTable";
 import { calculateDriverScore } from "./driver/utils";
@@ -11,8 +11,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   driverKPIs,
   previousWeekData
 }) => {
-  const [showAll, setShowAll] = useState(false);
-  
   // Filter only active drivers
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
 
@@ -21,13 +19,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     const score = calculateDriverScore(driver);
     return { ...driver, score };
   });
-
-  // Check for data quality issues
-  const hasNegativeDnrValues = driversWithScores.some(driver => 
-    driver.metrics.some(metric => 
-      metric.name === "DNR DPMO" && metric.value < 0
-    )
-  );
 
   // Show an info message if we suspect the data is sample data or problematic
   const isSuspectedSampleData = 
@@ -63,15 +54,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               Bitte prüfen Sie die PDF oder laden Sie sie erneut hoch. Wenn das Problem weiterhin besteht, 
               könnte das Format der PDF nicht vollständig unterstützt werden.
             </p>
-          </AlertDescription>
-        </Alert>
-      ) : hasNegativeDnrValues ? (
-        <Alert className="mb-4 bg-blue-50 border-blue-200">
-          <InfoIcon className="h-4 w-4 text-blue-600" />
-          <AlertTitle>Hinweis zu den DNR DPMO-Werten</AlertTitle>
-          <AlertDescription>
-            Bei einigen Fahrern wurden negative DNR DPMO-Werte gefunden. Dies kann auf ein Extraktionsproblem hindeuten. 
-            Die Werte werden als absolute Zahlen angezeigt, aber bitte prüfen Sie die Originaldaten für die genauen Werte.
           </AlertDescription>
         </Alert>
       ) : null}
