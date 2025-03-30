@@ -1,10 +1,9 @@
-
 /**
  * Utilities for handling localStorage operations related to shifts
  */
 
 import { ShiftAssignment } from "@/types/shift";
-import { STORAGE_KEYS, saveToStorage, loadFromStorage, mapToObject, objectToMap } from "@/utils/storageUtils";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage, mapToObject, objectToMap } from "@/utils/storage";
 
 // Save shifts to localStorage
 export const saveShiftsToStorage = (shiftsMap: Map<string, ShiftAssignment>): void => {

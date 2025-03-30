@@ -1,6 +1,5 @@
-
 import { toast } from "sonner";
-import { STORAGE_KEYS } from "@/utils/storageUtils";
+import { STORAGE_KEYS } from "@/utils/storage";
 
 export interface UploadHistoryItem {
   name: string;

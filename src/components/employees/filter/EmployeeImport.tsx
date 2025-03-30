@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { saveToStorage, STORAGE_KEYS } from "@/utils/storageUtils";
+import { saveToStorage, STORAGE_KEYS } from "@/utils/storage";
 
 interface EmployeeImportProps {
   onImportEmployees?: (employees: Employee[]) => void;

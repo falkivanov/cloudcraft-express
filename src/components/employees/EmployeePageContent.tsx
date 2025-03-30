@@ -9,7 +9,7 @@ import EmployeeFilter from "./EmployeeFilter";
 import EmployeeTabs from "./EmployeeTabs";
 import AddEmployeeDialog from "./AddEmployeeDialog";
 import { initialEmployees } from "@/data/sampleEmployeeData";
-import { saveToStorage, loadFromStorage, STORAGE_KEYS } from "@/utils/storageUtils";
+import { saveToStorage, loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 

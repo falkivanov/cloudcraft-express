@@ -1,8 +1,7 @@
-
 import { useEffect, useRef } from "react";
 import { Employee } from "@/types/employee";
 import { processEmployees } from "../utils/employee-processor";
-import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storage";
 
 /**
  * Hook zum Synchronisieren von Mitarbeiterdaten über Tabs hinweg und zur Behandlung von beforeunload

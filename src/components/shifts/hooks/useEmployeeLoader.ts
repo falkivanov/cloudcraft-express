@@ -4,7 +4,7 @@ import { Employee } from "@/types/employee";
 import { useEmployeeStorage } from "./useEmployeeStorage";
 import { useEmployeeStorageSync } from "./useEmployeeStorageSync";
 import { filterAndProcessEmployees } from "../utils/employee-processor";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 import { toast } from "sonner";
 
 export const useEmployeeLoader = (initialEmployeesData: Employee[] = []) => {

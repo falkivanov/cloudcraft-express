@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Employee } from "@/types/employee";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import { processEmployees } from "../utils/employee-processor";
-import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, saveToStorage, loadFromStorage } from "@/utils/storage";
 import { toast } from "sonner";
 
 /**

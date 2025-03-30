@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import ShiftPlanningHeader from "@/components/shifts/ShiftPlanningHeader";
 import ShiftScheduleContent from "@/components/shifts/ShiftScheduleContent";
@@ -7,7 +6,7 @@ import { useShiftPlanning } from "@/components/shifts/hooks/useShiftPlanning";
 import { Container } from "@/components/ui/container";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storageUtils";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 const ShiftPlanningPage = () => {
   const { toast } = useToast();
