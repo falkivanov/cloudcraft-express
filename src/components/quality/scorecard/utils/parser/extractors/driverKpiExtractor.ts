@@ -1,8 +1,14 @@
 
 import { extractDriversOrUseSampleData } from './driver/extractionStrategies';
-import { extractDriverKPIsFromStructure } from './driver/structuralExtractor';
-import { extractDriverKPIsFromText } from './driver/textExtractor';
-import { generateSampleDrivers } from './driver/sampleData';
+import { 
+  extractDriverKPIsFromStructure, 
+  extractDriverKPIsFromText,
+  generateSampleDrivers,
+  extractDriversFromDSPWeeklySummary,
+  extractDriversWithFlexiblePattern,
+  extractDriversLineByLine,
+  extractDriversWithEnhancedPatterns
+} from './driver';
 import { determineMetricStatus } from './driver/utils/metricStatus';
 import { DriverKPI } from '../../../types';
 
@@ -20,5 +26,9 @@ export {
   extractDriverKPIsFromStructure,
   extractDriverKPIsFromText,
   generateSampleDrivers,
-  determineMetricStatus
+  determineMetricStatus,
+  extractDriversFromDSPWeeklySummary,
+  extractDriversWithFlexiblePattern,
+  extractDriversLineByLine,
+  extractDriversWithEnhancedPatterns
 };
