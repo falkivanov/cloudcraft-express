@@ -92,14 +92,14 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
             value: 95 + (index % 5),
             target: 100,
             unit: "%",
-            status: "good" as const
+            status: "great" as const
           },
           {
             name: "DNR DPMO",
             value: 3000 - (index * 200),
             target: 3000,
             unit: "DPMO",
-            status: "good" as const
+            status: "great" as const
           }
         ]
       }));
