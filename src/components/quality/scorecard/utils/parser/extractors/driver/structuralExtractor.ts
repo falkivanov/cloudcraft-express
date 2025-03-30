@@ -1,4 +1,3 @@
-
 import { determineStatus } from '../../../helpers/statusHelper';
 import { extractDriverKPIsFromText } from './textExtractor';
 import { extractNumericValues } from '../valueExtractor';
@@ -47,10 +46,10 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     
     const sortedItems = [...page.items].sort((a, b) => b.y - a.y);
     
-    // Group into rows
+    // Group into rows with more flexible tolerance to handle table rows
     for (const item of sortedItems) {
-      if (lastY === -1 || Math.abs(item.y - lastY) < 5) {
-        // Same row
+      if (lastY === -1 || Math.abs(item.y - lastY) < 10) {
+        // Same row - increased tolerance from 5 to 10
         currentRow.push(item);
       } else {
         // New row
@@ -72,8 +71,8 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     // Headers we expect based on the provided image
     const expectedHeaders = [
       "Transporter ID", 
-      "Stops", 
       "Delivered", 
+      "DCR",  // Keep original name from PDF
       "DNR DPMO", 
       "POD", 
       "CC", 
@@ -84,16 +83,20 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     let headerRow: any[] = [];
     let headerIndexes: Record<string, number> = {};
     
-    // Look for header row
+    // Look for header row - make sure we check for exact matches
     for (const row of rows) {
-      const rowText = row.map(item => item.str.trim()).join(' ');
+      // Extract text from row items and concatenate
+      const rowItems = row.map(item => item.str.trim());
+      const rowText = rowItems.join(' ');
       
       // Check if this row contains a significant number of expected headers
-      const headerMatches = expectedHeaders.filter(header => 
-        rowText.includes(header) || 
-        (header === "Transporter ID" && rowText.includes("Transporter")) ||
-        (header === "Contact Compliance" && rowText.includes("CC"))
-      );
+      const headerMatches = expectedHeaders.filter(header => {
+        const headerLower = header.toLowerCase();
+        return rowItems.some(item => 
+          item.toLowerCase() === headerLower || 
+          item.toLowerCase().includes(headerLower)
+        );
+      });
       
       // If we found enough headers, mark this as the header row
       if (headerMatches.length >= 3) {
@@ -102,26 +105,24 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
         
         // Map column positions to header names
         for (let i = 0; i < row.length; i++) {
-          const headerText = row[i].str.trim();
+          const headerText = row[i].str.trim().toLowerCase();
           
-          if (headerText === "Transporter ID" || headerText.includes("Transporter")) {
+          if (headerText === "transporter id" || headerText.includes("transporter")) {
             headerIndexes["Transporter ID"] = i;
-          } else if (headerText === "Stops") {
-            headerIndexes["Stops"] = i;
-          } else if (headerText === "Delivered") {
+          } else if (headerText === "delivered") {
             headerIndexes["Delivered"] = i;
-          } else if (headerText === "DNR DPMO" || headerText === "DPMO") {
-            headerIndexes["DNR DPMO"] = i;
-          } else if (headerText === "POD") {
-            headerIndexes["POD"] = i;
-          } else if (headerText === "CC") {
-            headerIndexes["Contact Compliance"] = i;
-          } else if (headerText === "CE") {
-            headerIndexes["Customer Escalation"] = i;
-          } else if (headerText === "DEX") {
-            headerIndexes["DEX"] = i;
-          } else if (headerText === "DCR") {
+          } else if (headerText === "dcr") {
             headerIndexes["DCR"] = i;
+          } else if (headerText === "dnr dpmo" || headerText === "dpmo") {
+            headerIndexes["DNR DPMO"] = i;
+          } else if (headerText === "pod") {
+            headerIndexes["POD"] = i;
+          } else if (headerText === "cc") {
+            headerIndexes["CC"] = i;
+          } else if (headerText === "ce") {
+            headerIndexes["CE"] = i;
+          } else if (headerText === "dex") {
+            headerIndexes["DEX"] = i;
           }
         }
         
@@ -160,34 +161,34 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             
             // Process all metrics based on the header indexes
             
-            // Stops (if available)
-            if (headerIndexes["Stops"] !== undefined && headerIndexes["Stops"] < row.length) {
-              const stopsStr = row[headerIndexes["Stops"]].str.trim();
-              const stopsValue = parseInt(stopsStr);
-              
-              if (!isNaN(stopsValue)) {
-                metrics.push({
-                  name: "Stops",
-                  value: stopsValue,
-                  target: 0, // No specific target
-                  unit: "",
-                  status: "fantastic" as const
-                });
-              }
-            }
-            
-            // Add Delivered metric if available
+            // Delivered (keep original name)
             if (headerIndexes["Delivered"] !== undefined && headerIndexes["Delivered"] < row.length) {
               const deliveredStr = row[headerIndexes["Delivered"]].str.trim();
-              const deliveredValue = parseFloat(deliveredStr.replace('%', ''));
+              const deliveredValue = extractNumeric(deliveredStr);
               
               if (!isNaN(deliveredValue)) {
                 metrics.push({
                   name: "Delivered",
                   value: deliveredValue,
-                  target: 100,
-                  unit: "%",
+                  target: 0,
+                  unit: "",
                   status: determineStatus("Delivered", deliveredValue)
+                });
+              }
+            }
+            
+            // DCR (keep original name)
+            if (headerIndexes["DCR"] !== undefined && headerIndexes["DCR"] < row.length) {
+              const dcrStr = row[headerIndexes["DCR"]].str.trim();
+              const dcrValue = extractNumeric(dcrStr);
+              
+              if (!isNaN(dcrValue)) {
+                metrics.push({
+                  name: "DCR",
+                  value: dcrValue,
+                  target: 98.5,
+                  unit: "%",
+                  status: determineStatus("DCR", dcrValue)
                 });
               }
             }
@@ -195,13 +196,13 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             // Add DNR DPMO metric if available
             if (headerIndexes["DNR DPMO"] !== undefined && headerIndexes["DNR DPMO"] < row.length) {
               const dpmoStr = row[headerIndexes["DNR DPMO"]].str.trim();
-              const dpmoValue = parseInt(dpmoStr);
+              const dpmoValue = extractNumeric(dpmoStr);
               
               if (!isNaN(dpmoValue)) {
                 metrics.push({
                   name: "DNR DPMO",
                   value: dpmoValue,
-                  target: 3000,
+                  target: 1500,
                   unit: "DPMO",
                   status: determineStatus("DNR DPMO", dpmoValue)
                 });
@@ -211,7 +212,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             // Add POD metric if available
             if (headerIndexes["POD"] !== undefined && headerIndexes["POD"] < row.length) {
               const podStr = row[headerIndexes["POD"]].str.trim();
-              const podValue = parseFloat(podStr.replace('%', ''));
+              const podValue = extractNumeric(podStr);
               
               if (!isNaN(podValue)) {
                 metrics.push({
@@ -224,14 +225,14 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               }
             }
             
-            // Add Contact Compliance metric if available
-            if (headerIndexes["Contact Compliance"] !== undefined && headerIndexes["Contact Compliance"] < row.length) {
-              const ccStr = row[headerIndexes["Contact Compliance"]].str.trim();
-              const ccValue = parseFloat(ccStr.replace('%', ''));
+            // Add CC metric if available
+            if (headerIndexes["CC"] !== undefined && headerIndexes["CC"] < row.length) {
+              const ccStr = row[headerIndexes["CC"]].str.trim();
+              const ccValue = extractNumeric(ccStr);
               
               if (!isNaN(ccValue)) {
                 metrics.push({
-                  name: "Contact Compliance",
+                  name: "CC",
                   value: ccValue,
                   target: 95,
                   unit: "%",
@@ -240,10 +241,10 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               }
             }
             
-            // Add Customer Escalation metric if available
-            if (headerIndexes["Customer Escalation"] !== undefined && headerIndexes["Customer Escalation"] < row.length) {
-              const ceStr = row[headerIndexes["Customer Escalation"]].str.trim();
-              const ceValue = parseInt(ceStr);
+            // Add CE metric if available
+            if (headerIndexes["CE"] !== undefined && headerIndexes["CE"] < row.length) {
+              const ceStr = row[headerIndexes["CE"]].str.trim();
+              const ceValue = extractNumeric(ceStr);
               
               if (!isNaN(ceValue)) {
                 metrics.push({
@@ -259,7 +260,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             // Add DEX metric if available
             if (headerIndexes["DEX"] !== undefined && headerIndexes["DEX"] < row.length) {
               const dexStr = row[headerIndexes["DEX"]].str.trim();
-              const dexValue = parseFloat(dexStr.replace('%', ''));
+              const dexValue = extractNumeric(dexStr);
               
               if (!isNaN(dexValue)) {
                 metrics.push({
@@ -295,6 +296,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
         const rowText = rowItems.join(' ');
         
         // Check if this row has an alphanumeric ID that looks like a driver ID
+        // DSP IDs typically have format like 'A3GC57M6CUHDOR'
         const driverIdMatch = rowItems[0]?.match(/^[A-Z][A-Z0-9]{8,}$/);
         if (driverIdMatch && rowItems.length >= 5) {
           const driverId = rowItems[0];
@@ -303,11 +305,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
           // Try to extract numeric values in the correct order
           const numericValues = rowItems.slice(1).map(str => {
             // Convert percentages to numbers
-            if (str.includes('%')) {
-              return parseFloat(str.replace('%', ''));
-            }
-            // Convert plain numbers
-            const num = parseFloat(str);
+            const num = extractNumeric(str);
             return isNaN(num) ? null : num;
           }).filter(val => val !== null);
           
@@ -317,42 +315,42 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
             const metrics = [];
             
             // Map positions to metrics based on the expected order in the DSP Weekly Summary
-            // Expected order: Stops, Delivered%, DNR DPMO, POD%, CC%, CE, DEX%
+            // Expected order: Delivered, DCR, DNR DPMO, POD, CC, CE, DEX
             
-            // Stops (if available)
+            // Delivered (1st value)
             if (numericValues.length > 0) {
               metrics.push({
-                name: "Stops",
+                name: "Delivered",
                 value: numericValues[0],
                 target: 0,
                 unit: "",
-                status: "fantastic" as const
+                status: determineStatus("Delivered", numericValues[0])
               });
             }
             
-            // Delivered percentage
+            // DCR percentage (2nd value)
             if (numericValues.length > 1) {
               metrics.push({
-                name: "Delivered",
+                name: "DCR",
                 value: numericValues[1],
-                target: 100,
+                target: 98.5,
                 unit: "%",
-                status: determineStatus("Delivered", numericValues[1])
+                status: determineStatus("DCR", numericValues[1])
               });
             }
             
-            // DNR DPMO
+            // DNR DPMO (3rd value)
             if (numericValues.length > 2) {
               metrics.push({
                 name: "DNR DPMO",
                 value: numericValues[2],
-                target: 3000,
+                target: 1500,
                 unit: "DPMO",
                 status: determineStatus("DNR DPMO", numericValues[2])
               });
             }
             
-            // POD percentage
+            // POD percentage (4th value)
             if (numericValues.length > 3) {
               metrics.push({
                 name: "POD",
@@ -363,10 +361,10 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               });
             }
             
-            // Contact Compliance percentage
+            // CC percentage (5th value)
             if (numericValues.length > 4) {
               metrics.push({
-                name: "Contact Compliance",
+                name: "CC",
                 value: numericValues[4],
                 target: 95,
                 unit: "%",
@@ -374,7 +372,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               });
             }
             
-            // Customer Escalations (CE)
+            // CE (6th value)
             if (numericValues.length > 5) {
               const ceValue = numericValues[5];
               metrics.push({
@@ -386,7 +384,7 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
               });
             }
             
-            // DEX percentage
+            // DEX percentage (7th value)
             if (numericValues.length > 6) {
               metrics.push({
                 name: "DEX",
@@ -412,24 +410,36 @@ export const extractDriverKPIsFromStructure = (pageData: Record<number, any>): D
     }
   }
   
-  // If we didn't find any drivers with the structural approach, fall back to regex-based extraction
-  if (drivers.length === 0) {
-    console.log("No drivers found with structural analysis, trying text-based extraction");
-    
-    // Try to extract based on text patterns from all pages
-    const combinedText = relevantPages.map(pageNum => 
-      pageData[pageNum]?.text || ""
-    ).join("\n\n");
-    
-    // Log text for debugging
-    console.log(`Combined text length for extraction: ${combinedText.length} chars`);
-    if (combinedText.length < 500) {
-      console.log(`Combined text for extraction: ${combinedText}`);
-    }
-    
-    return extractDriverKPIsFromText(combinedText);
+  // If we found even one driver with structural analysis, return them
+  if (drivers.length > 0) {
+    console.log(`Successfully extracted ${drivers.length} drivers with structural analysis`);
+    return drivers;
   }
   
-  console.log(`Successfully extracted ${drivers.length} drivers with structural analysis`);
-  return drivers;
+  // If we didn't find any drivers with the structural approach, fall back to regex-based extraction
+  console.log("No drivers found with structural analysis, trying text-based extraction");
+  
+  // Try to extract based on text patterns from all pages
+  const combinedText = relevantPages.map(pageNum => 
+    pageData[pageNum]?.text || ""
+  ).join("\n\n");
+  
+  // Log text for debugging
+  console.log(`Combined text length for extraction: ${combinedText.length} chars`);
+  if (combinedText.length < 500) {
+    console.log(`Combined text for extraction: ${combinedText}`);
+  }
+  
+  return extractDriverKPIsFromText(combinedText);
+};
+
+/**
+ * Helper function to extract numeric values from strings, handling percentages and commas
+ */
+const extractNumeric = (str: string): number => {
+  if (!str) return NaN;
+  
+  // Remove % symbol and replace commas with dots for decimal notation
+  const cleanStr = str.replace('%', '').replace(',', '.');
+  return parseFloat(cleanStr);
 };

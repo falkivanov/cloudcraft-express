@@ -10,6 +10,7 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
   const drivers: DriverKPI[] = [];
   
   // Pattern specifically for the DSP Weekly Summary table format from the image
+  // Format in PDF: TransporterID Delivered DCR DNR_DPMO POD CC CE DEX
   const dspWeeklySummaryPattern = /([A-Z0-9]{10,})\s+([\d.]+)\s+([\d.]+%?)\s+([\d]+)\s+([\d.]+%?)\s+([\d.]+%?)\s+([\d]+)\s+([\d.]+%?)/g;
   const dspMatches = Array.from(text.matchAll(dspWeeklySummaryPattern));
   
@@ -30,26 +31,26 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
       // Create full metrics array based on all captured columns
       const metrics = [];
       
-      // Route count (stops)
+      // Delivered value (keep original name from PDF)
       if (match[2]) {
         metrics.push({
-          name: "Stops",
-          value: parseInt(match[2] || "0"),
-          target: 0, // No specific target for stops
+          name: "Delivered",
+          value: extractNumeric(match[2] || "0"),
+          target: 0,
           unit: "",
-          status: "fantastic" as const
+          status: determineStatus("Delivered", extractNumeric(match[2] || "0"))
         });
       }
       
-      // Delivered percentage
+      // DCR percentage (keep original name from PDF)
       if (match[3]) {
-        const delivered = extractNumeric(match[3] || "0");
+        const dcr = extractNumeric(match[3] || "0");
         metrics.push({
-          name: "Delivered",
-          value: delivered,
-          target: 100,
+          name: "DCR",
+          value: dcr,
+          target: 98.5,
           unit: "%",
-          status: determineStatus("Delivered", delivered)
+          status: determineStatus("DCR", dcr)
         });
       }
       
@@ -59,7 +60,7 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
         metrics.push({
           name: "DNR DPMO", 
           value: dnrDpmo,
-          target: 3000, // Target for DNR DPMO
+          target: 1500,
           unit: "DPMO",
           status: determineStatus("DNR DPMO", dnrDpmo)
         });
@@ -77,11 +78,11 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
         });
       }
       
-      // Contact Compliance percentage
+      // CC percentage (Contact Compliance)
       if (match[6]) {
         const ccValue = extractNumeric(match[6] || "0");
         metrics.push({
-          name: "Contact Compliance",
+          name: "CC",
           value: ccValue,
           target: 95,
           unit: "%",
@@ -89,7 +90,7 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
         });
       }
       
-      // Customer Escalations (CE)
+      // CE (Customer Escalations)
       if (match[7]) {
         const ceValue = parseInt(match[7] || "0");
         metrics.push({
@@ -129,7 +130,7 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
     }
   }
   
-  // If first pattern fails, try more flexible patterns with line breaks
+  // If first pattern fails, try more flexible patterns
   const flexibleTablePattern = /([A-Z0-9]{10,})[\s\n]+(\d+)[\s\n]+([\d.]+%)[\s\n]+(\d+)[\s\n]+([\d.]+%)[\s\n]+([\d.]+%)[\s\n]+(\d+)[\s\n]+([\d.]+%)/g;
   const flexMatches = Array.from(text.matchAll(flexibleTablePattern));
   
