@@ -24,12 +24,12 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
   
   // For BOC, display status text instead of value
   const displayValue = isBOC 
-    ? (kpi.status === "none" ? "In Compliance" : "Not In Compliance") 
+    ? "" 
     : formatKPIValue(kpi.value, kpi.unit);
   
-  // Treat "none" status as "fantastic" for BOC
-  const displayStatus = isBOC && kpi.status === "none" 
-    ? "fantastic" 
+  // For BOC, display "none" or "not in compliance" instead of fantastic/poor
+  const displayStatus = isBOC 
+    ? (kpi.status === "none" ? "none" : "not in compliance") 
     : kpi.status;
 
   // Don't append unit if the name already contains "DPMO" and the unit is "DPMO"
@@ -62,7 +62,7 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
         </div>
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
-        {isBOC ? "In Compliance" : `${formatKPIValue(kpi.target, kpi.unit)}${showUnit ? kpi.unit : ""}`}
+        {isBOC ? "" : `${formatKPIValue(kpi.target, kpi.unit)}${showUnit ? kpi.unit : ""}`}
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(displayStatus)}`}>

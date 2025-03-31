@@ -14,12 +14,12 @@ export const getStatusClass = (status: string | undefined) => {
       return "bg-orange-100 text-orange-600";
     case "poor":
       return "bg-red-100 text-red-600";
+    case "none":
+      return "bg-blue-100 text-blue-600"; // Blue for "none" status
     case "in compliance":
       return "bg-green-100 text-green-600";
     case "not in compliance":
       return "bg-red-100 text-red-600";
-    case "none":
-      return "bg-blue-100 text-blue-600"; // Blue for "none" to display as "fantastic"
     default:
       return "bg-gray-100 text-gray-500";
   }
