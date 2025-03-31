@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from '../../../types';
 import { extractWeekFromFilename } from '../weekUtils';
 import { extractCompanyKPIsFromStructure } from './companyKpiExtractor';
@@ -5,6 +6,7 @@ import { extractDriverKPIsFromStructure } from './driver/structural/structuralEx
 import { extractFocusAreasFromStructure } from './focus-areas';
 import { extractNumericValues } from './valueExtractor';
 import { extractDriverKPIsFromText } from './driver/textExtractor';
+import { KPIStatus } from '../../../helpers/statusHelper';
 
 /**
  * Extract scorecard data from a PDF based on structural analysis
@@ -33,22 +35,76 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   
   // Extract overall score - try to find it on every page with focus on page 2
   let overallScore = 0;
+  let overallStatus: KPIStatus = "fair";
   
   // First check page 2 which usually has this information
   if (pageData[2]?.text) {
-    // Try to find score with various patterns
-    const scorePatterns = [
-      /(?:overall|total)\s+score:?\s*(\d{1,3}(?:\.\d+)?)/i,
-      /score:?\s*(\d{1,3}(?:\.\d+)?)/i,
-      /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:overall|score)/i,
-      /(\d{1,3}(?:\.\d+)?)\s*(?:points?|score)/i
+    // Try to find score with various patterns including status
+    const scoreStatusPatterns = [
+      /(?:overall|total)\s+score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i,
+      /score:?\s*(\d{1,3}(?:\.\d+)?)\s*%?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i,
+      /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i,
+      /(\d{1,3}(?:\.\d+)?)\s*%?\s*(?:points?|score)\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i
     ];
     
-    for (const pattern of scorePatterns) {
+    for (const pattern of scoreStatusPatterns) {
       const match = pageData[2].text.match(pattern);
-      if (match) {
+      if (match && match.length >= 3) {
         overallScore = parseFloat(match[1]);
+        const statusText = match[2].toLowerCase();
+        
+        if (statusText === "poor") overallStatus = "poor";
+        else if (statusText === "fair") overallStatus = "fair";
+        else if (statusText === "great") overallStatus = "great";
+        else if (statusText === "fantastic") overallStatus = "fantastic";
+        
+        console.log(`Found overall score ${overallScore} with status "${overallStatus}"`);
         break;
+      }
+    }
+    
+    // If no score with status found, try just the score patterns
+    if (overallScore === 0) {
+      const scorePatterns = [
+        /(?:overall|total)\s+score:?\s*(\d{1,3}(?:\.\d+)?)/i,
+        /score:?\s*(\d{1,3}(?:\.\d+)?)/i,
+        /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:overall|score)/i,
+        /(\d{1,3}(?:\.\d+)?)\s*(?:points?|score)/i
+      ];
+      
+      for (const pattern of scorePatterns) {
+        const match = pageData[2].text.match(pattern);
+        if (match) {
+          overallScore = parseFloat(match[1]);
+          break;
+        }
+      }
+    }
+    
+    // For page 2 items, also look for specific status items near the score
+    if (overallScore > 0 && overallStatus === "fair") {
+      // Find items near where the score would be
+      const scoreItems = pageData[2].items.filter((item: any) => {
+        return item.str.match(/(\d{1,3}(?:\.\d+)?)\s*%/);
+      });
+      
+      for (const scoreItem of scoreItems) {
+        // Look for items on the same line that might contain status
+        const sameLineItems = pageData[2].items.filter((item: any) => {
+          return Math.abs(item.y - scoreItem.y) < 5 && item.x > scoreItem.x;
+        });
+        
+        for (const item of sameLineItems) {
+          const statusMatch = item.str.match(/(poor|fair|great|fantastic)/i);
+          if (statusMatch) {
+            const statusText = statusMatch[1].toLowerCase();
+            if (statusText === "poor") overallStatus = "poor";
+            else if (statusText === "fair") overallStatus = "fair";
+            else if (statusText === "great") overallStatus = "great"; 
+            else if (statusText === "fantastic") overallStatus = "fantastic";
+            break;
+          }
+        }
       }
     }
     
@@ -85,11 +141,12 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
     overallScore = 85; // Default value
   }
   
-  // Determine status based on score
-  let overallStatus = 'Fair';
-  if (overallScore >= 95) overallStatus = 'Fantastic';
-  else if (overallScore >= 85) overallStatus = 'Great';
-  else if (overallScore < 75) overallStatus = 'Poor';
+  // If no status was found, determine it based on score
+  if (overallStatus === "fair") {
+    if (overallScore >= 95) overallStatus = "fantastic";
+    else if (overallScore >= 85) overallStatus = "great";
+    else if (overallScore < 75) overallStatus = "poor";
+  }
   
   // Extract rank information - focus on page 2 with specific pattern "Rank at (Station): X"
   let rank = 0;
