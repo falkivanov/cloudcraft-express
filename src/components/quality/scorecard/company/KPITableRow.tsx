@@ -19,21 +19,30 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
   const previousKPI = getPreviousWeekKPI(kpi.name, previousWeekData);
   const change = getChangeDisplay(kpi.value, previousKPI);
   
+  // Special handling for BOC
+  const isBOC = kpi.name === "Breach of Contract (BOC)";
+  
+  // For BOC, display status text instead of value
+  const displayValue = isBOC 
+    ? (kpi.status === "none" ? "In Compliance" : "Not In Compliance") 
+    : formatKPIValue(kpi.value, kpi.unit);
+  
   // Treat "none" status as "fantastic" for BOC
-  const displayStatus = kpi.name === "Breach of Contract (BOC)" && kpi.status === "none" 
+  const displayStatus = isBOC && kpi.status === "none" 
     ? "fantastic" 
     : kpi.status;
 
   // Don't append unit if the name already contains "DPMO" and the unit is "DPMO"
-  const showUnit = !(kpi.name.includes("DPMO") && kpi.unit === "DPMO");
+  // or if this is BOC which doesn't have a unit
+  const showUnit = !(kpi.name.includes("DPMO") && kpi.unit === "DPMO") && !isBOC;
 
   return (
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">
       <TableCell className="py-2 px-3 text-sm">{kpi.name}</TableCell>
       <TableCell className="py-2 px-3 text-center">
         <div className="flex items-center justify-center">
-          <span className="font-medium">{formatKPIValue(kpi.value, kpi.unit)}{showUnit ? kpi.unit : ""}</span>
-          {change && (
+          <span className="font-medium">{displayValue}{showUnit ? kpi.unit : ""}</span>
+          {!isBOC && change && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className={`text-xs ml-2 flex items-center ${change.isPositive ? "text-green-500" : "text-red-500"}`}>
@@ -52,7 +61,9 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
           )}
         </div>
       </TableCell>
-      <TableCell className="py-2 px-3 text-center">{formatKPIValue(kpi.target, kpi.unit)}{showUnit ? kpi.unit : ""}</TableCell>
+      <TableCell className="py-2 px-3 text-center">
+        {isBOC ? "In Compliance" : `${formatKPIValue(kpi.target, kpi.unit)}${showUnit ? kpi.unit : ""}`}
+      </TableCell>
       <TableCell className="py-2 px-3 text-center">
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getStatusClass(displayStatus)}`}>
           {displayStatus || "N/A"}

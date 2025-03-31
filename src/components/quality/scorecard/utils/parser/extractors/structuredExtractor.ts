@@ -5,7 +5,8 @@ import { extractDriverKPIsFromStructure } from './driver/structural/structuralEx
 import { extractFocusAreasFromStructure } from './focus-areas';
 import { extractNumericValues } from './valueExtractor';
 import { extractDriverKPIsFromText } from './driver/textExtractor';
-import { KPIStatus } from '../../../../helpers/statusHelper';
+
+export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
 
 /**
  * Extract scorecard data from a PDF based on structural analysis

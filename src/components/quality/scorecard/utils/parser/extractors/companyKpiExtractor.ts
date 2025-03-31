@@ -1,4 +1,3 @@
-
 import { determineStatus } from '../../helpers/statusHelper';
 import { extractNumericValues } from './valueExtractor';
 import { KPIStatus } from '../../helpers/statusHelper';
@@ -17,7 +16,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     { name: "Mentor Adoption Rate", pattern: /Mentor\s+Adoption/i, unit: "%", category: "safety" },
     
     // Compliance KPIs
-    { name: "Breach of Contract (BOC)", pattern: /BOC|Breach\s+of\s+Contract/i, unit: "", category: "compliance" },
+    { name: "Breach of Contract (BOC)", pattern: /BOC|Breach\s+of\s+Contract/i, unit: "", category: "compliance", specialStatusOnly: true },
     { name: "Working Hours Compliance (WHC)", pattern: /WHC|Working\s+Hours/i, unit: "%", category: "compliance" },
     { name: "Comprehensive Audit Score (CAS)", pattern: /CAS|Comprehensive\s+Audit/i, unit: "%", category: "compliance" },
     
@@ -50,13 +49,83 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     const page = pageData[pageNum];
     
     // Check each KPI pattern
-    for (const { name, pattern, unit, category } of kpiPatterns) {
+    for (const { name, pattern, unit, category, specialStatusOnly } of kpiPatterns) {
       // Find items that match this KPI pattern
       const matchingItems = page.items.filter((item: any) => 
         pattern.test(item.str)
       );
       
       for (const item of matchingItems) {
+        // Special case for BOC which only has status and no value
+        if (specialStatusOnly && name === "Breach of Contract (BOC)") {
+          console.log("Processing special BOC case that only uses status...");
+          
+          // Look for items near this item
+          const nearbyItems = page.items.filter((otherItem: any) => {
+            // Check if item is on the same row or the next rows
+            const sameOrNextRows = Math.abs(item.y - otherItem.y) < 30;
+            // Check if the item is to the right of our KPI text
+            const isRightSide = otherItem.x > item.x;
+            return sameOrNextRows && isRightSide;
+          });
+          
+          // Look specifically for "none" or "not in compliance"
+          let bocStatus: KPIStatus = "none"; // Default is "none" (good)
+          
+          for (const nearbyItem of nearbyItems) {
+            const bocStatusMatch = nearbyItem.str.match(/(none|not\s+in\s+compliance|in\s+compliance)/i);
+            if (bocStatusMatch) {
+              const statusText = bocStatusMatch[1].toLowerCase();
+              if (statusText === "not in compliance") {
+                bocStatus = "not in compliance";
+                console.log("Found BOC with status: not in compliance");
+              } else if (statusText === "in compliance" || statusText === "none") {
+                bocStatus = "none";
+                console.log("Found BOC with status: none/in compliance");
+              }
+              break;
+            }
+          }
+          
+          // If we can't find explicit status, look for any indicators
+          if (bocStatus === "none") {
+            for (const nearbyItem of nearbyItems) {
+              // Look for numeric values - if any value > 0 is found, it's "not in compliance"
+              const valueMatch = nearbyItem.str.match(/(\d+)/);
+              if (valueMatch && parseInt(valueMatch[1]) > 0) {
+                bocStatus = "not in compliance";
+                console.log("Found BOC with value > 0, setting to not in compliance");
+                break;
+              }
+              
+              // Also look for color indicators or other words that might indicate status
+              if (nearbyItem.str.toLowerCase().includes("red") || 
+                  nearbyItem.str.toLowerCase().includes("fail") || 
+                  nearbyItem.str.toLowerCase().includes("poor")) {
+                bocStatus = "not in compliance";
+                console.log("Found BOC with indicator suggesting not in compliance");
+                break;
+              }
+            }
+          }
+          
+          // Add BOC with status but zero value
+          if (!extractedKPIs.some(kpi => kpi.name === name)) {
+            extractedKPIs.push({
+              name,
+              value: 0, // BOC has no numeric value, using 0
+              target: 0, // Target is always 0 breaches
+              unit,
+              trend: "neutral" as const,
+              status: bocStatus,
+              category: category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
+            });
+          }
+          
+          // Skip the regular value extraction for BOC
+          continue;
+        }
+        
         // Look for numeric values near this item
         const nearbyItems = page.items.filter((otherItem: any) => {
           // Check if item is on the same row or the next row
@@ -79,10 +148,10 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
           const targetIndex = unit === "DPMO" ? 1 : 0; // For DPMO, target might be the second value
           const target = valueMatches.length > 1 ? valueMatches[targetIndex] : 
                          unit === "DPMO" ? 3000 : 95; // Default targets
-          
+        
           // NEW: Look for status indicators (Poor, Fair, Great, Fantastic)
           let extractedStatus: KPIStatus = "fair"; // Default
-          
+        
           for (const nearbyItem of nearbyItems) {
             // Look for status indicators after a pipe character or standalone
             const statusMatch = nearbyItem.str.match(/(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance)/i);
