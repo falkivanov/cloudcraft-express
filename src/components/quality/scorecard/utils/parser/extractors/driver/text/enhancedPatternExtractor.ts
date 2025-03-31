@@ -1,6 +1,7 @@
 
 import { DriverKPI } from '../../../../../types';
 import { generateSampleDrivers } from '../sampleData';
+import { determineMetricStatus } from '../../../driver/utils/metricStatus';
 
 /**
  * Extract driver KPIs from text content using enhanced pattern matching
@@ -66,15 +67,16 @@ export const extractDriversWithEnhancedPatterns = (text: string): DriverKPI[] =>
       
       drivers.push({
         name,
-        metrics: {
-          "Delivered": { value: delivered, status: deliveredStatus },
-          "DCR": { value: dcrValue, status: dcrStatus },
-          "DNR DPMO": { value: dnrDpmoValue, status: dnrDpmoStatus },
-          "POD": { value: podValue, status: podStatus },
-          "CC": { value: ccValue, status: ccStatus },
-          "CE": { value: ceValue, status: ceStatus },
-          "DEX": { value: dexValue, status: dexStatus }
-        }
+        status: "active", // Set default status to active
+        metrics: [
+          { name: "Delivered", value: delivered, target: 0, unit: "", status: deliveredStatus as any },
+          { name: "DCR", value: dcrValue, target: 98.5, unit: "%", status: dcrStatus as any },
+          { name: "DNR DPMO", value: dnrDpmoValue, target: 1500, unit: "DPMO", status: dnrDpmoStatus as any },
+          { name: "POD", value: podValue, target: 98, unit: "%", status: podStatus as any },
+          { name: "CC", value: ccValue, target: 95, unit: "%", status: ccStatus as any },
+          { name: "CE", value: ceValue, target: 0, unit: "", status: ceStatus as any },
+          { name: "DEX", value: dexValue, target: 95, unit: "%", status: dexStatus as any }
+        ]
       });
     } catch (error) {
       console.log("Error parsing driver:", name, error);
@@ -94,6 +96,7 @@ export const extractDriversWithEnhancedPatterns = (text: string): DriverKPI[] =>
   const nameMatches = [];
   for (const pattern of namePatterns) {
     let nameMatch;
+    pattern.lastIndex = 0; // Reset the regex index
     while ((nameMatch = pattern.exec(driverSectionText)) !== null) {
       nameMatches.push(nameMatch[1].trim());
     }
@@ -111,25 +114,34 @@ export const extractDriversWithEnhancedPatterns = (text: string): DriverKPI[] =>
       
       if (metricMatch) {
         try {
-          const metrics: any = {};
+          const driverMetrics = [];
           const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+          const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+          const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
           
           for (let i = 0; i < 7; i++) {
             const valueIndex = 1 + (i * 2);
             const statusIndex = valueIndex + 1;
             
             if (metricMatch[valueIndex]) {
-              metrics[metricNames[i]] = {
-                value: parseFloat(metricMatch[valueIndex]),
-                status: metricMatch[statusIndex] || determineDefaultStatus(metricNames[i], parseFloat(metricMatch[valueIndex]))
-              };
+              const value = parseFloat(metricMatch[valueIndex]);
+              const status = metricMatch[statusIndex] || determineDefaultStatus(metricNames[i], value);
+              
+              driverMetrics.push({
+                name: metricNames[i],
+                value: value,
+                target: metricTargets[i],
+                unit: metricUnits[i],
+                status: status as any
+              });
             }
           }
           
-          if (Object.keys(metrics).length > 0) {
+          if (driverMetrics.length > 0) {
             drivers.push({
               name,
-              metrics
+              status: "active",
+              metrics: driverMetrics
             });
           }
         } catch (error) {

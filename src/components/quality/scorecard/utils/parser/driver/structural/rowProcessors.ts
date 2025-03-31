@@ -1,3 +1,4 @@
+
 import { DriverKPI } from '../../../../types';
 import { determineMetricStatus } from '../utils/metricStatus';
 
@@ -97,18 +98,22 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   // Only create driver if we found at least some metrics
   if (Object.keys(metrics).length > 0) {
-    // Build the driver object
+    // Build the driver object with proper type structure
     const driver: DriverKPI = {
       name,
-      metrics: {}
+      status: "active", // Set default status to active
+      metrics: [] // Initialize with empty array to fix type error
     };
     
-    // Add each metric to the driver
+    // Add each metric to the driver's metrics array
     for (const [metricName, data] of Object.entries(metrics)) {
-      driver.metrics[metricName] = {
+      driver.metrics.push({
+        name: metricName,
         value: data.value,
+        target: getTargetForMetric(metricName),
+        unit: getUnitForMetric(metricName),
         status: data.status as any
-      };
+      });
     }
     
     return driver;
@@ -150,10 +155,11 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
     // Get the driver name
     const name = nameItem.str.trim();
     
-    // Initialize the driver KPI object
+    // Initialize the driver KPI object with proper type structure
     const driver: DriverKPI = {
       name,
-      metrics: {}
+      status: "active",
+      metrics: [] // Initialize with empty array to fix type error
     };
     
     // Map of column headers to their metrics
@@ -191,10 +197,13 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
           const value = parseFloat(combinedMatch[1]);
           const status = combinedMatch[2].toLowerCase();
           
-          driver.metrics[metricName] = {
+          driver.metrics.push({
+            name: metricName,
             value,
-            status
-          };
+            target: getTargetForMetric(metricName),
+            unit: getUnitForMetric(metricName),
+            status: status as any
+          });
           continue;
         }
       }
@@ -230,19 +239,53 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
             status = determineMetricStatus(metricName, value);
           }
           
-          driver.metrics[metricName] = {
+          driver.metrics.push({
+            name: metricName,
             value,
-            status
-          };
+            target: getTargetForMetric(metricName),
+            unit: getUnitForMetric(metricName),
+            status: status as any
+          });
         }
       }
     }
     
     // Only add driver if we found at least one metric
-    if (Object.keys(driver.metrics).length > 0) {
+    if (driver.metrics.length > 0) {
       drivers.push(driver);
     }
   }
   
   return drivers;
+}
+
+/**
+ * Helper function to get the target value for a metric
+ */
+function getTargetForMetric(metricName: string): number {
+  switch (metricName) {
+    case "Delivered": return 0;
+    case "DCR": return 98.5;
+    case "DNR DPMO": return 1500;
+    case "POD": return 98;
+    case "CC": return 95;
+    case "CE": return 0;
+    case "DEX": return 95;
+    default: return 0;
+  }
+}
+
+/**
+ * Helper function to get the unit for a metric
+ */
+function getUnitForMetric(metricName: string): string {
+  switch (metricName) {
+    case "DCR": return "%";
+    case "DNR DPMO": return "DPMO";
+    case "POD": return "%";
+    case "CC": return "%";
+    case "CE": return "";
+    case "DEX": return "%";
+    default: return "";
+  }
 }

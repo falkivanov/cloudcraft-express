@@ -1,5 +1,5 @@
-import { determineStatus } from '../../../../helpers/statusHelper';
 
+// Don't import from statusHelper, define locally
 export type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
 
 /**
