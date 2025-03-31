@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../../../types';
 import { extractWeekFromFilename } from '../weekUtils';
 import { extractCompanyKPIsFromStructure } from './companyKpiExtractor';
@@ -6,7 +5,7 @@ import { extractDriverKPIsFromStructure } from './driver/structural/structuralEx
 import { extractFocusAreasFromStructure } from './focus-areas';
 import { extractNumericValues } from './valueExtractor';
 import { extractDriverKPIsFromText } from './driver/textExtractor';
-import { KPIStatus } from '../../../helpers/statusHelper';
+import { KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
  * Extract scorecard data from a PDF based on structural analysis
