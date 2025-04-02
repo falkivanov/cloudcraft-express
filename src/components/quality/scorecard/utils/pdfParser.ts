@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../types';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
@@ -57,7 +56,11 @@ export const parseScorecardPDF = async (
       }
       
       // Create a properly typed variable for textBasedResult with required properties
-      let textBasedResult: { success: boolean; data: any; error: any } = { 
+      let textBasedResult: { 
+        success: boolean; 
+        data: ScoreCardData | null; 
+        error: any 
+      } = { 
         success: false, 
         data: null, 
         error: null 
