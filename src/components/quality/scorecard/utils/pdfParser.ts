@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from '../types';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
@@ -11,7 +12,7 @@ import {
 import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
 
 /**
- * Parse a scorecard PDF and extract data
+ * Parse a scorecard PDF and extract data with improved driver extraction
  * @param pdfData ArrayBuffer containing the PDF data
  * @param filename Original filename (used for KW extraction)
  * @param detailedLogging Enable detailed logging for debugging
@@ -34,28 +35,61 @@ export const parseScorecardPDF = async (
       const pdf = await loadPDFDocument(pdfData);
       console.info(`PDF loaded with ${pdf.numPages} pages`);
       
-      // Try positional extraction once
+      // Try multiple extraction attempts to maximize driver detection
+      
+      // First try: Positional extraction (most reliable when it works)
       const positionalResult = await attemptPositionalExtraction(pdf, filename, detailedLogging);
+      let extractedData;
       
-      if (positionalResult.success && positionalResult.data) {
-        // Make sure the week is set correctly based on filename
-        if (weekNum > 0) {
-          positionalResult.data.week = weekNum;
+      if (positionalResult.success && positionalResult.data && 
+          positionalResult.data.driverKPIs && positionalResult.data.driverKPIs.length >= 10) {
+        // Positional extraction worked well
+        extractedData = positionalResult.data;
+        console.log(`Positional extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
+      } else {
+        // If positional extraction failed or found few drivers, try text-based extraction
+        console.log("Positional extraction didn't find enough drivers, trying text-based extraction");
+        const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, detailedLogging);
+        
+        if (textBasedResult.success && textBasedResult.data && 
+            textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 5) {
+          // Text-based extraction worked
+          extractedData = textBasedResult.data;
+          console.log(`Text-based extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else if (positionalResult.data && positionalResult.data.driverKPIs && 
+                  positionalResult.data.driverKPIs.length > 0) {
+          // Fall back to partial positional results if it found at least some drivers
+          extractedData = positionalResult.data;
+          console.log(`Using partial positional results with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else if (textBasedResult.data && textBasedResult.data.driverKPIs && 
+                  textBasedResult.data.driverKPIs.length > 0) {
+          // Fall back to partial text-based results
+          extractedData = textBasedResult.data;
+          console.log(`Using partial text-based results with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else {
+          // Last resort: use simple fallback data creation
+          console.log("No extraction method found drivers, using fallback data");
+          extractedData = createFallbackData(weekNum);
         }
-        console.log(`Extraction successful with ${positionalResult.data.driverKPIs?.length || 0} drivers`);
-        return positionalResult.data;
       }
       
-      // Fall back to text-based extraction
-      const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, detailedLogging);
-      
-      if (textBasedResult.success && textBasedResult.data) {
-        console.log(`Text-based extraction successful with ${textBasedResult.data.driverKPIs?.length || 0} drivers`);
-        return textBasedResult.data;
+      // Make sure the week is set correctly based on filename
+      if (weekNum > 0) {
+        extractedData.week = weekNum;
       }
       
-      // Last resort: use simple extraction
-      return createFallbackData(weekNum);
+      // If year is missing, use current year
+      if (!extractedData.year) {
+        extractedData.year = new Date().getFullYear();
+      }
+      
+      console.log(`Final extraction result: ${extractedData.driverKPIs?.length || 0} drivers`);
+      
+      // Store data in both locations for compatibility
+      saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, extractedData);
+      localStorage.setItem("extractedScorecardData", JSON.stringify(extractedData));
+      
+      return extractedData;
     } catch (error) {
       console.error('Error with PDF document:', error);
       // Use sample data as fallback but mark it as sample data

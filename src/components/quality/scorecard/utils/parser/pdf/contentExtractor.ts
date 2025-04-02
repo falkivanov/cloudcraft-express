@@ -78,10 +78,14 @@ export const extractPDFContentWithPositions = async (pdf: any) => {
         // Group items into logical rows for better structure reconstruction
         const rows = groupItemsIntoRows(items);
         
-        // Store page data with both items and rows
+        // Enhanced table detection - look for grid-like structures
+        const tables = detectTables(rows);
+        
+        // Store page data with both items, rows and tables
         result[i] = {
           items: items,
           rows: rows,
+          tables: tables,
           text: items.map((item: any) => item.str).join(' '),
           width: viewport.width,
           height: viewport.height
@@ -141,7 +145,7 @@ function groupItemsIntoRows(sortedItems: any[]) {
   let currentRow: any[] = [];
   let lastY = -1;
   
-  // Group items into rows
+  // Group items into rows with improved tolerance for slight vertical misalignments
   for (const item of sortedItems) {
     if (lastY === -1 || Math.abs(item.y - lastY) < 5) {
       // Same row
@@ -164,4 +168,121 @@ function groupItemsIntoRows(sortedItems: any[]) {
   }
   
   return rows;
+}
+
+/**
+ * Detect table structures within rows of text
+ * This helps identify driver tables for better extraction
+ */
+function detectTables(rows: any[][]) {
+  const tables = [];
+  let currentTable: any = null;
+  let columnCount = 0;
+  
+  // Scan rows to find potential tables
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    
+    // Skip very short rows (likely not table rows)
+    if (row.length < 3) {
+      if (currentTable) {
+        // We were in a table but now we're not, so end the current table
+        tables.push(currentTable);
+        currentTable = null;
+      }
+      continue;
+    }
+    
+    // Look for header-like rows that might indicate a table start
+    const isHeaderRow = row.some(item => 
+      /transporter|driver|id|delivered|dcr|dnr|dpmo|pod|cc|ce|dex/i.test(item.str)
+    );
+    
+    // Look for numeric content that suggests a data row
+    const hasNumericContent = row.some(item => /\d+\.\d+|\d+%/.test(item.str));
+    
+    // Look for driver ID patterns
+    const hasDriverId = row.some(item => 
+      /^[A][A-Z0-9]{5,}|^TR[-\s]?\d{3,}/i.test(item.str.trim())
+    );
+    
+    if (isHeaderRow) {
+      // This is likely a header row, start a new table
+      if (currentTable) {
+        // End previous table if there was one
+        tables.push(currentTable);
+      }
+      
+      currentTable = {
+        startRow: i,
+        endRow: i,
+        rows: [row],
+        columnCount: row.length
+      };
+      columnCount = row.length;
+    } 
+    else if ((hasNumericContent || hasDriverId) && currentTable) {
+      // This is likely a data row for the current table
+      currentTable.rows.push(row);
+      currentTable.endRow = i;
+      
+      // Update column count based on consistency
+      if (Math.abs(row.length - columnCount) <= 2) {
+        // This row has a similar number of columns, so it's likely part of the table
+        columnCount = Math.max(columnCount, row.length);
+        currentTable.columnCount = columnCount;
+      }
+    }
+    else if (currentTable && i - currentTable.endRow <= 2) {
+      // Allow small gaps in tables (max 2 rows)
+      if (row.length >= currentTable.columnCount - 2) {
+        // This row has enough columns to potentially be part of the table
+        currentTable.rows.push(row);
+        currentTable.endRow = i;
+      } else {
+        // End current table - too few columns to match
+        tables.push(currentTable);
+        currentTable = null;
+      }
+    }
+    else if (currentTable) {
+      // We're done with the current table
+      tables.push(currentTable);
+      currentTable = null;
+    }
+  }
+  
+  // Don't forget to add the last table if there is one
+  if (currentTable) {
+    tables.push(currentTable);
+  }
+  
+  // Process tables to extract headers and calculate column positions
+  return tables.map(table => {
+    // Find header row (usually the first row)
+    const headerRow = table.rows[0];
+    
+    // Extract header labels
+    const headers = headerRow.map((item: any) => ({
+      text: item.str,
+      x: item.x,
+      width: item.width
+    }));
+    
+    // Calculate column boundaries based on headers
+    const columns = headers.map((header: any, index: number) => {
+      const nextHeader = headers[index + 1];
+      return {
+        name: header.text,
+        start: header.x,
+        end: nextHeader ? nextHeader.x : header.x + header.width + 50 // Add padding for last column
+      };
+    });
+    
+    return {
+      ...table,
+      headers,
+      columns
+    };
+  });
 }

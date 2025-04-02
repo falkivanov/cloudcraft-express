@@ -23,17 +23,20 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     return { ...driver, score };
   });
 
-  // Show an info message if we suspect the data is sample data or problematic
+  // Show an info message if we suspect the data is sample data
   const isSuspectedSampleData = 
     (driverKPIs.length <= 3 && 
     driverKPIs.some(d => ["TR-001", "TR-002"].includes(d.name))) ||
     driverKPIs.length === 0;
 
   // Determine if we have too few drivers (likely extraction issue)
-  const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 10;
+  const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 8;
   
-  // Check if we have any drivers with 'A' prefix (expected format)
-  const hasExpectedDriverFormat = driverKPIs.some(d => d.name.startsWith('A'));
+  // Check if we have any drivers with 'A' prefix (expected format for newer PDFs)
+  const hasADriverFormat = driverKPIs.some(d => d.name.startsWith('A'));
+  
+  // Check if we might need to update extraction methods (no expected format found)
+  const needsExtractionUpdate = driverKPIs.length > 0 && !hasADriverFormat;
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -51,36 +54,41 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || hasTooFewDrivers || !hasExpectedDriverFormat) && (
+      {(isSuspectedSampleData || hasTooFewDrivers) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
           <AlertDescription className="space-y-3">
             <p>
-              Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
-              {driverKPIs.length === 0 ? 
-                " Es wurden keine Fahrer gefunden." : 
-                !hasExpectedDriverFormat ?
-                " Es wurden keine Fahrer im erwarteten Format (beginnend mit 'A') gefunden." :
-                driverKPIs.length < 10 ?
-                ` Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.` :
-                " Es wurden nur einige Beispielfahrer gefunden."}
+              {driverKPIs.length === 0 
+                ? "Es wurden keine Fahrer in der PDF gefunden." 
+                : hasTooFewDrivers 
+                  ? `Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.`
+                  : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
             </p>
+            
+            {needsExtractionUpdate && (
+              <p>
+                Die PDF scheint in einem Format zu sein, das zusätzliche Anpassungen erfordert.
+                {!hasADriverFormat ? " Es wurden keine Fahrer im neueren Format (beginnend mit 'A') gefunden." : ""}
+              </p>
+            )}
+            
             <p>
-              Dies kann verschiedene Ursachen haben:
+              Mögliche Ursachen:
             </p>
             <ul className="list-disc ml-5 space-y-1">
               <li>Das Format der Fahrertabelle wird nicht korrekt erkannt</li>
-              <li>Die "DSP WEEKLY SUMMARY" Tabelle wurde nicht gefunden</li>
-              <li>Die PDF-Struktur ist ungewöhnlich oder wurde geändert</li>
+              <li>Die Tabellendaten sind nicht standardmäßig strukturiert</li>
+              <li>Die PDF hat ein ungewöhnliches oder geändertes Layout</li>
             </ul>
             <p>
-              Sie können eine neue PDF mit einem klareren Format hochladen:
+              Sie können:
             </p>
-            <div className="pt-2">
-              <Button variant="outline" onClick={handleUploadClick} className="flex items-center gap-2">
+            <div className="pt-2 space-y-2">
+              <Button variant="outline" onClick={handleUploadClick} className="flex items-center gap-2 w-full sm:w-auto">
                 <Upload size={16} />
-                Neue PDF hochladen
+                Eine andere PDF-Version hochladen
               </Button>
             </div>
           </AlertDescription>
