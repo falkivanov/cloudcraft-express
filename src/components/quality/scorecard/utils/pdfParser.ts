@@ -56,8 +56,8 @@ export const parseScorecardPDF = async (
         }
       }
       
-      // Initialize textBasedResult before using it
-      let textBasedResult = { success: false, data: null, error: null };
+      // Initialize textBasedResult with non-optional properties to match the expected type
+      let textBasedResult = { success: false, data: null as any, error: null as any };
       
       // If positional extraction didn't find enough drivers, try text-based extraction
       if (!extractedData || driversFound < 10) {
