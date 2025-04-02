@@ -1,6 +1,5 @@
-
 import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
-import { extractDriversFromDSPWeeklySummary } from './text/dspWeeklySummaryExtractor';
+import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dspWeeklySummaryExtractor';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
@@ -16,18 +15,44 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   console.log("Starting driver KPI extraction with enhanced strategies");
   
   let extractedDrivers = [];
-  let hasAlphaNumericIds = text.includes("A1") || text.includes("A2") || text.includes("A3");
+  
+  // Priority 0: Check for DSP WEEKLY SUMMARY format which is most reliable when present
+  if (text.includes("DSP WEEKLY SUMMARY")) {
+    console.log("Found DSP WEEKLY SUMMARY format, trying specialized extractors first");
+    
+    // Try fixed width extractor first
+    const fixedWidthDrivers = extractDriversFromFixedWidthTable(text);
+    if (fixedWidthDrivers.length >= 10) {
+      console.log(`Found ${fixedWidthDrivers.length} drivers with fixed width extraction`);
+      return ensureAllMetrics(fixedWidthDrivers);
+    }
+    
+    // Try general DSP WEEKLY SUMMARY extractor
+    const summaryDrivers = extractDriversFromDSPWeeklySummary(text);
+    if (summaryDrivers.length >= 10) {
+      console.log(`Found ${summaryDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
+      return ensureAllMetrics(summaryDrivers);
+    }
+    
+    // If we found some drivers but not enough, keep them and continue with other methods
+    if (summaryDrivers.length > 0) {
+      extractedDrivers = [...summaryDrivers];
+      console.log(`Added ${summaryDrivers.length} drivers from DSP WEEKLY SUMMARY extraction`);
+    }
+  }
+  
+  let hasAlphaNumericIds = text.includes("A1") || text.includes("A2") || text.includes("A3") || /\bA[A-Z0-9]{5,}\b/.test(text);
   
   // Priority 1: Try table grid extraction with all pages (most reliable for structured tables)
   if (pageData && Object.keys(pageData).length > 0) {
     console.log("Attempting table grid extraction with page data");
-    extractedDrivers = findDriverTable(pageData);
+    const gridDrivers = findDriverTable(pageData);
     
-    if (extractedDrivers.length >= 5) {
-      console.log(`Found ${extractedDrivers.length} drivers with table grid extraction`);
-      return ensureAllMetrics(extractedDrivers);
+    if (gridDrivers.length >= 5) {
+      console.log(`Found ${gridDrivers.length} drivers with table grid extraction`);
+      return ensureAllMetrics(gridDrivers);
     } else {
-      console.log(`Only found ${extractedDrivers.length} drivers with table grid extraction, trying other methods`);
+      console.log(`Only found ${gridDrivers.length} drivers with table grid extraction, trying other methods`);
     }
   }
   
@@ -64,104 +89,66 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
       });
       
       if (combinedDrivers.length >= 10) {
-        console.log(`Combined extraction found ${combinedDrivers.length} drivers`);
+        console.log(`Combined extraction found ${combinedDrivers.length} drivers, returning results`);
         return ensureAllMetrics(combinedDrivers);
       }
       
-      // Update our running total
       extractedDrivers = combinedDrivers;
     }
   }
   
-  // Priority 4: Try DSP Weekly Summary extraction for this specific format
-  if (text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("Found DSP Weekly Summary format, using specialized extractor");
-    const dspDrivers = extractDriversFromDSPWeeklySummary(text);
+  // Priority 4: Try line-by-line extraction
+  console.log("Trying line-by-line extraction");
+  const lineByLineDrivers = extractDriversLineByLine(text);
+  
+  if (lineByLineDrivers.length > 0) {
+    console.log(`Found ${lineByLineDrivers.length} drivers with line-by-line extraction`);
+    // Combine with any drivers found so far
+    const combinedDrivers = [...extractedDrivers];
     
-    if (dspDrivers.length > 0) {
-      console.log(`Found ${dspDrivers.length} drivers with DSP Weekly Summary extraction`);
-      
+    // Add only new drivers that weren't found already
+    lineByLineDrivers.forEach(driver => {
+      if (!combinedDrivers.some(d => d.name === driver.name)) {
+        combinedDrivers.push(driver);
+      }
+    });
+    
+    extractedDrivers = combinedDrivers;
+  }
+  
+  // Priority 5: Try flexible pattern extraction as last resort for text-based extraction
+  if (extractedDrivers.length < 5) {
+    console.log("Trying flexible pattern extraction");
+    const flexibleDrivers = extractDriversWithFlexiblePattern(text);
+    
+    if (flexibleDrivers.length > 0) {
+      console.log(`Found ${flexibleDrivers.length} drivers with flexible pattern extraction`);
       // Combine with any drivers found so far
       const combinedDrivers = [...extractedDrivers];
       
       // Add only new drivers that weren't found already
-      dspDrivers.forEach(driver => {
+      flexibleDrivers.forEach(driver => {
         if (!combinedDrivers.some(d => d.name === driver.name)) {
           combinedDrivers.push(driver);
         }
       });
       
-      if (combinedDrivers.length >= 10) {
-        console.log(`Combined extraction found ${combinedDrivers.length} drivers`);
-        return ensureAllMetrics(combinedDrivers);
-      }
-      
-      // Update our running total
       extractedDrivers = combinedDrivers;
     }
   }
   
-  // Priority 5: Try flexible pattern extraction as a fallback
-  console.log("Trying flexible pattern extraction as additional method");
-  const flexibleDrivers = extractDriversWithFlexiblePattern(text);
-  
-  if (flexibleDrivers.length > 0) {
-    console.log(`Found ${flexibleDrivers.length} drivers with flexible pattern extraction`);
-    
-    // Combine with any drivers found so far
-    const combinedDrivers = [...extractedDrivers];
-    
-    // Add only new drivers that weren't found already
-    flexibleDrivers.forEach(driver => {
-      if (!combinedDrivers.some(d => d.name === driver.name)) {
-        combinedDrivers.push(driver);
-      }
-    });
-    
-    // Update our running total
-    extractedDrivers = combinedDrivers;
-  }
-  
-  // Priority 6: Try line-by-line extraction as last extraction attempt
-  console.log("Trying line-by-line extraction as final attempt");
-  const lineBasedDrivers = extractDriversLineByLine(text);
-  
-  if (lineBasedDrivers.length > 0) {
-    console.log(`Found ${lineBasedDrivers.length} drivers with line-based extraction`);
-    
-    // Combine with any drivers found so far
-    const combinedDrivers = [...extractedDrivers];
-    
-    // Add only new drivers that weren't found already
-    lineBasedDrivers.forEach(driver => {
-      if (!combinedDrivers.some(d => d.name === driver.name)) {
-        combinedDrivers.push(driver);
-      }
-    });
-    
-    // Update our running total
-    extractedDrivers = combinedDrivers;
-  }
-  
-  // If we found at least some drivers, return them
+  // If we found any drivers, return them with ensured metrics
   if (extractedDrivers.length > 0) {
-    console.log(`Returning ${extractedDrivers.length} drivers found from combined extraction methods`);
+    console.log(`Returning ${extractedDrivers.length} total drivers from combined extraction methods`);
     return ensureAllMetrics(extractedDrivers);
   }
   
-  // All extraction strategies failed, fall back to sample data
-  console.log("No drivers found with any extraction strategy, using sample data as fallback");
-  return ensureAllMetrics(generateSampleDrivers());
+  // If we got here, we couldn't extract any drivers
+  console.warn("No drivers could be extracted with any method, returning sample data");
+  return generateSampleDrivers();
 };
 
 export {
-  extractDriverKPIsFromStructure,
-  extractDriversFromDSPWeeklySummary,
-  extractDriversWithEnhancedPatterns,
-  extractDriversLineByLine,
-  extractDriversWithFlexiblePattern,
   generateSampleDrivers,
-  ensureAllMetrics,
-  createAllStandardMetrics,
-  findDriverTable
+  ensureAllMetrics
 };
