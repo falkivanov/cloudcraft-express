@@ -1,3 +1,4 @@
+
 import { DriverKPI } from '../../../../types';
 import { extractDriverKPIs } from './index';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
@@ -31,34 +32,53 @@ const runStrategy = (
 };
 
 /**
- * Extract drivers by trying different strategies based on content type
+ * Extract drivers by trying different strategies based on content type,
+ * prioritizing 14-character A-prefixed IDs
  */
 export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] => {
   console.log("Extracting drivers with page-based approach");
   let drivers: DriverKPI[] = [];
   
-  // Determine if we might have alphanumeric IDs (common in newer formats)
-  const hasAlphaNumericIDs = text.includes("A1") || text.includes("A2") || text.includes("A0");
+  // Check specifically for 14-character alphanumeric IDs starting with 'A'
+  const hasAIDs = /\bA[A-Z0-9]{13}\b/.test(text);
   
-  // Start with the main extraction function which tries multiple strategies
-  drivers = extractDriverKPIs(text, pageData);
+  if (hasAIDs) {
+    console.log("Detected 14-character A-prefixed IDs, prioritizing enhanced pattern extraction");
+    // First try the enhanced pattern extractor optimized for A-prefixed IDs
+    drivers = runStrategy(
+      extractDriversWithEnhancedPatterns, 
+      text, 
+      { prioritizeAIds: true }
+    );
+    
+    // If we found enough drivers, return them
+    if (drivers.length >= 15) {
+      console.log(`Found ${drivers.length} drivers with enhanced pattern extraction, returning early`);
+      return ensureAllMetrics(drivers);
+    }
+  }
+  
+  // If we don't have enough drivers yet, try the main extraction function
+  if (drivers.length < 15) {
+    console.log("Trying main extraction function");
+    const mainDrivers = extractDriverKPIs(text, pageData);
+    
+    // Combine with any drivers found so far
+    drivers.forEach(driver => {
+      if (!mainDrivers.some(d => d.name === driver.name)) {
+        mainDrivers.push(driver);
+      }
+    });
+    
+    drivers = mainDrivers;
+  }
   
   // If we still don't have enough drivers, try additional strategies
-  if (drivers.length < 10) {
-    // For alphanumeric IDs, prioritize enhanced pattern matching
-    if (hasAlphaNumericIDs) {
-      drivers = runStrategy(
-        extractDriversWithEnhancedPatterns, 
-        text, 
-        { prioritizeAIds: true },
-        drivers
-      );
-    }
+  if (drivers.length < 15) {
+    console.log("Still need more drivers, trying additional strategies");
     
     // Try line-by-line extraction
-    if (drivers.length < 15) {
-      drivers = runStrategy(extractDriversLineByLine, text, undefined, drivers);
-    }
+    drivers = runStrategy(extractDriversLineByLine, text, undefined, drivers);
     
     // Try flexible pattern extraction as a last resort
     if (drivers.length < 15) {
@@ -76,7 +96,21 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
 export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
   console.log("Trying all extraction strategies");
   
-  // The main extractDriverKPIs function already tries multiple strategies
+  // Check specifically for 14-character alphanumeric IDs starting with 'A'
+  const hasAIDs = /\bA[A-Z0-9]{13}\b/.test(text);
+  
+  if (hasAIDs) {
+    console.log("Detected 14-character A-prefixed IDs, using enhanced pattern extraction first");
+    // First try the enhanced pattern extractor optimized for A-prefixed IDs
+    const drivers = extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
+    
+    if (drivers.length >= 10) {
+      console.log(`Found ${drivers.length} drivers with enhanced pattern extraction, returning directly`);
+      return ensureAllMetrics(drivers);
+    }
+  }
+  
+  // Fall back to the main extraction function
   return extractDriverKPIs(text);
 };
 

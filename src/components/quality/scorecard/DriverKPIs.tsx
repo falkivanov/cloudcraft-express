@@ -23,6 +23,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     return { ...driver, score };
   });
 
+  // Check if we have any drivers with the expected 14-character A-prefix format
+  const hasExpectedFormat = driverKPIs.some(d => /^A[A-Z0-9]{13}$/.test(d.name));
+  
   // Show an info message if we suspect the data is sample data
   const isSuspectedSampleData = 
     (driverKPIs.length <= 3 && 
@@ -32,11 +35,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Determine if we have too few drivers (likely extraction issue)
   const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 8;
   
-  // Check if we have any drivers with 'A' prefix (expected format for newer PDFs)
-  const hasADriverFormat = driverKPIs.some(d => d.name.startsWith('A'));
+  // Check if we have any drivers with 'A' prefix but not in the expected format
+  const hasAnyAPrefix = driverKPIs.some(d => d.name.startsWith('A'));
   
   // Check if we might need to update extraction methods (no expected format found)
-  const needsExtractionUpdate = driverKPIs.length > 0 && !hasADriverFormat;
+  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExpectedFormat;
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -50,11 +53,12 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
         <div className="text-sm text-gray-500">
           {driversWithScores.length} Fahrer gefunden
+          {hasExpectedFormat && " (14-stellige A-IDs)"}
         </div>
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || hasTooFewDrivers) && (
+      {(isSuspectedSampleData || hasTooFewDrivers || needsExtractionUpdate) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -70,7 +74,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
             {needsExtractionUpdate && (
               <p>
                 Die PDF scheint in einem Format zu sein, das zusätzliche Anpassungen erfordert.
-                {!hasADriverFormat ? " Es wurden keine Fahrer im neueren Format (beginnend mit 'A') gefunden." : ""}
+                {!hasExpectedFormat ? 
+                  " Es wurden keine Fahrer im erwarteten Format (14-stellige IDs beginnend mit 'A') gefunden." : 
+                  " Nicht alle Fahrer-IDs entsprechen dem erwarteten Format."}
               </p>
             )}
             

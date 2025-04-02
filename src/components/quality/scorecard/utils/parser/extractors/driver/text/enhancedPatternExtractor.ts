@@ -9,9 +9,10 @@ interface ExtractorOptions {
 
 /**
  * Extract driver KPIs using enhanced pattern matching
+ * Specifically targeting 14-character IDs that start with 'A'
  */
 export const extractDriversWithEnhancedPatterns = (text: string, options: ExtractorOptions = {}): DriverKPI[] => {
-  console.log("Extracting drivers with enhanced patterns");
+  console.log("Extracting drivers with enhanced patterns, focusing on 14-character A-prefixed IDs");
   
   const drivers: DriverKPI[] = [];
   const processedDriverIds = new Set<string>();
@@ -42,240 +43,218 @@ export const extractDriversWithEnhancedPatterns = (text: string, options: Extrac
     }
   }
   
-  // Process lines after the header
+  // Define patterns specifically for 14-character IDs starting with 'A'
+  // This is our primary target pattern now
+  const exactPattern = /\b(A[A-Z0-9]{13})\b/g;  // Matches exactly 14 chars: A followed by 13 alphanumeric
+  
+  // Fallback patterns if exact pattern doesn't find enough matches
+  const fallbackPatterns = [
+    /\b(A[A-Z0-9]{10,15})\b/g,  // More flexible length (11-16 chars)
+    /\b(A[A-Z0-9]{5,})\b/g      // Any A-prefixed ID with at least 6 chars
+  ];
+  
+  // First pass: process lines after the header with our exact pattern
   if (headerIndex !== -1) {
-    // Define patterns for IDs starting with 'A'
-    const idPatterns = options.prioritizeAIds 
-      ? [
-          /\b([A][A-Z0-9]{5,})\b/g,  // Matches IDs starting with A followed by at least 5 alphanumeric chars
-          /\b([A][A-Z0-9]{2,}[A-Z0-9]*)\b/g  // More flexible pattern for A-prefixed IDs
-        ]
-      : [
-          /\b([A-Z][A-Z0-9]{5,})\b/g,  // Any letter followed by at least 5 alphanumeric
-          /\b(TR[-\s]?\d{3,})\b/g  // Traditional TR-### format
-        ];
+    console.log("Searching for 14-character A-prefixed IDs in table rows");
+    processLinesWithPattern(lines, headerIndex, exactPattern, drivers, processedDriverIds);
+  }
+  
+  // If we didn't find enough drivers with the exact pattern, try the fallback patterns
+  if (drivers.length < 10) {
+    console.log(`Only found ${drivers.length} drivers with exact pattern, trying fallback patterns`);
     
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-      const line = lines[i].trim();
+    // Try the fallback patterns in order of decreasing specificity
+    for (const pattern of fallbackPatterns) {
+      if (drivers.length >= 20) break; // Stop if we have enough drivers
       
-      // Skip empty or short lines
-      if (line.length < 5) continue;
-      
-      // Skip lines that look like page breaks or section markers
-      if (line.includes("Page") || line.includes("Seite") || line.includes("----")) continue;
-      
-      // Try each pattern to find IDs
-      for (const pattern of idPatterns) {
-        const matches = Array.from(line.matchAll(pattern));
-        
-        for (const match of matches) {
-          const id = match[1].trim();
-          
-          // Skip if we've already processed this ID
-          if (processedDriverIds.has(id)) continue;
-          
-          // Skip if the ID is obviously not a driver ID
-          if (id.toLowerCase().includes("page") || id.length < 6) continue;
-          
-          // Look for metrics in the rest of the line
-          const metricsText = line.substring(match.index! + match[0].length);
-          const numericValues = metricsText.match(/\b(\d+(?:\.\d+)?)\b/g);
-          
-          if (numericValues && numericValues.length >= 3) {
-            // Convert values to numbers
-            const values = numericValues.map(v => parseFloat(v));
-            
-            // Set up metrics with corresponding status
-            const metrics = [
-              {
-                name: "Delivered",
-                value: values[0] || 0,
-                target: 0,
-                unit: "",
-                status: determineStatus("Delivered", values[0] || 0)
-              },
-              {
-                name: "DCR",
-                value: values[1] || 0,
-                target: 98.5,
-                unit: "%",
-                status: determineStatus("DCR", values[1] || 0)
-              },
-              {
-                name: "DNR DPMO",
-                value: values[2] || 0,
-                target: 1500,
-                unit: "DPMO",
-                status: determineStatus("DNR DPMO", values[2] || 0)
-              }
-            ];
-            
-            // Add more metrics if values are available
-            if (values.length > 3) {
-              metrics.push({
-                name: "POD",
-                value: values[3] || 0,
-                target: 98,
-                unit: "%",
-                status: determineStatus("POD", values[3] || 0)
-              });
-            }
-            
-            if (values.length > 4) {
-              metrics.push({
-                name: "CC",
-                value: values[4] || 0,
-                target: 95,
-                unit: "%",
-                status: determineStatus("CC", values[4] || 0)
-              });
-            }
-            
-            if (values.length > 5) {
-              metrics.push({
-                name: "CE",
-                value: values[5] || 0,
-                target: 0,
-                unit: "",
-                status: determineStatus("CE", values[5] || 0)
-              });
-            }
-            
-            if (values.length > 6) {
-              metrics.push({
-                name: "DEX",
-                value: values[6] || 0,
-                target: 95,
-                unit: "%",
-                status: determineStatus("DEX", values[6] || 0)
-              });
-            }
-            
-            // Add the driver
-            drivers.push({
-              name: id,
-              status: "active",
-              metrics: metrics
-            });
-            
-            // Mark this ID as processed
-            processedDriverIds.add(id);
-            
-            console.log(`Added driver ${id} with ${metrics.length} metrics`);
-          }
-        }
+      if (headerIndex !== -1) {
+        processLinesWithPattern(lines, headerIndex, pattern, drivers, processedDriverIds);
+      } else {
+        // If no header found, try to find patterns across all text
+        processTextWithPattern(textToProcess, pattern, drivers, processedDriverIds);
       }
-    }
-  } else {
-    // If we can't find a clear header, try to extract using patterns across all text
-    console.log("No clear table header found, trying pattern-based extraction across all text");
-    
-    // Use regex to find patterns like "A12345 1234 98.5 2500" (ID followed by metrics)
-    const driverBlocks = textToProcess.match(/\b([A][A-Z0-9]{5,})[^\n]*?(\d+(?:\.\d+)?)[^\n]*?(\d+(?:\.\d+)?)[^\n]*?(\d+(?:\.\d+)?)/g);
-    
-    if (driverBlocks && driverBlocks.length > 0) {
-      console.log(`Found ${driverBlocks.length} potential driver blocks without clear header`);
-      
-      driverBlocks.forEach(block => {
-        // Get the ID
-        const idMatch = block.match(/\b([A][A-Z0-9]{5,})\b/);
-        if (!idMatch) return;
-        
-        const id = idMatch[1];
-        
-        // Skip if we've already processed this ID
-        if (processedDriverIds.has(id)) return;
-        
-        // Extract numeric values
-        const numericValues = block.match(/\b(\d+(?:\.\d+)?)\b/g);
-        if (!numericValues || numericValues.length < 3) return;
-        
-        // Convert values to numbers
-        const values = numericValues.map(v => parseFloat(v));
-        
-        // Create metrics (same as above)
-        const metrics = [
-          {
-            name: "Delivered",
-            value: values[0] || 0,
-            target: 0,
-            unit: "",
-            status: determineStatus("Delivered", values[0] || 0)
-          },
-          {
-            name: "DCR",
-            value: values[1] || 0,
-            target: 98.5,
-            unit: "%",
-            status: determineStatus("DCR", values[1] || 0)
-          },
-          {
-            name: "DNR DPMO",
-            value: values[2] || 0,
-            target: 1500,
-            unit: "DPMO",
-            status: determineStatus("DNR DPMO", values[2] || 0)
-          }
-        ];
-        
-        // Add more metrics if values are available (same as above)
-        if (values.length > 3) {
-          metrics.push({
-            name: "POD",
-            value: values[3] || 0,
-            target: 98,
-            unit: "%",
-            status: determineStatus("POD", values[3] || 0)
-          });
-        }
-        
-        if (values.length > 4) {
-          metrics.push({
-            name: "CC",
-            value: values[4] || 0,
-            target: 95,
-            unit: "%",
-            status: determineStatus("CC", values[4] || 0)
-          });
-        }
-        
-        if (values.length > 5) {
-          metrics.push({
-            name: "CE",
-            value: values[5] || 0,
-            target: 0,
-            unit: "",
-            status: determineStatus("CE", values[5] || 0)
-          });
-        }
-        
-        if (values.length > 6) {
-          metrics.push({
-            name: "DEX",
-            value: values[6] || 0,
-            target: 95,
-            unit: "%",
-            status: determineStatus("DEX", values[6] || 0)
-          });
-        }
-        
-        // Add the driver
-        drivers.push({
-          name: id,
-          status: "active",
-          metrics: metrics
-        });
-        
-        // Mark as processed
-        processedDriverIds.add(id);
-        
-        console.log(`Added driver ${id} with ${metrics.length} metrics from block pattern`);
-      });
     }
   }
   
-  console.log(`Extracted ${drivers.length} drivers with enhanced patterns`);
+  console.log(`Extracted ${drivers.length} drivers with enhanced patterns focusing on A-prefixed IDs`);
   
   // Ensure all drivers have complete metrics
   return ensureAllMetrics(drivers);
 };
+
+/**
+ * Process lines after a header with a specific pattern
+ */
+function processLinesWithPattern(
+  lines: string[], 
+  headerIndex: number, 
+  pattern: RegExp, 
+  drivers: DriverKPI[], 
+  processedDriverIds: Set<string>
+): void {
+  for (let i = headerIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty or short lines
+    if (line.length < 5) continue;
+    
+    // Skip lines that look like page breaks or section markers
+    if (line.includes("Page") || line.includes("Seite") || line.includes("----")) continue;
+    
+    const matches = Array.from(line.matchAll(pattern));
+    
+    for (const match of matches) {
+      const id = match[1].trim();
+      
+      // Skip if we've already processed this ID
+      if (processedDriverIds.has(id)) continue;
+      
+      // Skip if the ID is obviously not a driver ID
+      if (id.toLowerCase().includes("page") || id.length < 6) continue;
+      
+      // Look for metrics in the rest of the line
+      const metricsText = line.substring(match.index! + match[0].length);
+      const numericValues = metricsText.match(/\b(\d+(?:\.\d+)?)\b/g);
+      
+      if (numericValues && numericValues.length >= 3) {
+        // Convert values to numbers
+        const values = numericValues.map(v => parseFloat(v));
+        
+        // Create driver with metrics
+        const driver = createDriverWithMetrics(id, values);
+        
+        // Add the driver
+        drivers.push(driver);
+        
+        // Mark this ID as processed
+        processedDriverIds.add(id);
+        
+        console.log(`Added driver ${id} with ${driver.metrics.length} metrics`);
+      }
+    }
+  }
+}
+
+/**
+ * Process entire text block with a specific pattern
+ */
+function processTextWithPattern(
+  text: string, 
+  pattern: RegExp, 
+  drivers: DriverKPI[], 
+  processedDriverIds: Set<string>
+): void {
+  // Use regex to find patterns like "A12345... 1234 98.5 2500" (ID followed by metrics)
+  const driverBlocks = text.match(new RegExp(pattern.source + "[^\\n]*?(\\d+(?:\\.\\d+)?)[^\\n]*?(\\d+(?:\\.\\d+)?)[^\\n]*?(\\d+(?:\\.\\d+)?)", "g"));
+  
+  if (driverBlocks && driverBlocks.length > 0) {
+    console.log(`Found ${driverBlocks.length} potential driver blocks with pattern ${pattern}`);
+    
+    driverBlocks.forEach(block => {
+      // Get the ID
+      const idMatch = block.match(pattern);
+      if (!idMatch) return;
+      
+      const id = idMatch[1];
+      
+      // Skip if we've already processed this ID
+      if (processedDriverIds.has(id)) return;
+      
+      // Extract numeric values
+      const numericValues = block.match(/\b(\d+(?:\.\d+)?)\b/g);
+      if (!numericValues || numericValues.length < 3) return;
+      
+      // Convert values to numbers
+      const values = numericValues.map(v => parseFloat(v));
+      
+      // Create driver with metrics
+      const driver = createDriverWithMetrics(id, values);
+      
+      // Add the driver
+      drivers.push(driver);
+      
+      // Mark as processed
+      processedDriverIds.add(id);
+      
+      console.log(`Added driver ${id} with ${driver.metrics.length} metrics from block pattern`);
+    });
+  }
+}
+
+/**
+ * Create a driver object with metrics based on values array
+ */
+function createDriverWithMetrics(id: string, values: number[]): DriverKPI {
+  // Set up metrics with corresponding status
+  const metrics = [
+    {
+      name: "Delivered",
+      value: values[0] || 0,
+      target: 0,
+      unit: "",
+      status: determineStatus("Delivered", values[0] || 0)
+    },
+    {
+      name: "DCR",
+      value: values[1] || 0,
+      target: 98.5,
+      unit: "%",
+      status: determineStatus("DCR", values[1] || 0)
+    },
+    {
+      name: "DNR DPMO",
+      value: values[2] || 0,
+      target: 1500,
+      unit: "DPMO",
+      status: determineStatus("DNR DPMO", values[2] || 0)
+    }
+  ];
+  
+  // Add more metrics if values are available
+  if (values.length > 3) {
+    metrics.push({
+      name: "POD",
+      value: values[3] || 0,
+      target: 98,
+      unit: "%",
+      status: determineStatus("POD", values[3] || 0)
+    });
+  }
+  
+  if (values.length > 4) {
+    metrics.push({
+      name: "CC",
+      value: values[4] || 0,
+      target: 95,
+      unit: "%",
+      status: determineStatus("CC", values[4] || 0)
+    });
+  }
+  
+  if (values.length > 5) {
+    metrics.push({
+      name: "CE",
+      value: values[5] || 0,
+      target: 0,
+      unit: "",
+      status: determineStatus("CE", values[5] || 0)
+    });
+  }
+  
+  if (values.length > 6) {
+    metrics.push({
+      name: "DEX",
+      value: values[6] || 0,
+      target: 95,
+      unit: "%",
+      status: determineStatus("DEX", values[6] || 0)
+    });
+  }
+  
+  // Return the complete driver object
+  return {
+    name: id,
+    status: "active",
+    metrics: metrics
+  };
+}
