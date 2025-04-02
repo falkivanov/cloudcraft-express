@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -114,15 +115,25 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   // Handle form submission with type inference
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
-    const processedTargets = formData.targets.map(target => ({
-      name: target.name,
-      value: target.value,
-      unit: target.unit || "",
-      ...(showEffectiveDate[target.name] ? {
-        effectiveFromWeek: target.effectiveFromWeek,
-        effectiveFromYear: target.effectiveFromYear
-      } : {})
-    }));
+    const processedTargets = formData.targets.map(target => {
+      // Create a properly typed object with required fields
+      const processedTarget = {
+        name: target.name,      // Required
+        value: target.value,    // Required
+        unit: target.unit || "" // Default empty string if somehow undefined
+      };
+      
+      // Only add effective dates if they should be shown for this target
+      if (showEffectiveDate[target.name]) {
+        return {
+          ...processedTarget,
+          effectiveFromWeek: target.effectiveFromWeek,
+          effectiveFromYear: target.effectiveFromYear
+        };
+      }
+      
+      return processedTarget;
+    });
     
     onSubmit({ targets: processedTargets });
   };
