@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,7 @@ const COMPANY_KPI_TARGETS: TargetDefinition[] = [
   { name: "Capacity Reliability", value: 98, unit: "%" }
 ];
 
-// Form schema matching TargetDefinition type structure
+// Form schema matching TargetDefinition type structure but with optional fields for effective dates
 const formSchema = z.object({
   targets: z.array(
     z.object({
@@ -116,12 +115,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = formData.targets.map(target => {
-      if (!target.name || target.value === undefined) {
-        console.error("Invalid target data", target);
-        throw new Error("Invalid target data: name and value are required");
-      }
-
-      // Create target object with required properties
+      // Create a properly typed target object with required properties
       const processedTarget: TargetDefinition = {
         name: target.name,
         value: target.value,
