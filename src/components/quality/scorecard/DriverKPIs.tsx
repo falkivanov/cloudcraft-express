@@ -32,6 +32,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Determine if we have too few drivers (likely extraction issue)
   const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 10;
   
+  // Check if we have any drivers with 'A' prefix (expected format)
+  const hasExpectedDriverFormat = driverKPIs.some(d => d.name.startsWith('A'));
+  
   // Handle navigation to upload page
   const handleUploadClick = () => {
     navigate("/upload");
@@ -48,7 +51,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || hasTooFewDrivers) && (
+      {(isSuspectedSampleData || hasTooFewDrivers || !hasExpectedDriverFormat) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -57,6 +60,8 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               Die Fahrerdaten konnten nicht vollständig aus der PDF extrahiert werden. 
               {driverKPIs.length === 0 ? 
                 " Es wurden keine Fahrer gefunden." : 
+                !hasExpectedDriverFormat ?
+                " Es wurden keine Fahrer im erwarteten Format (beginnend mit 'A') gefunden." :
                 driverKPIs.length < 10 ?
                 ` Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.` :
                 " Es wurden nur einige Beispielfahrer gefunden."}
@@ -66,8 +71,8 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
             </p>
             <ul className="list-disc ml-5 space-y-1">
               <li>Das Format der Fahrertabelle wird nicht korrekt erkannt</li>
-              <li>Die Fahrer-IDs sind in einem nicht erkannten Format</li>
-              <li>Die PDF-Struktur ist ungewöhnlich</li>
+              <li>Die "DSP WEEKLY SUMMARY" Tabelle wurde nicht gefunden</li>
+              <li>Die PDF-Struktur ist ungewöhnlich oder wurde geändert</li>
             </ul>
             <p>
               Sie können eine neue PDF mit einem klareren Format hochladen:

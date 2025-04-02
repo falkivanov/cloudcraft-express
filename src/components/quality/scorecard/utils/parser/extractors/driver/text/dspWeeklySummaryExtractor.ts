@@ -11,15 +11,16 @@ type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compl
 export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] => {
   console.log("Trying DSP Weekly Summary extraction approach");
   
-  if (!text.includes("DSP WEEKLY SUMMARY") && !text.includes("TRANSPORTER ID")) {
-    console.log("Text does not appear to be a DSP Weekly Summary");
+  // Check if the text contains the expected header
+  if (!text.includes("DSP WEEKLY SUMMARY")) {
+    console.log("Text does not contain 'DSP WEEKLY SUMMARY'");
     return [];
   }
   
   const drivers: DriverKPI[] = [];
   
-  // Look for the header row first
-  const headerRowPattern = /TRANSPORTER\s+ID|Driver\s+ID|TR\s+ID/i;
+  // Look for the header row pattern (we're more flexible now)
+  const headerRowPattern = /TRANSPORTER\s+ID|TRANSPORT\s+ID|Driver\s+ID|TR\s+ID/i;
   const headerRowMatch = text.match(headerRowPattern);
   
   if (!headerRowMatch) {
@@ -50,16 +51,24 @@ export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] =>
     const line = lines[i].trim();
     if (line.length < 5) continue;
     
-    // Common patterns for driver IDs
-    const driverIdPattern = /([A-Z][A-Z0-9]{5,}|TR[-\s]?\d{3,}|[A-Z]{3}\d{5,})/;
+    // Driver IDs starting with 'A' as specified in requirements
+    const driverIdPattern = /([A][A-Z0-9]{5,})/;
     const idMatch = line.match(driverIdPattern);
     
-    if (!idMatch) continue;
+    if (!idMatch) {
+      // If we don't find an ID on this line, check if we've hit a page break or section end
+      if (line.includes("Page") || line.includes("Seite") || line.includes("--") || line.includes("===")) {
+        continue; // Skip pagination or section separators
+      }
+      
+      // If it's not a pagination marker and doesn't match our pattern, try next line
+      continue;
+    }
     
     const driverId = idMatch[1].trim();
     console.log(`Found potential driver ID in DSP summary: ${driverId}`);
     
-    // Extract values - numbers and dashes
+    // Extract values - look for numbers and percentages
     const valuesPattern = /([\d,.]+%?|-|\b\d+\b)/g;
     const values = line.match(valuesPattern) || [];
     
@@ -89,18 +98,20 @@ export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] =>
             unit: metricUnits[validValuesCount],
             status: "none" as MetricStatus
           });
-        } else {
-          const numValue = extractNumeric(value);
-          if (isNaN(numValue)) continue;
-          
-          metrics.push({
-            name: metricNames[validValuesCount],
-            value: numValue,
-            target: metricTargets[validValuesCount],
-            unit: metricUnits[validValuesCount],
-            status: determineStatus(metricNames[validValuesCount], numValue)
-          });
+          validValuesCount++;
+          continue;
         }
+        
+        const numValue = extractNumeric(value);
+        if (isNaN(numValue)) continue;
+        
+        metrics.push({
+          name: metricNames[validValuesCount],
+          value: numValue,
+          target: metricTargets[validValuesCount],
+          unit: metricUnits[validValuesCount],
+          status: determineStatus(metricNames[validValuesCount], numValue)
+        });
         
         validValuesCount++;
       }

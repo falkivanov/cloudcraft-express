@@ -1,320 +1,108 @@
 
 import { DriverKPI } from '../../../../../types';
+import { extractDriverKPIsFromText } from '../textExtractor';
+import { extractDriversFromDSPWeeklySummary } from '../text/dspWeeklySummaryExtractor';
 import { generateSampleDrivers } from '../sampleData';
-import { extractDriversByPage } from './pageProcessing';
-import { tryAllExtractionStrategies } from './multiStrategy';
+import { ensureAllMetrics } from '../utils/metricUtils';
 
 /**
- * Extract drivers from text content using multiple strategies,
- * falling back to sample data only if absolutely necessary
+ * Extract drivers from multiple pages, trying various strategies
  */
-export function extractDriversOrUseSampleData(text: string): DriverKPI[] {
-  console.log("Starting enhanced driver extraction from PDF text");
-  
-  // Step 1: Try all extraction strategies
-  const extractedDrivers = tryAllExtractionStrategies(text);
-  
-  // If we found at least 10 drivers, that's likely a good extraction
-  if (extractedDrivers.length >= 10) {
-    console.log(`Successfully extracted ${extractedDrivers.length} drivers`);
-    return extractedDrivers;
-  }
-  
-  // Step 2: If few drivers found, try page-by-page approach which can work better for some PDFs
-  if (extractedDrivers.length < 10) {
-    console.log(`First attempt found only ${extractedDrivers.length} drivers, trying page-by-page approach`);
-    const driversFromPages = extractDriversByPage(text);
+export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] => {
+  // Handle the case when pageData is available
+  if (pageData) {
+    // Extract drivers from each page
+    const allDrivers: DriverKPI[] = [];
     
-    if (driversFromPages.length > extractedDrivers.length) {
-      console.log(`Page approach found ${driversFromPages.length} drivers, using that result`);
-      return driversFromPages;
-    }
-  }
-  
-  // Step 3: Check specifically for KW11 format (or similar structured PDFs)
-  // Look for typical patterns in KW11 that might not be caught by other methods
-  if (extractedDrivers.length < 10) {
-    console.log("Checking for KW11-specific driver format");
+    // Focus on pages 3 and 4 which typically contain driver data
+    const relevantPages = [3, 4, 5].filter(num => pageData[num]);
     
-    // This RegEx specifically targets formats like seen in KW11 with alphanumeric IDs
-    const kw11Pattern = /([A-Z][0-9][A-Z0-9]{6,})/g;
-    const kw11Matches = Array.from(text.matchAll(kw11Pattern));
-    
-    if (kw11Matches.length > 0) {
-      console.log(`Found ${kw11Matches.length} potential KW11-style driver IDs`);
+    for (const pageNum of relevantPages) {
+      const pageText = pageData[pageNum]?.text || "";
       
-      const combinedResults: DriverKPI[] = [...extractedDrivers];
-      const foundIds = new Set(extractedDrivers.map(d => d.name));
-      
-      for (const match of kw11Matches) {
-        const driverId = match[0].trim();
+      // Try DSP Weekly Summary format for each page
+      if (pageText.includes("DSP WEEKLY SUMMARY")) {
+        console.log(`Found "DSP WEEKLY SUMMARY" on page ${pageNum}, using specialized extractor`);
+        const driversFromPage = extractDriversFromDSPWeeklySummary(pageText);
         
-        // Skip if already in our results or not a valid ID
-        if (foundIds.has(driverId) || 
-            driverId.toLowerCase().includes('page') ||
-            driverId.length < 8 ||
-            driverId.toLowerCase() === 'id' ||
-            driverId.toLowerCase().includes('kpi') ||
-            driverId.toLowerCase().includes('score')) {
-          continue;
-        }
-        
-        // Extract context around this ID to look for metrics
-        const startIndex = Math.max(0, match.index! - 100);
-        const endIndex = Math.min(text.length, match.index! + 200);
-        const context = text.substring(startIndex, endIndex);
-        
-        // Try to find sequences of numbers in this context (likely metrics)
-        const numericSequences = context.match(/\b(\d{2,3}(?:\.\d{1,2})?)\b/g);
-        
-        if (numericSequences && numericSequences.length >= 3) {
-          // Create metrics from the numbers found
-          const metrics = [
-            {
-              name: "Delivered",
-              value: parseFloat(numericSequences[0]),
-              target: 0,
-              unit: ""
-            },
-            {
-              name: "DCR",
-              value: parseFloat(numericSequences[1]),
-              target: 98.5,
-              unit: "%"
-            },
-            {
-              name: "DNR DPMO",
-              value: parseFloat(numericSequences[2]),
-              target: 1500,
-              unit: "DPMO"
+        if (driversFromPage.length > 0) {
+          driversFromPage.forEach(driver => {
+            if (!allDrivers.some(d => d.name === driver.name)) {
+              allDrivers.push(driver);
             }
-          ];
-          
-          // Add more metrics if available
-          if (numericSequences.length > 3) {
-            metrics.push({
-              name: "POD",
-              value: parseFloat(numericSequences[3]),
-              target: 98,
-              unit: "%"
-            });
-          }
-          
-          if (numericSequences.length > 4) {
-            metrics.push({
-              name: "CC",
-              value: parseFloat(numericSequences[4]),
-              target: 95,
-              unit: "%"
-            });
-          }
-          
-          if (numericSequences.length > 5) {
-            metrics.push({
-              name: "CE",
-              value: parseFloat(numericSequences[5]),
-              target: 0,
-              unit: ""
-            });
-          }
-          
-          if (numericSequences.length > 6) {
-            metrics.push({
-              name: "DEX",
-              value: parseFloat(numericSequences[6]),
-              target: 95,
-              unit: "%"
-            });
-          }
-          
-          // Add this driver
-          combinedResults.push({
-            name: driverId,
-            status: "active",
-            metrics
           });
-          
-          foundIds.add(driverId);
-        }
-      }
-      
-      if (combinedResults.length > extractedDrivers.length) {
-        console.log(`KW11 specific approach improved driver count from ${extractedDrivers.length} to ${combinedResults.length}`);
-        return combinedResults;
-      }
-    }
-  }
-  
-  // Step 4: As a last resort, try a very aggressive pattern matching approach
-  // Look for any patterns that might be driver IDs, even without complete metrics
-  if (extractedDrivers.length < 10) {
-    const aggressivePatterns = [
-      /([A-Z][A-Z0-9]{5,})/g,  // Any uppercase sequence with at least 6 chars
-      /([A-Z]\d{1,2}[A-Z]\d[A-Z0-9]{3,})/g,  // Patterns like A1B2C345
-      /([A-Z]{2,3}\d{2,})/g,   // Patterns like AB12345
-      /(TR[-\s]?\d{2,})/g,     // TR- patterns
-    ];
-    
-    const combinedResults: DriverKPI[] = [...extractedDrivers];
-    const foundIds = new Set(extractedDrivers.map(d => d.name));
-    
-    console.log("Trying aggressive ID pattern matching as last resort");
-    
-    // Try each pattern
-    for (const pattern of aggressivePatterns) {
-      const matches = Array.from(text.matchAll(pattern));
-      
-      if (matches.length > 0) {
-        console.log(`Found ${matches.length} potential driver IDs with pattern ${pattern}`);
-        
-        // For each match, create a driver if it's not already in the list
-        for (const match of matches) {
-          const driverId = match[0].trim();
-          
-          // Skip if already in our results or not a valid ID
-          if (foundIds.has(driverId) || 
-              driverId.toLowerCase().includes('page') ||
-              driverId.length < 4 ||
-              driverId.toLowerCase() === 'id' ||
-              driverId.toLowerCase().includes('kpi') ||
-              driverId.toLowerCase().includes('score')) {
-            continue;
-          }
-          
-          // Extract context around this ID to look for metrics
-          const startIndex = Math.max(0, match.index! - 50);
-          const endIndex = Math.min(text.length, match.index! + 150);
-          const context = text.substring(startIndex, endIndex);
-          
-          // Try to find numbers in this context
-          const numberMatches = context.match(/\b(\d+(?:\.\d+)?)\b/g);
-          
-          if (numberMatches && numberMatches.length >= 3) {
-            // Create metrics from the numbers found
-            const metrics = [
-              {
-                name: "Delivered",
-                value: parseFloat(numberMatches[0]),
-                target: 0,
-                unit: ""
-              },
-              {
-                name: "DCR",
-                value: parseFloat(numberMatches[1]),
-                target: 98.5,
-                unit: "%"
-              },
-              {
-                name: "DNR DPMO",
-                value: parseFloat(numberMatches[2]),
-                target: 1500,
-                unit: "DPMO"
-              }
-            ];
-            
-            // Add more metrics if available
-            if (numberMatches.length > 3) {
-              metrics.push({
-                name: "POD",
-                value: parseFloat(numberMatches[3]),
-                target: 98,
-                unit: "%"
-              });
-            }
-            
-            if (numberMatches.length > 4) {
-              metrics.push({
-                name: "CC",
-                value: parseFloat(numberMatches[4]),
-                target: 95,
-                unit: "%"
-              });
-            }
-            
-            if (numberMatches.length > 5) {
-              metrics.push({
-                name: "CE",
-                value: parseFloat(numberMatches[5]),
-                target: 0,
-                unit: ""
-              });
-            }
-            
-            if (numberMatches.length > 6) {
-              metrics.push({
-                name: "DEX",
-                value: parseFloat(numberMatches[6]),
-                target: 95,
-                unit: "%"
-              });
-            }
-            
-            // Create driver
-            combinedResults.push({
-              name: driverId,
-              status: "active",
-              metrics
-            });
-            
-            foundIds.add(driverId);
-          }
         }
       }
     }
     
-    if (combinedResults.length > extractedDrivers.length) {
-      console.log(`Aggressive approach improved driver count from ${extractedDrivers.length} to ${combinedResults.length}`);
-      return combinedResults;
+    // If we've found at least 10 drivers this way, use them
+    if (allDrivers.length >= 10) {
+      console.log(`Found ${allDrivers.length} drivers from page-by-page "DSP WEEKLY SUMMARY" parsing`);
+      return ensureAllMetrics(allDrivers);
     }
   }
   
-  // Special case: If we found sample data from KW11, use specific drivers from test data
-  const foundKW11 = text.includes("KW11") || text.includes("KW 11") || text.toLowerCase().includes("week 11");
-  if (foundKW11 && extractedDrivers.length < 10) {
-    console.log("KW11 detected, attempting to use pre-defined test data for KW11");
-    
-    // Check if we have any of the KW11 drivers in the text to confirm it's the right format
-    const kw11SampleIDs = ["A10PTFSF1G664", "A13JMD0G4ND0QP", "A1ON8E0DOQH8PK"];
-    let foundKw11Format = false;
-    
-    for (const id of kw11SampleIDs) {
-      if (text.includes(id)) {
-        foundKw11Format = true;
-        console.log(`Found KW11 sample ID: ${id} in text`);
-        break;
-      }
-    }
-    
-    if (foundKw11Format) {
-      try {
-        // Attempt to dynamically import the KW11 driver data
-        console.log("Using hardcoded KW11 driver data");
-        const kw11Drivers = [
-          ...require('../../../../data/weeks/week11/driverGroups/group1').getDriverGroup1(),
-          ...require('../../../../data/weeks/week11/driverGroups/group2').getDriverGroup2(),
-          ...require('../../../../data/weeks/week11/driverGroups/group3').getDriverGroup3(),
-          ...require('../../../../data/weeks/week11/driverGroups/group4').getDriverGroup4(),
-          ...require('../../../../data/weeks/week11/driverGroups/group5').getDriverGroup5()
-        ];
-        
-        console.log(`Found ${kw11Drivers.length} hardcoded KW11 drivers`);
-        return kw11Drivers;
-      } catch (error) {
-        console.error("Error loading KW11 driver data:", error);
-      }
-    }
-  }
-  
-  // If we still found some drivers (but fewer than we'd like), return those
-  if (extractedDrivers.length > 0) {
-    console.log(`Returning ${extractedDrivers.length} drivers found through extraction, though fewer than expected`);
-    return extractedDrivers;
-  }
-  
-  // Absolute last resort: return sample data
-  console.warn("No driver extraction methods succeeded, using sample data");
-  return generateSampleDrivers();
-}
+  // If we don't have page data or didn't find enough drivers with the page approach,
+  // try parsing the entire text
+  return extractDriverKPIsFromText(text);
+};
 
-// Export the functions needed by extractionStrategies.ts
-export { extractDriversByPage, tryAllExtractionStrategies };
+/**
+ * Try all extraction strategies for driver KPIs
+ */
+export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
+  // First, try with DSP WEEKLY SUMMARY format
+  if (text.includes("DSP WEEKLY SUMMARY")) {
+    const dspWeeklySummaryDrivers = extractDriversFromDSPWeeklySummary(text);
+    if (dspWeeklySummaryDrivers.length >= 5) {
+      console.log(`Using ${dspWeeklySummaryDrivers.length} drivers from DSP WEEKLY SUMMARY format`);
+      return ensureAllMetrics(dspWeeklySummaryDrivers);
+    }
+  }
+  
+  // Then try full text extraction with all strategies
+  const drivers = extractDriverKPIsFromText(text);
+  
+  // If we found a good number of drivers, use them
+  if (drivers.length >= 5) {
+    return drivers;
+  }
+  
+  // If still not enough, use sample data
+  console.warn("Extraction strategies found fewer than 5 drivers, using sample data");
+  return generateSampleDrivers();
+};
+
+/**
+ * Main function to extract drivers from text, with fallback to sample data
+ */
+export const extractDriversOrUseSampleData = (text: string): DriverKPI[] => {
+  try {
+    // First try with DSP WEEKLY SUMMARY format
+    if (text.includes("DSP WEEKLY SUMMARY")) {
+      console.log("Text contains 'DSP WEEKLY SUMMARY', using specialized extractor");
+      
+      const summaryDrivers = extractDriversFromDSPWeeklySummary(text);
+      if (summaryDrivers.length >= 5) {
+        console.log(`Using ${summaryDrivers.length} drivers from DSP WEEKLY SUMMARY extractor`);
+        return ensureAllMetrics(summaryDrivers);
+      }
+    }
+    
+    // If DSP extractor didn't find enough, try all strategies
+    const drivers = tryAllExtractionStrategies(text);
+    
+    // If we found a good number of drivers, use them
+    if (drivers.length >= 5) {
+      console.log(`Found ${drivers.length} drivers with multiple extraction strategies`);
+      return drivers;
+    }
+    
+    // If still not enough, use sample data
+    console.warn("All strategies found fewer than 5 drivers, using sample data");
+    return generateSampleDrivers();
+  } catch (error) {
+    console.error("Error extracting driver KPIs:", error);
+    return generateSampleDrivers();
+  }
+};
