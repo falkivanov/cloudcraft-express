@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -115,13 +116,12 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (data: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = data.targets.map(target => {
-      // Create a valid target object with all required properties
-      // We ensure name and value are always present with correct types
-      // This resolves the TypeScript error
+      // Since our Zod schema validates these fields, we can assert they're non-null
+      // Cast the target to ensure TypeScript recognizes it has the required properties
       const processedTarget: TargetDefinition = {
-        name: target.name, // this is guaranteed to be a string because of Zod validation
-        value: target.value, // this is guaranteed to be a number because of Zod validation
-        unit: target.unit || "" // default to empty string if unit is undefined
+        name: target.name, // Zod ensures this is a string
+        value: target.value, // Zod ensures this is a number
+        unit: target.unit || "" // Default to empty string if unit is undefined
       };
 
       // Only include effective dates if they are being shown for this target
