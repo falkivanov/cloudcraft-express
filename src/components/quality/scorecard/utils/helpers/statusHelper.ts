@@ -32,7 +32,15 @@ export const getDefaultTargetForKPI = (kpiName: string): number => {
     "Vehicle Audit (VSA) Compliance": 95,
     "DVIC Compliance": 95,
     "Safe Driving Metric (FICO)": 800,
-    "Capacity Reliability": 98
+    "Capacity Reliability": 98,
+    "Working Hours Compliance (WHC)": 100,
+    "Breach of Contract (BOC)": 0,
+    "Lost on Road (LoR) DPMO": 350,
+    "Speeding Event Rate (Per 100 Trips)": 10,
+    "Mentor Adoption Rate": 80,
+    "Customer Delivery Feedback": 85,
+    "Comprehensive Audit Score (CAS)": 100,
+    "Next Day Capacity Reliability": 98
   };
   
   return targets[kpiName] || 95;
@@ -42,6 +50,11 @@ export const getDefaultTargetForKPI = (kpiName: string): number => {
  * Determine the status of a KPI based on its value
  */
 export const determineStatus = (kpiName: string, value: number): KPIStatus => {
+  // Special case for BOC
+  if (kpiName === "Breach of Contract (BOC)") {
+    return value === 0 ? "none" : "not in compliance";
+  }
+  
   // For DPMO metrics, lower is better
   if (kpiName.includes("DPMO")) {
     if (value < 2000) return "fantastic";

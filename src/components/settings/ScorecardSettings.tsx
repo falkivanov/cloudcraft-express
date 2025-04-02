@@ -8,7 +8,27 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { METRIC_NAMES, METRIC_TARGETS, METRIC_UNITS } from "@/components/quality/scorecard/utils/parser/extractors/driver/utils/metricDefinitions";
+
+// Define company KPI names and their default targets
+const COMPANY_KPI_TARGETS = [
+  { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
+  { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
+  { name: "Photo-On-Delivery", value: 95, unit: "%" },
+  { name: "Contact Compliance", value: 95, unit: "%" },
+  { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
+  { name: "Vehicle Audit (VSA) Compliance", value: 95, unit: "%" },
+  { name: "DVIC Compliance", value: 95, unit: "%" },
+  { name: "Safe Driving Metric (FICO)", value: 800, unit: "" },
+  { name: "Capacity Reliability", value: 98, unit: "%" },
+  { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
+  { name: "Breach of Contract (BOC)", value: 0, unit: "" },
+  { name: "Lost on Road (LoR) DPMO", value: 350, unit: "DPMO" },
+  { name: "Speeding Event Rate (Per 100 Trips)", value: 10, unit: "" },
+  { name: "Mentor Adoption Rate", value: 80, unit: "%" },
+  { name: "Customer Delivery Feedback", value: 85, unit: "%" },
+  { name: "Comprehensive Audit Score (CAS)", value: 100, unit: "%" },
+  { name: "Next Day Capacity Reliability", value: 98, unit: "%" }
+];
 
 // Create a schema for our form
 const formSchema = z.object({
@@ -31,11 +51,7 @@ const ScorecardSettings: React.FC = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      targets: METRIC_NAMES.map((name, index) => ({
-        name,
-        value: METRIC_TARGETS[index],
-        unit: METRIC_UNITS[index]
-      }))
+      targets: COMPANY_KPI_TARGETS
     }
   });
 
@@ -60,6 +76,9 @@ const ScorecardSettings: React.FC = () => {
         title: "Zielwerte gespeichert",
         description: "Die Scorecard-Zielwerte wurden erfolgreich aktualisiert.",
       });
+      
+      // Trigger a custom event to notify components that use this data
+      window.dispatchEvent(new Event('scorecard_targets_updated'));
     } catch (error) {
       console.error("Error saving targets:", error);
       toast({
@@ -75,7 +94,7 @@ const ScorecardSettings: React.FC = () => {
       <CardHeader>
         <CardTitle>Scorecard Zielwerte</CardTitle>
         <CardDescription>
-          Passen Sie die Zielwerte für die verschiedenen Scorecard-Metriken an
+          Passen Sie die Zielwerte für die Unternehmens-KPIs der Scorecard an
         </CardDescription>
       </CardHeader>
       <CardContent>

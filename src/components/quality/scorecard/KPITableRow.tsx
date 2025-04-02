@@ -29,7 +29,7 @@ const KPITableRow: React.FC<KPITableRowProps> = ({ kpi, previousWeekData }) => {
   
   // For BOC, display "none" or "not in compliance" instead of fantastic/poor
   const displayStatus = isBOC 
-    ? (kpi.status === "none" ? "none" : "not in compliance") 
+    ? (kpi.value === 0 ? "none" : "not in compliance") 
     : kpi.status;
 
   // Don't append unit if the name already contains "DPMO" and the unit is "DPMO"
