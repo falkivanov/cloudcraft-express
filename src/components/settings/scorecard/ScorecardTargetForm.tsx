@@ -42,20 +42,32 @@ const COMPANY_KPI_TARGETS: TargetDefinition[] = [
   { name: "Capacity Reliability", value: 98, unit: "%" }
 ];
 
-// Form schema matching TargetDefinition type structure but with optional fields for effective dates
-const formSchema = z.object({
-  targets: z.array(
-    z.object({
-      name: z.string(),
-      value: z.number().min(0),
-      effectiveFromWeek: z.number().min(1).max(53).optional(),
-      effectiveFromYear: z.number().min(2020).max(2030).optional(),
-      unit: z.string().default("")
-    })
-  )
+// Define a target item schema for the form
+const targetItemSchema = z.object({
+  name: z.string(),
+  value: z.number().min(0),
+  unit: z.string().default(""),
+  effectiveFromWeek: z.number().min(1).max(53).optional(),
+  effectiveFromYear: z.number().min(2020).max(2030).optional(),
 });
 
+// Form schema matching TargetDefinition type structure but with optional fields for effective dates
+const formSchema = z.object({
+  targets: z.array(targetItemSchema)
+});
+
+// Types derived from the schema
+export type TargetItem = z.infer<typeof targetItemSchema>;
 export type FormValues = z.infer<typeof formSchema>;
+
+// Type for the processed target (without effective dates)
+export type ProcessedTarget = {
+  name: string;
+  value: number;
+  unit: string;
+  effectiveFromWeek?: number;
+  effectiveFromYear?: number;
+};
 
 interface ScorecardTargetFormProps {
   onSubmit: (data: FormValues) => void;
@@ -69,7 +81,11 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      targets: COMPANY_KPI_TARGETS
+      targets: COMPANY_KPI_TARGETS.map(target => ({
+        name: target.name,
+        value: target.value,
+        unit: target.unit || ""
+      }))
     }
   });
 
@@ -114,27 +130,26 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
   // Handle form submission with type inference
   const handleSubmit = (formData: FormValues) => {
-    // Process form data - remove effective dates if not showing
+    // Process form data - ensure all required fields are present
     const processedTargets = formData.targets.map(target => {
-      // Create a properly typed object with required fields
-      const processedTarget = {
-        name: target.name,      // Required
-        value: target.value,    // Required
-        unit: target.unit || "" // Default empty string if somehow undefined
+      const processedTarget: ProcessedTarget = {
+        name: target.name,
+        value: target.value,
+        unit: target.unit || ""
       };
       
       // Only add effective dates if they should be shown for this target
       if (showEffectiveDate[target.name]) {
-        return {
-          ...processedTarget,
-          effectiveFromWeek: target.effectiveFromWeek,
-          effectiveFromYear: target.effectiveFromYear
-        };
+        if (target.effectiveFromWeek && target.effectiveFromYear) {
+          processedTarget.effectiveFromWeek = target.effectiveFromWeek;
+          processedTarget.effectiveFromYear = target.effectiveFromYear;
+        }
       }
       
       return processedTarget;
     });
     
+    // Pass the processed data to the parent component
     onSubmit({ targets: processedTargets });
   };
 

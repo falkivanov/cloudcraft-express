@@ -4,17 +4,13 @@ import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
-import { FormValues } from "./ScorecardTargetForm";
+import { FormValues, TargetItem } from "./ScorecardTargetForm";
 import EffectiveDateFields from "./EffectiveDateFields";
 
 interface TargetFormItemProps {
   form: UseFormReturn<FormValues>;
   index: number;
-  metric: {
-    name: string;
-    value: number;
-    unit?: string;
-  };
+  metric: TargetItem;
   showEffectiveDate: boolean;
   currentWeek: number;
   currentYear: number;
@@ -31,7 +27,7 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
   onToggleEffectiveDate
 }) => {
   return (
-    <div key={metric.name} className="border p-4 rounded-md">
+    <div className="border p-4 rounded-md">
       <div className="flex flex-col space-y-4">
         <div className="flex justify-between items-start">
           <FormField

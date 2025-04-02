@@ -1,132 +1,108 @@
-
-/**
- * KPI status type to ensure we use only valid status values
- */
-export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
-
-/**
- * Type for target definitions with effective week
- */
-export type TargetDefinition = {
+export interface TargetDefinition {
   name: string;
   value: number;
+  unit: string;
   effectiveFromWeek?: number;
   effectiveFromYear?: number;
-  unit?: string;
+}
+
+export interface StatusDefinition {
+    status: string;
+    color: string;
+    icon?: React.ComponentType<any>;
+}
+
+export const DEFAULT_TARGETS: TargetDefinition[] = [
+    { name: "Vehicle Audit (VSA) Compliance", value: 95, unit: "%" },
+    { name: "Safe Driving Metric (FICO)", value: 800, unit: "" },
+    { name: "DVIC Compliance", value: 95, unit: "%" },
+    { name: "Speeding Event Rate (Per 100 Trips)", value: 10, unit: "" },
+    { name: "Mentor Adoption Rate", value: 80, unit: "%" },
+    { name: "Breach of Contract (BOC)", value: 0, unit: "" },
+    { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
+    { name: "Comprehensive Audit Score (CAS)", value: 100, unit: "%" },
+    { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
+    { name: "Customer Delivery Feedback", value: 85, unit: "%" },
+    { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
+    { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
+    { name: "Lost on Road (LoR) DPMO", value: 350, unit: "DPMO" },
+    { name: "Photo-On-Delivery", value: 95, unit: "%" },
+    { name: "Contact Compliance", value: 95, unit: "%" },
+    { name: "Next Day Capacity Reliability", value: 98, unit: "%" },
+    { name: "Capacity Reliability", value: 98, unit: "%" }
+];
+
+export function getDefaultTargetValue(kpiName: string): number {
+    const target = DEFAULT_TARGETS.find(t => t.name === kpiName);
+    return target ? target.value : 0;
+}
+
+export const STATUS_DEFINITIONS: { [key: string]: StatusDefinition } = {
+    "At Risk": { status: "At Risk", color: "red" },
+    "Needs Improvement": { status: "Needs Improvement", color: "orange" },
+    "On Track": { status: "On Track", color: "green" },
+    "Not Applicable": { status: "Not Applicable", color: "gray" }
 };
 
-/**
- * Get the default target value for a KPI
- */
-export const getDefaultTargetForKPI = (kpiName: string, weekNum?: number, year?: number): number => {
-  // First check if we have custom targets in localStorage
+export function getDefaultTargetForKPI(kpiName: string, currentWeek?: number, currentYear?: number): number {
   try {
-    const savedTargets = localStorage.getItem("scorecard_custom_targets");
-    if (savedTargets) {
-      const targets: TargetDefinition[] = JSON.parse(savedTargets);
-      
-      // First try: Look for targets with effective date that match the current week
-      if (weekNum && year) {
-        // Find all targets for this KPI, sorted by effective date (newest first)
-        const relevantTargets = targets
-          .filter((t: TargetDefinition) => t.name === kpiName)
-          .sort((a: TargetDefinition, b: TargetDefinition) => {
-            // Sort by year first, then by week
-            const aYear = a.effectiveFromYear || 0;
-            const bYear = b.effectiveFromYear || 0;
-            
-            if (aYear !== bYear) return bYear - aYear;
-            
-            const aWeek = a.effectiveFromWeek || 0;
-            const bWeek = b.effectiveFromWeek || 0;
-            return bWeek - aWeek;
-          });
-        
-        // Find the most recent target that is applicable for the given week
-        for (const target of relevantTargets) {
-          const targetYear = target.effectiveFromYear || 0;
-          const targetWeek = target.effectiveFromWeek || 0;
-          
-          if ((targetYear < year) || (targetYear === year && targetWeek <= weekNum)) {
-            console.log(`Using effective date target for ${kpiName}: ${target.value} (effective from week ${targetWeek}/${targetYear})`);
-            return target.value;
-          }
-        }
-      }
-      
-      // Second try: Look for a target without date restrictions or most recent one
-      const defaultTarget = targets.find((t: TargetDefinition) => 
-        t.name === kpiName && (!t.effectiveFromWeek && !t.effectiveFromYear)
+    const STORAGE_KEY = "scorecard_custom_targets";
+    const savedTargetsJson = localStorage.getItem(STORAGE_KEY);
+    
+    if (!savedTargetsJson) {
+      // Fallback to the hardcoded default values from the constants
+      const defaultTarget = DEFAULT_TARGETS.find(t => t.name === kpiName);
+      return defaultTarget?.value || 0;
+    }
+    
+    const savedTargets = JSON.parse(savedTargetsJson) as TargetDefinition[];
+    const matchingTargets = savedTargets.filter(t => t.name === kpiName);
+    
+    if (matchingTargets.length === 0) {
+      return 0; // No matching target found
+    }
+    
+    // If currentWeek and currentYear are provided, try to find a target that is effective from that date
+    if (currentWeek && currentYear) {
+      // First, filter targets that have effective dates
+      const targetsWithEffectiveDates = matchingTargets.filter(
+        t => t.effectiveFromWeek && t.effectiveFromYear
       );
       
-      if (defaultTarget) {
-        console.log(`Using default target for ${kpiName}: ${defaultTarget.value}`);
-        return defaultTarget.value;
-      }
+      // Sort them by date (newest first)
+      targetsWithEffectiveDates.sort((a, b) => {
+        const aYear = a.effectiveFromYear || 0;
+        const bYear = b.effectiveFromYear || 0;
+        
+        if (aYear !== bYear) {
+          return bYear - aYear; // Higher year first
+        }
+        
+        const aWeek = a.effectiveFromWeek || 0;
+        const bWeek = b.effectiveFromWeek || 0;
+        return bWeek - aWeek; // Higher week first
+      });
       
-      // Third try: Just get the most recent target for this KPI regardless of date
-      const allTargetsForKPI = targets.filter((t: TargetDefinition) => t.name === kpiName);
-      if (allTargetsForKPI.length > 0) {
-        console.log(`Using most recent target for ${kpiName}: ${allTargetsForKPI[0].value}`);
-        return allTargetsForKPI[0].value;
+      // Find the most recent applicable target
+      for (const target of targetsWithEffectiveDates) {
+        const effectiveYear = target.effectiveFromYear || 0;
+        const effectiveWeek = target.effectiveFromWeek || 0;
+        
+        if (
+          (effectiveYear < currentYear) || 
+          (effectiveYear === currentYear && effectiveWeek <= currentWeek)
+        ) {
+          console.info(`Using effective date target for ${kpiName}: ${target.value} (effective from week ${effectiveWeek}/${effectiveYear})`);
+          return target.value;
+        }
       }
     }
+    
+    // If no effective date match or no current date provided, just use the first matching target
+    return matchingTargets[0].value;
+    
   } catch (error) {
-    console.error("Error loading custom targets:", error);
+    console.error(`Error getting target for KPI ${kpiName}:`, error);
+    return 0;
   }
-  
-  // Fall back to hardcoded targets
-  const targets: { [key: string]: number } = {
-    "Delivery Completion Rate (DCR)": 98.0,
-    "Delivered Not Received (DNR DPMO)": 3000,
-    "Photo-On-Delivery": 95,
-    "Contact Compliance": 95,
-    "Customer escalation DPMO": 3500,
-    "Vehicle Audit (VSA) Compliance": 95,
-    "DVIC Compliance": 95,
-    "Safe Driving Metric (FICO)": 800,
-    "Capacity Reliability": 98,
-    "Working Hours Compliance (WHC)": 100,
-    "Breach of Contract (BOC)": 0,
-    "Lost on Road (LoR) DPMO": 350,
-    "Speeding Event Rate (Per 100 Trips)": 10,
-    "Mentor Adoption Rate": 80,
-    "Customer Delivery Feedback": 85,
-    "Comprehensive Audit Score (CAS)": 100,
-    "Next Day Capacity Reliability": 98
-  };
-  
-  return targets[kpiName] || 95;
-};
-
-/**
- * Determine the status of a KPI based on its value
- */
-export const determineStatus = (kpiName: string, value: number): KPIStatus => {
-  // Special case for BOC
-  if (kpiName === "Breach of Contract (BOC)") {
-    return value === 0 ? "none" : "not in compliance";
-  }
-  
-  // For DPMO metrics, lower is better
-  if (kpiName.includes("DPMO")) {
-    if (value < 2000) return "fantastic";
-    if (value < 3000) return "great";
-    if (value < 4000) return "fair";
-    return "poor";
-  }
-  
-  // For FICO score
-  if (kpiName.includes("FICO")) {
-    if (value > 850) return "fantastic";
-    if (value > 800) return "great";
-    if (value > 750) return "fair";
-    return "poor";
-  }
-  
-  // For percentage metrics
-  if (value > 98) return "fantastic";
-  if (value > 95) return "great";
-  if (value > 90) return "fair";
-  return "poor";
-};
+}
