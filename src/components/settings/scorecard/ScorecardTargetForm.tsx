@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -116,11 +115,16 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = formData.targets.map(target => {
-      // Fixed: Ensure the target object explicitly has the required properties
-      // by first creating a copy with the required properties
+      // Ensure target has required properties
+      if (!target.name || target.value === undefined) {
+        console.error("Missing required properties in target:", target);
+        throw new Error("Target is missing required name or value property");
+      }
+      
+      // Create target object with required properties
       const processedTarget: TargetDefinition = {
-        name: target.name,  // Now we're sure this exists
-        value: target.value, // Now we're sure this exists
+        name: target.name,
+        value: target.value,
         unit: target.unit || ""
       };
 
