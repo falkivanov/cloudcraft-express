@@ -1,3 +1,4 @@
+
 import { ScoreCardData } from '../types';
 import { PDFParseError } from './parser/PDFParseError';
 import { extractWeekFromFilename } from './parser/weekUtils';
@@ -55,12 +56,15 @@ export const parseScorecardPDF = async (
         }
       }
       
+      // Define the type explicitly with the right structure
+      interface ExtractionResult {
+        success: boolean;
+        data: ScoreCardData | null;
+        error: any;
+      }
+      
       // Create a properly typed variable for textBasedResult with required properties
-      let textBasedResult: { 
-        success: boolean; 
-        data: ScoreCardData | null; 
-        error: any 
-      } = { 
+      let textBasedResult: ExtractionResult = {
         success: false, 
         data: null, 
         error: null 
@@ -69,7 +73,9 @@ export const parseScorecardPDF = async (
       // If positional extraction didn't find enough drivers, try text-based extraction
       if (!extractedData || driversFound < 10) {
         console.log("Not enough drivers found with positional extraction, trying text-based extraction");
-        textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, true);
+        
+        // Cast the result to ensure it matches our expected type
+        textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, true) as ExtractionResult;
         
         if (textBasedResult.success && textBasedResult.data && 
             textBasedResult.data.driverKPIs) {
@@ -114,8 +120,10 @@ export const parseScorecardPDF = async (
             : textBasedResult.data;
           
           // Update with the combined driver list
-          extractedData.driverKPIs = combinedDrivers;
-          driversFound = combinedDrivers.length;
+          if (extractedData) {
+            extractedData.driverKPIs = combinedDrivers;
+            driversFound = combinedDrivers.length;
+          }
         }
       }
       
