@@ -6,16 +6,22 @@ import { extractNumeric, isNumeric } from '../structural/valueExtractor';
  * Find a grid-based driver table in the PDF and extract drivers
  */
 export function findDriverTable(pageData: Record<number, any>): DriverKPI[] {
-  console.log("Looking for driver table grid in PDF pages");
+  console.log("Looking for driver table grid in ALL PDF pages");
   
-  // Check pages 2, 3, and 4 which typically contain driver tables
-  const relevantPages = [2, 3, 4].filter(num => pageData[num]);
+  // Get all available pages, not just 2, 3, and 4
+  const availablePages = Object.keys(pageData).map(Number).sort();
+  console.log(`Available pages for table extraction: ${availablePages.join(', ')}`);
+  
   const allDrivers: DriverKPI[] = [];
   
-  for (const pageNum of relevantPages) {
+  // Process every available page
+  for (const pageNum of availablePages) {
     console.log(`Analyzing page ${pageNum} for driver table grid`);
     const page = pageData[pageNum];
-    if (!page || !page.items || page.items.length === 0) continue;
+    if (!page || !page.items || page.items.length === 0) {
+      console.log(`Page ${pageNum} has no items, skipping`);
+      continue;
+    }
     
     // First look for header cells that would indicate a driver table
     const headerIndicators = ["transporter id", "driver", "delivered", "dcr", "dnr", "dpmo", "pod", "cc", "ce", "dex"];
@@ -30,17 +36,24 @@ export function findDriverTable(pageData: Record<number, any>): DriverKPI[] {
       console.log(`Found ${headerCells.length} header cells on page ${pageNum}`);
       
       // Find driver ID cells (starting with 'A')
-      const driverIdCells = page.items.filter(item => 
-        (item.str || "").trim().startsWith('A') && 
-        (item.str || "").trim().length >= 6
-      );
+      const driverIdCells = page.items.filter(item => {
+        const str = (item.str || "").trim();
+        return str.startsWith('A') && str.length >= 6;
+      });
       
       console.log(`Found ${driverIdCells.length} potential driver IDs on page ${pageNum}`);
       
-      if (driverIdCells.length >= 3) {
+      if (driverIdCells.length >= 1) {
+        let driversFoundOnPage = 0;
+        
         // Process each driver ID cell as a starting point for a row
         for (const idCell of driverIdCells) {
           const driverId = idCell.str.trim();
+          
+          // Skip if we already found this driver
+          if (allDrivers.some(d => d.name === driverId)) {
+            continue;
+          }
           
           // Find cells that are aligned horizontally with the driver ID
           // with a small vertical tolerance (±5 pixels)
@@ -49,14 +62,14 @@ export function findDriverTable(pageData: Record<number, any>): DriverKPI[] {
             item !== idCell
           ).sort((a, b) => a.x - b.x);
           
-          if (rowCells.length >= 3) {
+          if (rowCells.length >= 2) {
             // Filter out non-numeric cells
             const metricCells = rowCells.filter(cell => 
               isNumeric((cell.str || "").trim())
             );
             
-            if (metricCells.length >= 3) {
-              console.log(`Found driver ${driverId} with ${metricCells.length} metric cells`);
+            if (metricCells.length >= 2) {
+              console.log(`Found driver ${driverId} with ${metricCells.length} metric cells on page ${pageNum}`);
               
               // Extract metric values
               const metrics = [];
@@ -85,70 +98,66 @@ export function findDriverTable(pageData: Record<number, any>): DriverKPI[] {
                   status: "active",
                   metrics
                 });
+                driversFoundOnPage++;
               }
             }
           }
         }
+        
+        console.log(`Found ${driversFoundOnPage} drivers on page ${pageNum} using direct ID matching`);
       }
     }
     
     // Alternative approach - look for rows of aligned cells that may form a table
-    if (allDrivers.length < 3) {
-      console.log("Trying alternative table detection approach on page " + pageNum);
-      const driversFromRows = detectTableRows(page.items);
-      allDrivers.push(...driversFromRows);
+    if (page.rows && page.rows.length > 0) {
+      console.log(`Trying table row detection with ${page.rows.length} rows on page ${pageNum}`);
+      const driversFromRows = detectTableRows(page.items, page.rows);
+      
+      let newDriversFound = 0;
+      for (const driver of driversFromRows) {
+        if (!allDrivers.some(d => d.name === driver.name)) {
+          allDrivers.push(driver);
+          newDriversFound++;
+        }
+      }
+      
+      if (newDriversFound > 0) {
+        console.log(`Found ${newDriversFound} additional drivers from table rows on page ${pageNum}`);
+      }
     }
   }
   
   // If we found multiple drivers with the same ID, keep only the one with the most metrics
   const uniqueDrivers = deduplicateDrivers(allDrivers);
   
-  console.log(`Found ${uniqueDrivers.length} unique drivers in grid table`);
+  console.log(`Found ${uniqueDrivers.length} unique drivers in grid table after processing all pages`);
   return uniqueDrivers;
 }
 
 /**
- * Detect table rows by grouping cells with similar y-coordinates
+ * Detect table rows by processing rows data
  */
-function detectTableRows(items: any[]): DriverKPI[] {
-  // Group items by y-coordinate with a small tolerance
-  const yGroups: Record<number, any[]> = {};
-  
-  for (const item of items) {
-    // Round y to the nearest 2 pixels to group items in the same row
-    const yKey = Math.round(item.y / 2) * 2;
-    
-    if (!yGroups[yKey]) {
-      yGroups[yKey] = [];
-    }
-    yGroups[yKey].push(item);
-  }
-  
-  // Sort groups by y-coordinate (top to bottom)
-  const sortedYKeys = Object.keys(yGroups)
-    .map(Number)
-    .sort((a, b) => b - a); // Reverse order (PDF y-coordinates increase from bottom to top)
-  
-  // Process each row that might be a data row
+function detectTableRows(items: any[], rows: any[][]): DriverKPI[] {
   const drivers: DriverKPI[] = [];
   
-  for (const yKey of sortedYKeys) {
-    const row = yGroups[yKey].sort((a, b) => a.x - b.x);
-    
+  // Process each row that might be a data row
+  for (const row of rows) {
     // Skip rows that are too short
     if (row.length < 4) continue;
     
     // Check if the first cell looks like a driver ID
     const firstCell = row[0];
-    const cellText = (firstCell.str || "").trim();
+    if (!firstCell || !firstCell.str) continue;
+    
+    const cellText = firstCell.str.trim();
     
     if (cellText.startsWith('A') && cellText.length >= 6) {
       // Looks like a driver ID - assume this is a data row
       const numericCells = row.slice(1).filter(cell => 
-        isNumeric((cell.str || "").trim())
+        cell && cell.str && isNumeric(cell.str.trim())
       );
       
-      if (numericCells.length >= 3) {
+      if (numericCells.length >= 2) {
         // Create metrics based on position
         const metrics = [];
         const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];

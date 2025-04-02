@@ -13,7 +13,7 @@ export const extractTextFromPDF = async (pdf: any) => {
     const pageTexts: Record<number, string> = {};
     
     // Extract text from all pages for better context
-    for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+    for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent({normalizeWhitespace: true});
       
@@ -64,28 +64,35 @@ export const extractPDFContentWithPositions = async (pdf: any) => {
   try {
     const result: Record<number, any> = {};
     
-    // Process all pages (or up to 5 to avoid performance issues with large documents)
-    for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.0 });
-      const textContent = await page.getTextContent({normalizeWhitespace: true});
-      
-      // Get items with positions and process them
-      const items = extractAndProcessItems(textContent, viewport);
-      
-      // Group items into logical rows for better structure reconstruction
-      const rows = groupItemsIntoRows(items);
-      
-      // Store page data with both items and rows
-      result[i] = {
-        items: items,
-        rows: rows,
-        text: items.map((item: any) => item.str).join(' '),
-        width: viewport.width,
-        height: viewport.height
-      };
+    // Process ALL pages to ensure we don't miss any tables or data
+    for (let i = 1; i <= pdf.numPages; i++) {
+      console.log(`Processing page ${i} of ${pdf.numPages}`);
+      try {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const textContent = await page.getTextContent({normalizeWhitespace: true});
+        
+        // Get items with positions and process them
+        const items = extractAndProcessItems(textContent, viewport);
+        
+        // Group items into logical rows for better structure reconstruction
+        const rows = groupItemsIntoRows(items);
+        
+        // Store page data with both items and rows
+        result[i] = {
+          items: items,
+          rows: rows,
+          text: items.map((item: any) => item.str).join(' '),
+          width: viewport.width,
+          height: viewport.height
+        };
+      } catch (error) {
+        console.error(`Error processing page ${i}:`, error);
+        // Continue with other pages even if one fails
+      }
     }
     
+    console.log(`Successfully processed ${Object.keys(result).length} pages`);
     return result;
   } catch (error) {
     console.error('Error extracting PDF content with positions:', error);
