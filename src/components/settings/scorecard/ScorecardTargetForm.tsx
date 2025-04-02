@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -118,8 +117,8 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     const processedTargets = data.targets.map(target => {
       // Create a type-safe target definition with required properties
       const processedTarget: TargetDefinition = {
-        name: target.name, // This is guaranteed to be a string by zod
-        value: target.value, // This is guaranteed to be a number by zod
+        name: target.name as string, // Assert these as non-optional
+        value: target.value as number, // Assert these as non-optional
         unit: target.unit || "" // Default to empty string if unit is undefined
       };
 
