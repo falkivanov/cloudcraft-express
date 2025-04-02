@@ -23,10 +23,33 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
       
       // Ensure each driver has all 7 standard metrics
       return ensureAllMetrics(driversFromDSPWeeklySummary);
+    } else {
+      console.log("DSP Weekly Summary format found but no drivers were extracted, trying other methods");
     }
   }
   
-  // If DSP Weekly Summary extraction didn't work, try other methods
+  // Try specifically looking for A-prefixed IDs which is the expected format
+  console.log("Looking specifically for drivers with IDs starting with 'A'");
+  const aDriverPattern = /\b(A\d{7,})\b/g;
+  const potentialADrivers = [...text.matchAll(aDriverPattern)].map(match => match[1]);
+  
+  if (potentialADrivers.length > 0) {
+    console.log(`Found ${potentialADrivers.length} potential driver IDs starting with 'A'`);
+    
+    // Try enhanced pattern extraction specifically for A-prefixed IDs
+    const enhancedOptions = {
+      prioritizeAIds: true,
+      multiPageTable: true // Handle tables that continue across pages
+    };
+    
+    const driversFromEnhancedPatterns = extractDriversWithEnhancedPatterns(text, enhancedOptions);
+    if (driversFromEnhancedPatterns.length > 0) {
+      console.log(`Successfully extracted ${driversFromEnhancedPatterns.length} drivers with enhanced pattern matching`);
+      return ensureAllMetrics(driversFromEnhancedPatterns);
+    }
+  }
+  
+  // If A-prefixed IDs were found but extraction failed, try with flexible patterns
   // Collect all drivers from different extraction methods
   let allDrivers: DriverKPI[] = [];
   
@@ -61,16 +84,6 @@ export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
     if (allDrivers.length > 1) {
       return allDrivers;
     }
-  }
-  
-  // Try enhanced pattern extraction specifically for A-prefixed IDs
-  const enhancedOptions = {
-    prioritizeAIds: true // Add this option to prioritize IDs starting with 'A'
-  };
-  
-  const driversFromEnhancedPatterns = extractDriversWithEnhancedPatterns(text, enhancedOptions);
-  if (driversFromEnhancedPatterns.length > 0) {
-    return driversFromEnhancedPatterns;
   }
   
   // Fall back to sample data if no drivers were found

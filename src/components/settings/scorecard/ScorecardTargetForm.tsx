@@ -113,13 +113,13 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const { week: currentWeek, year: currentYear } = getCurrentWeek();
 
   // Handle form submission
-  const handleSubmit = (data: FormValues) => {
+  const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
-    const processedTargets = data.targets.map(target => {
-      // Create a properly typed TargetDefinition object
+    const processedTargets = formData.targets.map(target => {
+      // Create a properly typed TargetDefinition object ensuring required properties exist
       const processedTarget: TargetDefinition = {
-        name: target.name,  // name is required by the schema
-        value: target.value, // value is required by the schema
+        name: target.name,  // These are guaranteed to exist because of zod validation
+        value: target.value,  // These are guaranteed to exist because of zod validation
         unit: target.unit || "" // Default to empty string if unit is undefined
       };
 
