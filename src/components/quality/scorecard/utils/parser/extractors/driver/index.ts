@@ -15,9 +15,11 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
     console.log("Attempting structural extraction with page data");
     const structuralDrivers = extractDriverKPIsFromStructure(pageData);
     
-    if (structuralDrivers.length >= 5) {
+    if (structuralDrivers.length >= 3) {
       console.log(`Found ${structuralDrivers.length} drivers with structural extraction`);
       return ensureAllMetrics(structuralDrivers);
+    } else {
+      console.log(`Only found ${structuralDrivers.length} drivers with structural extraction, trying other methods`);
     }
   }
   
@@ -26,14 +28,28 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
     console.log("Found DSP Weekly Summary format, using specialized extractor");
     const dspDrivers = extractDriversFromDSPWeeklySummary(text);
     
-    if (dspDrivers.length >= 5) {
+    if (dspDrivers.length >= 3) {
       console.log(`Found ${dspDrivers.length} drivers with DSP Weekly Summary extraction`);
       return ensureAllMetrics(dspDrivers);
+    } else {
+      console.log(`Only found ${dspDrivers.length} drivers with DSP Weekly Summary extraction, trying fallback`);
+    }
+  }
+  
+  // Additional logging before falling back to sample data
+  console.log("No sufficient drivers found with extraction strategies");
+  
+  // See if we got at least some drivers from the structural extraction
+  if (pageData && Object.keys(pageData).length > 0) {
+    const lastAttemptDrivers = extractDriverKPIsFromStructure(pageData);
+    if (lastAttemptDrivers.length > 0) {
+      console.log(`Returning ${lastAttemptDrivers.length} partial drivers found in last attempt`);
+      return ensureAllMetrics(lastAttemptDrivers);
     }
   }
   
   // Strategy 3: Fall back to sample data when no drivers found
-  console.log("No drivers found with extraction strategies, using sample data");
+  console.log("Using sample data as fallback");
   return ensureAllMetrics(generateSampleDrivers());
 };
 

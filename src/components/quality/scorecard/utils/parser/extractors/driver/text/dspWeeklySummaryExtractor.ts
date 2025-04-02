@@ -1,132 +1,129 @@
 
 import { DriverKPI } from '../../../../../types';
-import { determineStatus } from '../../../../helpers/statusHelper';
-import { extractNumeric } from '../structural/valueExtractor';
-
-type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+import { determineMetricStatus } from '../utils/metricStatus';
+import { createAllStandardMetrics } from '../utils/metricUtils';
 
 /**
- * Extract drivers from a DSP Weekly Summary formatted text
+ * Extract drivers from DSP Weekly Summary format text
  */
-export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] => {
-  console.log("Trying DSP Weekly Summary extraction approach");
+export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
+  console.log("Extracting drivers from DSP Weekly Summary format");
   
-  // Check if the text contains the expected header
-  if (!text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("Text does not contain 'DSP WEEKLY SUMMARY'");
-    return [];
-  }
-  
+  // Multiple pattern matching to catch different variations
   const drivers: DriverKPI[] = [];
   
-  // Look for the header row pattern (we're more flexible now)
-  const headerRowPattern = /TRANSPORTER\s+ID|TRANSPORT\s+ID|Driver\s+ID|TR\s+ID/i;
-  const headerRowMatch = text.match(headerRowPattern);
-  
-  if (!headerRowMatch) {
-    console.log("Could not find header row in DSP Weekly Summary");
+  // Primary pattern - look for the table section after "DSP WEEKLY SUMMARY"
+  const summaryIndex = text.indexOf("DSP WEEKLY SUMMARY");
+  if (summaryIndex === -1) {
+    console.log("DSP WEEKLY SUMMARY not found in text");
     return [];
   }
   
-  // Split text into lines and find the header line
-  const lines = text.split(/\r?\n/);
-  let headerLineIndex = -1;
+  // Extract relevant text section
+  const relevantText = text.substring(summaryIndex);
   
+  // Split into lines
+  const lines = relevantText.split('\n');
+  
+  // Flag to track when we're in the drivers section
+  let inDriverSection = false;
+  
+  // Process each line
   for (let i = 0; i < lines.length; i++) {
-    if (headerRowPattern.test(lines[i])) {
-      headerLineIndex = i;
-      break;
-    }
-  }
-  
-  if (headerLineIndex === -1) {
-    console.log("Could not locate header line index");
-    return [];
-  }
-  
-  console.log(`Found header at line ${headerLineIndex}: ${lines[headerLineIndex]}`);
-  
-  // Process driver rows after the header
-  for (let i = headerLineIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.length < 5) continue;
     
-    // Driver IDs starting with 'A' as specified in the PDF example
-    const driverIdPattern = /([A][A-Z0-9]{5,})/;
-    const idMatch = line.match(driverIdPattern);
+    // Skip empty lines
+    if (!line) continue;
     
-    if (!idMatch) {
-      // If we don't find an ID on this line, check if we've hit a page break or section end
-      if (line.includes("Page") || line.includes("Seite") || line.includes("--") || line.includes("===")) {
-        continue; // Skip pagination or section separators
-      }
-      
-      // If it's not a pagination marker and doesn't match our pattern, try next line
+    // Check if this line contains header information
+    if (line.match(/transporter|id|delivered|dcr|dnr|dpmo|pod|cc|ce|dex/i) && !inDriverSection) {
+      inDriverSection = true;
+      console.log("Found driver table header: " + line);
       continue;
     }
     
-    const driverId = idMatch[1].trim();
-    console.log(`Found potential driver ID in DSP summary: ${driverId}`);
-    
-    // Extract values - look for numbers and percentages
-    const valuesPattern = /([\d,.]+%?|-|\b\d+\b)/g;
-    const values = line.match(valuesPattern) || [];
-    
-    // Skip the first match if it's part of the ID
-    const valueStartIndex = (driverId.match(/\d+/)) ? 1 : 0;
-    
-    if (values.length >= 3 + valueStartIndex) {
-      console.log(`Found ${values.length} values for ${driverId}`);
+    // If we're in the driver section, look for driver IDs
+    if (inDriverSection) {
+      // Look for driver ID at the start of the line (starting with A)
+      const driverMatch = line.match(/^(A[A-Z0-9]+)/);
       
-      // Define metric names and targets
-      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-      const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
-      const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
-      
-      const metrics = [];
-      let validValuesCount = 0;
-      
-      for (let j = valueStartIndex; j < values.length && validValuesCount < metricNames.length; j++) {
-        const value = values[j];
+      if (driverMatch) {
+        const driverId = driverMatch[1];
+        console.log("Found driver ID: " + driverId);
         
-        // Handle dash case
-        if (value === "-") {
-          metrics.push({
-            name: metricNames[validValuesCount],
-            value: 0,
-            target: metricTargets[validValuesCount],
-            unit: metricUnits[validValuesCount],
-            status: "none" as MetricStatus
-          });
-          validValuesCount++;
-          continue;
+        // Now extract metrics - look for series of numbers
+        const metrics = [];
+        const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'POD', 'CC', 'CE', 'DEX'];
+        
+        // Extract numbers from the line
+        const numberMatches = line.match(/\b\d+(?:\.\d+)?%?\b/g);
+        
+        if (numberMatches && numberMatches.length > 0) {
+          for (let j = 0; j < Math.min(numberMatches.length, metricNames.length); j++) {
+            // Clean the number string and convert to float
+            const valueStr = numberMatches[j].replace('%', '');
+            const value = parseFloat(valueStr);
+            
+            if (!isNaN(value)) {
+              metrics.push({
+                name: metricNames[j],
+                value,
+                target: getTargetForMetric(metricNames[j]),
+                unit: getUnitForMetric(metricNames[j]),
+                status: determineMetricStatus(metricNames[j], value)
+              });
+            }
+          }
+          
+          if (metrics.length > 0) {
+            drivers.push({
+              name: driverId,
+              status: "active",
+              metrics
+            });
+          }
         }
-        
-        const numValue = extractNumeric(value);
-        if (isNaN(numValue)) continue;
-        
-        metrics.push({
-          name: metricNames[validValuesCount],
-          value: numValue,
-          target: metricTargets[validValuesCount],
-          unit: metricUnits[validValuesCount],
-          status: determineStatus(metricNames[validValuesCount], numValue)
-        });
-        
-        validValuesCount++;
       }
-      
-      if (metrics.length >= 3) {
-        drivers.push({
-          name: driverId,
-          status: "active",
-          metrics
-        });
-        console.log(`Added driver ${driverId} with ${metrics.length} metrics from DSP summary`);
+      // If we hit a line that doesn't look like driver data after being in the section,
+      // we might be at the end of the driver table
+      else if (line.match(/total|average|mean/i) && drivers.length > 0) {
+        // Likely at the end of the driver section
+        break;
       }
     }
   }
   
   console.log(`Found ${drivers.length} drivers in DSP Weekly Summary format`);
-  return drivers;
+  
+  // Fill in missing metrics for each driver
+  return drivers.map(driver => ({
+    ...driver,
+    metrics: createAllStandardMetrics(driver.metrics)
+  }));
+}
+
+// Helper functions to get target and unit for metrics
+function getTargetForMetric(metricName: string): number {
+  switch (metricName) {
+    case "Delivered": return 0;
+    case "DCR": return 98.5;
+    case "DNR DPMO": return 1500;
+    case "POD": return 98;
+    case "CC": return 95;
+    case "CE": return 0;
+    case "DEX": return 95;
+    default: return 0;
+  }
+}
+
+function getUnitForMetric(metricName: string): string {
+  switch (metricName) {
+    case "DCR": return "%";
+    case "DNR DPMO": return "DPMO";
+    case "POD": return "%";
+    case "CC": return "%";
+    case "CE": return "";
+    case "DEX": return "%";
+    default: return "";
+  }
 }

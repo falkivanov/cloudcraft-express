@@ -22,7 +22,8 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
     });
     
     // If we found enough headers, mark this as the header row
-    if (headerMatches.length >= 3) {
+    // Reduced from 3 to 2 to catch more headers
+    if (headerMatches.length >= 2) {
       console.log("Found header row with columns: " + rowText);
       
       // Map column positions to header names
@@ -32,25 +33,26 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
         
         if (headerText.includes("transporter") || headerText === "id") {
           headerIndexes["Transporter ID"] = j;
-        } else if (headerText === "delivered") {
+        } else if (headerText === "delivered" || headerText.includes("delivered")) {
           headerIndexes["Delivered"] = j;
-        } else if (headerText === "dcr") {
+        } else if (headerText === "dcr" || headerText.includes("dcr")) {
           headerIndexes["DCR"] = j;
-        } else if (headerText.includes("dpmo") || headerText === "dnr") {
+        } else if (headerText.includes("dpmo") || headerText === "dnr" || headerText.includes("dnr")) {
           headerIndexes["DNR DPMO"] = j;
-        } else if (headerText === "pod") {
+        } else if (headerText === "pod" || headerText.includes("pod")) {
           headerIndexes["POD"] = j;
-        } else if (headerText === "cc") {
+        } else if (headerText === "cc" || headerText.includes("contact comp")) {
           headerIndexes["CC"] = j;
-        } else if (headerText === "ce") {
+        } else if (headerText === "ce" || headerText.includes("customer esc")) {
           headerIndexes["CE"] = j;
-        } else if (headerText === "dex") {
+        } else if (headerText === "dex" || headerText.includes("dex")) {
           headerIndexes["DEX"] = j;
         }
       }
       
       // Make sure we found at least the essential columns
-      const essentialHeaders = ["Transporter ID", "Delivered", "DCR"];
+      // Changed to only require Transporter ID for more flexibility
+      const essentialHeaders = ["Transporter ID"];
       const foundEssential = essentialHeaders.every(header => headerIndexes[header] !== undefined);
       
       if (foundEssential) {
