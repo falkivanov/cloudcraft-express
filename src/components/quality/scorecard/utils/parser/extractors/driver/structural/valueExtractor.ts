@@ -27,6 +27,11 @@ export function extractNumeric(value: string): number {
     cleanNumber = cleanNumber.replace(/,/g, '');
   }
   
+  // Handle percentage values (e.g., 98.45%)
+  if (value.includes('%')) {
+    cleanNumber = cleanNumber.replace(/%/g, '');
+  }
+  
   let result = parseFloat(cleanNumber);
   
   // Apply negative sign if needed
@@ -34,5 +39,32 @@ export function extractNumeric(value: string): number {
     result = -result;
   }
   
+  // If the original string had a percentage sign, we don't need to divide by 100
+  // as the value is already presented as a percentage in the UI
+  
   return isNaN(result) ? 0 : result;
+}
+
+/**
+ * Determines if a string contains a numeric value
+ */
+export function isNumeric(value: string): boolean {
+  if (!value) return false;
+  return /^-?\d*\.?\d+%?$/.test(value.trim().replace(/,/g, '.'));
+}
+
+/**
+ * Extracts a value from a table cell, handling various formats
+ * including numeric values, percentages, and text
+ */
+export function extractCellValue(cell: string): { value: number; isPercentage: boolean; } {
+  if (!cell) return { value: 0, isPercentage: false };
+  
+  const trimmed = cell.trim();
+  const isPercentage = trimmed.includes('%');
+  
+  return {
+    value: extractNumeric(trimmed),
+    isPercentage
+  };
 }

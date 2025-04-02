@@ -3,12 +3,26 @@ import { extractDriverKPIsFromStructure } from './structural/structuralExtractor
 import { extractDriversFromDSPWeeklySummary } from './text/dspWeeklySummaryExtractor';
 import { generateSampleDrivers } from './sampleData';
 import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
+import { findDriverTable } from './table/gridTableFinder';
 
 /**
  * Main driver extraction function - tries all strategies in priority order
  */
 export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   console.log("Starting driver KPI extraction");
+  
+  // NEW: Try table grid extraction first
+  if (pageData && Object.keys(pageData).length > 0) {
+    console.log("Attempting table grid extraction with page data");
+    const tableDrivers = findDriverTable(pageData);
+    
+    if (tableDrivers.length >= 5) {
+      console.log(`Found ${tableDrivers.length} drivers with table grid extraction`);
+      return ensureAllMetrics(tableDrivers);
+    } else {
+      console.log(`Only found ${tableDrivers.length} drivers with table grid extraction, trying other methods`);
+    }
+  }
   
   // Strategy 1: Try structural extraction if page data is available
   if (pageData && Object.keys(pageData).length > 0) {
@@ -58,5 +72,6 @@ export {
   extractDriversFromDSPWeeklySummary,
   generateSampleDrivers,
   ensureAllMetrics,
-  createAllStandardMetrics
+  createAllStandardMetrics,
+  findDriverTable
 };
