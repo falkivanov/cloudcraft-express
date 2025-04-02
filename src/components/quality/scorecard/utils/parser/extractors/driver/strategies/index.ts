@@ -23,9 +23,4 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
   return extractDriverKPIs(text, pageData);
 };
 
-// Re-export the strategy functions for backward compatibility
-export {
-  extractDriversByPage,
-  tryAllExtractionStrategies,
-  extractDriversOrUseSampleData
-};
+// No need to re-export since these functions are already exported above

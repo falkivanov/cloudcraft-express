@@ -1,6 +1,6 @@
 
 import { 
-  extractDriverKPIs,
+  extractDriverKPIs as extractDriverKPIsFromDriver,
   generateSampleDrivers,
   ensureAllMetrics
 } from './driver';
@@ -32,7 +32,7 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
  */
 export const extractDriverKPIsFromText = (text: string, pageData?: any): DriverKPI[] => {
   // Verwendet die konsolidierte Extraktionsfunktion aus ./driver/index.ts
-  return extractDriverKPIs(text, pageData);
+  return extractDriverKPIsFromDriver(text, pageData);
 };
 
 export {
