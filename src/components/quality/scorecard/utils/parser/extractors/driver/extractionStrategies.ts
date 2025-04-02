@@ -118,6 +118,31 @@ export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
  * Extract drivers or fall back to sample data
  */
 export const extractDriversOrUseSampleData = (text: string, pageData?: any): DriverKPI[] => {
-  const drivers = extractDriverKPIs(text, pageData);
-  return drivers;
+  try {
+    // Try various extraction methods in sequence for best results
+    console.log("Attempting extract with extractDriversByPage first");
+    const drivers = extractDriversByPage(text, pageData);
+    
+    if (drivers && drivers.length > 0) {
+      console.log(`Successfully extracted ${drivers.length} drivers`);
+      return drivers;
+    }
+    
+    // If page-based extraction didn't work, try all strategies
+    console.log("Page-based extraction failed, trying all strategies");
+    const allStrategiesDrivers = tryAllExtractionStrategies(text);
+    
+    if (allStrategiesDrivers && allStrategiesDrivers.length > 0) {
+      console.log(`Successfully extracted ${allStrategiesDrivers.length} drivers using all strategies`);
+      return allStrategiesDrivers;
+    }
+    
+    // Last resort - fallback to direct extraction
+    console.log("All strategies failed, using direct extraction");
+    return extractDriverKPIs(text, pageData);
+  } catch (error) {
+    // If all extraction methods fail, log and use direct extraction
+    console.error("Error in driver extraction:", error);
+    return extractDriverKPIs(text, pageData);
+  }
 };

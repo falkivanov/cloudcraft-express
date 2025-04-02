@@ -11,6 +11,13 @@ import {
 } from './parser/extractionStrategies';
 import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
 
+// Definiere ein konkretes Interface für das Extraktionsergebnis
+interface ExtractionResult {
+  success: boolean;
+  data: ScoreCardData | null;
+  error: any;
+}
+
 /**
  * Parse a scorecard PDF and extract data with improved driver extraction
  * @param pdfData ArrayBuffer containing the PDF data
@@ -49,7 +56,14 @@ export const parseScorecardPDF = async (
       } else {
         // If positional extraction failed or found few drivers, try text-based extraction
         console.log("Positional extraction didn't find enough drivers, trying text-based extraction");
-        const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, detailedLogging);
+        
+        // Cast to ensure we have all required properties
+        const textBasedResult: ExtractionResult = {
+          success: false,
+          data: null,
+          error: null,
+          ...await attemptTextBasedExtraction(pdf, weekNum, detailedLogging)
+        };
         
         if (textBasedResult.success && textBasedResult.data && 
             textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 5) {
