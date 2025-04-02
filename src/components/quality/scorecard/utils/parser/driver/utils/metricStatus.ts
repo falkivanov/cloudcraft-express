@@ -1,11 +1,9 @@
-
-// Don't import from statusHelper, define locally
-export type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+import { KPIStatus } from '../../../helpers/statusHelper';
 
 /**
  * Determine the status of a metric based on its value and any provided status text
  */
-export function determineMetricStatus(metricName: string, value: number, statusText?: string): MetricStatus {
+export function determineMetricStatus(metricName: string, value: number, statusText?: string): KPIStatus {
   // If status text is provided, use it directly
   if (statusText) {
     const lowerStatus = statusText.toLowerCase().trim();

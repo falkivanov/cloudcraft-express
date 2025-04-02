@@ -1,12 +1,10 @@
 
-import { determineStatus } from '../../../../helpers/statusHelper';
-
-export type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
+import { KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
  * Determine the status of a metric based on its value
  */
-export function determineMetricStatus(metricName: string, value: number): MetricStatus {
+export function determineMetricStatus(metricName: string, value: number): KPIStatus {
   switch (metricName) {
     case "Delivered":
       return value >= 1000 ? "fantastic" : value >= 800 ? "great" : "fair";
