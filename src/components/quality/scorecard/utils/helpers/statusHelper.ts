@@ -1,4 +1,3 @@
-
 export interface TargetDefinition {
   name: string;
   value: number;

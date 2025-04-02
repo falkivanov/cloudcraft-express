@@ -1,6 +1,5 @@
-
 import { DriverKPI } from "../../types";
-import { determineStatus, KPIStatus } from '../helpers/statusHelper';
+import { determineStatus } from '../helpers/statusHelper';
 
 /**
  * Extract driver KPIs from text content

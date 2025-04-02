@@ -1,6 +1,5 @@
-import { determineStatus } from '../../helpers/statusHelper';
+import { determineStatus, getDefaultTargetForKPI, KPIStatus } from '../../helpers/statusHelper';
 import { extractNumericValues } from './valueExtractor';
-import { KPIStatus } from '../../helpers/statusHelper';
 
 /**
  * Extract company KPIs based on structural analysis of the PDF
