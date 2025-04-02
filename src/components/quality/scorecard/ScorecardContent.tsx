@@ -27,6 +27,48 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({
   const [currentWeekData, setCurrentWeekData] = useState<ScoreCardData | null>(initialScorecardData);
   const [prevWeekData, setPrevWeekData] = useState<ScoreCardData | null>(initialPrevWeekData);
   
+  // Apply custom targets to data if available
+  useEffect(() => {
+    if (!currentWeekData) return;
+    
+    try {
+      const savedTargets = localStorage.getItem("scorecard_custom_targets");
+      if (savedTargets) {
+        const targets = JSON.parse(savedTargets);
+        
+        // Apply to company KPIs
+        const updatedCompanyKPIs = currentWeekData.companyKPIs.map(kpi => {
+          const customTarget = targets.find((t: any) => t.name === kpi.name);
+          if (customTarget) {
+            return { ...kpi, target: customTarget.value };
+          }
+          return kpi;
+        });
+        
+        // Apply to driver KPIs
+        const updatedDriverKPIs = currentWeekData.driverKPIs.map(driver => {
+          const updatedMetrics = driver.metrics.map(metric => {
+            const customTarget = targets.find((t: any) => t.name === metric.name);
+            if (customTarget) {
+              return { ...metric, target: customTarget.value };
+            }
+            return metric;
+          });
+          
+          return { ...driver, metrics: updatedMetrics };
+        });
+        
+        setCurrentWeekData({
+          ...currentWeekData,
+          companyKPIs: updatedCompanyKPIs,
+          driverKPIs: updatedDriverKPIs
+        });
+      }
+    } catch (error) {
+      console.error("Error applying custom targets:", error);
+    }
+  }, [currentWeekData]);
+  
   // Load scorecard data when selected week changes
   useEffect(() => {
     if (selectedWeek && selectedWeek !== "week-0-0") {

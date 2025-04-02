@@ -8,6 +8,21 @@ export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in c
  * Get the default target value for a KPI
  */
 export const getDefaultTargetForKPI = (kpiName: string): number => {
+  // First check if we have custom targets in localStorage
+  try {
+    const savedTargets = localStorage.getItem("scorecard_custom_targets");
+    if (savedTargets) {
+      const targets = JSON.parse(savedTargets);
+      const customTarget = targets.find((t: any) => t.name === kpiName);
+      if (customTarget) {
+        return customTarget.value;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading custom targets:", error);
+  }
+  
+  // Fall back to hardcoded targets
   const targets: { [key: string]: number } = {
     "Delivery Completion Rate (DCR)": 98.0,
     "Delivered Not Received (DNR DPMO)": 3000,

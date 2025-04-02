@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RegionSettings from "@/components/settings/RegionSettings";
+import ScorecardSettings from "@/components/settings/ScorecardSettings";
 
 const SettingsPage = () => {
   return (
@@ -13,6 +14,7 @@ const SettingsPage = () => {
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="general">Allgemein</TabsTrigger>
+          <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
           <TabsTrigger value="account">Konto</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
         </TabsList>
@@ -35,6 +37,12 @@ const SettingsPage = () => {
                 </p>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="scorecard">
+          <div className="grid gap-6">
+            <ScorecardSettings />
           </div>
         </TabsContent>
         
