@@ -56,10 +56,13 @@ export const parseScorecardPDF = async (
         }
       }
       
+      // Initialize textBasedResult before using it
+      let textBasedResult = { success: false, data: null, error: null };
+      
       // If positional extraction didn't find enough drivers, try text-based extraction
       if (!extractedData || driversFound < 10) {
         console.log("Not enough drivers found with positional extraction, trying text-based extraction");
-        const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, true);
+        textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, true);
         
         if (textBasedResult.success && textBasedResult.data && 
             textBasedResult.data.driverKPIs) {
