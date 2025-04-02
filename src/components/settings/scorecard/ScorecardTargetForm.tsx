@@ -112,15 +112,20 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
   const { week: currentWeek, year: currentYear } = getCurrentWeek();
 
-  // Handle form submission
+  // Handle form submission with typed validation
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = formData.targets.map(target => {
+      // Explizit die Werte extrahieren
+      const name = target.name;
+      const value = target.value;
+      const unit = target.unit || "";
+      
       // Create a properly typed TargetDefinition object ensuring required properties exist
       const processedTarget: TargetDefinition = {
-        name: target.name,  // These are guaranteed to exist because of zod validation
-        value: target.value,  // These are guaranteed to exist because of zod validation
-        unit: target.unit || "" // Default to empty string if unit is undefined
+        name,
+        value,
+        unit
       };
 
       // Only include effective dates if they are being shown for this target

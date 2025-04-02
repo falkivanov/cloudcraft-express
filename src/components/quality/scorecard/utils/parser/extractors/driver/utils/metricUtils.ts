@@ -2,15 +2,13 @@
 import { determineStatus } from '../../../../helpers/statusHelper';
 
 /**
- * Create a complete set of all 7 standard metrics for a driver
- * @param existingMetrics Any existing metrics to include
- * @returns Complete set of all standard metrics
+ * Erstellt einen vollständigen Satz aller 7 Standardmetriken für einen Fahrer
  */
 export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
-  // Get existing metric names
+  // Namen der vorhandenen Metriken
   const existingMetricNames = existingMetrics.map(m => m.name);
   
-  // Standard metrics that should be present
+  // Standardmetriken, die vorhanden sein sollten
   const standardMetrics = [
     {name: "Delivered", target: 0, unit: "", defaultValue: 1000},
     {name: "DCR", target: 98.5, unit: "%", defaultValue: 98.5},
@@ -18,13 +16,13 @@ export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
     {name: "POD", target: 98, unit: "%", defaultValue: 98},
     {name: "CC", target: 95, unit: "%", defaultValue: 95},
     {name: "CE", target: 0, unit: "", defaultValue: 0},
-    {name: "DEX", target: 95, unit: "%", defaultValue: 92}
+    {name: "DEX", target: 95, unit: "%", defaultValue: 95}
   ];
   
-  // Create a copy of metrics to avoid mutating the original
+  // Kopie der Metriken erstellen, um das Original nicht zu verändern
   const enhancedMetrics = [...existingMetrics];
   
-  // Add any missing metrics
+  // Fehlende Metriken hinzufügen
   standardMetrics.forEach(metric => {
     if (!existingMetricNames.includes(metric.name)) {
       enhancedMetrics.push({
@@ -41,9 +39,7 @@ export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
 }
 
 /**
- * Ensure all drivers have all 7 standard metrics
- * @param drivers Array of drivers to ensure metrics for
- * @returns Drivers with all standard metrics
+ * Stelle sicher, dass alle Fahrer alle 7 Standardmetriken haben
  */
 export function ensureAllMetrics(drivers: any[]): any[] {
   return drivers.map(driver => {

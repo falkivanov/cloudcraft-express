@@ -1,44 +1,33 @@
 
-import { extractDriversOrUseSampleData } from './driver/strategies';
 import { 
-  extractDriverKPIsFromStructure, 
   extractDriverKPIsFromText,
   generateSampleDrivers,
-  extractDriversFromDSPWeeklySummary,
-  extractDriversWithFlexiblePattern,
-  extractDriversLineByLine,
-  extractDriversWithEnhancedPatterns
+  ensureAllMetrics
 } from './driver';
 import { determineMetricStatus } from './driver/utils/metricStatus';
 import { DriverKPI } from '../../../types';
-import { ensureAllMetrics } from './driver/utils/metricUtils';
 
 /**
- * Extract driver KPIs from text content
- * @param text Text content to extract driver KPIs from
- * @returns Array of DriverKPIs
+ * Extrahiere Fahrer-KPIs aus dem Textinhalt
+ * @param text Textinhalt, aus dem Fahrer-KPIs extrahiert werden sollen
+ * @returns Array von DriverKPIs
  */
 export const extractDriverKPIs = (text: string): DriverKPI[] => {
-  console.log("Extracting driver KPIs from text content");
+  console.log("Extrahiere Fahrer-KPIs aus dem Textinhalt");
   
-  // Try our most robust extraction method
-  const drivers = extractDriversOrUseSampleData(text);
+  // Extraktion mit unserem vereinfachten Ansatz versuchen
+  const drivers = extractDriverKPIsFromText(text);
   
-  // Ensure all drivers have complete metric sets
+  // Sicherstellen, dass alle Fahrer vollständige Metriksätze haben
   const enhancedDrivers = ensureAllMetrics(drivers);
   
-  console.log(`Returning ${enhancedDrivers.length} driver KPIs`);
+  console.log(`Gebe ${enhancedDrivers.length} Fahrer-KPIs zurück`);
   return enhancedDrivers;
 };
 
 export {
-  extractDriverKPIsFromStructure,
   extractDriverKPIsFromText,
   generateSampleDrivers,
   determineMetricStatus,
-  extractDriversFromDSPWeeklySummary,
-  extractDriversWithFlexiblePattern,
-  extractDriversLineByLine,
-  extractDriversWithEnhancedPatterns,
   ensureAllMetrics
 };
