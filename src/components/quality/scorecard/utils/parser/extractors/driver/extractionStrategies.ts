@@ -1,4 +1,4 @@
-import { DriverKPI } from '../../../../../../types';
+import { DriverKPI } from '../../../../types';
 import { extractDriverKPIs } from './index';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
