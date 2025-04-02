@@ -1,4 +1,5 @@
 
+
 import { DriverKPI } from "../../../../types";
 import { determineMetricStatus } from "./utils/metricStatus";
 import { createAllStandardMetrics } from "./utils/metricUtils";
@@ -87,7 +88,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
                   name: "Delivered",
                   value: parseFloat(numbersMatch[0]),
                   target: 0,
-                  status: "neutral"
+                  status: "fair" // Changed from "neutral" to "fair"
                 },
                 {
                   name: "DCR",
@@ -155,7 +156,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
               name: "Delivered",
               value: parseFloat(columns[metricIndices[0]].replace('%', '')),
               target: 0,
-              status: "neutral"
+              status: "fair" // Changed from "neutral" to "fair"
             },
             {
               name: "DCR",
@@ -271,7 +272,7 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
             name: "Delivered",
             value: parseFloat(delivered),
             target: 0,
-            status: "neutral"
+            status: "fair" // Changed from "neutral" to "fair"
           },
           {
             name: "DCR",
@@ -328,3 +329,4 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
   console.log(`Extrahiert: ${drivers.length} Fahrer mit fester Spaltenbreiten-Methode`);
   return drivers;
 }
+
