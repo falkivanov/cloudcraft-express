@@ -117,13 +117,19 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     // Process form data - remove effective dates if not showing
     const processedTargets = data.targets.map(target => {
       if (!showEffectiveDate[target.name]) {
+        // Ensure we're returning an object with required properties
         return {
           name: target.name,
           value: target.value,
           unit: target.unit
         };
       }
-      return target;
+      // Make sure name and value are always defined
+      return {
+        ...target,
+        name: target.name,
+        value: target.value
+      };
     });
     
     onSubmit({ targets: processedTargets });
