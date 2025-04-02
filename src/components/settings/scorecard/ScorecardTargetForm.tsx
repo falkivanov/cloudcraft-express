@@ -130,8 +130,12 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
       // Only include effective dates if they are being shown for this target
       if (showEffectiveDate[target.name]) {
-        processedTarget.effectiveFromWeek = target.effectiveFromWeek;
-        processedTarget.effectiveFromYear = target.effectiveFromYear;
+        if (target.effectiveFromWeek !== undefined) {
+          processedTarget.effectiveFromWeek = target.effectiveFromWeek;
+        }
+        if (target.effectiveFromYear !== undefined) {
+          processedTarget.effectiveFromYear = target.effectiveFromYear;
+        }
       }
 
       return processedTarget;
