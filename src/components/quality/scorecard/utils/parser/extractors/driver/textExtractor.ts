@@ -1,118 +1,125 @@
 
-import { DriverKPI } from "../../../../types";
-import { generateSampleDrivers } from "./sampleData";
-import { ensureAllMetrics } from "./utils/metricUtils";
+import { determineMetricStatus } from './utils/metricStatus';
+import { createAllStandardMetrics } from './utils/metricUtils';
 
 /**
- * Extrahiere Fahrer-KPIs aus dem Textinhalt eines PDFs
- * mit Fokus auf DSP WEEKLY SUMMARY Format
+ * Extrahiert Fahrer-KPIs aus dem Textinhalt mit Fokus auf den Bereich nach "DSP WEEKLY SUMMARY"
+ * @param text Textinhalt, aus dem Fahrer-KPIs extrahiert werden sollen
+ * @returns Array von DriverKPIs
  */
-export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
-  console.log("Extrahiere Fahrer-KPIs aus dem Textinhalt");
+export const extractDriverKPIsFromText = (text: string) => {
+  // Suche nach "DSP WEEKLY SUMMARY" als Anker im Text
+  const dspSummaryIndex = text.indexOf("DSP WEEKLY SUMMARY");
   
-  // Zuerst prüfen, ob es sich um ein DSP WEEKLY SUMMARY handelt
-  if (text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("'DSP WEEKLY SUMMARY' gefunden, beginne mit Extraktion");
-    
-    const drivers = extractDriversFromDSPWeeklySummary(text);
-    if (drivers.length > 0) {
-      console.log(`${drivers.length} Fahrer aus DSP Weekly Summary extrahiert`);
-      return ensureAllMetrics(drivers);
-    }
+  if (dspSummaryIndex === -1) {
+    console.log("DSP WEEKLY SUMMARY nicht gefunden");
+    return [];
   }
   
-  // Wenn keine Fahrer gefunden wurden, verwende Beispieldaten
-  console.warn("Keine Fahrer gefunden, verwende Beispieldaten");
-  return generateSampleDrivers();
-};
-
-/**
- * Extrahiere Fahrer aus einem DSP Weekly Summary formatierten Text
- */
-const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] => {
-  const drivers: DriverKPI[] = [];
+  // Extrahiere den Text nach "DSP WEEKLY SUMMARY"
+  const relevantText = text.substring(dspSummaryIndex);
   
-  // Teile den Text in Zeilen auf
-  const lines = text.split(/\r?\n/);
+  // Identifiziere die Tabellenüberschrift
+  const headerPattern = /Transport\s*ID\s*[,|]\s*Delivered\s*[,|]\s*DCR\s*[,|]\s*DNR\s*DPMO\s*[,|]\s*POD\s*[,|]\s*CC\s*[,|]\s*CE\s*[,|]\s*DEX/i;
+  const headerMatch = relevantText.match(headerPattern);
   
-  // Suche nach der Kopfzeile der Tabelle
-  let headerLineIndex = -1;
-  const headerPattern = /Transporter\s+ID|Transport\s+ID|Driver\s+ID/i;
+  if (!headerMatch) {
+    console.log("Tabellenüberschrift nicht gefunden");
+    return [];
+  }
   
+  // Teile den Text in Zeilen
+  const lines = relevantText.split('\n');
+  
+  // Finde den Tabellenanfang
+  let tableStartIndex = -1;
   for (let i = 0; i < lines.length; i++) {
     if (headerPattern.test(lines[i])) {
-      headerLineIndex = i;
-      console.log(`Tabellenkopf gefunden in Zeile ${i}: ${lines[i]}`);
+      tableStartIndex = i;
       break;
     }
   }
   
-  if (headerLineIndex === -1) {
-    console.log("Konnte Tabellenkopf nicht finden");
-    return drivers;
+  if (tableStartIndex === -1) {
+    console.log("Tabellenanfang nicht gefunden");
+    return [];
   }
   
-  // Identifiziere die Spalten im Header
-  const headerColumns = lines[headerLineIndex].split(/\s+/).filter(Boolean);
-  console.log("Gefundene Spalten:", headerColumns);
-  
-  // Verarbeite Fahrerzeilen nach dem Header
-  for (let i = headerLineIndex + 1; i < lines.length; i++) {
+  // Extrahiere die Fahrerdaten ab der Zeile nach der Überschrift
+  const drivers = [];
+  for (let i = tableStartIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Überspringe leere Zeilen oder Seitenumbrüche
-    if (line.length < 5 || line.includes("Page") || line.includes("Seite")) {
-      continue;
-    }
-    
-    // Suche nach Fahrer-IDs, die mit 'A' beginnen
-    const driverIdMatch = line.match(/^(A[A-Z0-9]{5,})/);
-    if (!driverIdMatch) continue;
-    
-    const driverId = driverIdMatch[1];
-    console.log(`Mögliche Fahrer-ID gefunden: ${driverId}`);
-    
-    // Extrahiere Zahlenwerte aus der Zeile
-    const values = line.match(/(\d+(?:\.\d+)?%?|\d+)/g) || [];
-    
-    if (values.length >= 3) { // Mindestens 3 Metriken
-      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-      const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
-      const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+    // Überprüfe, ob die Zeile eine Fahrer-ID enthält (beginnt mit "A")
+    if (line.match(/^A\w+/)) {
+      // Extrahiere die Werte aus der Zeile
+      const values = line.split(/[,|\t]+/).map(item => item.trim());
       
-      const metrics = [];
-      
-      // Werte den Metriken zuordnen, dabei den ersten Wert überspringen,
-      // falls er Teil der ID ist oder ein numerischer Teil der ID
-      const valueStartIndex = (driverId.match(/\d+/)) ? 1 : 0;
-      
-      for (let j = valueStartIndex; j < values.length && j - valueStartIndex < metricNames.length; j++) {
-        const value = values[j];
-        const metricIndex = j - valueStartIndex;
+      if (values.length >= 8) {
+        const [id, delivered, dcr, dnrDpmo, pod, cc, ce, dex] = values;
         
-        // Numerischen Wert extrahieren, Prozentzeichen und Kommas berücksichtigen
-        let numValue = parseFloat(value.replace('%', '').replace(',', '.'));
+        // Erstelle ein Fahrerobjekt mit den extrahierten Werten
+        const driver = {
+          id,
+          name: id, // Verwende ID als Name, wenn kein Name verfügbar ist
+          metrics: [
+            {
+              name: "Delivered",
+              value: parseFloat(delivered) || 0,
+              target: 0,
+              status: "neutral"
+            },
+            {
+              name: "DCR",
+              value: parseFloat(dcr) || 0,
+              target: 98.5,
+              status: determineMetricStatus("DCR", parseFloat(dcr) || 0)
+            },
+            {
+              name: "DNR DPMO",
+              value: parseFloat(dnrDpmo) || 0,
+              target: 1500,
+              status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo) || 0)
+            },
+            {
+              name: "POD",
+              value: parseFloat(pod) || 0,
+              target: 98,
+              status: determineMetricStatus("POD", parseFloat(pod) || 0)
+            },
+            {
+              name: "CC",
+              value: parseFloat(cc) || 0,
+              target: 95,
+              status: determineMetricStatus("CC", parseFloat(cc) || 0)
+            },
+            {
+              name: "CE",
+              value: parseFloat(ce) || 0,
+              target: 0,
+              status: determineMetricStatus("CE", parseFloat(ce) || 0)
+            },
+            {
+              name: "DEX",
+              value: parseFloat(dex) || 0,
+              target: 95,
+              status: determineMetricStatus("DEX", parseFloat(dex) || 0)
+            }
+          ]
+        };
         
-        metrics.push({
-          name: metricNames[metricIndex],
-          value: numValue,
-          target: metricTargets[metricIndex],
-          unit: metricUnits[metricIndex]
-        });
-      }
-      
-      // Fahrer nur hinzufügen, wenn genug Metriken gefunden wurden
-      if (metrics.length >= 3) {
-        drivers.push({
-          name: driverId,
-          status: "active",
-          metrics
-        });
-        console.log(`Fahrer ${driverId} mit ${metrics.length} Metriken hinzugefügt`);
+        drivers.push(driver);
       }
     }
   }
   
-  console.log(`Insgesamt ${drivers.length} Fahrer gefunden`);
-  return drivers;
+  console.log(`Extrahiert: ${drivers.length} Fahrer aus DSP WEEKLY SUMMARY Tabelle`);
+  
+  // Stelle sicher, dass alle Fahrer vollständige Metriken haben
+  const enhancedDrivers = drivers.map(driver => ({
+    ...driver,
+    metrics: createAllStandardMetrics(driver.metrics)
+  }));
+  
+  return enhancedDrivers;
 };
