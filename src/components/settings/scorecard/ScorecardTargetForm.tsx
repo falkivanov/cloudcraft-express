@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -115,7 +116,8 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = formData.targets.map(target => {
-      // Create a properly typed target object with required properties
+      // Sicherstellen, dass die Eigenschaften korrekt typisiert sind
+      // Wir wissen, dass name und value vorhanden sein müssen, da das Formular-Schema sie validiert
       const processedTarget: TargetDefinition = {
         name: target.name,
         value: target.value,
