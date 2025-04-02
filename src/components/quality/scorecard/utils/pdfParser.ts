@@ -35,84 +35,42 @@ export const parseScorecardPDF = async (
       const pdf = await loadPDFDocument(pdfData);
       console.info(`PDF loaded with ${pdf.numPages} pages`);
       
-      // Process all pages of the PDF specifically looking for driver tables
-      // This approach is inspired by the Google Docs conversion method mentioned
-      let extractedData;
-      let driversFound = 0;
+      // Try multiple extraction attempts to maximize driver detection
       
-      // First attempt: enhanced positional extraction that analyzes all pages thoroughly
-      console.log("Attempting multi-page positional extraction with improved driver detection");
-      const positionalResult = await attemptPositionalExtraction(pdf, filename, true);
+      // First try: Positional extraction (most reliable when it works)
+      const positionalResult = await attemptPositionalExtraction(pdf, filename, detailedLogging);
+      let extractedData;
       
       if (positionalResult.success && positionalResult.data && 
-          positionalResult.data.driverKPIs) {
-        
-        driversFound = positionalResult.data.driverKPIs.length;
-        console.log(`Positional extraction found ${driversFound} drivers`);
-        
-        // If we found a significant number of drivers, use this result
-        if (driversFound >= 10) {
-          extractedData = positionalResult.data;
-        }
-      }
-      
-      // If positional extraction didn't find enough drivers, try text-based extraction
-      if (!extractedData || driversFound < 10) {
-        console.log("Not enough drivers found with positional extraction, trying text-based extraction");
-        const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, true);
+          positionalResult.data.driverKPIs && positionalResult.data.driverKPIs.length >= 10) {
+        // Positional extraction worked well
+        extractedData = positionalResult.data;
+        console.log(`Positional extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
+      } else {
+        // If positional extraction failed or found few drivers, try text-based extraction
+        console.log("Positional extraction didn't find enough drivers, trying text-based extraction");
+        const textBasedResult = await attemptTextBasedExtraction(pdf, weekNum, detailedLogging);
         
         if (textBasedResult.success && textBasedResult.data && 
-            textBasedResult.data.driverKPIs) {
-          
-          const textDriversFound = textBasedResult.data.driverKPIs.length;
-          console.log(`Text-based extraction found ${textDriversFound} drivers`);
-          
-          // If text-based extraction found more drivers than positional, use it instead
-          if (textDriversFound > driversFound) {
-            extractedData = textBasedResult.data;
-            driversFound = textDriversFound;
-          } else if (!extractedData && textDriversFound > 0) {
-            // Or if we don't have any data yet but found some drivers
-            extractedData = textBasedResult.data;
-            driversFound = textDriversFound;
-          }
+            textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 5) {
+          // Text-based extraction worked
+          extractedData = textBasedResult.data;
+          console.log(`Text-based extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else if (positionalResult.data && positionalResult.data.driverKPIs && 
+                  positionalResult.data.driverKPIs.length > 0) {
+          // Fall back to partial positional results if it found at least some drivers
+          extractedData = positionalResult.data;
+          console.log(`Using partial positional results with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else if (textBasedResult.data && textBasedResult.data.driverKPIs && 
+                  textBasedResult.data.driverKPIs.length > 0) {
+          // Fall back to partial text-based results
+          extractedData = textBasedResult.data;
+          console.log(`Using partial text-based results with ${extractedData.driverKPIs?.length || 0} drivers`);
+        } else {
+          // Last resort: use simple fallback data creation
+          console.log("No extraction method found drivers, using fallback data");
+          extractedData = createFallbackData(weekNum);
         }
-      }
-      
-      // If we still don't have data or enough drivers, combine results from both methods
-      if (!extractedData || driversFound < 5) {
-        console.log("Still not enough drivers, attempting to combine results from both methods");
-        
-        // Get both results if available
-        const drivers1 = positionalResult.data?.driverKPIs || [];
-        const drivers2 = textBasedResult?.data?.driverKPIs || [];
-        
-        // Combine drivers, removing duplicates
-        const combinedDrivers = [...drivers1];
-        drivers2.forEach(driver => {
-          if (!combinedDrivers.some(d => d.name === driver.name)) {
-            combinedDrivers.push(driver);
-          }
-        });
-        
-        if (combinedDrivers.length > driversFound) {
-          console.log(`Combined approach found ${combinedDrivers.length} drivers`);
-          
-          // Use the result with more drivers as the base
-          extractedData = (drivers1.length > drivers2.length) 
-            ? positionalResult.data 
-            : textBasedResult.data;
-          
-          // Update with the combined driver list
-          extractedData.driverKPIs = combinedDrivers;
-          driversFound = combinedDrivers.length;
-        }
-      }
-      
-      // If we still don't have data, use fallback
-      if (!extractedData) {
-        console.log("No extraction method found enough drivers, using fallback data");
-        extractedData = createFallbackData(weekNum);
       }
       
       // Make sure the week is set correctly based on filename

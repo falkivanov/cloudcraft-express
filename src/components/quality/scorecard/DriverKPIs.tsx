@@ -24,10 +24,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   });
 
   // Check if we have any drivers with the expected 14-character A-prefix format
-  const hasExactFormat = driverKPIs.some(d => /^A[A-Z0-9]{13}$/.test(d.name));
-  
-  // Check if we have any drivers with A-prefix but not exactly 14 characters
-  const hasAnyAPrefixFormat = driverKPIs.some(d => /^A[A-Z0-9]{5,}/.test(d.name) && !(/^A[A-Z0-9]{13}$/.test(d.name)));
+  const hasExpectedFormat = driverKPIs.some(d => /^A[A-Z0-9]{13}$/.test(d.name));
   
   // Show an info message if we suspect the data is sample data
   const isSuspectedSampleData = 
@@ -42,7 +39,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   const hasAnyAPrefix = driverKPIs.some(d => d.name.startsWith('A'));
   
   // Check if we might need to update extraction methods (no expected format found)
-  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExactFormat;
+  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExpectedFormat;
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -56,12 +53,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
         <div className="text-sm text-gray-500">
           {driversWithScores.length} Fahrer gefunden
-          {hasExactFormat && 
-            " (14-stellige A-IDs)"
-          }
-          {hasAnyAPrefixFormat && 
-            " (A-IDs mit unterschiedlicher Länge)"
-          }
+          {hasExpectedFormat && " (14-stellige A-IDs)"}
         </div>
       </div>
       
@@ -79,16 +71,10 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                   : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
             </p>
             
-            {hasAnyAPrefix && !hasExactFormat && (
-              <p>
-                Es wurden Fahrer-IDs mit dem Präfix 'A' gefunden, aber nicht im erwarteten 14-stelligen Format.
-              </p>
-            )}
-            
             {needsExtractionUpdate && (
               <p>
                 Die PDF scheint in einem Format zu sein, das zusätzliche Anpassungen erfordert.
-                {!hasExactFormat ? 
+                {!hasExpectedFormat ? 
                   " Es wurden keine Fahrer im erwarteten Format (14-stellige IDs beginnend mit 'A') gefunden." : 
                   " Nicht alle Fahrer-IDs entsprechen dem erwarteten Format."}
               </p>
@@ -101,7 +87,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               <li>Das Format der Fahrertabelle wird nicht korrekt erkannt</li>
               <li>Die Tabellendaten sind nicht standardmäßig strukturiert</li>
               <li>Die PDF hat ein ungewöhnliches oder geändertes Layout</li>
-              <li>Die Daten könnten auf mehreren Seiten verteilt sein</li>
             </ul>
             <p>
               Sie können:
