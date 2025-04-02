@@ -19,6 +19,7 @@ const ScorecardSettings: React.FC = () => {
       });
       
       // Trigger a custom event to notify components that use this data
+      console.log("Dispatching scorecard_targets_updated event");
       window.dispatchEvent(new Event('scorecard_targets_updated'));
     } catch (error) {
       console.error("Error saving targets:", error);

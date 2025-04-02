@@ -10,6 +10,32 @@ import {
   getDummyScoreCardData 
 } from "../weekData";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
+import { getDefaultTargetForKPI } from "../../utils/helpers/statusHelper";
+
+/**
+ * Apply custom targets to scorecard data
+ * @param data Original scorecard data
+ * @param weekNum Week number
+ * @param year Year
+ * @returns Updated data with custom targets
+ */
+const applyCustomTargets = (data: ScoreCardData, weekNum: number, year: number): ScoreCardData => {
+  try {
+    // Apply custom targets to company KPIs
+    const updatedCompanyKPIs = data.companyKPIs.map(kpi => {
+      const customTarget = getDefaultTargetForKPI(kpi.name, weekNum, year);
+      return { ...kpi, target: customTarget };
+    });
+    
+    return {
+      ...data,
+      companyKPIs: updatedCompanyKPIs
+    };
+  } catch (error) {
+    console.error("Error applying custom targets in dataFetcher:", error);
+    return data; // Return original data if there's an error
+  }
+};
 
 /**
  * Get the appropriate data function for a specific week
@@ -22,7 +48,7 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
   const weekKey = `scorecard_data_week_${weekNum}_${year}`;
   const weekData = loadFromStorage<ScoreCardData>(weekKey);
   if (weekData) {
-    return () => weekData;
+    return () => applyCustomTargets(weekData, weekNum, year);
   }
   
   // Then check for extracted data - consistent approach
@@ -30,7 +56,7 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
     const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
       if (extractedData.week === weekNum && extractedData.year === year) {
-        return () => extractedData;
+        return () => applyCustomTargets(extractedData, weekNum, year);
       }
     }
     
@@ -39,7 +65,7 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
     if (legacyData) {
       const parsedData = JSON.parse(legacyData);
       if (parsedData && parsedData.week === weekNum && parsedData.year === year) {
-        return () => parsedData;
+        return () => applyCustomTargets(parsedData, weekNum, year);
       }
     }
   } catch (e) {
@@ -49,16 +75,16 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
   // If no extracted data, use sample data
   if (year === 2025) {
     switch (weekNum) {
-      case 6: return getWeek6Data;
-      case 7: return getWeek7Data;
-      case 8: return getWeek8Data;
-      case 9: return getWeek9Data;
-      case 10: return getWeek10Data;
-      case 11: return getWeek11Data;
-      default: return getDummyScoreCardData;
+      case 6: return () => applyCustomTargets(getWeek6Data(), weekNum, year);
+      case 7: return () => applyCustomTargets(getWeek7Data(), weekNum, year);
+      case 8: return () => applyCustomTargets(getWeek8Data(), weekNum, year);
+      case 9: return () => applyCustomTargets(getWeek9Data(), weekNum, year);
+      case 10: return () => applyCustomTargets(getWeek10Data(), weekNum, year);
+      case 11: return () => applyCustomTargets(getWeek11Data(), weekNum, year);
+      default: return () => applyCustomTargets(getDummyScoreCardData(), weekNum, year);
     }
   }
   
   // Default to dummy data for any other year
-  return getDummyScoreCardData;
+  return () => applyCustomTargets(getDummyScoreCardData(), weekNum, year);
 };

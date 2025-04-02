@@ -11,7 +11,7 @@ import { ScoreCardData } from './types';
 import UnavailableWeekMessage from './components/UnavailableWeekMessage';
 import { useScorecardWeek } from './hooks/useScorecardWeek';
 import ScorecardWeekSelector from './ScorecardWeekSelector';
-import { getPreviousWeekData } from './data/dataProvider';
+import { getPreviousWeekData } from './data/utils/dataProvider';
 import { getDefaultTargetForKPI } from './utils/helpers/statusHelper';
 
 interface ScorecardContentProps {
@@ -49,20 +49,23 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({
         ...currentWeekData,
         companyKPIs: updatedCompanyKPIs
       });
+      
+      console.log("Custom targets applied to scorecard data");
     } catch (error) {
       console.error("Error applying custom targets:", error);
     }
   };
   
-  // Apply custom targets when data changes
+  // Apply custom targets when data changes or on component mount
   useEffect(() => {
+    console.log("Scorecard data changed, applying targets...");
     applyCustomTargets();
-  }, [currentWeekData?.week]); // Only re-run when the week changes
+  }, [currentWeekData?.week, currentWeekData?.year]); // Re-run when week or year changes
   
   // Listen for target updates
   useEffect(() => {
     const handleTargetsUpdated = () => {
-      console.log("Targets updated, reapplying...");
+      console.log("Targets updated event received, reapplying targets...");
       applyCustomTargets();
     };
     

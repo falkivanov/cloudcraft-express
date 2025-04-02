@@ -22,41 +22,53 @@ export const getDefaultTargetForKPI = (kpiName: string, weekNum?: number, year?:
   // First check if we have custom targets in localStorage
   try {
     const savedTargets = localStorage.getItem("scorecard_custom_targets");
-    if (savedTargets && weekNum && year) {
-      const targets = JSON.parse(savedTargets);
+    if (savedTargets) {
+      const targets: TargetDefinition[] = JSON.parse(savedTargets);
       
-      // Find all targets for this KPI, sorted by effective date (newest first)
-      const relevantTargets = targets
-        .filter((t: TargetDefinition) => t.name === kpiName)
-        .sort((a: TargetDefinition, b: TargetDefinition) => {
-          // Sort by year first, then by week
-          const aYear = a.effectiveFromYear || 0;
-          const bYear = b.effectiveFromYear || 0;
-          
-          if (aYear !== bYear) return bYear - aYear;
-          
-          const aWeek = a.effectiveFromWeek || 0;
-          const bWeek = b.effectiveFromWeek || 0;
-          return bWeek - aWeek;
-        });
-      
-      // Find the most recent target that is applicable for the given week
-      for (const target of relevantTargets) {
-        const targetYear = target.effectiveFromYear || 0;
-        const targetWeek = target.effectiveFromWeek || 0;
+      // First try: Look for targets with effective date that match the current week
+      if (weekNum && year) {
+        // Find all targets for this KPI, sorted by effective date (newest first)
+        const relevantTargets = targets
+          .filter((t: TargetDefinition) => t.name === kpiName)
+          .sort((a: TargetDefinition, b: TargetDefinition) => {
+            // Sort by year first, then by week
+            const aYear = a.effectiveFromYear || 0;
+            const bYear = b.effectiveFromYear || 0;
+            
+            if (aYear !== bYear) return bYear - aYear;
+            
+            const aWeek = a.effectiveFromWeek || 0;
+            const bWeek = b.effectiveFromWeek || 0;
+            return bWeek - aWeek;
+          });
         
-        if ((targetYear < year) || (targetYear === year && targetWeek <= weekNum)) {
-          return target.value;
+        // Find the most recent target that is applicable for the given week
+        for (const target of relevantTargets) {
+          const targetYear = target.effectiveFromYear || 0;
+          const targetWeek = target.effectiveFromWeek || 0;
+          
+          if ((targetYear < year) || (targetYear === year && targetWeek <= weekNum)) {
+            console.log(`Using effective date target for ${kpiName}: ${target.value} (effective from week ${targetWeek}/${targetYear})`);
+            return target.value;
+          }
         }
       }
       
-      // If no target with effective date found, look for targets without date restrictions
+      // Second try: Look for a target without date restrictions or most recent one
       const defaultTarget = targets.find((t: TargetDefinition) => 
-        t.name === kpiName && (!t.effectiveFromWeek || !t.effectiveFromYear)
+        t.name === kpiName && (!t.effectiveFromWeek && !t.effectiveFromYear)
       );
       
       if (defaultTarget) {
+        console.log(`Using default target for ${kpiName}: ${defaultTarget.value}`);
         return defaultTarget.value;
+      }
+      
+      // Third try: Just get the most recent target for this KPI regardless of date
+      const allTargetsForKPI = targets.filter((t: TargetDefinition) => t.name === kpiName);
+      if (allTargetsForKPI.length > 0) {
+        console.log(`Using most recent target for ${kpiName}: ${allTargetsForKPI[0].value}`);
+        return allTargetsForKPI[0].value;
       }
     }
   } catch (error) {

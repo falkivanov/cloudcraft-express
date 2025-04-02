@@ -4,6 +4,7 @@ import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 import { parseWeekIdentifier, isDataAvailableForWeek } from "./weekIdentifier";
 import { getDataFunctionForWeek } from "./dataFetcher";
 import { getDummyScoreCardData } from "../../data/weeks";
+import { getDefaultTargetForKPI } from "../../utils/helpers/statusHelper";
 
 /**
  * Helper function to get the data based on selected week
@@ -29,12 +30,19 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
       const weekData = loadFromStorage<ScoreCardData>(weekKey);
       if (weekData) {
         console.log(`Using week-specific data for week ${weekNum}/${year}`, weekData);
-        return weekData;
+        
+        // Apply custom targets if available
+        const updatedData = applyCustomTargets(weekData, weekNum, year);
+        return updatedData;
       }
       
       // Then try other data sources
       const getDataFunction = getDataFunctionForWeek(weekNum, year);
-      return getDataFunction();
+      const data = getDataFunction();
+      
+      // Apply custom targets if available
+      const updatedData = applyCustomTargets(data, weekNum, year);
+      return updatedData;
     }
   }
   
@@ -45,7 +53,10 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
     const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
     if (extractedData) {
       console.log("Using extracted PDF data for scorecard from structured storage", extractedData);
-      return extractedData;
+      
+      // Apply custom targets if available
+      const updatedData = applyCustomTargets(extractedData, extractedData.week, extractedData.year);
+      return updatedData;
     }
     
     // Fallback to legacy approach
@@ -53,14 +64,45 @@ export const getScorecardData = (scorecardData: ScoreCardData | null, selectedWe
     if (legacyData) {
       const parsedData = JSON.parse(legacyData);
       console.log("Using extracted PDF data for scorecard from legacy storage", parsedData);
-      return parsedData;
+      
+      // Apply custom targets if available
+      const updatedData = applyCustomTargets(parsedData, parsedData.week, parsedData.year);
+      return updatedData;
     }
   } catch (e) {
     console.error("Error retrieving extracted data:", e);
   }
   
   // Default to dummy data if nothing found
-  return getDummyScoreCardData();
+  const dummyData = getDummyScoreCardData();
+  
+  // Apply custom targets to dummy data
+  return applyCustomTargets(dummyData, dummyData.week, dummyData.year);
+};
+
+/**
+ * Apply custom target values to scorecard data
+ * @param data Original scorecard data
+ * @param weekNum Week number
+ * @param year Year
+ * @returns Updated scorecard data with custom targets
+ */
+export const applyCustomTargets = (data: ScoreCardData, weekNum: number, year: number): ScoreCardData => {
+  try {
+    // Apply custom targets to company KPIs
+    const updatedCompanyKPIs = data.companyKPIs.map(kpi => {
+      const customTarget = getDefaultTargetForKPI(kpi.name, weekNum, year);
+      return { ...kpi, target: customTarget };
+    });
+    
+    return {
+      ...data,
+      companyKPIs: updatedCompanyKPIs
+    };
+  } catch (error) {
+    console.error("Error applying custom targets:", error);
+    return data; // Return original data if there's an error
+  }
 };
 
 /**
