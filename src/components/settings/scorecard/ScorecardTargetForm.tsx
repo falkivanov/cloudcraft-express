@@ -49,7 +49,7 @@ const formSchema = z.object({
       value: z.number().min(0),
       effectiveFromWeek: z.number().min(1).max(53).optional(),
       effectiveFromYear: z.number().min(2020).max(2030).optional(),
-      unit: z.string().optional()
+      unit: z.string().default("")
     })
   )
 });
