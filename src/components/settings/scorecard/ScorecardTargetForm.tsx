@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -116,17 +115,18 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (data: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = data.targets.map(target => {
-      if (!target.name || target.value === undefined) {
+      // Ensure target has required properties before processing
+      if (typeof target.name !== 'string' || typeof target.value !== 'number') {
         console.error("Invalid target data:", target);
-        // Create a fallback target with required properties to avoid type errors
+        // Return a valid target with defaults to avoid type errors
         return {
-          name: target.name || "Unknown",
+          name: typeof target.name === 'string' ? target.name : "Unknown",
           value: typeof target.value === 'number' ? target.value : 0,
-          unit: target.unit || ""
+          unit: typeof target.unit === 'string' ? target.unit : ""
         };
       }
 
-      // Create a new target object with required properties
+      // Since we've validated the required properties, TypeScript should recognize them as non-optional
       const processedTarget: TargetDefinition = {
         name: target.name,
         value: target.value,
@@ -135,12 +135,8 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
       // Only include effective dates if they are being shown for this target
       if (showEffectiveDate[target.name]) {
-        if (target.effectiveFromWeek !== undefined) {
-          processedTarget.effectiveFromWeek = target.effectiveFromWeek;
-        }
-        if (target.effectiveFromYear !== undefined) {
-          processedTarget.effectiveFromYear = target.effectiveFromYear;
-        }
+        processedTarget.effectiveFromWeek = target.effectiveFromWeek;
+        processedTarget.effectiveFromYear = target.effectiveFromYear;
       }
 
       return processedTarget;
