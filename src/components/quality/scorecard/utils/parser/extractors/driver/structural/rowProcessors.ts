@@ -23,8 +23,8 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
       const driverId = (row[driverIdIndex]?.str || "").trim();
       
       // Skip if driver ID is empty or doesn't look like a valid ID
-      // Driver IDs are typically alphanumeric with 10+ characters
-      if (!driverId || driverId.length < 8) continue;
+      // Driver IDs now start with 'A' and are alphanumeric with at least 6 characters
+      if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) continue;
       
       console.log(`Processing driver: ${driverId}`);
       
@@ -164,8 +164,8 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   // First item should be driver ID
   const driverId = (row[0]?.str || "").trim();
   
-  // Driver IDs are typically alphanumeric with 10+ characters
-  if (!driverId || driverId.length < 8) return null;
+  // Driver IDs now start with 'A' and are alphanumeric with at least 6 characters
+  if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) return null;
   
   console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   

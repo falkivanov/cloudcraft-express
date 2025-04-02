@@ -1,14 +1,26 @@
 
 /**
- * Helper function to extract numeric values from strings, handling percentages and commas
+ * Extract a numeric value from a string, handling various formats
  */
-export const extractNumeric = (str: string): number => {
-  if (!str) return NaN;
+export function extractNumeric(value: string): number {
+  if (!value || value === "-") return 0;
   
-  // Check if the string is a dash, indicating no value
-  if (str === "-") return 0;
+  // Remove any non-numeric characters except for period and comma
+  const numericString = value.replace(/[^0-9.,]/g, '');
   
-  // Remove % symbol and replace commas with dots for decimal notation
-  const cleanStr = str.replace('%', '').replace(',', '.');
-  return parseFloat(cleanStr);
-};
+  // Handle different number formats
+  let cleanNumber = numericString;
+  
+  // Replace comma with period if it's used as a decimal separator
+  if (numericString.includes(',') && !numericString.includes('.')) {
+    cleanNumber = numericString.replace(',', '.');
+  }
+  
+  // If there are both commas and periods, assume comma is thousands separator
+  if (numericString.includes(',') && numericString.includes('.')) {
+    cleanNumber = numericString.replace(/,/g, '');
+  }
+  
+  const result = parseFloat(cleanNumber);
+  return isNaN(result) ? 0 : result;
+}

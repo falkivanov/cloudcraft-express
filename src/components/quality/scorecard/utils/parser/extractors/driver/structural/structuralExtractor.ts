@@ -27,7 +27,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
     }
   }
   
-  // First process page 3, which typically contains most drivers
+  // Process page 3, which typically contains most drivers
   const page3 = pageData[3];
   if (page3 && page3.items && page3.items.length > 0) {
     console.log(`Processing page 3 with ${page3.items.length} items`);
@@ -60,6 +60,38 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
       drivers.push(...pageThreeDrivers);
       
       console.log(`Extracted ${pageThreeDrivers.length} drivers from page 3`);
+    } else {
+      // If header row not found, try alternative approach for page 3
+      console.log("Header row not found on page 3, trying alternative approach");
+      
+      // Try to identify driver rows directly based on pattern
+      let inDriverSection = false;
+      
+      for (const row of rows) {
+        // Skip rows with less than 5 items (likely not a driver row)
+        if (row.length < 5) continue;
+        
+        // Sort row by x-coordinate to ensure correct column order
+        const sortedRow = [...row].sort((a, b) => a.x - b.x);
+        
+        // Check if this is a potential driver row
+        const firstColumn = sortedRow[0]?.str || "";
+        
+        // If we find the "Transporter ID" header, mark that we're in the driver section
+        if (firstColumn.includes("Transporter") || firstColumn.includes("ID")) {
+          inDriverSection = true;
+          continue;
+        }
+        
+        // If we're in the driver section and find an 'A' prefixed code that looks like a driver ID
+        if (inDriverSection && /^A[A-Z0-9]{5,}/.test(firstColumn.trim())) {
+          const driverRow = processDriverRow(sortedRow);
+          if (driverRow) {
+            drivers.push(driverRow);
+            console.log(`Added driver ${driverRow.name} from page 3 using alternative approach`);
+          }
+        }
+      }
     }
   }
   
@@ -74,11 +106,18 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
     
     // Look for driver rows directly in page 4 (continuation of the table)
     for (const row of rowsPage4) {
-      if (row.length >= 7) {  // At least 7 items for a complete driver row
-        const driverRow = processDriverRow(row);
-        if (driverRow) {
-          drivers.push(driverRow);
-          console.log(`Added driver ${driverRow.name} from page 4`);
+      if (row.length >= 5) {  // At least 5 items for a complete driver row
+        // Sort by x-coordinate to ensure correct column order
+        const sortedRow = [...row].sort((a, b) => a.x - b.x);
+        
+        // Check if this is a driver row (first column starts with A)
+        const firstColumn = sortedRow[0]?.str || "";
+        if (/^A[A-Z0-9]{5,}/.test(firstColumn.trim())) {
+          const driverRow = processDriverRow(sortedRow);
+          if (driverRow) {
+            drivers.push(driverRow);
+            console.log(`Added driver ${driverRow.name} from page 4`);
+          }
         }
       }
     }

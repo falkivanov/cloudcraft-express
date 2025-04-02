@@ -49,10 +49,19 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
         }
       }
       
-      console.log("Header indexes:", headerIndexes);
-      return { headerRow: row, headerRowIndex: i, headerIndexes };
+      // Make sure we found at least the essential columns
+      const essentialHeaders = ["Transporter ID", "Delivered", "DCR"];
+      const foundEssential = essentialHeaders.every(header => headerIndexes[header] !== undefined);
+      
+      if (foundEssential) {
+        console.log("Header indexes:", headerIndexes);
+        return { headerRow: row, headerRowIndex: i, headerIndexes };
+      } else {
+        console.log("Found header-like row but missing essential columns");
+      }
     }
   }
   
+  console.log("No header row found matching expected pattern");
   return null;
 }

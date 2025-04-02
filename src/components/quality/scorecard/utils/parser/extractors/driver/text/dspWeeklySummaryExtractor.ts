@@ -51,7 +51,7 @@ export const extractDriversFromDSPWeeklySummary = (text: string): DriverKPI[] =>
     const line = lines[i].trim();
     if (line.length < 5) continue;
     
-    // Driver IDs starting with 'A' as specified in requirements
+    // Driver IDs starting with 'A' as specified in the PDF example
     const driverIdPattern = /([A][A-Z0-9]{5,})/;
     const idMatch = line.match(driverIdPattern);
     
