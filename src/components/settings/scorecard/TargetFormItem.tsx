@@ -46,7 +46,8 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
                       type="number"
                       step="0.1"
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      required
                     />
                   </FormControl>
                   <span className="text-sm text-muted-foreground w-10">
