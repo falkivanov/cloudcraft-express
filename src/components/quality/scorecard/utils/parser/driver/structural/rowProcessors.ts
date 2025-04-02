@@ -1,6 +1,6 @@
-
 import { DriverKPI } from '../../../../types';
 import { determineMetricStatus } from '../utils/metricStatus';
+import { getDefaultTargetForKPI } from '../../../utils/helpers/statusHelper';
 
 /**
  * Process a row of driver data from the PDF
@@ -263,6 +263,14 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
  * Helper function to get the target value for a metric
  */
 function getTargetForMetric(metricName: string): number {
+  // First try to get the target from our helper function
+  const target = getDefaultTargetForKPI(`Driver ${metricName}`);
+  if (target !== 95) {
+    // If we got a non-default value, use it
+    return target;
+  }
+  
+  // Otherwise use our hardcoded values
   switch (metricName) {
     case "Delivered": return 0;
     case "DCR": return 98.5;

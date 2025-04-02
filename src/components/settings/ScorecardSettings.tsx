@@ -10,25 +10,37 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { TargetDefinition } from "../quality/scorecard/utils/helpers/statusHelper";
 
-// Define company KPI names and their default targets
+// Define company KPI names in the same order as they appear on the Scorecard page
+// Organized by category to match the CompanyKPIs.tsx display order
 const COMPANY_KPI_TARGETS: TargetDefinition[] = [
-  { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
-  { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
-  { name: "Photo-On-Delivery", value: 95, unit: "%" },
-  { name: "Contact Compliance", value: 95, unit: "%" },
-  { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
+  // Safety category
   { name: "Vehicle Audit (VSA) Compliance", value: 95, unit: "%" },
-  { name: "DVIC Compliance", value: 95, unit: "%" },
   { name: "Safe Driving Metric (FICO)", value: 800, unit: "" },
-  { name: "Capacity Reliability", value: 98, unit: "%" },
-  { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
-  { name: "Breach of Contract (BOC)", value: 0, unit: "" },
-  { name: "Lost on Road (LoR) DPMO)", value: 350, unit: "DPMO" },
+  { name: "DVIC Compliance", value: 95, unit: "%" },
   { name: "Speeding Event Rate (Per 100 Trips)", value: 10, unit: "" },
   { name: "Mentor Adoption Rate", value: 80, unit: "%" },
-  { name: "Customer Delivery Feedback", value: 85, unit: "%" },
+  
+  // Compliance category
+  { name: "Breach of Contract (BOC)", value: 0, unit: "" },
+  { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
   { name: "Comprehensive Audit Score (CAS)", value: 100, unit: "%" },
-  { name: "Next Day Capacity Reliability", value: 98, unit: "%" }
+  
+  // Customer category
+  { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
+  { name: "Customer Delivery Feedback", value: 85, unit: "%" },
+  
+  // Quality category
+  { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
+  { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
+  { name: "Lost on Road (LoR) DPMO", value: 350, unit: "DPMO" },
+  
+  // Standard Work category
+  { name: "Photo-On-Delivery", value: 95, unit: "%" },
+  { name: "Contact Compliance", value: 95, unit: "%" },
+  
+  // Capacity category
+  { name: "Next Day Capacity Reliability", value: 98, unit: "%" },
+  { name: "Capacity Reliability", value: 98, unit: "%" }
 ];
 
 // Create a schema for our form
