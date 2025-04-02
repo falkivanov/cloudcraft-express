@@ -2,6 +2,7 @@
 /**
  * Functions for finding and processing the header row in tabular data
  */
+import { isNumeric } from './valueExtractor';
 
 /**
  * Find the header row that contains the expected column headers
