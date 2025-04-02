@@ -1,5 +1,5 @@
 
-import { determineStatus } from '../../../../helpers/statusHelper';
+import { determineStatus, KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
  * Erstellt einen vollständigen Satz aller 7 Standardmetriken für einen Fahrer
