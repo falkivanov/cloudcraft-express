@@ -33,24 +33,22 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({
     if (!currentWeekData) return;
     
     try {
-      const savedTargets = localStorage.getItem("scorecard_custom_targets");
-      if (savedTargets) {
-        const targets = JSON.parse(savedTargets);
+      // Apply only to company KPIs
+      const updatedCompanyKPIs = currentWeekData.companyKPIs.map(kpi => {
+        // Get the target value for this KPI for the current week/year
+        const customTarget = getDefaultTargetForKPI(
+          kpi.name, 
+          currentWeekData.week, 
+          currentWeekData.year
+        );
         
-        // Apply only to company KPIs
-        const updatedCompanyKPIs = currentWeekData.companyKPIs.map(kpi => {
-          const customTarget = targets.find((t: any) => t.name === kpi.name);
-          if (customTarget) {
-            return { ...kpi, target: customTarget.value };
-          }
-          return kpi;
-        });
-        
-        setCurrentWeekData({
-          ...currentWeekData,
-          companyKPIs: updatedCompanyKPIs
-        });
-      }
+        return { ...kpi, target: customTarget };
+      });
+      
+      setCurrentWeekData({
+        ...currentWeekData,
+        companyKPIs: updatedCompanyKPIs
+      });
     } catch (error) {
       console.error("Error applying custom targets:", error);
     }

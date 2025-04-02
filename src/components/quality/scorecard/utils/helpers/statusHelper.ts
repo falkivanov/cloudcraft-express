@@ -5,17 +5,58 @@
 export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
 
 /**
+ * Type for target definitions with effective week
+ */
+export type TargetDefinition = {
+  name: string;
+  value: number;
+  effectiveFromWeek?: number;
+  effectiveFromYear?: number;
+  unit?: string;
+};
+
+/**
  * Get the default target value for a KPI
  */
-export const getDefaultTargetForKPI = (kpiName: string): number => {
+export const getDefaultTargetForKPI = (kpiName: string, weekNum?: number, year?: number): number => {
   // First check if we have custom targets in localStorage
   try {
     const savedTargets = localStorage.getItem("scorecard_custom_targets");
-    if (savedTargets) {
+    if (savedTargets && weekNum && year) {
       const targets = JSON.parse(savedTargets);
-      const customTarget = targets.find((t: any) => t.name === kpiName);
-      if (customTarget) {
-        return customTarget.value;
+      
+      // Find all targets for this KPI, sorted by effective date (newest first)
+      const relevantTargets = targets
+        .filter((t: TargetDefinition) => t.name === kpiName)
+        .sort((a: TargetDefinition, b: TargetDefinition) => {
+          // Sort by year first, then by week
+          const aYear = a.effectiveFromYear || 0;
+          const bYear = b.effectiveFromYear || 0;
+          
+          if (aYear !== bYear) return bYear - aYear;
+          
+          const aWeek = a.effectiveFromWeek || 0;
+          const bWeek = b.effectiveFromWeek || 0;
+          return bWeek - aWeek;
+        });
+      
+      // Find the most recent target that is applicable for the given week
+      for (const target of relevantTargets) {
+        const targetYear = target.effectiveFromYear || 0;
+        const targetWeek = target.effectiveFromWeek || 0;
+        
+        if ((targetYear < year) || (targetYear === year && targetWeek <= weekNum)) {
+          return target.value;
+        }
+      }
+      
+      // If no target with effective date found, look for targets without date restrictions
+      const defaultTarget = targets.find((t: TargetDefinition) => 
+        t.name === kpiName && (!t.effectiveFromWeek || !t.effectiveFromYear)
+      );
+      
+      if (defaultTarget) {
+        return defaultTarget.value;
       }
     }
   } catch (error) {
