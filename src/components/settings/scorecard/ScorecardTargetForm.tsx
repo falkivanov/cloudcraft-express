@@ -116,20 +116,24 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (data: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = data.targets.map(target => {
-      if (!showEffectiveDate[target.name]) {
-        // Ensure we're returning an object with required properties
-        return {
-          name: target.name,
-          value: target.value,
-          unit: target.unit
-        };
-      }
-      // Make sure name and value are always defined
-      return {
-        ...target,
-        name: target.name,
-        value: target.value
+      // Ensure target is correctly typed with required properties
+      const processedTarget: TargetDefinition = {
+        name: target.name,  // This is required
+        value: target.value, // This is required
+        unit: target.unit    // This is optional
       };
+
+      // Only include effective dates if they are being shown for this target
+      if (showEffectiveDate[target.name]) {
+        if (target.effectiveFromWeek) {
+          processedTarget.effectiveFromWeek = target.effectiveFromWeek;
+        }
+        if (target.effectiveFromYear) {
+          processedTarget.effectiveFromYear = target.effectiveFromYear;
+        }
+      }
+
+      return processedTarget;
     });
     
     onSubmit({ targets: processedTargets });
