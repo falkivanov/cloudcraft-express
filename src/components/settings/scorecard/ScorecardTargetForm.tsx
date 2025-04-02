@@ -42,7 +42,7 @@ const COMPANY_KPI_TARGETS: TargetDefinition[] = [
   { name: "Capacity Reliability", value: 98, unit: "%" }
 ];
 
-// Create a schema for our form
+// Create a schema for our form that enforces required fields
 const formSchema = z.object({
   targets: z.array(
     z.object({
@@ -116,11 +116,10 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (data: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = data.targets.map(target => {
-      // Since our Zod schema validates these fields, we can assert they're non-null
-      // Cast the target to ensure TypeScript recognizes it has the required properties
+      // Create a type-safe target definition with required properties
       const processedTarget: TargetDefinition = {
-        name: target.name, // Zod ensures this is a string
-        value: target.value, // Zod ensures this is a number
+        name: target.name, // This is guaranteed to be a string by zod
+        value: target.value, // This is guaranteed to be a number by zod
         unit: target.unit || "" // Default to empty string if unit is undefined
       };
 
