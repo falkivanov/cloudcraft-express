@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -112,30 +111,18 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
   const { week: currentWeek, year: currentYear } = getCurrentWeek();
 
-  // Handle form submission with typed validation
+  // Handle form submission with type inference
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
-    const processedTargets = formData.targets.map(target => {
-      // Sicherstellen, dass die Eigenschaften korrekt typisiert sind
-      // Wir wissen, dass name und value vorhanden sein müssen, da das Formular-Schema sie validiert
-      const processedTarget: TargetDefinition = {
-        name: target.name,
-        value: target.value,
-        unit: target.unit || ""
-      };
-
-      // Only include effective dates if they are being shown for this target
-      if (showEffectiveDate[target.name]) {
-        if (target.effectiveFromWeek !== undefined) {
-          processedTarget.effectiveFromWeek = target.effectiveFromWeek;
-        }
-        if (target.effectiveFromYear !== undefined) {
-          processedTarget.effectiveFromYear = target.effectiveFromYear;
-        }
-      }
-
-      return processedTarget;
-    });
+    const processedTargets = formData.targets.map(target => ({
+      name: target.name,
+      value: target.value,
+      unit: target.unit || "",
+      ...(showEffectiveDate[target.name] ? {
+        effectiveFromWeek: target.effectiveFromWeek,
+        effectiveFromYear: target.effectiveFromYear
+      } : {})
+    }));
     
     onSubmit({ targets: processedTargets });
   };
