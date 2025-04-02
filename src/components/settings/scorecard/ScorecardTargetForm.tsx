@@ -42,7 +42,7 @@ const COMPANY_KPI_TARGETS: TargetDefinition[] = [
   { name: "Capacity Reliability", value: 98, unit: "%" }
 ];
 
-// Create a schema for our form that enforces required fields
+// Form schema matching TargetDefinition type structure
 const formSchema = z.object({
   targets: z.array(
     z.object({
@@ -116,6 +116,11 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const handleSubmit = (formData: FormValues) => {
     // Process form data - remove effective dates if not showing
     const processedTargets = formData.targets.map(target => {
+      if (!target.name || target.value === undefined) {
+        console.error("Invalid target data", target);
+        throw new Error("Invalid target data: name and value are required");
+      }
+
       // Create target object with required properties
       const processedTarget: TargetDefinition = {
         name: target.name,
