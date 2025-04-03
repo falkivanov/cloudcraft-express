@@ -78,6 +78,9 @@ function mapEnglishHeaders(headerRow: any, columnMapping: Record<string, string>
     else if (lowerValue.includes('distraction') || lowerValue.includes('phone')) {
       columnMapping['Phone Distraction'] = col;
     }
+    else if (lowerValue === 'tempo') {
+      columnMapping['Tempo'] = col;
+    }
   });
 }
 
@@ -105,6 +108,9 @@ function mapGermanHeaders(headerRow: any, columnMapping: Record<string, string>)
       columnMapping['Cornering'] = col;
     }
     else if (lowerValue === 'tempo') {
+      columnMapping['Tempo'] = col;
+    }
+    else if (lowerValue === 'speeding') {
       columnMapping['Speeding'] = col;
     }
     else if (lowerValue === 'fahrten') {
@@ -145,6 +151,12 @@ function setFallbackMappings(columnMapping: Record<string, string>): void {
   columnMapping['Cornering'] = 'L';     // Column L - ALWAYS use column L for Cornering
   columnMapping['Speeding'] = 'N';      // Column N - ALWAYS use column N for Speeding
   columnMapping['Seatbelt'] = 'V';      // Column V - ALWAYS use column V for Seatbelt
+  
+  // Make sure Tempo is mapped (if not already)
+  if (!columnMapping['Tempo']) {
+    // Use a different column or create from existing data
+    columnMapping['Tempo'] = 'M'; // Assuming column M might contain Tempo data
+  }
 }
 
 /**

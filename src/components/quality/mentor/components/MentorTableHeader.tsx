@@ -38,28 +38,28 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         </TableHead>
         <TableHead className="text-center">Station</TableHead>
         <TableHead 
-          className="text-right cursor-pointer hover:bg-slate-50"
+          className="text-center cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalTrips')}
         >
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-center">
             <span>Fahrten</span>
             {sortField === 'totalTrips' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
         <TableHead 
-          className="text-right cursor-pointer hover:bg-slate-50"
+          className="text-center cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalKm')}
         >
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-center">
             <span>KM</span>
             {sortField === 'totalKm' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
         <TableHead 
-          className="text-right cursor-pointer hover:bg-slate-50"
+          className="text-center cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalHours')}
         >
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-center">
             <span>Stunden</span>
             {sortField === 'totalHours' && <SortIcon direction={sortDirection} />}
           </div>

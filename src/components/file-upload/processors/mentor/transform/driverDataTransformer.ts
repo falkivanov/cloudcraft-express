@@ -1,4 +1,3 @@
-
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -128,8 +127,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const cornering = extractRiskRating(row['Cornering'] || row['L'] || '-');
     const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
-    // Add tempo field with fallbacks to Speeding or Speed if Tempo is not found
-    const tempo = extractRiskRating(row['Tempo'] || row['Speed'] || speeding || '-');
+    // Process tempo separately - this allows us to have both tempo and speeding values
+    const tempo = extractRiskRating(row['Tempo'] || '-');
 
     // Log processed values for debugging
     console.log("Processed values:", { 
@@ -161,7 +160,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       seatbelt,
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction']),
-      tempo: tempo  // Add the tempo property
+      tempo: tempo  // Keep tempo as a separate field
     };
   });
 }
