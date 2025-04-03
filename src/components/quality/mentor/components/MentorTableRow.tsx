@@ -89,9 +89,9 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
             <TooltipTrigger asChild>
               <div className="cursor-help">
                 {driver.employeeName ? (
-                  <span className="text-green-700 font-semibold">{driver.employeeName}</span>
+                  <span className="font-semibold">{driver.employeeName}</span>
                 ) : (
-                  <span className="text-muted-foreground">{driver.firstName}</span>
+                  <span className="text-muted-foreground">ID fehlt</span>
                 )}
               </div>
             </TooltipTrigger>
@@ -107,6 +107,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
               ) : (
                 <div>
                   <p>Anonymisierte ID - Kein Mitarbeiter gefunden</p>
+                  <p className="text-xs text-muted-foreground mt-1">ID: {driver.firstName}</p>
                   <p className="text-xs text-muted-foreground mt-1">Bearbeiten Sie die Mitarbeiterdaten und fügen Sie diese Mentor-ID hinzu</p>
                 </div>
               )}
@@ -114,7 +115,6 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
           </Tooltip>
         </TooltipProvider>
       </TableCell>
-      <TableCell className="font-medium">{driver.lastName}</TableCell>
       <TableCell className="text-center">{getScoreDisplay(driver.overallRating)}</TableCell>
       <TableCell className="text-center">{driver.station}</TableCell>
       <TableCell className="text-right">{formatNumericValue(driver.totalTrips)}</TableCell>

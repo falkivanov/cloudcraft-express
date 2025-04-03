@@ -1,8 +1,8 @@
 
 import React from "react";
-import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { ChevronDown, ChevronUp, ArrowUpDown } from "lucide-react";
-import { SortField } from "../hooks/useMentorDrivers";
+import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SortField } from "../hooks/useMentorDriversTypes";
+import { SortIcon } from "./SortIcon";
 
 interface MentorTableHeaderProps {
   sortField: SortField;
@@ -10,72 +10,33 @@ interface MentorTableHeaderProps {
   onSort: (field: SortField) => void;
 }
 
-const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({ 
-  sortField, 
-  sortDirection, 
-  onSort 
+const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
+  sortField,
+  sortDirection,
+  onSort
 }) => {
-  // Render sort indicator based on current sort state
-  const renderSortIndicator = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="ml-1 h-4 w-4 text-gray-400" />;
-    }
-    
-    return sortDirection === 'asc' 
-      ? <ChevronUp className="ml-1 h-4 w-4" />
-      : <ChevronDown className="ml-1 h-4 w-4" />;
-  };
-  
-  // Generate a sortable column header
-  const SortableHeader = ({ field, label }: { field: SortField, label: string }) => (
-    <div 
-      className="flex items-center cursor-pointer" 
-      onClick={() => onSort(field)}
-    >
-      {label}
-      {renderSortIndicator(field)}
-    </div>
-  );
-  
   return (
     <TableHeader>
-      <TableRow className="bg-slate-50">
-        <TableHead className="w-[200px]">
-          <SortableHeader field="firstName" label="Mentor ID" />
+      <TableRow>
+        <TableHead 
+          className="w-[250px] cursor-pointer hover:bg-slate-50" 
+          onClick={() => onSort('lastName')}
+        >
+          <div className="flex items-center">
+            <span>Fahrer</span>
+            {sortField === 'lastName' && <SortIcon direction={sortDirection} />}
+          </div>
         </TableHead>
-        <TableHead className="w-[150px]">
-          <SortableHeader field="lastName" label="Last Name" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="overallRating" label="FICO" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="station" label="Station" />
-        </TableHead>
-        <TableHead className="text-right">
-          <SortableHeader field="totalTrips" label="Trips" />
-        </TableHead>
-        <TableHead className="text-right">
-          <SortableHeader field="totalKm" label="KM" />
-        </TableHead>
-        <TableHead className="text-right">
-          <SortableHeader field="totalHours" label="Hours" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="acceleration" label="Accel" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="braking" label="Braking" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="cornering" label="Turning" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="speeding" label="Speed" />
-        </TableHead>
-        <TableHead className="text-center">
-          <SortableHeader field="seatbelt" label="Seatbelt" />
-        </TableHead>
+        <TableHead className="text-center">Score</TableHead>
+        <TableHead className="text-center">Station</TableHead>
+        <TableHead className="text-right">Fahrten</TableHead>
+        <TableHead className="text-right">KM</TableHead>
+        <TableHead className="text-right">Stunden</TableHead>
+        <TableHead className="text-center">Beschl.</TableHead>
+        <TableHead className="text-center">Bremsen</TableHead>
+        <TableHead className="text-center">Kurven</TableHead>
+        <TableHead className="text-center">Tempo</TableHead>
+        <TableHead className="text-center">Gurt</TableHead>
       </TableRow>
     </TableHeader>
   );
