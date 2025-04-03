@@ -106,11 +106,14 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
     );
   }
 
-  // Hilfsfunktion für Risiko-Farben
-  const getRiskColor = (risk: string) => {
+  // Hilfsfunktion für Risiko-Farben - FIX: Ensure risk is a string before calling toLowerCase()
+  const getRiskColor = (risk: string | number | undefined) => {
     if (!risk) return "";
     
-    const lowerRisk = risk.toLowerCase();
+    // Convert risk to string to handle cases where it might be a number or undefined
+    const riskStr = String(risk);
+    const lowerRisk = riskStr.toLowerCase();
+    
     if (lowerRisk.includes("high")) {
       return "bg-red-50 text-red-700 font-medium";
     } 
