@@ -127,13 +127,27 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       }
     }
     
-    // Improved risk extraction with fallbacks for empty or "-" values
+    // Enhanced risk extraction with proper handling for all formats
     const extractRiskRating = (value: any): string => {
+      // First check if value exists and isn't empty or a dash
       if (!value || value === '-' || value === '' || value === null || value === undefined) {
         return '-';
       }
       
-      // If it's a number, convert to risk rating
+      // If it's an object (which can happen with Excel), convert to string first
+      if (typeof value === 'object') {
+        if (value._type === 'undefined' || value.value === 'undefined') {
+          return '-';
+        }
+        
+        // Try to extract a meaningful value from the object
+        if ('text' in value) return String(value.text);
+        if ('value' in value) return String(value.value);
+        
+        return '-';
+      }
+      
+      // Handle numeric risk ratings
       if (typeof value === 'number' || !isNaN(Number(value))) {
         const numValue = Number(value);
         if (numValue === 0) return '-';
@@ -142,30 +156,50 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
         if (numValue > 5) return 'High Risk';
       }
       
-      // Process "Low", "Medium", "High" risk values
+      // Process string values
       if (typeof value === 'string') {
         const lowerValue = value.toLowerCase();
         
-        // Handle German terms
-        if (lowerValue.includes('niedrig') || lowerValue.includes('low')) return 'Low Risk';
-        if (lowerValue.includes('mittel') || lowerValue.includes('med')) return 'Medium Risk';
-        if (lowerValue.includes('hoch') || lowerValue.includes('high')) return 'High Risk';
+        // Skip empty or dash values
+        if (lowerValue === '-' || lowerValue === '' || lowerValue === 'unknown') {
+          return '-';
+        }
+        
+        // Handle risk labels directly
+        if (lowerValue.includes('low') || lowerValue.includes('niedrig')) return 'Low Risk';
+        if (lowerValue.includes('med') || lowerValue.includes('mittel')) return 'Medium Risk';
+        if (lowerValue.includes('high') || lowerValue.includes('hoch')) return 'High Risk';
         
         // Handle Yes/No values (sometimes used for risk indicators)
         if (lowerValue.includes('ja') || lowerValue.includes('yes')) return 'High Risk';
         if (lowerValue.includes('nein') || lowerValue.includes('no')) return 'Low Risk';
       }
       
-      // Return the original value as a string
+      // Return the original value as a string if nothing else matches
       return String(value);
     };
     
-    // Debugging: log the risk values we're processing
-    console.log("Processing risk values:", {
+    // Print out raw values for debugging
+    console.log("Raw risk values:", {
       accel: row['Acceleration'],
       brake: row['Braking'],
       corner: row['Cornering'],
-      speed: row['Speeding'] || row['W'],
+      speed: row['Speeding'],
+    });
+
+    // Extract risk values
+    const acceleration = extractRiskRating(row['Acceleration']);
+    const braking = extractRiskRating(row['Braking']);
+    const cornering = extractRiskRating(row['Cornering']);
+    const speeding = extractRiskRating(row['Speeding']);
+
+    // Log processed values for debugging
+    console.log("Processed risk values:", { 
+      firstName, lastName, 
+      accel: acceleration, 
+      brake: braking, 
+      corner: cornering, 
+      speed: speeding 
     });
 
     return {
@@ -176,11 +210,11 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours,
       totalKm,
       overallRating: String(row['Overall Rating'] || row['FICO Score'] || row['FICO® Safe Driving Score'] || ''),
-      // Use direct risk value columns, not the "Rating" columns
-      acceleration: extractRiskRating(row['Acceleration']),
-      braking: extractRiskRating(row['Braking']),
-      cornering: extractRiskRating(row['Cornering']),
-      speeding: extractRiskRating(row['Speeding'] || row['W']), // Also check column W which should have speeding data
+      // Use directly processed risk values
+      acceleration,
+      braking,
+      cornering,
+      speeding,
       seatbelt: extractRiskRating(row['Seatbelt']),
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction'])

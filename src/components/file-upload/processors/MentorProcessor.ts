@@ -22,7 +22,7 @@ export class MentorProcessor extends BaseFileProcessor {
       // Process the data
       const processedData = await dataProcessor.processFileData();
       
-      // Log data for debugging
+      // Enhanced debugging: Log more detailed information about the first few drivers
       console.log("Processed Mentor data with risk values:", 
         processedData.drivers.slice(0, 3).map(d => ({
           name: `${d.firstName} ${d.lastName}`,
@@ -32,6 +32,21 @@ export class MentorProcessor extends BaseFileProcessor {
           speed: d.speeding
         }))
       );
+
+      // Additional sample data check for German columns
+      if (processedData.drivers.length > 0) {
+        const sampleDriver = processedData.drivers[0];
+        console.log("Detailed sample driver data:", {
+          name: `${sampleDriver.firstName} ${sampleDriver.lastName}`,
+          trips: sampleDriver.totalTrips,
+          hours: sampleDriver.totalHours,
+          km: sampleDriver.totalKm,
+          accel: sampleDriver.acceleration,
+          brake: sampleDriver.braking, 
+          corner: sampleDriver.cornering,
+          speed: sampleDriver.speeding
+        });
+      }
       
       // Prüfung und Warnung bei leeren Daten
       if (!processedData.drivers || processedData.drivers.length === 0) {

@@ -1,77 +1,58 @@
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
 
 /**
- * Gets the background color class for a risk rating
+ * Gets the CSS background class based on the rating value
  */
-export const getRatingBackground = (risk: string | number | undefined): string => {
-  if (!risk) return "";
+export function getRatingBackground(rating: string | number | undefined): string {
+  if (!rating) return '';
   
-  // Convert risk to string to handle cases where it might be a number or undefined
-  const riskStr = String(risk);
+  const ratingStr = rating.toString().toLowerCase();
   
-  // Handle dash-like values
-  if (riskStr === "-" || riskStr === "Unknown") {
-    return "";
+  if (ratingStr.includes('low') || ratingStr.includes('niedrig')) {
+    return 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200';
+  } else if (ratingStr.includes('med') || ratingStr.includes('mittel')) {
+    return 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200';
+  } else if (ratingStr.includes('high') || ratingStr.includes('hoch')) {
+    return 'bg-red-100 text-red-800 hover:bg-red-100 border-red-200';
   }
   
-  const lowerRisk = riskStr.toLowerCase();
-  
-  if (lowerRisk.includes("high")) {
-    return "bg-red-50 border-red-200 text-red-700";
-  } 
-  if (lowerRisk.includes("medium")) {
-    return "bg-amber-50 border-amber-200 text-amber-700";
-  }
-  if (lowerRisk.includes("low")) {
-    return "bg-green-50 border-green-200 text-green-700";
-  }
-  
-  // Handle German risk terms
-  if (lowerRisk.includes("hoch")) {
-    return "bg-red-50 border-red-200 text-red-700";
-  }
-  if (lowerRisk.includes("mittel")) {
-    return "bg-amber-50 border-amber-200 text-amber-700";
-  }
-  if (lowerRisk.includes("niedrig")) {
-    return "bg-green-50 border-green-200 text-green-700";
-  }
-  
-  // Fallback
-  return "";
-};
+  // Fallback to default badge style
+  return '';
+}
 
 /**
- * Formats and displays the FICO score with appropriate color coding
+ * Formats and displays a score value with appropriate styling
  */
-export const getScoreDisplay = (score: string): React.ReactNode => {
-  if (!score || score === "Unknown") return <span className="text-gray-500">-</span>;
+export function getScoreDisplay(score: string | number | undefined): React.ReactNode {
+  if (!score) return '-';
   
-  let numericScore = 0;
-  // Extract numeric value if possible
-  const matches = score.match(/\d+/);
-  if (matches) {
-    numericScore = parseInt(matches[0]);
+  const numScore = typeof score === 'string' 
+    ? parseFloat(score.replace(/[^\d.-]/g, '')) 
+    : score;
+  
+  if (!isNaN(numScore)) {
+    // FICO score thresholds
+    if (numScore >= 800) {
+      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+        {numScore.toFixed(0)}
+      </Badge>;
+    } else if (numScore >= 700) {
+      return <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-200">
+        {numScore.toFixed(0)}
+      </Badge>;
+    } else if (numScore >= 600) {
+      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+        {numScore.toFixed(0)}
+      </Badge>;
+    } else {
+      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+        {numScore.toFixed(0)}
+      </Badge>;
+    }
   }
   
-  // If no number found, show original text
-  if (isNaN(numericScore)) return <span>{score}</span>;
-  
-  let color = "bg-red-100 border-red-200 text-red-800";
-  
-  if (numericScore >= 800) {
-    color = "bg-green-100 border-green-200 text-green-800";
-  } else if (numericScore >= 700) {
-    color = "bg-emerald-100 border-emerald-200 text-emerald-800";
-  } else if (numericScore >= 600) {
-    color = "bg-amber-100 border-amber-200 text-amber-800";
-  }
-  
-  return (
-    <Badge variant="outline" className={`${color} font-bold px-3 py-1`}>
-      {numericScore}
-    </Badge>
-  );
-};
+  // If not a number, just display the raw value
+  return score;
+}

@@ -28,7 +28,15 @@ export function findHeaderRow(rawData: any[]): any | null {
       (row['I'] && typeof row['I'] === 'string' && (
         row['I'].includes('Beschl') || 
         row['I'].includes('Accel')
-      ))
+      )) ||
+      // Format 5: Deutsch-spezifische Bezeichnungen
+      (row['K'] && typeof row['K'] === 'string' && row['K'].includes('Fahrten')) ||
+      (row['L'] && typeof row['L'] === 'string' && row['L'].includes('Km')) ||
+      (row['M'] && typeof row['M'] === 'string' && row['M'].includes('Stunden')) ||
+      (row['N'] && typeof row['N'] === 'string' && row['N'].includes('Beschl')) ||
+      (row['O'] && typeof row['O'] === 'string' && row['O'].includes('Bremsen')) ||
+      (row['P'] && typeof row['P'] === 'string' && row['P'].includes('Kurven')) ||
+      (row['V'] && typeof row['V'] === 'string' && row['V'].includes('Tempo'))
     ) {
       console.log(`Header-Zeile gefunden in Zeile ${i+1}`, row);
       return row;
@@ -53,17 +61,17 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     columnMapping['Driver First Name'] = 'A';  // Erste Spalte enthält Fahrernummern oder Namen
     columnMapping['Driver Last Name'] = 'B';   // Last Name
     columnMapping['Station'] = 'D';            // Station
-    columnMapping['Total Trips'] = 'E';        // Total Trips
-    columnMapping['Total Driver km'] = 'F';    // Total Driver km
-    columnMapping['Total Hours'] = 'G';        // Total Hours
+    columnMapping['Total Trips'] = 'K';        // Fahrten
+    columnMapping['Total Driver km'] = 'L';    // Km
+    columnMapping['Total Hours'] = 'M';        // Stunden
     columnMapping['Overall Rating'] = 'C';     // Overall Score or Rating
-    columnMapping['Acceleration'] = 'I';       // Acceleration - direkter Wert, nicht Rating
-    columnMapping['Braking'] = 'K';            // Braking - direkter Wert, nicht Rating
-    columnMapping['Cornering'] = 'M';          // Cornering - direkter Wert, nicht Rating
-    columnMapping['Speeding'] = 'W';           // Speeding - direkter Wert, nicht Rating
+    columnMapping['Acceleration'] = 'N';       // Beschl.
+    columnMapping['Braking'] = 'O';            // Bremsen
+    columnMapping['Cornering'] = 'P';          // Kurven
+    columnMapping['Speeding'] = 'V';           // Tempo
     columnMapping['Seatbelt'] = 'Q';           // Seatbelt
     columnMapping['Following Distance'] = 'S'; // Following Distance
-    columnMapping['Phone Distraction'] = 'O';  // Distraction
+    columnMapping['Phone Distraction'] = 'R';  // Distraction
   } else {
     // Für jeden Header nach passenden Spalten suchen
     Object.entries(headerRow).forEach(([col, value]) => {
@@ -105,16 +113,16 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
       }
       // Metriken-Zuordnung: WICHTIG - bei der Standard-Mentor-Datei enthält jede Metrik sowohl ein "Rating" als auch einen direkten Wert
       // Wir wollen den direkten Wert, nicht das Rating (Rating ist eine Zahl, Wert ist "Low Risk", "Medium Risk", etc.)
-      else if (lowerValue === 'acceleration') {
+      else if (lowerValue === 'acceleration' || lowerValue === 'beschl.' || lowerValue === 'beschl') {
         columnMapping['Acceleration'] = col;
       }
-      else if (lowerValue === 'braking') {
+      else if (lowerValue === 'braking' || lowerValue === 'bremsen') {
         columnMapping['Braking'] = col;
       }
-      else if (lowerValue === 'cornering') {
+      else if (lowerValue === 'cornering' || lowerValue === 'kurven') {
         columnMapping['Cornering'] = col;
       }
-      else if (lowerValue === 'speeding') {
+      else if (lowerValue === 'speeding' || lowerValue === 'tempo') {
         columnMapping['Speeding'] = col;
       }
       else if (lowerValue.includes('seatbelt') || lowerValue.includes('gurt')) {
@@ -129,71 +137,54 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     });
   }
   
-  // Scan all column headers for special German terms and risk values
+  // Explicitly map German headers if they exist in the header row
   if (headerRow) {
     Object.entries(headerRow).forEach(([col, value]) => {
       if (typeof value !== 'string') return;
       
       const lowerValue = value.toLowerCase();
       
-      // German-specific column mappings
+      // German-specific column mappings with exact matches
       if (lowerValue === 'beschl.' || lowerValue === 'beschl') {
         columnMapping['Acceleration'] = col;
       } 
-      else if (lowerValue === 'bremsen' || lowerValue === 'bremse') {
+      else if (lowerValue === 'bremsen') {
         columnMapping['Braking'] = col;
       }
-      else if (lowerValue === 'kurven' || lowerValue === 'kurve') {
+      else if (lowerValue === 'kurven') {
         columnMapping['Cornering'] = col;
-      }
-      else if (lowerValue === 'ablenk.' || lowerValue === 'ablenk') {
-        columnMapping['Phone Distraction'] = col;
       }
       else if (lowerValue === 'tempo') {
         columnMapping['Speeding'] = col;
       }
-      // Directly match Risk values
-      else if (lowerValue === 'acceleration rating') {
-        // Skip rating columns in favor of direct value columns
+      else if (lowerValue === 'fahrten') {
+        columnMapping['Total Trips'] = col;
       }
-      else if (lowerValue === 'acceleration') {
-        columnMapping['Acceleration'] = col;
+      else if (lowerValue === 'km') {
+        columnMapping['Total Driver km'] = col;
       }
-      else if (lowerValue === 'braking rating') {
-        // Skip rating columns
-      }
-      else if (lowerValue === 'braking') {
-        columnMapping['Braking'] = col;
-      }
-      else if (lowerValue === 'cornering rating') {
-        // Skip rating columns
-      }
-      else if (lowerValue === 'cornering') {
-        columnMapping['Cornering'] = col;
-      }
-      else if (lowerValue === 'speeding rating') {
-        // Skip rating columns
-      }
-      else if (lowerValue === 'speeding') {
-        columnMapping['Speeding'] = col;
+      else if (lowerValue === 'stunden') {
+        columnMapping['Total Hours'] = col;
       }
     });
   }
   
-  // Fallback-Werte für nicht gefundene Spalten
+  // Fallback-Werte für nicht gefundene Spalten - angepasst an die tatsächliche Struktur der Datei
   if (!columnMapping['Driver First Name']) columnMapping['Driver First Name'] = 'A';
   if (!columnMapping['Driver Last Name']) columnMapping['Driver Last Name'] = 'B';
   if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'C';
   if (!columnMapping['Station']) columnMapping['Station'] = 'D';
-  if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'E';
-  if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'F';
-  if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G';
   
-  // The Excel screenshot shows that these are the actual data columns we want, not the rating columns
-  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';  // Direct risk value, not rating
-  if (!columnMapping['Braking']) columnMapping['Braking'] = 'K';  // Direct risk value, not rating
-  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'M';  // Direct risk value, not rating
-  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'W';  // Direct risk value, not rating
+  // German Excel format specific fallbacks
+  if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'K';
+  if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'L';
+  if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'M';
+  
+  // Updated risk columns based on image provided - Specifically for German Excel format
+  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'N';  // Beschl
+  if (!columnMapping['Braking']) columnMapping['Braking'] = 'O';  // Bremsen
+  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'P';  // Kurven
+  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'V';  // Tempo
   
   console.log("Spaltenzuordnung:", columnMapping);
   return columnMapping;
