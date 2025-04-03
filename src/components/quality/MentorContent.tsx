@@ -66,6 +66,7 @@ const MentorContent: React.FC = () => {
           />
         </div>
         <NoDataMessage
+          category="mentor"
           title="Keine Mentor Daten verfügbar"
           description="Bitte laden Sie eine Mentor Excel-Datei hoch."
           buttonText="Mentor Daten hochladen"

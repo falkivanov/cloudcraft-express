@@ -12,7 +12,7 @@ interface ConcessionsContentProps {
 
 const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData }) => {
   if (!concessionsData || !concessionsData.fileName) {
-    return <NoDataMessage category="Concessions" />;
+    return <NoDataMessage category="concessions" />;
   }
 
   return (

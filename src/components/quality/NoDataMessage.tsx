@@ -6,13 +6,21 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface NoDataMessageProps {
-  category: string;
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  onButtonClick?: () => void;
+  category?: string;
   className?: string;
   customMessage?: string;
 }
 
 const NoDataMessage: React.FC<NoDataMessageProps> = ({ 
-  category, 
+  title,
+  description,
+  buttonText,
+  onButtonClick,
+  category = 'default', // Provide a default value to prevent undefined
   className,
   customMessage 
 }) => {
@@ -59,7 +67,8 @@ const NoDataMessage: React.FC<NoDataMessageProps> = ({
   };
 
   const styles = getCategoryStyles();
-  const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+  // Format the display category safely
+  const displayCategory = category ? category.charAt(0).toUpperCase() + category.slice(1) : 'Daten';
 
   return (
     <div className={cn(
@@ -72,16 +81,23 @@ const NoDataMessage: React.FC<NoDataMessageProps> = ({
         {styles.icon}
       </div>
       <p className={cn("text-lg font-medium mb-3", styles.textColor)}>
-        Keine {displayCategory}-Daten verfügbar
+        {title || `Keine ${displayCategory}-Daten verfügbar`}
       </p>
       <p className="text-muted-foreground mb-4">
-        {customMessage || "Bitte laden Sie zuerst eine Datei hoch, um die Daten hier anzuzeigen."}
+        {description || customMessage || "Bitte laden Sie zuerst eine Datei hoch, um die Daten hier anzuzeigen."}
       </p>
-      <Button asChild>
-        <Link to="/file-upload" className="flex items-center gap-2">
-          <UploadIcon className="h-4 w-4" />
-          <span>Zur Upload-Seite</span>
-        </Link>
+      <Button 
+        onClick={onButtonClick} 
+        asChild={!onButtonClick}
+      >
+        {onButtonClick ? (
+          <span>{buttonText || "Zur Upload-Seite"}</span>
+        ) : (
+          <Link to="/file-upload" className="flex items-center gap-2">
+            <UploadIcon className="h-4 w-4" />
+            <span>{buttonText || "Zur Upload-Seite"}</span>
+          </Link>
+        )}
       </Button>
     </div>
   );

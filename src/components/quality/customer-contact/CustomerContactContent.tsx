@@ -15,7 +15,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ custome
   if (!customerContactData || driversData.length === 0) {
     return (
       <NoDataMessage
-        category="Customer Contact"
+        category="customer-contact"
         customMessage="Es wurden keine Customer Contact Daten gefunden. Bitte lade zuerst die HTML-Datei hoch."
       />
     );
