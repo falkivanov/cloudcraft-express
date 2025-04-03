@@ -15,7 +15,25 @@ export interface MentorTableData {
   drivers: MentorDriverData[];
 }
 
-export const useMentorDrivers = (data: MentorTableData | null) => {
+type SortField = 
+  | "firstName" 
+  | "lastName" 
+  | "overallRating" 
+  | "station" 
+  | "totalTrips" 
+  | "totalKm" 
+  | "totalHours" 
+  | "acceleration" 
+  | "braking" 
+  | "cornering" 
+  | "speeding" 
+  | "seatbelt";
+
+export const useMentorDrivers = (
+  data: MentorTableData | null, 
+  sortField: SortField = "lastName", 
+  sortDirection: 'asc' | 'desc' = 'asc'
+) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   // Load employee data from localStorage
@@ -74,8 +92,8 @@ export const useMentorDrivers = (data: MentorTableData | null) => {
     console.log('Employees with mentor data:', employeesByMentorName.size);
     console.log('Employees with name parsing:', employeesByNameParts.size);
     
-    // Sort drivers by station and then name
-    return data.drivers
+    // Map drivers with employee data
+    const mappedDrivers = data.drivers
       .map(driver => {
         // Create the same key structures for matching
         const mentorKey = `${(driver.firstName || '').toLowerCase()}_${(driver.lastName || '').toLowerCase()}`;
@@ -87,23 +105,57 @@ export const useMentorDrivers = (data: MentorTableData | null) => {
           employeeName: matchedEmployee?.name || '',
           transporterId: matchedEmployee?.transporterId || ''
         };
-      })
-      .sort((a, b) => {
-        // First sort by station
-        if (a.station < b.station) return -1;
-        if (a.station > b.station) return 1;
-        
-        // Then by last name
-        if (a.lastName < b.lastName) return -1;
-        if (a.lastName > b.lastName) return 1;
-        
-        // Then by first name
-        if (a.firstName < b.firstName) return -1;
-        if (a.firstName > b.firstName) return 1;
-        
-        return 0;
       });
-  }, [data, employees]);
+
+    // Apply sorting based on the provided field and direction
+    const sortedDrivers = [...mappedDrivers].sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      // Handle sorting based on field type
+      switch (sortField) {
+        case 'totalTrips':
+        case 'totalKm':
+        case 'totalHours':
+          valueA = typeof a[sortField] === 'number' ? a[sortField] : 0;
+          valueB = typeof b[sortField] === 'number' ? b[sortField] : 0;
+          break;
+        case 'acceleration':
+        case 'braking':
+        case 'cornering':
+        case 'speeding':
+        case 'seatbelt':
+          // Risk rating sorting logic - Low Risk < Medium Risk < High Risk
+          const getRiskValue = (risk: string | undefined) => {
+            if (!risk || risk === '-') return 0;
+            if (risk.includes('Low')) return 1;
+            if (risk.includes('Medium')) return 2;
+            if (risk.includes('High')) return 3;
+            return 0;
+          };
+          valueA = getRiskValue(a[sortField]);
+          valueB = getRiskValue(b[sortField]);
+          break;
+        case 'overallRating':
+          valueA = typeof a.overallRating === 'number' ? a.overallRating : 0;
+          valueB = typeof b.overallRating === 'number' ? b.overallRating : 0;
+          break;
+        default:
+          // For string values like firstName, lastName, station
+          valueA = String(a[sortField] || '').toLowerCase();
+          valueB = String(b[sortField] || '').toLowerCase();
+      }
+
+      // Apply sort direction
+      if (sortDirection === 'asc') {
+        return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+      } else {
+        return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+      }
+    });
+
+    return sortedDrivers;
+  }, [data, employees, sortField, sortDirection]);
 
   return {
     driversWithNames,
