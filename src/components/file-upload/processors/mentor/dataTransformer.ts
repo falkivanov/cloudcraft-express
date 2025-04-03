@@ -1,4 +1,3 @@
-
 import { cleanNumericValue } from "@/components/quality/scorecard/utils/parser/extractors/driver/dsp-weekly/numericExtractor";
 import { MentorDriverData } from "./types";
 
@@ -74,9 +73,14 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     // Clean and convert numeric values
     const totalTrips = cleanNumericValue(String(row['Total Trips'] || 0));
     
-    // Handle Total Hours as string or number
+    // Handle Total Hours
     let totalHours = row['Total Hours'] || 0;
-    if (typeof totalHours === 'string') {
+    
+    // Check if hours is in time format (HH:MM)
+    if (typeof totalHours === 'string' && totalHours.includes(':')) {
+      // Keep time format as is for proper display
+      totalHours = String(totalHours).trim();
+    } else if (typeof totalHours === 'string') {
       totalHours = cleanNumericValue(totalHours);
     }
     
@@ -133,6 +137,14 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
         if (numValue >= 1 && numValue <= 3) return 'Low Risk';
         if (numValue === 4 || numValue === 5) return 'Medium Risk';
         if (numValue > 5) return 'High Risk';
+      }
+      
+      // Process "Low", "Medium", "High" risk values
+      if (typeof value === 'string') {
+        const lowerValue = value.toLowerCase();
+        if (lowerValue.includes('low')) return 'Low Risk';
+        if (lowerValue.includes('med')) return 'Medium Risk';
+        if (lowerValue.includes('high')) return 'High Risk';
       }
       
       // Return the original value as a string

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,25 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
       // Otherwise just show as decimal
       return hours.toFixed(2);
     }
+    
+    // Check if hours is a time string in format hh:mm
+    if (typeof hours === 'string') {
+      // If it contains a colon, assume it's already in HH:MM format
+      if (hours.includes(':')) return hours;
+      
+      // Try to parse as a number
+      const numericValue = parseFloat(hours);
+      if (!isNaN(numericValue)) {
+        if (numericValue > 1000) {
+          const totalMinutes = Math.floor(numericValue / 60);
+          const hours24 = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+          return `${hours24}:${minutes.toString().padStart(2, '0')}`;
+        }
+        return numericValue.toFixed(2);
+      }
+    }
+    
     return String(hours || "-");
   };
   
@@ -59,8 +79,8 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
         </Badge>
       </TableCell>
       <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.distraction)}>
-          {driver.distraction || "-"}
+        <Badge variant="outline" className={getRatingBackground(driver.speeding)}>
+          {driver.speeding || "-"}
         </Badge>
       </TableCell>
     </TableRow>

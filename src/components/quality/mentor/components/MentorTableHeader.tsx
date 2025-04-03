@@ -16,7 +16,7 @@ const MentorTableHeader: React.FC = () => {
         <TableHead className="text-center">Beschl.</TableHead>
         <TableHead className="text-center">Bremsen</TableHead>
         <TableHead className="text-center">Kurven</TableHead>
-        <TableHead className="text-center">Ablenk.</TableHead>
+        <TableHead className="text-center">Tempo</TableHead>
       </TableRow>
     </TableHeader>
   );

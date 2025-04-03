@@ -59,7 +59,7 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     columnMapping['Acceleration'] = 'I';       // Acceleration Rating
     columnMapping['Braking'] = 'K';            // Braking Rating
     columnMapping['Cornering'] = 'M';          // Cornering Rating
-    columnMapping['Speeding'] = 'O';           // Speeding
+    columnMapping['Speeding'] = 'V';           // Speeding Rating - Updated to column V
     columnMapping['Seatbelt'] = 'Q';           // Seatbelt
     columnMapping['Following Distance'] = 'S'; // Following Distance
     columnMapping['Phone Distraction'] = 'U';  // Distraction
@@ -148,6 +148,10 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
       else if (lowerValue === 'ablenk.' || lowerValue === 'ablenk') {
         columnMapping['Phone Distraction'] = col;
       }
+      // Look for Speeding Rating - important column V
+      else if (lowerValue === 'speeding rating') {
+        columnMapping['Speeding'] = col;
+      }
     });
   }
   
@@ -164,7 +168,8 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
   if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';
   if (!columnMapping['Braking']) columnMapping['Braking'] = 'J';
   if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'K';
-  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'L';
+  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'V'; // Changed from 'L' to 'V'
+  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'O';
   
   console.log("Spaltenzuordnung:", columnMapping);
   return columnMapping;

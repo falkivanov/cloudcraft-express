@@ -89,13 +89,20 @@ function calculateTotalKm(driver: MentorDriverData): number {
 }
 
 /**
- * Format hours to be consistent
+ * Format hours to be consistent - improved to handle time formats
  */
 function formatHours(hours: number | string): number | string {
+  // If it's already a string in format "hh:mm" (contains a colon)
+  if (typeof hours === 'string' && hours.includes(':')) {
+    // Return as is, it's already in the right format
+    return hours;
+  }
+  
   if (typeof hours === 'number') {
     // If it's a very large number (likely seconds), convert to hours format
     if (hours > 1000) {
-      return Math.round(hours / 36) / 100; // Convert to hours with 2 decimal places
+      // Just return directly in seconds format
+      return hours;
     }
     return hours;
   }
@@ -105,9 +112,9 @@ function formatHours(hours: number | string): number | string {
   // Try to parse as number
   const numHours = parseFloat(String(hours).replace(/[^\d.-]/g, ''));
   if (!isNaN(numHours)) {
-    // If it's a very large number (likely seconds), convert to hours format
+    // If it's a very large number (likely seconds), return as is for proper formatting in the UI
     if (numHours > 1000) {
-      return Math.round(numHours / 36) / 100; // Convert to hours with 2 decimal places
+      return numHours;
     }
     return numHours;
   }
