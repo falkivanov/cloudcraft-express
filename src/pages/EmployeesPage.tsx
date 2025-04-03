@@ -19,6 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Names of employees to be removed
+const EMPLOYEES_TO_REMOVE = ["Stefan Wagner", "Laura Krüger", "Julia Becker"];
+
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
@@ -36,19 +39,32 @@ const EmployeesPage = () => {
       const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
       
       if (savedEmployees && savedEmployees.length > 0) {
-        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', savedEmployees.length);
-        setLoadedEmployees(savedEmployees);
+        // Filter out the employees to remove
+        const filteredEmployees = savedEmployees.filter(
+          emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+        );
         
-        // Toast message to confirm loading
-        toast(`${savedEmployees.length} Mitarbeiter geladen`, {
-          description: "Mitarbeiterdaten wurden erfolgreich geladen."
-        });
+        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', filteredEmployees.length);
+        
+        // If we filtered out employees, save the filtered list back to storage
+        if (filteredEmployees.length < savedEmployees.length) {
+          saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredEmployees);
+          toast.success("Mitarbeiterdaten aktualisiert", {
+            description: `${savedEmployees.length - filteredEmployees.length} Mitarbeiter wurden entfernt.`
+          });
+        }
+        
+        setLoadedEmployees(filteredEmployees);
       } else {
         console.log('EmployeesPage - Keine gespeicherten Mitarbeiter gefunden, verwende Beispieldaten');
-        setLoadedEmployees(initialEmployees);
+        // Make sure example data doesn't include the employees to remove
+        const filteredInitialEmployees = initialEmployees.filter(
+          emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+        );
+        setLoadedEmployees(filteredInitialEmployees);
         
-        // Save example employees immediately to localStorage
-        saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
+        // Save filtered example employees immediately to localStorage
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredInitialEmployees);
         
         toast("Beispieldaten geladen", {
           description: "Es wurden keine gespeicherten Mitarbeiterdaten gefunden. Beispieldaten wurden geladen."
@@ -56,10 +72,14 @@ const EmployeesPage = () => {
       }
     } catch (error) {
       console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', error);
-      setLoadedEmployees(initialEmployees);
+      // Make sure example data doesn't include the employees to remove
+      const filteredInitialEmployees = initialEmployees.filter(
+        emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+      );
+      setLoadedEmployees(filteredInitialEmployees);
       
-      // Save example employees to localStorage as fallback
-      saveToStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees);
+      // Save filtered example employees to localStorage as fallback
+      saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredInitialEmployees);
       
       toast.error("Fehler beim Laden der Daten", {
         description: "Beispieldaten wurden stattdessen geladen."
