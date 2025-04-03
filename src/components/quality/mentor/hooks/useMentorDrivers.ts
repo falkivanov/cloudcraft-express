@@ -1,10 +1,11 @@
+
 import { useMemo, useState, useEffect } from "react";
 import { loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
 import { Employee } from "@/types/employee";
 import { 
-  export type MentorDriver, 
-  export type MentorTableData, 
-  export type SortField 
+  MentorDriver, 
+  MentorTableData, 
+  SortField 
 } from "./useMentorDriversTypes";
 import { buildEmployeeMappings, matchDriverToEmployee } from "../utils/matchingUtils";
 import { sortDrivers } from "../utils/sortDrivers";
