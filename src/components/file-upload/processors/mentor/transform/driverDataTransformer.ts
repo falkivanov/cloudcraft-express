@@ -1,3 +1,4 @@
+
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -90,19 +91,22 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       }
     }
     
-    // Print out raw values for debugging
-    console.log("Raw risk values:", {
-      accel: row['Acceleration'],
-      brake: row['Braking'],
-      corner: row['Cornering'],
-      speed: row['Speeding'],
+    // Print out raw values for debugging - DIRECTLY ACCESS THE SPECIFIC COLUMNS
+    console.log("Raw risk values from specific columns:", {
+      accel: row['H'],  // Column H
+      brake: row['J'],  // Column J
+      corner: row['L'], // Column L
+      speed: row['N'],  // Column N
+      seatbelt: row['V'] // Column V
     });
-
-    // Extract risk values using the dedicated risk extractor
-    const acceleration = extractRiskRating(row['Acceleration']);
-    const braking = extractRiskRating(row['Braking']);
-    const cornering = extractRiskRating(row['Cornering']);
-    const speeding = extractRiskRating(row['Speeding']);
+    
+    // Process risk values from Acceleration column using the dedicated risk extractor
+    // First try the mapped columns, then fall back to direct column access
+    const acceleration = extractRiskRating(row['Acceleration'] || row['H'] || '-');
+    const braking = extractRiskRating(row['Braking'] || row['J'] || '-');
+    const cornering = extractRiskRating(row['Cornering'] || row['L'] || '-');
+    const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
+    const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
 
     // Log processed values for debugging
     console.log("Processed risk values:", { 
@@ -110,7 +114,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       accel: acceleration, 
       brake: braking, 
       corner: cornering, 
-      speed: speeding 
+      speed: speeding,
+      seatbelt: seatbelt
     });
 
     return {
@@ -126,7 +131,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       braking,
       cornering,
       speeding,
-      seatbelt: extractRiskRating(row['Seatbelt']),
+      seatbelt,
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction'])
     };

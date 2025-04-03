@@ -116,22 +116,23 @@ function mapGermanHeaders(headerRow: any, columnMapping: Record<string, string>)
  * @param columnMapping The column mapping to fill with fallbacks
  */
 function setFallbackMappings(columnMapping: Record<string, string>): void {
-  // Fallback values for columns not found - adapted to the actual structure of the file
+  // Fallback values for columns not found - using specific column letters requested by user
   if (!columnMapping['Driver First Name']) columnMapping['Driver First Name'] = 'A';
   if (!columnMapping['Driver Last Name']) columnMapping['Driver Last Name'] = 'B';
   if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'C';
   if (!columnMapping['Station']) columnMapping['Station'] = 'D';
   
-  // German Excel format specific fallbacks
+  // German Excel format specific fallbacks for base data
   if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'K';
   if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'L';
   if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'M';
   
-  // Risk columns fallbacks based on image provided - Specifically for German Excel format
-  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'N';  // Beschl
-  if (!columnMapping['Braking']) columnMapping['Braking'] = 'O';  // Bremsen
-  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'P';  // Kurven
-  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'V';  // Tempo
+  // DIRECT TARGETING OF RISK COLUMNS - using the specific columns requested by user
+  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'H';  // Column H
+  if (!columnMapping['Braking']) columnMapping['Braking'] = 'J';  // Column J
+  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'L';  // Column L
+  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'N';  // Column N
+  if (!columnMapping['Seatbelt']) columnMapping['Seatbelt'] = 'V';  // Column V
 }
 
 /**

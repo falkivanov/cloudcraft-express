@@ -87,8 +87,11 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
       <TableCell className="text-center">
         {displayRiskValue(driver.speeding)}
       </TableCell>
+      <TableCell className="text-center">
+        {displayRiskValue(driver.seatbelt)}
+      </TableCell>
     </TableRow>
   );
-};
+}
 
 export default MentorTableRow;

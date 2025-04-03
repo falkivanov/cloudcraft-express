@@ -4,19 +4,20 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const MentorTableHeader: React.FC = () => {
   return (
-    <TableHeader className="bg-slate-50">
+    <TableHeader>
       <TableRow>
-        <TableHead className="w-[100px]">Vorname</TableHead>
-        <TableHead className="w-[100px]">Nachname</TableHead>
-        <TableHead className="text-center">FICO® Score</TableHead>
+        <TableHead>First Name</TableHead>
+        <TableHead>Last Name</TableHead>
+        <TableHead className="text-center">FICO Score</TableHead>
         <TableHead className="text-center">Station</TableHead>
-        <TableHead className="text-right">Fahrten</TableHead>
-        <TableHead className="text-right">Km</TableHead>
-        <TableHead className="text-right">Stunden</TableHead>
-        <TableHead className="text-center">Beschl.</TableHead>
-        <TableHead className="text-center">Bremsen</TableHead>
-        <TableHead className="text-center">Kurven</TableHead>
-        <TableHead className="text-center">Tempo</TableHead>
+        <TableHead className="text-right">Trips</TableHead>
+        <TableHead className="text-right">KM</TableHead>
+        <TableHead className="text-right">Hours</TableHead>
+        <TableHead className="text-center">Acceleration</TableHead>
+        <TableHead className="text-center">Braking</TableHead>
+        <TableHead className="text-center">Cornering</TableHead>
+        <TableHead className="text-center">Speeding</TableHead>
+        <TableHead className="text-center">Seatbelt</TableHead>
       </TableRow>
     </TableHeader>
   );
