@@ -95,7 +95,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
             
             {selectedCategory === "mentor" && (
               <div className="mt-2 text-xs text-green-600">
-                <p>PDF-Dateien mit Mentor-Programm Informationen werden verarbeitet und analysiert.</p>
+                <p>Excel-Dateien vom Mentor-Programm werden verarbeitet. Das System erwartet Dateien im Format "Driver Report YYYY-MM-DD.xlsx".</p>
+                <p className="mt-1">Die Datei sollte Spalten für Fahrernamen, Station, Fahrten, Stunden und verschiedene Risikobewertungen enthalten.</p>
               </div>
             )}
           </div>
@@ -107,6 +108,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
             <AlertTitle>Hinweis zur Scorecard-Verarbeitung</AlertTitle>
             <AlertDescription>
               Nach dem Hochladen werden die Daten automatisch extrahiert und können anschließend unter "Qualität → Scorecard" angezeigt werden.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {selectedCategory === "mentor" && (
+          <Alert variant="warning" className="bg-green-50 text-green-800 border-green-200">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Hinweis zur Mentor-Verarbeitung</AlertTitle>
+            <AlertDescription>
+              Nach dem Hochladen werden die Mentor-Daten automatisch extrahiert und können anschließend unter "Qualität → Mentor" angezeigt werden.
+              Das System erkennt automatisch die Kalenderwoche basierend auf dem Datum im Dateinamen.
             </AlertDescription>
           </Alert>
         )}

@@ -1,146 +1,113 @@
 
-import { format, addDays } from "date-fns";
-import { WeekInfo, MentorDriverData } from "./types";
+import { MentorDriverData, MentorReport, WeekInfo } from "./types";
 
 /**
- * Extrahiere Wocheninformationen aus dem Dateinamen
- * Format: Driver_Report_YYYY-MM-DD.xlsx (Datum ist immer der Sonntag VOR der berichteten KW)
+ * Extrakt Datum und Wocheninformationen aus dem Dateinamen
  */
-export function extractWeekInfo(filename: string): WeekInfo {
-  // Erwartetes Format: Driver_Report_YYYY-MM-DD.xlsx
-  const dateMatch = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
+export function extractWeekInfo(fileName: string): WeekInfo {
+  // Suchen nach Datum im Format YYYY-MM-DD im Dateinamen
+  const dateRegex = /(20\d{2})[_\-]?(\d{2})[_\-]?(\d{2})/;
+  const dateMatch = fileName.match(dateRegex);
   
   if (dateMatch) {
-    const year = parseInt(dateMatch[1], 10);
-    const month = parseInt(dateMatch[2], 10) - 1; // JS-Monate sind 0-indiziert
-    const day = parseInt(dateMatch[3], 10);
+    const year = parseInt(dateMatch[1]);
+    const month = parseInt(dateMatch[2]) - 1; // JavaScript Monate sind 0-basiert
+    const day = parseInt(dateMatch[3]);
     
-    // Das Datum aus dem Dateinamen ist der Sonntag VOR der berichteten KW
-    const reportDate = new Date(year, month, day);
+    // Datum aus dem Dateinamen erstellen
+    const fileDate = new Date(year, month, day);
+    console.info(`Extrahierte Datumsinformationen: Datum=${year}-${month+1}-${day}`);
+
+    // Das Datum im Dateinamen ist der Sonntag VOR der Berichtswoche
+    // Die KW des Berichts ist also die KW NACH dem Datum im Dateinamen
+    const reportDate = new Date(fileDate);
+    reportDate.setDate(reportDate.getDate() + 1); // Ein Tag später = Montag der Berichtswoche
     
-    // Prüfen, ob das Datum tatsächlich ein Sonntag ist
-    if (reportDate.getDay() !== 0) {
-      console.warn("Das extrahierte Datum ist kein Sonntag. Die KW-Berechnung könnte ungenau sein.");
-    }
+    // Kalenderwoche berechnen - für die Berichtswoche (eine Woche später)
+    const weekNumber = getWeekNumber(reportDate);
+    const reportYear = reportDate.getFullYear();
     
-    // Die KW für den FOLGENDEN Montag nehmen
-    // Also: Sonntag + 1 Tag = Montag der berichteten KW
-    const mondayDate = addDays(reportDate, 1);
+    console.info(`Datum=${year}-${month+1}-${day}, KW${weekNumber}/${reportYear}`);
     
-    // Die KW für diesen Montag ermitteln
-    const weekNumber = getISOWeek(mondayDate);
-    const reportYear = mondayDate.getFullYear();
-    
-    console.log(`Extrahierte Datumsinformationen: Datum=${format(reportDate, 'yyyy-MM-dd')}, KW${weekNumber}/${reportYear}`);
-    
-    return { weekNumber, year: reportYear };
+    return {
+      date: fileDate,
+      reportDate: reportDate,
+      weekNumber,
+      year: reportYear
+    };
   }
   
-  // Fallback, wenn kein Datum im Dateinamen gefunden wurde
-  console.warn("Kein Datum im Dateinamen gefunden. Verwende aktuelle Woche als Fallback.");
-  const currentDate = new Date();
+  // Fallback: aktuelle Woche verwenden
+  const now = new Date();
+  const weekNumber = getWeekNumber(now);
+  console.warn("Kein Datum im Dateinamen gefunden, verwende aktuelle Woche");
+  
   return {
-    weekNumber: getISOWeek(currentDate),
-    year: currentDate.getFullYear()
+    date: now,
+    reportDate: now,
+    weekNumber,
+    year: now.getFullYear()
   };
 }
 
 /**
- * ISO-Kalenderwoche (1-53) berechnen
+ * Berechnet die ISO-Kalenderwoche für ein Datum
  */
-export function getISOWeek(date: Date): number {
-  // Eine Kopie des Datumobjekts erstellen
-  const target = new Date(date.valueOf());
-  
-  // ISO-Woche beginnt am Montag
-  const dayNr = (date.getDay() + 6) % 7;
-  
-  // Target auf den Donnerstag dieser Woche setzen
-  target.setDate(target.getDate() - dayNr + 3);
-  
-  // Timestamp von Target speichern
-  const jan4 = new Date(target.getFullYear(), 0, 4);
-  
-  // Volle Wochen zum nächsten Donnerstag berechnen
-  const dayDiff = (target.getTime() - jan4.getTime()) / 86400000;
-  
-  // Wochennummer zurückgeben
-  return 1 + Math.floor(dayDiff / 7);
+function getWeekNumber(date: Date): number {
+  const tempDate = new Date(date.getTime());
+  tempDate.setHours(0, 0, 0, 0);
+  tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+  const week1 = new Date(tempDate.getFullYear(), 0, 4);
+  return 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
 }
 
 /**
- * Standardisiere die Risikostufen-Texte (Verarbeitet Variationen wie "Low Risk", "low risk", etc.)
+ * Verarbeitet die Rohdaten aus der Excel-Datei
  */
-export function standardizeRiskLevel(risk: string | undefined): string {
-  if (!risk) return "Unknown";
+export function processMentorData(rawData: any[], weekInfo: WeekInfo): MentorReport {
+  console.info(`Verarbeite ${rawData.length} Zeilen aus der Excel-Datei`);
   
-  const lowerRisk = risk.toLowerCase();
-  
-  if (lowerRisk.includes("high")) return "High Risk";
-  if (lowerRisk.includes("medium")) return "Medium Risk";
-  if (lowerRisk.includes("low")) return "Low Risk";
-  
-  return risk; // Original zurückgeben, wenn keine Übereinstimmung gefunden wurde
-}
-
-/**
- * Verarbeite Rohdaten des Mentor-Programms in ein strukturiertes Format
- * Extrahiert nur die relevanten Spalten: A,B,C,D,E,F,G,H,J,L,N,V
- */
-export function processMentorData(rawData: any[], weekInfo: WeekInfo): {
-  weekNumber: number;
-  year: number;
-  reportDate: string;
-  fileName: string;
-  drivers: MentorDriverData[];
-} {
-  const drivers: MentorDriverData[] = [];
-  
-  // Zeilen herausfiltern, die nicht die erforderlichen Daten haben
-  const validRows = rawData.filter(row => 
-    row["First Name"] && 
-    (row["FICOP Safe Driving Station"] || row["FICOP Safe Drvn Station"])
-  );
-  
-  console.log(`Verarbeite ${validRows.length} gültige Zeilen aus ${rawData.length} Gesamtzeilen`);
-  
-  for (const row of validRows) {
-    // Station-Feld könnte unterschiedlich benannt sein
-    const stationField = row["FICOP Safe Driving Station"] || row["FICOP Safe Drvn Station"];
-    const station = typeof stationField === 'string' ? stationField : String(stationField);
+  // Überspringe Headerzeilen (in der Regel die ersten 1-2 Zeilen)
+  const validRows = rawData.filter(row => {
+    // Filtere Zeilen ohne Namen oder echte Daten aus
+    const hasName = row['Driver First Name'] && 
+                   typeof row['Driver First Name'] === 'string' && 
+                   row['Driver First Name'].trim() !== '';
     
-    // Neue relevante Spalten extrahieren (J,L,N,V)
-    const seatbeltRating = row["Seatbelt Rating"] || row["Seatbelt"];
-    const speedingRating = row["Speeding Rating"] || row["Speeding"];
-    const followingRating = row["Following Distance Rating"] || row["Following Distance"];
-    const overallRating = row["FICO Rating"] || row["Overall Rating"] || row["FICO Score"];
+    // Prüfe zusätzlich, ob es sich um eine Datenzeile handelt
+    const isDataRow = hasName && 
+                     (row['Station'] || row['Total Trips'] || 
+                      row['Total Hours'] || row['Driver Last Name']);
     
-    const driver: MentorDriverData = {
-      firstName: row["First Name"],
-      lastName: row["Last Name"] || "",
-      station: station,
-      totalTrips: parseInt(row["Total Driver Trips"] || "0", 10),
-      totalKm: parseFloat(row["Total Driver km"] || "0"),
-      totalHours: row["Total Driver Hours"] || "0",
-      acceleration: standardizeRiskLevel(row["Acceleration Rating"]),
-      braking: standardizeRiskLevel(row["Braking Rating"]),
-      cornering: standardizeRiskLevel(row["Cornering Rating"]),
-      distraction: standardizeRiskLevel(row["Distraction Rating"]),
-      // Neue Felder hinzufügen
-      seatbelt: standardizeRiskLevel(seatbeltRating),
-      speeding: standardizeRiskLevel(speedingRating),
-      following: standardizeRiskLevel(followingRating),
-      overallRating: overallRating ? String(overallRating) : "Unknown"
+    return isDataRow;
+  });
+  
+  console.info(`Verarbeite ${validRows.length} gültige Zeilen aus ${rawData.length} Gesamtzeilen`);
+  
+  // Extrahiere die benötigten Daten aus den validen Zeilen
+  const drivers: MentorDriverData[] = validRows.map(row => {
+    return {
+      firstName: row['Driver First Name'] || '',
+      lastName: row['Driver Last Name'] || '',
+      station: row['Station'] || '',
+      totalTrips: row['Total Trips'] || 0,
+      totalHours: row['Total Hours'] || 0,
+      overallRating: row['Overall Rating'] || '',
+      acceleration: row['Acceleration'] || '',
+      braking: row['Braking'] || '',
+      cornering: row['Cornering'] || '',
+      speeding: row['Speeding'] || '',
+      seatbelt: row['Seatbelt'] || '',
+      following: row['Following Distance'] || '',
+      distraction: row['Phone Distraction'] || ''
     };
-    
-    drivers.push(driver);
-  }
+  });
   
   return {
     weekNumber: weekInfo.weekNumber,
     year: weekInfo.year,
-    reportDate: format(new Date(), "yyyy-MM-dd"),
     fileName: '',
+    reportDate: weekInfo.reportDate.toISOString(),
     drivers
   };
 }

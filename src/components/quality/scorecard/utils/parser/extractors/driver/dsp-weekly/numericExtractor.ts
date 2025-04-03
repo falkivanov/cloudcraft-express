@@ -3,14 +3,14 @@
  * Extract numeric values from text with different formats
  */
 export function extractNumericValues(text: string): number[] {
-  const numericPattern = /\b(\d+(?:\.\d+)?)\b/g;
+  const numericPattern = /\b(\d+(?:[.,]\d+)?)\b/g;
   const matches = Array.from(text.matchAll(numericPattern));
   
   if (!matches || matches.length === 0) {
     return [];
   }
   
-  return matches.map(match => parseFloat(match[1]));
+  return matches.map(match => parseFloat(match[1].replace(',', '.')));
 }
 
 /**
