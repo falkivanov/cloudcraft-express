@@ -52,7 +52,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
     return String(hours);
   };
 
-  // Helper function to display risk values properly with tooltip
+  // Helper function to display risk values properly with tooltip (now in a single line)
   const displayRiskValue = (value: string | undefined): React.ReactNode => {
     if (!value || value === "-" || value === "Unknown") {
       return <span>-</span>;
@@ -89,7 +89,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
             <TooltipTrigger asChild>
               <div className="cursor-help">
                 {driver.employeeName ? (
-                  <span className="font-semibold">{driver.employeeName}</span>
+                  <span className="font-semibold text-black">{driver.employeeName}</span>
                 ) : (
                   <span className="text-muted-foreground">ID fehlt</span>
                 )}
@@ -122,19 +122,19 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
       <TableCell className="text-right">
         {formatHours(driver.totalHours)}
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center whitespace-nowrap">
         {displayRiskValue(driver.acceleration)}
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center whitespace-nowrap">
         {displayRiskValue(driver.braking)}
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center whitespace-nowrap">
         {displayRiskValue(driver.cornering)}
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center whitespace-nowrap">
         {displayRiskValue(driver.speeding)}
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center whitespace-nowrap">
         {displayRiskValue(driver.seatbelt)}
       </TableCell>
     </TableRow>

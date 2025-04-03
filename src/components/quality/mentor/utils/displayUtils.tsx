@@ -33,21 +33,22 @@ export function getScoreDisplay(score: string | number | undefined): React.React
     : score;
   
   if (!isNaN(numScore)) {
-    // FICO score thresholds
-    if (numScore >= 800) {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+    // Updated score thresholds based on new requirements
+    if (numScore >= 800 && numScore <= 850) {
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
         {numScore.toFixed(0)}
       </Badge>;
-    } else if (numScore >= 700) {
-      return <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-200">
+    } else if (numScore >= 710 && numScore <= 799) {
+      return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
         {numScore.toFixed(0)}
       </Badge>;
-    } else if (numScore >= 600) {
-      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+    } else if (numScore <= 709) {
+      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
         {numScore.toFixed(0)}
       </Badge>;
     } else {
-      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+      // For any scores outside the specified ranges
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
         {numScore.toFixed(0)}
       </Badge>;
     }

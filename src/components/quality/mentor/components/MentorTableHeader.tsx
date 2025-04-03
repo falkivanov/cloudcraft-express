@@ -64,11 +64,11 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
             {sortField === 'totalHours' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
-        <TableHead className="text-center">Beschl.</TableHead>
-        <TableHead className="text-center">Bremsen</TableHead>
-        <TableHead className="text-center">Kurven</TableHead>
-        <TableHead className="text-center">Tempo</TableHead>
-        <TableHead className="text-center">Gurt</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Beschl.</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Bremsen</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Kurven</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Tempo</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Gurt</TableHead>
       </TableRow>
     </TableHeader>
   );
