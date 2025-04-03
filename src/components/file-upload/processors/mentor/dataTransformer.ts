@@ -80,7 +80,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours = cleanNumericValue(totalHours);
     }
     
-    // Extract total kilometers - Improved detection for "Total Driver km" field
+    // Extract total kilometers with improved fallback detection
     let totalKm = 0;
     if (row['Total Driver km'] !== undefined) {
       totalKm = cleanNumericValue(String(row['Total Driver km'] || 0));
@@ -90,11 +90,35 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalKm = cleanNumericValue(String(row['Total Kilometers'] || 0));
     } else if (row['Total Distance'] !== undefined) {
       totalKm = cleanNumericValue(String(row['Total Distance'] || 0));
-    } else if (row['F'] !== undefined) {
-      // Fallback to column F if it's numeric (common for Total Driver km)
-      const value = row['F'];
-      if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
-        totalKm = cleanNumericValue(String(value));
+    } else if (row['Miles'] !== undefined || row['Total Miles'] !== undefined) {
+      // Convert miles to kilometers if that's what we have
+      const miles = cleanNumericValue(String(row['Miles'] || row['Total Miles'] || 0));
+      totalKm = miles * 1.60934; // Miles to km conversion
+    } else {
+      // Additional fallback checks for common patterns
+      for (const key of Object.keys(row)) {
+        if (
+          key.toLowerCase().includes('km') || 
+          key.toLowerCase().includes('kilometer') || 
+          key.toLowerCase().includes('distance')
+        ) {
+          const value = row[key];
+          if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
+            totalKm = cleanNumericValue(String(value));
+            break;
+          }
+        }
+      }
+      
+      // Last resort: check columns by position (F, G, H often contain distance)
+      if (totalKm === 0) {
+        for (const col of ['F', 'G', 'H']) {
+          const value = row[col];
+          if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
+            totalKm = cleanNumericValue(String(value));
+            break;
+          }
+        }
       }
     }
     

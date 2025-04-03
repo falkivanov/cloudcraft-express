@@ -1,65 +1,97 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, CalendarIcon, UploadIcon } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
 import MentorTable from "./mentor/MentorTable";
+import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
 import NoDataMessage from "./NoDataMessage";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
+import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
 
-interface MentorContentProps {
-  mentorData: any | null;
-}
+const MentorContent: React.FC = () => {
+  const [mentorData, setMentorData] = useState<{
+    weekNumber: number;
+    year: number;
+    drivers: MentorDriverData[];
+  } | null>(null);
+  
+  const navigate = useNavigate();
+  const { selectedWeek, setSelectedWeek, weekData } = useMentorWeek();
 
-const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
-  if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
-    return <NoDataMessage category="Mentor" />;
-  }
+  useEffect(() => {
+    const handleMentorDataRemoved = () => {
+      setMentorData(null);
+    };
 
-  // Format date in German format
-  const getFormattedDate = () => {
-    if (!mentorData.reportDate) return "";
+    window.addEventListener("mentorDataRemoved", handleMentorDataRemoved);
     
+    return () => {
+      window.removeEventListener("mentorDataRemoved", handleMentorDataRemoved);
+    };
+  }, []);
+
+  useEffect(() => {
     try {
-      const date = new Date(mentorData.reportDate);
-      return format(date, "dd.MM.yyyy");
+      const storedData = localStorage.getItem("mentorData");
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        // Check if data matches the selected week
+        if (data.weekNumber === weekData.weekNumber && data.year === weekData.year) {
+          setMentorData(data);
+        } else {
+          // TODO: In the future, we might implement week-specific storage like in Scorecard
+          setMentorData(null);
+        }
+      } else {
+        setMentorData(null);
+      }
     } catch (error) {
-      return mentorData.reportDate;
+      console.error("Error loading mentor data:", error);
+      setMentorData(null);
     }
+  }, [weekData]);
+
+  const handleUploadClick = () => {
+    navigate("/file-upload");
   };
 
+  if (!mentorData) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <MentorWeekSelector 
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+          />
+        </div>
+        <NoDataMessage
+          title="Keine Mentor Daten verfügbar"
+          description="Bitte laden Sie eine Mentor Excel-Datei hoch."
+          buttonText="Mentor Daten hochladen"
+          onButtonClick={handleUploadClick}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <MentorWeekSelector 
+          selectedWeek={selectedWeek}
+          setSelectedWeek={setSelectedWeek}
+        />
+        <Button onClick={handleUploadClick}>Neue Mentor Daten hochladen</Button>
+      </div>
+
       <Card>
-        <CardHeader className="bg-gradient-to-r from-indigo-50 to-slate-50 border-b">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-indigo-500" /> 
-              <span className="text-indigo-700">Mentor Auswertung - KW{mentorData.weekNumber}/{mentorData.year}</span>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/file-upload" className="flex items-center gap-2">
-                <UploadIcon className="h-4 w-4" />
-                <span>Neue Datei hochladen</span>
-              </Link>
-            </Button>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">
+            Mentor Übersicht KW{mentorData.weekNumber}/{mentorData.year}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Dateiname: {mentorData.fileName || 'unbekannt'}</span>
-            </div>
-            <span className="text-sm text-muted-foreground mx-2">
-              • Daten vom {getFormattedDate()}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              • {mentorData.drivers?.length || 0} Fahrer
-            </span>
-          </div>
-          
+        <CardContent>
           <MentorTable data={mentorData} />
         </CardContent>
       </Card>

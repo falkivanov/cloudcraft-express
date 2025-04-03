@@ -2,6 +2,7 @@
 import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { MentorDataProcessor } from "./mentor/MentorDataProcessor";
+import { addItemToHistory } from "@/utils/fileUploadHistory";
 
 /**
  * Specialized processor for Mentor Excel files
@@ -35,6 +36,17 @@ export class MentorProcessor extends BaseFileProcessor {
       
       // Store in localStorage
       localStorage.setItem("mentorData", JSON.stringify(processedData));
+      
+      // Add to upload history
+      addItemToHistory({
+        name: this.file.name,
+        type: "excel",
+        timestamp: new Date().toISOString(),
+        category: "mentor",
+        weekNumber: processedData.weekNumber,
+        year: processedData.year,
+        driversCount: processedData.drivers.length
+      });
       
       if (showToasts) {
         toast.success(`Mentor Datei erfolgreich verarbeitet: ${this.file.name}`, {
