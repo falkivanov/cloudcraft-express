@@ -1,3 +1,4 @@
+
 import { MentorDriverData, MentorReport } from "../types";
 
 /**
@@ -91,12 +92,25 @@ function calculateTotalKm(driver: MentorDriverData): number {
  * Format hours to be consistent
  */
 function formatHours(hours: number | string): number | string {
-  if (typeof hours === 'number') return hours;
+  if (typeof hours === 'number') {
+    // If it's a very large number (likely seconds), convert to hours format
+    if (hours > 1000) {
+      return Math.round(hours / 36) / 100; // Convert to hours with 2 decimal places
+    }
+    return hours;
+  }
+  
   if (!hours) return 0;
   
   // Try to parse as number
   const numHours = parseFloat(String(hours).replace(/[^\d.-]/g, ''));
-  if (!isNaN(numHours)) return numHours;
+  if (!isNaN(numHours)) {
+    // If it's a very large number (likely seconds), convert to hours format
+    if (numHours > 1000) {
+      return Math.round(numHours / 36) / 100; // Convert to hours with 2 decimal places
+    }
+    return numHours;
+  }
   
   // Return original if not parseable
   return hours;
@@ -106,10 +120,20 @@ function formatHours(hours: number | string): number | string {
  * Format risk ratings to be consistent
  */
 function formatRating(rating: string): string {
-  if (!rating) return "Unknown";
+  if (!rating || rating === "-") return "Unknown";
   
   const lowerRating = rating.toLowerCase();
   
+  // Handle numeric ratings (German style)
+  if (/^\d+(\.\d+)?$/.test(rating)) {
+    const numValue = parseFloat(rating);
+    if (numValue === 0) return "-";
+    if (numValue >= 1 && numValue <= 3) return "Low Risk";
+    if (numValue === 4 || numValue === 5) return "Medium Risk";
+    if (numValue > 5) return "High Risk";
+  }
+  
+  // Handle text-based ratings
   if (lowerRating.includes('high')) {
     return "High Risk";
   } else if (lowerRating.includes('med')) {

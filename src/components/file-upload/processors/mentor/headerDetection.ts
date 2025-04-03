@@ -23,7 +23,12 @@ export function findHeaderRow(rawData: any[]): any | null {
       // Format 2: Spalten B und D enthalten typische Werte
       (row['B'] && typeof row['B'] === 'string' && row['B'].includes('Last Name')) ||
       // Format 3: Mehrere Spalten mit typischen Header-Namen
-      (row['D'] && typeof row['D'] === 'string' && row['D'].includes('Station'))
+      (row['D'] && typeof row['D'] === 'string' && row['D'].includes('Station')) ||
+      // Format 4: Mehrere Spalten für Risikowerte
+      (row['I'] && typeof row['I'] === 'string' && (
+        row['I'].includes('Beschl') || 
+        row['I'].includes('Accel')
+      ))
     ) {
       console.log(`Header-Zeile gefunden in Zeile ${i+1}`, row);
       return row;
@@ -74,7 +79,7 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
         columnMapping['Driver Last Name'] = col;
       }
       // FICO Score-Zuordnung
-      else if (lowerValue.includes('fico') || lowerValue.includes('score')) {
+      else if (lowerValue.includes('fico') || lowerValue.includes('score') || lowerValue.includes('gesamt')) {
         columnMapping['Overall Rating'] = col;
       }
       // Station-Zuordnung
@@ -83,69 +88,65 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
       }
       // Fahrten-Zuordnung
       else if ((lowerValue.includes('total') && lowerValue.includes('trip')) ||
-                lowerValue === 'trips') {
+                lowerValue === 'trips' || lowerValue.includes('fahrten')) {
         columnMapping['Total Trips'] = col;
       }
       // KM-Zuordnung - Verbesserte Erkennung
       else if ((lowerValue.includes('total') && (lowerValue.includes('km') || lowerValue.includes('driver km'))) || 
                 lowerValue.includes('kilometers') ||
-                lowerValue.includes('distance')) {
+                lowerValue.includes('distance') ||
+                lowerValue === 'km') {
         columnMapping['Total Driver km'] = col;
       }
       // Stunden-Zuordnung
       else if ((lowerValue.includes('total') && lowerValue.includes('hour')) ||
-               lowerValue === 'hours') {
+               lowerValue === 'hours' || lowerValue.includes('stunden')) {
         columnMapping['Total Hours'] = col;
       }
-      // Metriken-Zuordnung
-      else if (lowerValue.includes('acceleration')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Acceleration'] = col;
-        } else {
-          columnMapping['Acceleration'] = col;
-        }
+      // Metriken-Zuordnung mit deutschen und englischen Begriffen
+      else if (lowerValue.includes('acceleration') || lowerValue.includes('beschl')) {
+        columnMapping['Acceleration'] = col;
       }
-      else if (lowerValue.includes('braking')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Braking'] = col;
-        } else {
-          columnMapping['Braking'] = col;
-        }
+      else if (lowerValue.includes('braking') || lowerValue.includes('bremsen')) {
+        columnMapping['Braking'] = col;
       }
-      else if (lowerValue.includes('cornering')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Cornering'] = col;
-        } else {
-          columnMapping['Cornering'] = col;
-        }
+      else if (lowerValue.includes('cornering') || lowerValue.includes('kurven')) {
+        columnMapping['Cornering'] = col;
       }
-      else if (lowerValue.includes('speeding')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Speeding'] = col;
-        } else {
-          columnMapping['Speeding'] = col;
-        }
+      else if (lowerValue.includes('speeding') || lowerValue.includes('tempo')) {
+        columnMapping['Speeding'] = col;
       }
-      else if (lowerValue.includes('seatbelt')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Seatbelt'] = col;
-        } else {
-          columnMapping['Seatbelt'] = col;
-        }
+      else if (lowerValue.includes('seatbelt') || lowerValue.includes('gurt')) {
+        columnMapping['Seatbelt'] = col;
       }
-      else if (lowerValue.includes('following')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Following Distance'] = col;
-        } else {
-          columnMapping['Following Distance'] = col;
-        }
+      else if (lowerValue.includes('following') || lowerValue.includes('abstand')) {
+        columnMapping['Following Distance'] = col;
       }
-      else if (lowerValue.includes('distraction') || lowerValue.includes('phone')) {
-        if (lowerValue.includes('rating')) {
-          columnMapping['Phone Distraction'] = col;
-        } else {
-          columnMapping['Phone Distraction'] = col;
-        }
+      else if (lowerValue.includes('distraction') || lowerValue.includes('phone') || lowerValue.includes('ablenk')) {
+        columnMapping['Phone Distraction'] = col;
+      }
+    });
+  }
+  
+  // Scan all column headers for special German terms
+  if (headerRow) {
+    Object.entries(headerRow).forEach(([col, value]) => {
+      if (typeof value !== 'string') return;
+      
+      const lowerValue = value.toLowerCase();
+      
+      // German-specific column mappings
+      if (lowerValue === 'beschl.' || lowerValue === 'beschl') {
+        columnMapping['Acceleration'] = col;
+      } 
+      else if (lowerValue === 'bremsen' || lowerValue === 'bremse') {
+        columnMapping['Braking'] = col;
+      }
+      else if (lowerValue === 'kurven' || lowerValue === 'kurve') {
+        columnMapping['Cornering'] = col;
+      }
+      else if (lowerValue === 'ablenk.' || lowerValue === 'ablenk') {
+        columnMapping['Phone Distraction'] = col;
       }
     });
   }
@@ -158,10 +159,12 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
   if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'E';
   if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'F';
   if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G';
+  
+  // Map Risk columns based on image shown (using appropriate positions)
   if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';
-  if (!columnMapping['Braking']) columnMapping['Braking'] = 'K';
-  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'M';
-  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'O';
+  if (!columnMapping['Braking']) columnMapping['Braking'] = 'J';
+  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'K';
+  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'L';
   
   console.log("Spaltenzuordnung:", columnMapping);
   return columnMapping;

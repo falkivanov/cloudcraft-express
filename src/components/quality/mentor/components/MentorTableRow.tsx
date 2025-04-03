@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,22 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
   const firstName = driver.firstName || "";
   const lastName = driver.lastName || "";
   
+  // Format hours correctly
+  const formatHours = (hours: number | string): string => {
+    if (typeof hours === 'number') {
+      // Format as HH:MM if it's a large number (likely seconds)
+      if (hours > 1000) {
+        const totalMinutes = Math.floor(hours / 60);
+        const hours24 = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours24}:${minutes.toString().padStart(2, '0')}`;
+      }
+      // Otherwise just show as decimal
+      return hours.toFixed(2);
+    }
+    return String(hours || "-");
+  };
+  
   return (
     <TableRow className="hover:bg-slate-50">
       <TableCell className="font-medium">{firstName}</TableCell>
@@ -26,9 +41,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
       <TableCell className="text-right">{driver.totalTrips}</TableCell>
       <TableCell className="text-right">{driver.totalKm > 0 ? Number(driver.totalKm).toFixed(2) : "-"}</TableCell>
       <TableCell className="text-right">
-        {typeof driver.totalHours === 'number' 
-          ? Number(driver.totalHours).toFixed(2) 
-          : driver.totalHours || "-"}
+        {formatHours(driver.totalHours)}
       </TableCell>
       <TableCell className="text-center">
         <Badge variant="outline" className={getRatingBackground(driver.acceleration)}>

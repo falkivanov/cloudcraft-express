@@ -122,6 +122,23 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       }
     }
     
+    // Improved risk extraction with fallbacks for empty or "-" values
+    const extractRiskRating = (value: any): string => {
+      if (!value || value === '-') return '-';
+      
+      // If it's a number, convert to risk rating
+      if (typeof value === 'number' || !isNaN(Number(value))) {
+        const numValue = Number(value);
+        if (numValue === 0) return '-';
+        if (numValue >= 1 && numValue <= 3) return 'Low Risk';
+        if (numValue === 4 || numValue === 5) return 'Medium Risk';
+        if (numValue > 5) return 'High Risk';
+      }
+      
+      // Return the original value as a string
+      return String(value);
+    };
+    
     return {
       firstName,
       lastName,
@@ -130,13 +147,13 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours,
       totalKm,
       overallRating: String(row['Overall Rating'] || row['FICO Score'] || row['FICO® Safe Driving Score'] || ''),
-      acceleration: String(row['Acceleration'] || ''),
-      braking: String(row['Braking'] || ''),
-      cornering: String(row['Cornering'] || ''),
-      speeding: String(row['Speeding'] || ''),
-      seatbelt: String(row['Seatbelt'] || ''),
-      following: String(row['Following Distance'] || ''),
-      distraction: String(row['Phone Distraction'] || row['Distraction'] || '')
+      acceleration: extractRiskRating(row['Acceleration']),
+      braking: extractRiskRating(row['Braking']),
+      cornering: extractRiskRating(row['Cornering']),
+      speeding: extractRiskRating(row['Speeding']),
+      seatbelt: extractRiskRating(row['Seatbelt']),
+      following: extractRiskRating(row['Following Distance']),
+      distraction: extractRiskRating(row['Phone Distraction'])
     };
   });
 }
