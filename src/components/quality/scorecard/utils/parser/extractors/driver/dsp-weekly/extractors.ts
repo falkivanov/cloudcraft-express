@@ -1,26 +1,26 @@
 
-
-import { DriverKPI } from "../../../../types";
-import { determineMetricStatus } from "./utils/metricStatus";
-import { createAllStandardMetrics } from "./utils/metricUtils";
+import { DriverKPI } from "../../../../../types";
+import { determineMetricStatus } from "../utils/metricStatus";
+import { createAllStandardMetrics } from "../utils/metricUtils";
+import { extractNumericValues } from "./numericExtractor";
+import { processTableRow } from "./rowProcessor";
 
 /**
- * Spezialisierter Extraktor für die "DSP WEEKLY SUMMARY" Tabelle
- * Optimal angepasst für das Format wie im bereitgestellten Beispiel
+ * Extract drivers from DSP Weekly Summary format using line-by-line analysis
  */
 export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
-  console.log("Extrahiere Fahrer aus DSP WEEKLY SUMMARY Tabelle");
+  console.log("Extracting drivers from DSP Weekly Summary format");
   
-  // Suche nach dem DSP WEEKLY SUMMARY Header
+  // Check if the text contains the DSP WEEKLY SUMMARY header
   if (!text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("DSP WEEKLY SUMMARY nicht gefunden");
+    console.log("DSP WEEKLY SUMMARY not found");
     return [];
   }
   
-  // 1. Teile den Text in Zeilen
+  // 1. Split into lines
   const lines = text.split('\n');
   
-  // 2. Finde die Tabellenüberschrift
+  // 2. Find the header line
   let headerLineIndex = -1;
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes("Transporter ID") && 
@@ -33,53 +33,49 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
   }
   
   if (headerLineIndex === -1) {
-    console.log("Tabellenüberschriften nicht gefunden");
+    console.log("Table headers not found");
     return [];
   }
   
-  console.log(`Tabellenüberschrift gefunden in Zeile ${headerLineIndex}`);
+  console.log(`Table header found at line ${headerLineIndex}`);
   
-  // 3. Extrahiere die Datenzeilen
+  // 3. Extract data rows
   const drivers: DriverKPI[] = [];
   
-  // Starte mit der Zeile nach der Überschrift
+  // Start with the line after the header
   for (let i = headerLineIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Stoppe, wenn wir eine leere Zeile oder das Ende der Tabelle erreichen
+    // Stop if we reach an empty line or the end of the table
     if (!line || line.startsWith("Total")) break;
     
-    // Prüfe, ob die Zeile mit einer Transporter-ID beginnt (A gefolgt von alphanumerischen Zeichen)
+    // Check if the line starts with a Transporter ID (A followed by alphanumeric)
     if (/^A[A-Z0-9]/.test(line)) {
       try {
-        // Wir haben eine Fahrer-Zeile gefunden
-        // Teile die Zeile in Spalten auf
+        // Process the driver line
         const columns = line.split(/\s+/);
         
-        // Wenn wir nicht mindestens eine ID und einige Metriken haben, überspringe die Zeile
+        // Skip if we don't have enough columns
         if (columns.length < 5) continue;
         
-        // Extrahiere die ID (erstes Element)
+        // Extract the driver ID (first column)
         const driverId = columns[0];
         
-        // Initialisiere ein Array für die Metrik-Indizes
-        let metricIndices: number[] = [];
-        
-        // Suche nach numerischen Werten und speichere ihre Indizes
+        // Find numeric values in the line
+        const metricIndices: number[] = [];
         for (let j = 1; j < columns.length; j++) {
           if (/^[0-9]+(\.[0-9]+)?%?$/.test(columns[j])) {
             metricIndices.push(j);
           }
         }
         
-        // Wenn wir nicht genügend numerische Werte finden, versuche eine alternative Methode
+        // If not enough numeric values found, try alternative extraction
         if (metricIndices.length < 4) {
-          // Verwende reguläre Ausdrücke, um die Zahlen direkt zu extrahieren
           const numbersMatch = line.match(/\b(\d+(?:\.\d+)?)\b/g);
           if (numbersMatch && numbersMatch.length >= 4) {
-            console.log(`Alternative Extraktion für Zeile: ${line}`);
+            console.log(`Alternative extraction for line: ${line}`);
             
-            // Erstelle einen Fahrer mit den extrahierten Werten
+            // Create driver with extracted values
             const driver: DriverKPI = {
               name: driverId,
               status: "active",
@@ -111,7 +107,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
               ]
             };
             
-            // Füge weitere Metriken hinzu, wenn verfügbar
+            // Add additional metrics if available
             if (numbersMatch.length > 4) {
               driver.metrics.push({
                 name: "CC",
@@ -139,18 +135,18 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
               });
             }
             
-            // Füge vollständige Metriken hinzu
+            // Add complete metrics and add to drivers list
             driver.metrics = createAllStandardMetrics(driver.metrics);
             drivers.push(driver);
             continue;
           }
         }
         
-        // Wenn wir genügend Indizes haben, erstelle einen Fahrer
+        // Process metrics if we have enough values
         if (metricIndices.length >= 4) {
-          console.log(`Extraktion für Fahrer: ${driverId} mit ${metricIndices.length} Metriken`);
+          console.log(`Extraction for driver: ${driverId} with ${metricIndices.length} metrics`);
           
-          // Mappe die Spaltenindizes zu bestimmten Metriken
+          // Map column indices to metrics
           const metrics = [
             {
               name: "Delivered",
@@ -178,7 +174,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
             }
           ];
           
-          // Füge CC hinzu, wenn verfügbar
+          // Add additional metrics if available
           if (metricIndices.length > 4) {
             metrics.push({
               name: "CC",
@@ -188,7 +184,6 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
             });
           }
           
-          // Füge CE hinzu, wenn verfügbar
           if (metricIndices.length > 5) {
             metrics.push({
               name: "CE",
@@ -198,7 +193,6 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
             });
           }
           
-          // Füge DEX hinzu, wenn verfügbar
           if (metricIndices.length > 6) {
             metrics.push({
               name: "DEX",
@@ -208,51 +202,50 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
             });
           }
           
-          // Erstelle den Fahrer und füge ihn zur Liste hinzu
+          // Create the driver and add to list
           const driver: DriverKPI = {
             name: driverId,
             status: "active",
-            metrics: createAllStandardMetrics(metrics) // Stelle sicher, dass alle Standardmetriken vorhanden sind
+            metrics: createAllStandardMetrics(metrics)
           };
           
           drivers.push(driver);
         }
       } catch (error) {
-        console.error(`Fehler beim Verarbeiten der Zeile ${i}:`, error);
-        // Fahre mit der nächsten Zeile fort
+        console.error(`Error processing line ${i}:`, error);
+        // Continue with next line
       }
     }
   }
   
-  console.log(`Extrahiert: ${drivers.length} Fahrer aus DSP WEEKLY SUMMARY Tabelle`);
+  console.log(`Extracted: ${drivers.length} drivers from DSP WEEKLY SUMMARY table`);
   return drivers;
 }
 
 /**
- * Optimierte Extraktion für Tabellendaten mit festen Spaltenbreiten,
- * spezifisch für das DSP WEEKLY SUMMARY Format
+ * Optimized extraction for fixed-width table format specifically for DSP WEEKLY SUMMARY
  */
 export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
-  console.log("Extrahiere Fahrer aus DSP WEEKLY SUMMARY mit fester Spaltenbreite");
+  console.log("Extracting drivers from DSP WEEKLY SUMMARY with fixed column width");
   
-  // Suche nach dem DSP WEEKLY SUMMARY Header
+  // Check for DSP WEEKLY SUMMARY header
   if (!text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("DSP WEEKLY SUMMARY nicht gefunden");
+    console.log("DSP WEEKLY SUMMARY not found");
     return [];
   }
   
-  // Definiere Regex-Pattern für Zeilen mit Transporter IDs
-  // Format: A-Code + Zahlen + Prozente
+  // Define regex pattern for driver rows
+  // Format: A-Code + numbers + percentages
   const rowPattern = /^(A[A-Z0-9]+)\s+(\d+)\s+([\d.]+)%?\s+([\d.]+)\s+([\d.]+)%?\s+([\d.]+)%?\s+(\d+)\s+([\d.]+)%?/gm;
   
   const drivers: DriverKPI[] = [];
   let match;
   
-  // Finde alle übereinstimmenden Zeilen
+  // Find all matching rows
   while ((match = rowPattern.exec(text)) !== null) {
     try {
       const [
-        _, // Gesamter Match
+        _, // Full match
         driverId,
         delivered,
         dcr,
@@ -263,7 +256,7 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
         dex
       ] = match;
       
-      // Erstelle einen Fahrer mit den extrahierten Werten
+      // Create driver with extracted values
       const driver: DriverKPI = {
         name: driverId,
         status: "active",
@@ -315,18 +308,17 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
       
       drivers.push(driver);
     } catch (error) {
-      console.error("Fehler beim Verarbeiten eines Tabelleneintrags:", error);
-      // Fahre mit dem nächsten Match fort
+      console.error("Error processing table entry:", error);
+      // Continue with next match
     }
   }
   
-  // Wenn die Regex-Methode keine Fahrer fand, versuche die zeilenbasierte Methode
+  // If regex method found no drivers, try line-based method
   if (drivers.length === 0) {
-    console.log("Regex-Methode fand keine Fahrer, versuche zeilenbasierte Extraktion");
+    console.log("Regex method found no drivers, trying line-based extraction");
     return extractDriversFromDSPWeeklySummary(text);
   }
   
-  console.log(`Extrahiert: ${drivers.length} Fahrer mit fester Spaltenbreiten-Methode`);
+  console.log(`Extracted: ${drivers.length} drivers with fixed column width method`);
   return drivers;
 }
-

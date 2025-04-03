@@ -6,6 +6,7 @@ import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtract
 import { generateSampleDrivers } from './sampleData';
 import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
 import { findDriverTable } from './table/gridTableFinder';
+import { extractDriversFromDSPWeekly } from './dsp-weekly';
 
 /**
  * Main driver extraction function - tries all strategies in priority order
@@ -20,24 +21,17 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   if (text.includes("DSP WEEKLY SUMMARY")) {
     console.log("Found DSP WEEKLY SUMMARY format, trying specialized extractors first");
     
-    // Try fixed width extractor first
-    const fixedWidthDrivers = extractDriversFromFixedWidthTable(text);
-    if (fixedWidthDrivers.length >= 10) {
-      console.log(`Found ${fixedWidthDrivers.length} drivers with fixed width extraction`);
-      return ensureAllMetrics(fixedWidthDrivers);
-    }
-    
-    // Try general DSP WEEKLY SUMMARY extractor
-    const summaryDrivers = extractDriversFromDSPWeeklySummary(text);
-    if (summaryDrivers.length >= 10) {
-      console.log(`Found ${summaryDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
-      return ensureAllMetrics(summaryDrivers);
+    // Use our refactored DSP Weekly extractor
+    const dspWeeklyDrivers = extractDriversFromDSPWeekly(text);
+    if (dspWeeklyDrivers.length >= 10) {
+      console.log(`Found ${dspWeeklyDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
+      return ensureAllMetrics(dspWeeklyDrivers);
     }
     
     // If we found some drivers but not enough, keep them and continue with other methods
-    if (summaryDrivers.length > 0) {
-      extractedDrivers = [...summaryDrivers];
-      console.log(`Added ${summaryDrivers.length} drivers from DSP WEEKLY SUMMARY extraction`);
+    if (dspWeeklyDrivers.length > 0) {
+      extractedDrivers = [...dspWeeklyDrivers];
+      console.log(`Added ${dspWeeklyDrivers.length} drivers from DSP WEEKLY SUMMARY extraction`);
     }
   }
   
