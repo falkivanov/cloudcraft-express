@@ -21,13 +21,13 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   onOpenChange,
   onAddEmployee
 }) => {
-  // Default empty employee template
+  // Default empty employee template with minimal required fields
   const emptyEmployee: Employee = {
     id: crypto.randomUUID(),
     name: "",
     email: "",
     phone: "",
-    status: "Aktiv",
+    status: "Aktiv", // Providing a default value
     transporterId: "",
     startDate: new Date().toISOString().split("T")[0],
     endDate: null,
