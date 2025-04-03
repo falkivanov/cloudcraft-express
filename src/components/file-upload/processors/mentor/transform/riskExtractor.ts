@@ -12,15 +12,29 @@ export function extractRiskRating(value: any): string {
     return '-';
   }
   
-  // If it's an object (which can happen with Excel), convert to string first
+  // If it's an object (which can happen with Excel), try to extract meaningful values
   if (typeof value === 'object') {
+    console.log("Processing object value for risk:", value);
+    
+    // Check for undefined object types
     if (value._type === 'undefined' || value.value === 'undefined') {
       return '-';
     }
     
     // Try to extract a meaningful value from the object
-    if ('text' in value) return String(value.text);
-    if ('value' in value) return String(value.value);
+    if ('text' in value && value.text) return String(value.text);
+    if ('value' in value && value.value) return String(value.value);
+    if ('result' in value) return String(value.result);
+    
+    // Try to stringify the object to see if we can extract anything useful
+    try {
+      const stringValue = JSON.stringify(value);
+      if (stringValue.includes('Low') || stringValue.includes('low')) return 'Low Risk';
+      if (stringValue.includes('Medium') || stringValue.includes('med')) return 'Medium Risk';
+      if (stringValue.includes('High') || stringValue.includes('high')) return 'High Risk';
+    } catch (e) {
+      // Ignore JSON stringify errors
+    }
     
     return '-';
   }

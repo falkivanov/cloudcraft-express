@@ -4,6 +4,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getRatingBackground, getScoreDisplay } from "../utils/displayUtils";
 import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MentorTableRowProps {
   driver: MentorDriverData & {
@@ -52,16 +53,32 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
     return String(hours || "-");
   };
 
-  // Helper function to display risk values properly
+  // Helper function to display risk values properly with tooltip
   const displayRiskValue = (value: string | undefined): React.ReactNode => {
     if (!value || value === "-" || value === "Unknown") {
       return <span>-</span>;
     }
+    
     return (
-      <Badge variant="outline" className={getRatingBackground(value)}>
-        {value}
-      </Badge>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className={getRatingBackground(value)}>
+              {value}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{value}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
+  };
+  
+  // Debug function to see raw values
+  const getDebugInfo = (field: keyof MentorDriverData) => {
+    const rawValue = driver[field];
+    return `Raw: ${String(rawValue)}`;
   };
   
   return (

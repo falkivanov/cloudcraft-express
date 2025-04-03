@@ -128,11 +128,12 @@ function setFallbackMappings(columnMapping: Record<string, string>): void {
   if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'M';
   
   // DIRECT TARGETING OF RISK COLUMNS - using the specific columns requested by user
-  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'H';  // Column H
-  if (!columnMapping['Braking']) columnMapping['Braking'] = 'J';  // Column J
-  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'L';  // Column L
-  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'N';  // Column N
-  if (!columnMapping['Seatbelt']) columnMapping['Seatbelt'] = 'V';  // Column V
+  // Map these columns directly regardless of header detection
+  columnMapping['Acceleration'] = 'H';  // Column H - ALWAYS use column H for Acceleration
+  columnMapping['Braking'] = 'J';       // Column J - ALWAYS use column J for Braking
+  columnMapping['Cornering'] = 'L';     // Column L - ALWAYS use column L for Cornering
+  columnMapping['Speeding'] = 'N';      // Column N - ALWAYS use column N for Speeding
+  columnMapping['Seatbelt'] = 'V';      // Column V - ALWAYS use column V for Seatbelt
 }
 
 /**
@@ -151,6 +152,6 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
   // Set fallback values for any unmapped columns
   setFallbackMappings(columnMapping);
   
-  console.log("Column mapping:", columnMapping);
+  console.log("Final column mapping:", columnMapping);
   return columnMapping;
 }

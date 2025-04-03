@@ -91,17 +91,26 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       }
     }
     
-    // Print out raw values for debugging - DIRECTLY ACCESS THE SPECIFIC COLUMNS
-    console.log("Raw risk values from specific columns:", {
-      accel: row['H'],  // Column H
-      brake: row['J'],  // Column J
-      corner: row['L'], // Column L
-      speed: row['N'],  // Column N
-      seatbelt: row['V'] // Column V
+    // Print out raw values for debugging - ADD MORE DEBUG INFORMATION
+    console.log("Raw risk values from row columns:", {
+      H: row['H'], // Acceleration
+      J: row['J'], // Braking
+      L: row['L'], // Cornering
+      N: row['N'], // Speeding
+      V: row['V']  // Seatbelt
     });
     
-    // Process risk values from Acceleration column using the dedicated risk extractor
-    // First try the mapped columns, then fall back to direct column access
+    // Also print mapped column values
+    console.log("Values from mapped columns:", {
+      accel: row['Acceleration'], 
+      brake: row['Braking'],
+      corner: row['Cornering'],
+      speed: row['Speeding'],
+      seatbelt: row['Seatbelt']
+    });
+    
+    // Process risk values from specific columns and with more debugging
+    // IMPORTANT: We're using both the mapped columns AND the direct column letters to ensure we get data
     const acceleration = extractRiskRating(row['Acceleration'] || row['H'] || '-');
     const braking = extractRiskRating(row['Braking'] || row['J'] || '-');
     const cornering = extractRiskRating(row['Cornering'] || row['L'] || '-');
