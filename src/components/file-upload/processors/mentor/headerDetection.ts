@@ -49,6 +49,7 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     columnMapping['Driver Last Name'] = 'B';   // Last Name
     columnMapping['Station'] = 'D';            // Station
     columnMapping['Total Trips'] = 'E';        // Total Trips
+    columnMapping['Total Driver km'] = 'F';    // Total Driver km
     columnMapping['Total Hours'] = 'G';        // Total Hours
     columnMapping['Acceleration'] = 'I';       // Acceleration Rating
     columnMapping['Braking'] = 'K';            // Braking Rating
@@ -57,7 +58,7 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     columnMapping['Seatbelt'] = 'Q';           // Seatbelt
     columnMapping['Following Distance'] = 'S'; // Following Distance
     columnMapping['Phone Distraction'] = 'U';  // Distraction
-    columnMapping['Overall Rating'] = 'W';     // Overall Score or Rating
+    columnMapping['Overall Rating'] = 'C';     // Overall Score or Rating
   } else {
     // Für jeden Header nach passenden Spalten suchen
     Object.entries(headerRow).forEach(([col, value]) => {
@@ -72,16 +73,28 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
       else if (lowerValue.includes('last name')) {
         columnMapping['Driver Last Name'] = col;
       }
+      // FICO Score-Zuordnung
+      else if (lowerValue.includes('fico') || lowerValue.includes('score')) {
+        columnMapping['Overall Rating'] = col;
+      }
       // Station-Zuordnung
       else if (lowerValue.includes('station')) {
         columnMapping['Station'] = col;
       }
       // Fahrten-Zuordnung
-      else if (lowerValue.includes('total') && lowerValue.includes('trip')) {
+      else if ((lowerValue.includes('total') && lowerValue.includes('trip')) ||
+                lowerValue === 'trips') {
         columnMapping['Total Trips'] = col;
       }
+      // KM-Zuordnung - Verbesserte Erkennung
+      else if ((lowerValue.includes('total') && (lowerValue.includes('km') || lowerValue.includes('driver km'))) || 
+                lowerValue.includes('kilometers') ||
+                lowerValue.includes('distance')) {
+        columnMapping['Total Driver km'] = col;
+      }
       // Stunden-Zuordnung
-      else if (lowerValue.includes('total') && lowerValue.includes('hour')) {
+      else if ((lowerValue.includes('total') && lowerValue.includes('hour')) ||
+               lowerValue === 'hours') {
         columnMapping['Total Hours'] = col;
       }
       // Metriken-Zuordnung
@@ -89,53 +102,50 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
         if (lowerValue.includes('rating')) {
           columnMapping['Acceleration'] = col;
         } else {
-          columnMapping['Acceleration'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Acceleration'] = col;
         }
       }
       else if (lowerValue.includes('braking')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Braking'] = col;
         } else {
-          columnMapping['Braking'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Braking'] = col;
         }
       }
       else if (lowerValue.includes('cornering')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Cornering'] = col;
         } else {
-          columnMapping['Cornering'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Cornering'] = col;
         }
       }
       else if (lowerValue.includes('speeding')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Speeding'] = col;
         } else {
-          columnMapping['Speeding'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Speeding'] = col;
         }
       }
       else if (lowerValue.includes('seatbelt')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Seatbelt'] = col;
         } else {
-          columnMapping['Seatbelt'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Seatbelt'] = col;
         }
       }
       else if (lowerValue.includes('following')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Following Distance'] = col;
         } else {
-          columnMapping['Following Distance'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Following Distance'] = col;
         }
       }
       else if (lowerValue.includes('distraction') || lowerValue.includes('phone')) {
         if (lowerValue.includes('rating')) {
           columnMapping['Phone Distraction'] = col;
         } else {
-          columnMapping['Phone Distraction'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          columnMapping['Phone Distraction'] = col;
         }
-      }
-      else if (lowerValue.includes('overall') || lowerValue.includes('fico') || lowerValue.includes('score')) {
-        columnMapping['Overall Rating'] = col;
       }
     });
   }
@@ -143,17 +153,15 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
   // Fallback-Werte für nicht gefundene Spalten
   if (!columnMapping['Driver First Name']) columnMapping['Driver First Name'] = 'A';
   if (!columnMapping['Driver Last Name']) columnMapping['Driver Last Name'] = 'B';
+  if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'C';
   if (!columnMapping['Station']) columnMapping['Station'] = 'D';
   if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'E';
+  if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'F';
   if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G';
   if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';
   if (!columnMapping['Braking']) columnMapping['Braking'] = 'K';
   if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'M';
-  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'O';
-  if (!columnMapping['Seatbelt']) columnMapping['Seatbelt'] = 'Q';
-  if (!columnMapping['Following Distance']) columnMapping['Following Distance'] = 'S';
-  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'U';
-  if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'W';
+  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'O';
   
   console.log("Spaltenzuordnung:", columnMapping);
   return columnMapping;

@@ -50,21 +50,6 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
           {driver.distraction || "-"}
         </Badge>
       </TableCell>
-      <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.seatbelt)}>
-          {driver.seatbelt || "-"}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.speeding)}>
-          {driver.speeding || "-"}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.following)}>
-          {driver.following || "-"}
-        </Badge>
-      </TableCell>
     </TableRow>
   );
 };

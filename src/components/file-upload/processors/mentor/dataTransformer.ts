@@ -80,11 +80,22 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours = cleanNumericValue(totalHours);
     }
     
-    // Extract total kilometers if available
+    // Extract total kilometers - Improved detection for "Total Driver km" field
     let totalKm = 0;
-    if (row['Total KM'] || row['Total Kilometers'] || row['Total Distance']) {
-      const kmValue = row['Total KM'] || row['Total Kilometers'] || row['Total Distance'] || 0;
-      totalKm = cleanNumericValue(String(kmValue));
+    if (row['Total Driver km'] !== undefined) {
+      totalKm = cleanNumericValue(String(row['Total Driver km'] || 0));
+    } else if (row['Total KM'] !== undefined) {
+      totalKm = cleanNumericValue(String(row['Total KM'] || 0));
+    } else if (row['Total Kilometers'] !== undefined) {
+      totalKm = cleanNumericValue(String(row['Total Kilometers'] || 0));
+    } else if (row['Total Distance'] !== undefined) {
+      totalKm = cleanNumericValue(String(row['Total Distance'] || 0));
+    } else if (row['F'] !== undefined) {
+      // Fallback to column F if it's numeric (common for Total Driver km)
+      const value = row['F'];
+      if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
+        totalKm = cleanNumericValue(String(value));
+      }
     }
     
     return {
@@ -94,14 +105,14 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalTrips,
       totalHours,
       totalKm,
-      overallRating: String(row['Overall Rating'] || row['FICO Score'] || ''),
+      overallRating: String(row['Overall Rating'] || row['FICO Score'] || row['FICO® Safe Driving Score'] || ''),
       acceleration: String(row['Acceleration'] || ''),
       braking: String(row['Braking'] || ''),
       cornering: String(row['Cornering'] || ''),
       speeding: String(row['Speeding'] || ''),
       seatbelt: String(row['Seatbelt'] || ''),
       following: String(row['Following Distance'] || ''),
-      distraction: String(row['Phone Distraction'] || '')
+      distraction: String(row['Phone Distraction'] || row['Distraction'] || '')
     };
   });
 }
