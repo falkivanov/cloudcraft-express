@@ -112,20 +112,25 @@ export const useMentorDrivers = (
       let valueA: any;
       let valueB: any;
 
-      // Handle sorting based on field type
+      // Expand sorting logic to cover more fields
       switch (sortField) {
+        case 'firstName':
+        case 'lastName':
+        case 'station':
+          valueA = String(a[sortField] || '').toLowerCase();
+          valueB = String(b[sortField] || '').toLowerCase();
+          break;
         case 'totalTrips':
         case 'totalKm':
         case 'totalHours':
-          valueA = typeof a[sortField] === 'number' ? a[sortField] : 0;
-          valueB = typeof b[sortField] === 'number' ? b[sortField] : 0;
+          valueA = typeof a[sortField] === 'number' ? Number(a[sortField]) : 0;
+          valueB = typeof b[sortField] === 'number' ? Number(b[sortField]) : 0;
           break;
         case 'acceleration':
         case 'braking':
         case 'cornering':
         case 'speeding':
         case 'seatbelt':
-          // Risk rating sorting logic - Low Risk < Medium Risk < High Risk
           const getRiskValue = (risk: string | undefined) => {
             if (!risk || risk === '-') return 0;
             if (risk.includes('Low')) return 1;
@@ -137,11 +142,15 @@ export const useMentorDrivers = (
           valueB = getRiskValue(b[sortField]);
           break;
         case 'overallRating':
-          valueA = typeof a.overallRating === 'number' ? a.overallRating : 0;
-          valueB = typeof b.overallRating === 'number' ? b.overallRating : 0;
+          // Handle FICO Score with special parsing
+          valueA = typeof a.overallRating === 'number' 
+            ? a.overallRating 
+            : parseFloat(String(a.overallRating)) || 0;
+          valueB = typeof b.overallRating === 'number' 
+            ? b.overallRating 
+            : parseFloat(String(b.overallRating)) || 0;
           break;
         default:
-          // For string values like firstName, lastName, station
           valueA = String(a[sortField] || '').toLowerCase();
           valueB = String(b[sortField] || '').toLowerCase();
       }

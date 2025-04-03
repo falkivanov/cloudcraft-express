@@ -29,43 +29,36 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
   sortDirection, 
   onSort 
 }) => {
-  const renderHeaderWithTooltip = (text: string, tooltip: string, field: SortField) => (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div 
-            className="flex items-center justify-center space-x-1 cursor-pointer" 
-            onClick={() => onSort(field)}
-          >
-            <span>{text}</span>
-            <Info className="h-4 w-4 text-muted-foreground" />
-            {sortField === field && (
-              sortDirection === 'asc' 
-                ? <ArrowUp className="h-4 w-4 ml-1" /> 
-                : <ArrowDown className="h-4 w-4 ml-1" />
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+  const renderSortableHeader = (text: string, field: SortField, tooltip?: string) => {
+    const sortIcon = sortField === field && (
+      sortDirection === 'asc' 
+        ? <ArrowUp className="h-4 w-4 ml-1" /> 
+        : <ArrowDown className="h-4 w-4 ml-1" />
+    );
 
-  const renderSortableHeader = (text: string, field: SortField) => (
-    <div 
-      className="flex items-center cursor-pointer" 
-      onClick={() => onSort(field)}
-    >
-      <span>{text}</span>
-      {sortField === field && (
-        sortDirection === 'asc' 
-          ? <ArrowUp className="h-4 w-4 ml-1" /> 
-          : <ArrowDown className="h-4 w-4 ml-1" />
-      )}
-    </div>
-  );
+    const headerContent = (
+      <div 
+        className="flex items-center cursor-pointer" 
+        onClick={() => onSort(field)}
+      >
+        <span>{text}</span>
+        {sortIcon}
+      </div>
+    );
+
+    return tooltip ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>{headerContent}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : headerContent;
+  };
 
   return (
     <TableHeader>
@@ -78,19 +71,39 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         <TableHead className="text-right">{renderSortableHeader("KM", "totalKm")}</TableHead>
         <TableHead className="text-right">{renderSortableHeader("Hours", "totalHours")}</TableHead>
         <TableHead className="text-center">
-          {renderHeaderWithTooltip("Acceleration", "Harsh acceleration events (Column H)", "acceleration")}
+          {renderSortableHeader(
+            "Acceleration", 
+            "acceleration", 
+            "Harsh acceleration events (Column H)"
+          )}
         </TableHead>
         <TableHead className="text-center">
-          {renderHeaderWithTooltip("Braking", "Harsh braking events (Column J)", "braking")}
+          {renderSortableHeader(
+            "Braking", 
+            "braking", 
+            "Harsh braking events (Column J)"
+          )}
         </TableHead>
         <TableHead className="text-center">
-          {renderHeaderWithTooltip("Cornering", "Harsh cornering events (Column L)", "cornering")}
+          {renderSortableHeader(
+            "Cornering", 
+            "cornering", 
+            "Harsh cornering events (Column L)"
+          )}
         </TableHead>
         <TableHead className="text-center">
-          {renderHeaderWithTooltip("Speeding", "Speeding events (Column N)", "speeding")}
+          {renderSortableHeader(
+            "Speeding", 
+            "speeding", 
+            "Speeding events (Column N)"
+          )}
         </TableHead>
         <TableHead className="text-center">
-          {renderHeaderWithTooltip("Seatbelt", "Seatbelt usage (Column V)", "seatbelt")}
+          {renderSortableHeader(
+            "Seatbelt", 
+            "seatbelt", 
+            "Seatbelt usage (Column V)"
+          )}
         </TableHead>
       </TableRow>
     </TableHeader>
