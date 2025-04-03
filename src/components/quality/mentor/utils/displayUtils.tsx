@@ -10,6 +10,12 @@ export const getRatingBackground = (risk: string | number | undefined): string =
   
   // Convert risk to string to handle cases where it might be a number or undefined
   const riskStr = String(risk);
+  
+  // Handle dash-like values
+  if (riskStr === "-" || riskStr === "Unknown") {
+    return "";
+  }
+  
   const lowerRisk = riskStr.toLowerCase();
   
   if (lowerRisk.includes("high")) {
@@ -21,6 +27,18 @@ export const getRatingBackground = (risk: string | number | undefined): string =
   if (lowerRisk.includes("low")) {
     return "bg-green-50 border-green-200 text-green-700";
   }
+  
+  // Handle German risk terms
+  if (lowerRisk.includes("hoch")) {
+    return "bg-red-50 border-red-200 text-red-700";
+  }
+  if (lowerRisk.includes("mittel")) {
+    return "bg-amber-50 border-amber-200 text-amber-700";
+  }
+  if (lowerRisk.includes("niedrig")) {
+    return "bg-green-50 border-green-200 text-green-700";
+  }
+  
   // Fallback
   return "";
 };

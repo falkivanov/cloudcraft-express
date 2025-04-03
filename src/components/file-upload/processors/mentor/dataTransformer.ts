@@ -1,3 +1,4 @@
+
 import { cleanNumericValue } from "@/components/quality/scorecard/utils/parser/extractors/driver/dsp-weekly/numericExtractor";
 import { MentorDriverData } from "./types";
 
@@ -128,7 +129,9 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     
     // Improved risk extraction with fallbacks for empty or "-" values
     const extractRiskRating = (value: any): string => {
-      if (!value || value === '-') return '-';
+      if (!value || value === '-' || value === '' || value === null || value === undefined) {
+        return '-';
+      }
       
       // If it's a number, convert to risk rating
       if (typeof value === 'number' || !isNaN(Number(value))) {
@@ -142,9 +145,15 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       // Process "Low", "Medium", "High" risk values
       if (typeof value === 'string') {
         const lowerValue = value.toLowerCase();
-        if (lowerValue.includes('low')) return 'Low Risk';
-        if (lowerValue.includes('med')) return 'Medium Risk';
-        if (lowerValue.includes('high')) return 'High Risk';
+        
+        // Handle German terms
+        if (lowerValue.includes('niedrig') || lowerValue.includes('low')) return 'Low Risk';
+        if (lowerValue.includes('mittel') || lowerValue.includes('med')) return 'Medium Risk';
+        if (lowerValue.includes('hoch') || lowerValue.includes('high')) return 'High Risk';
+        
+        // Handle Yes/No values (sometimes used for risk indicators)
+        if (lowerValue.includes('ja') || lowerValue.includes('yes')) return 'High Risk';
+        if (lowerValue.includes('nein') || lowerValue.includes('no')) return 'Low Risk';
       }
       
       // Return the original value as a string
@@ -162,7 +171,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       acceleration: extractRiskRating(row['Acceleration']),
       braking: extractRiskRating(row['Braking']),
       cornering: extractRiskRating(row['Cornering']),
-      speeding: extractRiskRating(row['Speeding']),
+      speeding: extractRiskRating(row['Speeding'] || row['V']),  // Also check column V which should have speeding data
       seatbelt: extractRiskRating(row['Seatbelt']),
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction'])

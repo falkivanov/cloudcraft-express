@@ -51,6 +51,18 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
     
     return String(hours || "-");
   };
+
+  // Helper function to display risk values properly
+  const displayRiskValue = (value: string | undefined): React.ReactNode => {
+    if (!value || value === "-" || value === "Unknown") {
+      return <span>-</span>;
+    }
+    return (
+      <Badge variant="outline" className={getRatingBackground(value)}>
+        {value}
+      </Badge>
+    );
+  };
   
   return (
     <TableRow className="hover:bg-slate-50">
@@ -64,24 +76,16 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
         {formatHours(driver.totalHours)}
       </TableCell>
       <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.acceleration)}>
-          {driver.acceleration || "-"}
-        </Badge>
+        {displayRiskValue(driver.acceleration)}
       </TableCell>
       <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.braking)}>
-          {driver.braking || "-"}
-        </Badge>
+        {displayRiskValue(driver.braking)}
       </TableCell>
       <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.cornering)}>
-          {driver.cornering || "-"}
-        </Badge>
+        {displayRiskValue(driver.cornering)}
       </TableCell>
       <TableCell className="text-center">
-        <Badge variant="outline" className={getRatingBackground(driver.speeding)}>
-          {driver.speeding || "-"}
-        </Badge>
+        {displayRiskValue(driver.speeding)}
       </TableCell>
     </TableRow>
   );
