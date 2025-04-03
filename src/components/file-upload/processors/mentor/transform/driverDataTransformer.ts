@@ -130,7 +130,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
     // Process tempo separately - this allows us to have both tempo and speeding values
-    // Look specifically for Tempo data in column M as fallback
+    // We MUST use the M column for Tempo data as a critical fallback
     const tempo = extractRiskRating(row['Tempo'] || row['M'] || '-');
 
     // Log processed values for debugging
@@ -163,7 +163,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       seatbelt,
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction']),
-      tempo: tempo  // Keep tempo as a separate field
+      tempo  // Make sure tempo is included in the return object
     };
   });
 }

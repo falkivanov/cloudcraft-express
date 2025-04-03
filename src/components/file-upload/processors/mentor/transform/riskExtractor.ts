@@ -34,8 +34,8 @@ export function extractRiskRating(value: any): string {
     return 'High Risk';
   }
   
-  // For debugging
-  console.log(`Unrecognized risk value: "${value}" (type: ${typeof value})`);
+  // Add more detailed logging for debugging
+  console.log(`Processing risk value: "${value}" (type: ${typeof value}, as string: "${strValue}")`);
   
   // If we can't determine the format, return the original value
   return String(value);
