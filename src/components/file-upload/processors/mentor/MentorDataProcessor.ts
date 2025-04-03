@@ -1,6 +1,6 @@
 
 import { MentorReport } from "./types";
-import { extractWeekInfo } from "./utils";
+import { extractWeekInfo } from "./utils/weekInfoExtractor";
 import { readExcelFile } from "./fileReader";
 import { findHeaderRow, createColumnMapping } from "./headerDetection";
 import { transformDataWithHeaders, convertToDriverData, filterValidDrivers } from "./dataTransformer";
