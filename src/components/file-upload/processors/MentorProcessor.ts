@@ -126,41 +126,6 @@ export class MentorProcessor extends BaseFileProcessor {
     let updatedCount = 0;
     const updatedEmployees = [...employees]; // Create a copy to modify
     
-    // Manual mappings for the drivers in the screenshot/image
-    const manualMappings: Record<string, string> = {
-      "CXj/3tgrD7kAK8zpa8Ej4g==": "Anna Müller",
-      "X8cd86yNj90SICxGTQkn/A==": "Thomas Schmidt",
-      "QG4OyykqwH9oih9a3B1q8A==": "Sarah Weber",
-      "Oie821laz44l/dhv3o9wg==": "Michael Fischer",
-      "Xvbthgkwsqoj6vydcc56rw==": "Julia Becker",
-      "SOgV5fVRK9GsIXseNyyGFA==": "Daniel Hoffmann",
-      "/a2rgsibfr943p80wh+kjg==": "Laura Krüger",
-      "Gjcxz7pm40bc4lbnh6d3sg==": "Stefan Wagner",
-      "Qs28led2m6jkngsnqynaza==": "Katharina Meyer"
-    };
-    
-    // Apply manual mappings and update employee records
-    for (const [encodedId, employeeName] of Object.entries(manualMappings)) {
-      const employee = employeesByName.get(employeeName.toLowerCase());
-      if (employee && !employee.mentorFirstName) {
-        // Find the corresponding driver
-        const driver = drivers.find(d => d.firstName === encodedId);
-        if (driver) {
-          // Update the employee's mentor IDs
-          const index = employees.findIndex(e => e.id === employee.id);
-          if (index !== -1) {
-            updatedEmployees[index] = {
-              ...employee,
-              mentorFirstName: driver.firstName,
-              mentorLastName: driver.lastName
-            };
-            updatedCount++;
-            console.log(`Updated mentor ID for ${employee.name}: ${driver.firstName}`);
-          }
-        }
-      }
-    }
-    
     // For employees without mentor IDs, try to find matches in the drivers
     drivers.forEach(driver => {
       // Skip if driver has no firstName (which contains the mentor ID)
@@ -183,54 +148,6 @@ export class MentorProcessor extends BaseFileProcessor {
       });
     } else {
       console.log("No employees needed mentor ID updates");
-    }
-    
-    // Create or update dummy employees with the IDs if they don't exist
-    // This ensures we have entries for all mentor IDs
-    const existingMentorIds = new Set(updatedEmployees.map(e => e.mentorFirstName).filter(Boolean));
-    const newEmployees: Employee[] = [];
-    
-    drivers.forEach(driver => {
-      if (!driver.firstName || existingMentorIds.has(driver.firstName)) return;
-      
-      // Check if we have a manual mapping for this driver
-      const employeeName = Object.entries(manualMappings).find(([id]) => id === driver.firstName)?.[1];
-      if (employeeName && !updatedEmployees.some(e => e.name === employeeName)) {
-        // Create new employee with this mentor ID
-        const newId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        const newEmployee: Employee = {
-          id: newId,
-          name: employeeName || `Fahrer (${driver.firstName.substring(0, 8)}...)`,
-          email: "",
-          phone: "",
-          status: "active",
-          transporterId: "",
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: null,
-          address: "",
-          telegramUsername: "",
-          workingDaysAWeek: 5,
-          preferredVehicle: "",
-          preferredWorkingDays: [],
-          wantsToWorkSixDays: false,
-          isWorkingDaysFlexible: true,
-          mentorFirstName: driver.firstName,
-          mentorLastName: driver.lastName
-        };
-        
-        newEmployees.push(newEmployee);
-        console.log(`Created new employee record for mentor ID: ${driver.firstName}`);
-      }
-    });
-    
-    if (newEmployees.length > 0) {
-      console.log(`Adding ${newEmployees.length} new employees with mentor IDs`);
-      saveToStorage(STORAGE_KEYS.EMPLOYEES, [...updatedEmployees, ...newEmployees]);
-      
-      toast.success(`Neue Mitarbeiter hinzugefügt`, {
-        description: `${newEmployees.length} neue Mitarbeiter mit Mentor-IDs erstellt.`,
-        duration: 5000,
-      });
     }
   }
 }
