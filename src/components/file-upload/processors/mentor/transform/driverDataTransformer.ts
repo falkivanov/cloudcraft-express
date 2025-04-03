@@ -1,4 +1,3 @@
-
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -107,7 +106,6 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       H: row['H'], // Acceleration
       J: row['J'], // Braking
       L: row['L'], // Cornering
-      M: row['M'], // Tempo
       N: row['N'], // Speeding
       V: row['V']  // Seatbelt
     });
@@ -117,7 +115,6 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       accel: row['Acceleration'], 
       brake: row['Braking'],
       corner: row['Cornering'],
-      tempo: row['Tempo'],
       speed: row['Speeding'],
       seatbelt: row['Seatbelt']
     });
@@ -129,9 +126,6 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const cornering = extractRiskRating(row['Cornering'] || row['L'] || '-');
     const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
-    // Process tempo separately - this allows us to have both tempo and speeding values
-    // We MUST use the M column for Tempo data as a critical fallback
-    const tempo = extractRiskRating(row['Tempo'] || row['M'] || '-');
 
     // Log processed values for debugging
     console.log("Processed values:", { 
@@ -142,7 +136,6 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       accel: acceleration, 
       brake: braking, 
       corner: cornering, 
-      tempo: tempo,
       speed: speeding,
       seatbelt: seatbelt
     });
@@ -162,8 +155,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       speeding,
       seatbelt,
       following: extractRiskRating(row['Following Distance']),
-      distraction: extractRiskRating(row['Phone Distraction']),
-      tempo  // Make sure tempo is included in the return object
+      distraction: extractRiskRating(row['Phone Distraction'])
     };
   });
 }

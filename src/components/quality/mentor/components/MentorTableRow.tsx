@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -127,10 +126,10 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
         {displayRiskValue(driver.cornering)}
       </TableCell>
       <TableCell className="text-center whitespace-nowrap">
-        {displayRiskValue(driver.tempo)}
+        {displayRiskValue(driver.speeding)}
       </TableCell>
       <TableCell className="text-center whitespace-nowrap">
-        {displayRiskValue(driver.speeding)}
+        {displayRiskValue(driver.seatbelt)}
       </TableCell>
     </TableRow>
   );

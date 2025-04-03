@@ -24,4 +24,4 @@ export type SortField =
   | "braking" 
   | "cornering" 
   | "speeding" 
-  | "tempo";
+  | "seatbelt";

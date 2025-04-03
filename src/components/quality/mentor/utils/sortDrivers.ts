@@ -14,8 +14,7 @@ type SortField =
   | "braking" 
   | "cornering" 
   | "speeding" 
-  | "seatbelt"
-  | "tempo";
+  | "seatbelt";
 
 /**
  * Sort drivers based on the provided field and direction
@@ -94,7 +93,6 @@ export function sortDrivers(
       case 'cornering':
       case 'speeding':
       case 'seatbelt':
-      case 'tempo':
         valueA = getRiskValue(a[sortField]);
         valueB = getRiskValue(b[sortField]);
         break;

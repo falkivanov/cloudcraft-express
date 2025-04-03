@@ -38,28 +38,28 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         </TableHead>
         <TableHead className="text-center">Station</TableHead>
         <TableHead 
-          className="text-center cursor-pointer hover:bg-slate-50"
+          className="text-right cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalTrips')}
         >
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-end">
             <span>Fahrten</span>
             {sortField === 'totalTrips' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
         <TableHead 
-          className="text-center cursor-pointer hover:bg-slate-50"
+          className="text-right cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalKm')}
         >
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-end">
             <span>KM</span>
             {sortField === 'totalKm' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
         <TableHead 
-          className="text-center cursor-pointer hover:bg-slate-50"
+          className="text-right cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalHours')}
         >
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-end">
             <span>Stunden</span>
             {sortField === 'totalHours' && <SortIcon direction={sortDirection} />}
           </div>
@@ -67,24 +67,8 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         <TableHead className="text-center whitespace-nowrap">Beschl.</TableHead>
         <TableHead className="text-center whitespace-nowrap">Bremsen</TableHead>
         <TableHead className="text-center whitespace-nowrap">Kurven</TableHead>
-        <TableHead 
-          className="text-center whitespace-nowrap cursor-pointer hover:bg-slate-50"
-          onClick={() => onSort('tempo')}
-        >
-          <div className="flex items-center justify-center">
-            <span>Tempo</span>
-            {sortField === 'tempo' && <SortIcon direction={sortDirection} />}
-          </div>
-        </TableHead>
-        <TableHead 
-          className="text-center whitespace-nowrap cursor-pointer hover:bg-slate-50"
-          onClick={() => onSort('speeding')}
-        >
-          <div className="flex items-center justify-center">
-            <span>Speeding</span>
-            {sortField === 'speeding' && <SortIcon direction={sortDirection} />}
-          </div>
-        </TableHead>
+        <TableHead className="text-center whitespace-nowrap">Tempo</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Gurt</TableHead>
       </TableRow>
     </TableHeader>
   );
