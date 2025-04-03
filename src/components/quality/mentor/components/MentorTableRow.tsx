@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -84,36 +83,40 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
   return (
     <TableRow className="hover:bg-slate-50">
       <TableCell className="font-medium">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-help">
-                {driver.employeeName ? (
-                  <span className="font-semibold text-black">{driver.employeeName}</span>
-                ) : (
-                  <span className="text-muted-foreground">ID fehlt</span>
-                )}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {driver.employeeName ? (
-                <div className="max-w-xs">
-                  <p className="font-medium">Mitarbeiter: {driver.employeeName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Mentor ID: {driver.firstName}</p>
-                  {driver.transporterId && (
-                    <p className="text-xs text-muted-foreground">Transporter ID: {driver.transporterId}</p>
+        <div className="flex items-center space-x-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
+                  {driver.employeeName ? (
+                    <span className="font-semibold text-black truncate max-w-[200px]">
+                      {driver.employeeName}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">ID fehlt</span>
                   )}
                 </div>
-              ) : (
-                <div>
-                  <p>Anonymisierte ID - Kein Mitarbeiter gefunden</p>
-                  <p className="text-xs text-muted-foreground mt-1">ID: {driver.firstName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Bearbeiten Sie die Mitarbeiterdaten und fügen Sie diese Mentor-ID hinzu</p>
-                </div>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+              </TooltipTrigger>
+              <TooltipContent>
+                {driver.employeeName ? (
+                  <div className="max-w-xs">
+                    <p className="font-medium">Mitarbeiter: {driver.employeeName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Mentor ID: {driver.firstName}</p>
+                    {driver.transporterId && (
+                      <p className="text-xs text-muted-foreground">Transporter ID: {driver.transporterId}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <p>Anonymisierte ID - Kein Mitarbeiter gefunden</p>
+                    <p className="text-xs text-muted-foreground mt-1">ID: {driver.firstName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Bearbeiten Sie die Mitarbeiterdaten und fügen Sie diese Mentor-ID hinzu</p>
+                  </div>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </TableCell>
       <TableCell className="text-center">{getScoreDisplay(driver.overallRating)}</TableCell>
       <TableCell className="text-center">{driver.station}</TableCell>
