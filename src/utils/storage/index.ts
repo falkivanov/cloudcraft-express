@@ -11,7 +11,8 @@ export {
   saveToStorage,
   loadFromStorage as loadRawFromStorage,
   clearStorageItem,
-  clearAllStorage
+  clearAllStorage,
+  clearEmployeesStorage  // Adding this line to export the function
 } from './storageCore';
 
 // Serialization and validation utilities
