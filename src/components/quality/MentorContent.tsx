@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from "react";
 import MentorTable from "./mentor/MentorTable";
-import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
+import { MentorDriverData, MentorReport } from "@/components/file-upload/processors/mentor/types";
 import NoDataMessage from "./NoDataMessage";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
 import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
 
-const MentorContent: React.FC = () => {
-  const [mentorData, setMentorData] = useState<{
-    weekNumber: number;
-    year: number;
-    drivers: MentorDriverData[];
-  } | null>(null);
+interface MentorContentProps {
+  mentorData?: any;
+}
+
+const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorData }) => {
+  const [mentorData, setMentorData] = useState<MentorReport | null>(null);
   
   const navigate = useNavigate();
   const { selectedWeek, setSelectedWeek, weekData } = useMentorWeek();
@@ -33,6 +32,13 @@ const MentorContent: React.FC = () => {
 
   useEffect(() => {
     try {
+      // First check if we have data from props
+      if (propsMentorData) {
+        setMentorData(propsMentorData);
+        return;
+      }
+      
+      // Otherwise try to load from localStorage
       const storedData = localStorage.getItem("mentorData");
       if (storedData) {
         const data = JSON.parse(storedData);
@@ -50,7 +56,7 @@ const MentorContent: React.FC = () => {
       console.error("Error loading mentor data:", error);
       setMentorData(null);
     }
-  }, [weekData]);
+  }, [weekData, propsMentorData]);
 
   const handleUploadClick = () => {
     navigate("/file-upload");

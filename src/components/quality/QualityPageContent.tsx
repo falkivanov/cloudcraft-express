@@ -5,6 +5,7 @@ import CustomerContactContent from "./customer-contact/CustomerContactContent";
 import ConcessionsContent from "./ConcessionsContent";
 import ScorecardContent from "./scorecard/ScorecardContent";
 import MentorContent from "./MentorContent";
+import { MentorReport } from "../file-upload/processors/mentor/types";
 
 interface QualityPageContentProps {
   pathname: string;
@@ -14,7 +15,7 @@ interface QualityPageContentProps {
   customerContactData: string | null;
   driversData: any[];
   concessionsData: any;
-  mentorData: any;
+  mentorData: MentorReport | null;
 }
 
 const QualityPageContent: React.FC<QualityPageContentProps> = ({

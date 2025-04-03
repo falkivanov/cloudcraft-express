@@ -5,7 +5,7 @@ import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtrac
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
 import { ensureAllMetrics } from './utils/metricUtils';
-import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dspWeeklySummaryExtractor';
+import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dsp-weekly/extractors';
 
 /**
  * Run a specific extraction strategy and combine results

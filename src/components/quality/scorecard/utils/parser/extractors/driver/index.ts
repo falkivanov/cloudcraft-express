@@ -1,5 +1,6 @@
+
 import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
-import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dspWeeklySummaryExtractor';
+import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dsp-weekly/extractors';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';

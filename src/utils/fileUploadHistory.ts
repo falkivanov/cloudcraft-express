@@ -7,6 +7,9 @@ export interface UploadHistoryItem {
   type: string;
   timestamp: string;
   category: string;
+  weekNumber?: number;
+  year?: number;
+  driversCount?: number;
 }
 
 export const getUploadHistory = (): UploadHistoryItem[] => {
