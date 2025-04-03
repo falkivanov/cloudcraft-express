@@ -1,8 +1,9 @@
 
 import { MentorDriverData, MentorReport, WeekInfo } from "./types";
+import { cleanNumericValue } from "@/components/quality/scorecard/utils/parser/extractors/driver/dsp-weekly/numericExtractor";
 
 /**
- * Extrakt Datum und Wocheninformationen aus dem Dateinamen
+ * Extrahiert Datum und Wocheninformationen aus dem Dateinamen
  */
 export function extractWeekInfo(fileName: string): WeekInfo {
   // Suchen nach Datum im Format YYYY-MM-DD im Dateinamen
@@ -37,6 +38,27 @@ export function extractWeekInfo(fileName: string): WeekInfo {
     };
   }
   
+  // Alternative Extraktion: "KW" im Dateinamen suchen
+  const kwRegex = /KW\s*(\d{1,2})[-_\s]?(20\d{2})?/i;
+  const kwMatch = fileName.match(kwRegex);
+  
+  if (kwMatch) {
+    const weekNumber = parseInt(kwMatch[1]);
+    const year = kwMatch[2] ? parseInt(kwMatch[2]) : new Date().getFullYear();
+    
+    console.info(`Direkte KW-Extraktion: KW${weekNumber}/${year}`);
+    
+    // Aktuelles Datum als Reportdate verwenden
+    const now = new Date();
+    
+    return {
+      date: now,
+      reportDate: now,
+      weekNumber,
+      year
+    };
+  }
+  
   // Fallback: aktuelle Woche verwenden
   const now = new Date();
   const weekNumber = getWeekNumber(now);
@@ -67,47 +89,80 @@ function getWeekNumber(date: Date): number {
 export function processMentorData(rawData: any[], weekInfo: WeekInfo): MentorReport {
   console.info(`Verarbeite ${rawData.length} Zeilen aus der Excel-Datei`);
   
-  // Überspringe Headerzeilen (in der Regel die ersten 1-2 Zeilen)
-  const validRows = rawData.filter(row => {
-    // Filtere Zeilen ohne Namen oder echte Daten aus
-    const hasName = row['Driver First Name'] && 
-                   typeof row['Driver First Name'] === 'string' && 
-                   row['Driver First Name'].trim() !== '';
+  // Extrahiere die benötigten Daten aus den Zeilen
+  const drivers: MentorDriverData[] = rawData.map(row => {
+    // Extrahiere Name auf intelligente Weise
+    let firstName = row['Driver First Name'] || '';
+    let lastName = row['Driver Last Name'] || '';
     
-    // Prüfe zusätzlich, ob es sich um eine Datenzeile handelt
-    const isDataRow = hasName && 
-                     (row['Station'] || row['Total Trips'] || 
-                      row['Total Hours'] || row['Driver Last Name']);
+    // Falls der Name in einer Spalte eine Zahl enthält (Fahrer-ID), versuche den Namen aus nachfolgenden Spalten zu extrahieren
+    if (/^\d+$/.test(firstName.toString())) {
+      // Wenn erster Name eine Zahl ist, dann ist es wahrscheinlich eine ID
+      // Versuche den Namen aus anderem Feld zu extrahieren
+      firstName = row['B'] || row['C'] || '';
+    }
     
-    return isDataRow;
-  });
-  
-  console.info(`Verarbeite ${validRows.length} gültige Zeilen aus ${rawData.length} Gesamtzeilen`);
-  
-  // Extrahiere die benötigten Daten aus den validen Zeilen
-  const drivers: MentorDriverData[] = validRows.map(row => {
+    // Stationsformat bereinigen
+    let station = row['Station'] || '';
+    if (!station && row['D']) {
+      station = row['D'];
+    }
+    
+    // String-Typumwandlung sicherstellen
+    firstName = String(firstName).trim();
+    lastName = String(lastName).trim();
+    station = String(station).trim();
+    
+    // Standardisiere "UNASSIGNED" Werte
+    if (station.toUpperCase().includes('UNASSIGNED')) {
+      station = 'UNASSIGNED';
+    }
+    
+    // Nummerische Werte bereinigen und konvertieren
+    const totalTrips = cleanNumericValue(String(row['Total Trips'] || 0));
+    
+    // Behandle Total Hours als String oder Nummer
+    let totalHours = row['Total Hours'] || 0;
+    if (typeof totalHours === 'string') {
+      totalHours = cleanNumericValue(totalHours);
+    }
+    
     return {
-      firstName: row['Driver First Name'] || '',
-      lastName: row['Driver Last Name'] || '',
-      station: row['Station'] || '',
-      totalTrips: row['Total Trips'] || 0,
-      totalHours: row['Total Hours'] || 0,
-      overallRating: row['Overall Rating'] || '',
-      acceleration: row['Acceleration'] || '',
-      braking: row['Braking'] || '',
-      cornering: row['Cornering'] || '',
-      speeding: row['Speeding'] || '',
-      seatbelt: row['Seatbelt'] || '',
-      following: row['Following Distance'] || '',
-      distraction: row['Phone Distraction'] || ''
+      firstName,
+      lastName,
+      station,
+      totalTrips,
+      totalHours,
+      totalKm: 0, // Diese Information ist in der Excel nicht vorhanden
+      overallRating: String(row['Overall Rating'] || ''),
+      acceleration: String(row['Acceleration'] || ''),
+      braking: String(row['Braking'] || ''),
+      cornering: String(row['Cornering'] || ''),
+      speeding: String(row['Speeding'] || ''),
+      seatbelt: String(row['Seatbelt'] || ''),
+      following: String(row['Following Distance'] || ''),
+      distraction: String(row['Phone Distraction'] || '')
     };
   });
+  
+  // Fahrer mit leeren Namen oder offensichtlichen Headern herausfiltern
+  const validDrivers = drivers.filter(driver => {
+    const isValid = 
+      driver.firstName && 
+      driver.lastName && 
+      !driver.firstName.toLowerCase().includes('first') &&
+      !driver.lastName.toLowerCase().includes('last');
+    
+    return isValid;
+  });
+  
+  console.log(`Gefilterte Fahrerdaten: ${validDrivers.length} gültige Fahrer aus ${drivers.length} Gesamteinträgen`);
   
   return {
     weekNumber: weekInfo.weekNumber,
     year: weekInfo.year,
     fileName: '',
     reportDate: weekInfo.reportDate.toISOString(),
-    drivers
+    drivers: validDrivers
   };
 }

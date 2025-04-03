@@ -32,7 +32,9 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
   }, []);
 
   const driversWithNames = useMemo(() => {
-    if (!data?.drivers || !employees.length) return [];
+    if (!data?.drivers || !data.drivers.length) return [];
+    
+    console.log(`Verarbeite ${data.drivers.length} Fahrer für die Anzeige`);
     
     // Erstelle Maps für verschiedene Matching-Strategien
     const employeesByMentorName = new Map();
@@ -85,15 +87,18 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
       const matchedEmployee = employeesByMentorName.get(mentorKey) || 
                               employeesByNameParts.get(mentorKey);
       
+      // Erstelle eine zusammengesetzte Anzeige für den Namen
+      const driverFullName = `${driver.firstName} ${driver.lastName}`.trim();
+      
       return {
         ...driver,
-        employeeName: matchedEmployee?.name || `${driver.firstName} ${driver.lastName}`,
+        employeeName: matchedEmployee?.name || driverFullName,
         transporterId: matchedEmployee?.transporterId || ''
       };
     });
   }, [data, employees]);
 
-  if (!data || driversWithNames.length === 0) {
+  if (!data || !data.drivers || data.drivers.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
         Keine Daten verfügbar
@@ -105,20 +110,32 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
   const getRiskColor = (risk: string) => {
     if (!risk) return "";
     
-    if (risk.toLowerCase().includes("high")) {
+    const lowerRisk = risk.toLowerCase();
+    if (lowerRisk.includes("high")) {
       return "bg-red-50 text-red-700 font-medium";
     } 
-    if (risk.toLowerCase().includes("medium")) {
+    if (lowerRisk.includes("medium")) {
       return "bg-amber-50 text-amber-700 font-medium";
     }
-    return "bg-green-50 text-green-700 font-medium";
+    if (lowerRisk.includes("low")) {
+      return "bg-green-50 text-green-700 font-medium";
+    }
+    // Fallback
+    return "";
   };
 
   // FICO-Score formatieren und Farbe zuweisen
   const getScoreDisplay = (score: string) => {
     if (!score || score === "Unknown") return <span className="text-gray-500">-</span>;
     
-    let numericScore = parseInt(score);
+    let numericScore = 0;
+    // Versuche, einen nummerischen Wert zu extrahieren
+    const matches = score.match(/\d+/);
+    if (matches) {
+      numericScore = parseInt(matches[0]);
+    }
+    
+    // Wenn keine Zahl gefunden wurde, zeige den Original-Text an
     if (isNaN(numericScore)) return <span>{score}</span>;
     
     let color = "bg-red-100 text-red-800";

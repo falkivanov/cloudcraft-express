@@ -47,9 +47,11 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-            <CalendarIcon className="h-4 w-4" />
-            <span>Dateiname: {mentorData.fileName}</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>Dateiname: {mentorData.fileName || 'unbekannt'}</span>
+            </div>
             <span className="text-sm text-muted-foreground mx-2">
               • Daten vom {getFormattedDate()}
             </span>

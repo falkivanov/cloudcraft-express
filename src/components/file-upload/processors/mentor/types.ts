@@ -3,6 +3,8 @@
  * Informationen zur Kalenderwoche eines Berichts
  */
 export interface WeekInfo {
+  date: Date;
+  reportDate: Date;
   weekNumber: number;
   year: number;
 }
@@ -16,16 +18,15 @@ export interface MentorDriverData {
   station: string;
   totalTrips: number;
   totalKm: number;
-  totalHours: string;
+  totalHours: number | string;
   acceleration: string;
   braking: string;
   cornering: string;
   distraction: string;
-  // Neue Felder für die Spalten J,L,N,V
-  seatbelt: string;         // Spalte J - Seatbelt Rating
-  speeding: string;         // Spalte L - Speeding Rating
-  following: string;        // Spalte N - Following Distance Rating
-  overallRating: string;    // Spalte V - Overall Rating
+  seatbelt: string;         // Seatbelt Rating
+  speeding: string;         // Speeding Rating
+  following: string;        // Following Distance Rating
+  overallRating: string;    // Overall Rating / FICO Score
 }
 
 /**

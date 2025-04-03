@@ -64,38 +64,31 @@ export class MentorDataProcessor {
    * Finde die Header-Zeile in den Rohdaten
    */
   private findHeaderRow(rawData: any[]): any | null {
-    // Suche nach typischen Header-Spalten
+    // Suche nach typischen Header-Spalten in den ersten 10 Zeilen
     for (let i = 0; i < Math.min(10, rawData.length); i++) {
       const row = rawData[i];
       
-      // Prüfe, ob diese Zeile typische Header enthält
+      // Erweiterte Header-Erkennung basierend auf verschiedenen Spaltenformaten
       if (
-        (row['A'] && row['A'].toString().includes('Driver First Name')) ||
-        (row['A'] && row['A'].toString().includes('First Name')) ||
-        (row['B'] && row['B'].toString().includes('Last Name')) ||
-        (row['C'] && row['C'].toString().includes('Station'))
+        // Format 1: Spalten enthalten typische Header-Namen
+        (row['A'] && typeof row['A'] === 'string' && (
+          row['A'].includes('First Name') || 
+          row['A'].includes('Driver') ||
+          row['A'].includes('#')
+        )) ||
+        // Format 2: Spalten B und D enthalten typische Werte
+        (row['B'] && typeof row['B'] === 'string' && row['B'].includes('Last Name')) ||
+        // Format 3: Mehrere Spalten mit typischen Header-Namen
+        (row['D'] && typeof row['D'] === 'string' && row['D'].includes('Station'))
       ) {
-        console.log(`Header-Zeile gefunden in Zeile ${i+1}`);
+        console.log(`Header-Zeile gefunden in Zeile ${i+1}`, row);
         return row;
       }
     }
     
     // Wenn keine klare Header-Zeile gefunden wurde, nehmen wir standardmäßige Spaltenbezeichnungen an
     console.warn("Keine klare Header-Zeile gefunden, verwende Standard-Spaltenbezeichnungen");
-    return {
-      'A': 'Driver First Name',
-      'B': 'Driver Last Name',
-      'C': 'Station',
-      'D': 'Total Trips',
-      'E': 'Total Hours',
-      'F': 'Acceleration',
-      'G': 'Braking',
-      'H': 'Cornering',
-      'J': 'Speeding',
-      'L': 'Seatbelt',
-      'N': 'Following Distance',
-      'V': 'Overall Rating'
-    };
+    return null;
   }
   
   /**
@@ -105,50 +98,135 @@ export class MentorDataProcessor {
     // Erstelle Zuordnung von Excel-Spalten zu Spaltennamen
     const columnMapping: Record<string, string> = {};
     
-    // Finde die entsprechenden Spalten für die benötigten Daten
-    Object.entries(headerRow).forEach(([col, value]) => {
-      if (typeof value === 'string') {
-        if (value.includes('First Name')) columnMapping['Driver First Name'] = col;
-        else if (value.includes('Last Name')) columnMapping['Driver Last Name'] = col;
-        else if (value.includes('Station')) columnMapping['Station'] = col;
-        else if (value.includes('Total Trips')) columnMapping['Total Trips'] = col;
-        else if (value.includes('Total Hours')) columnMapping['Total Hours'] = col;
-        else if (value.includes('Acceleration')) columnMapping['Acceleration'] = col;
-        else if (value.includes('Braking')) columnMapping['Braking'] = col;
-        else if (value.includes('Cornering')) columnMapping['Cornering'] = col;
-        else if (value.includes('Speeding')) columnMapping['Speeding'] = col;
-        else if (value.includes('Seatbelt')) columnMapping['Seatbelt'] = col;
-        else if (value.includes('Following Distance')) columnMapping['Following Distance'] = col;
-        else if (value.includes('Overall')) columnMapping['Overall Rating'] = col;
-        else if (value.includes('Phone') || value.includes('Distraction')) columnMapping['Phone Distraction'] = col;
-      }
-    });
+    // Standardmäßige Zuordnung, falls keine Header gefunden wurden
+    if (!headerRow) {
+      // Basierend auf dem Screenshot der Excel-Datei
+      columnMapping['Driver First Name'] = 'A';  // Erste Spalte enthält Fahrernummern oder Namen
+      columnMapping['Driver Last Name'] = 'B';   // Last Name
+      columnMapping['Station'] = 'D';            // Station
+      columnMapping['Total Trips'] = 'E';        // Total Trips
+      columnMapping['Total Hours'] = 'G';        // Total Hours
+      columnMapping['Acceleration'] = 'I';       // Acceleration Rating
+      columnMapping['Braking'] = 'K';            // Braking Rating
+      columnMapping['Cornering'] = 'M';          // Cornering Rating
+      columnMapping['Speeding'] = 'O';           // Speeding
+      columnMapping['Seatbelt'] = 'Q';           // Seatbelt
+      columnMapping['Following Distance'] = 'S'; // Following Distance
+      columnMapping['Phone Distraction'] = 'U';  // Distraction
+      columnMapping['Overall Rating'] = 'W';     // Overall Score or Rating
+    } else {
+      // Für jeden Header nach passenden Spalten suchen
+      Object.entries(headerRow).forEach(([col, value]) => {
+        if (typeof value !== 'string') return;
+        
+        const lowerValue = value.toLowerCase();
+        
+        // Fahrername-Zuordnung
+        if (lowerValue.includes('first') || (lowerValue.includes('driver') && !lowerValue.includes('last'))) {
+          columnMapping['Driver First Name'] = col;
+        } 
+        else if (lowerValue.includes('last name')) {
+          columnMapping['Driver Last Name'] = col;
+        }
+        // Station-Zuordnung
+        else if (lowerValue.includes('station')) {
+          columnMapping['Station'] = col;
+        }
+        // Fahrten-Zuordnung
+        else if (lowerValue.includes('total') && lowerValue.includes('trip')) {
+          columnMapping['Total Trips'] = col;
+        }
+        // Stunden-Zuordnung
+        else if (lowerValue.includes('total') && lowerValue.includes('hour')) {
+          columnMapping['Total Hours'] = col;
+        }
+        // Metriken-Zuordnung
+        else if (lowerValue.includes('acceleration')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Acceleration'] = col;
+          } else {
+            columnMapping['Acceleration'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('braking')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Braking'] = col;
+          } else {
+            columnMapping['Braking'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('cornering')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Cornering'] = col;
+          } else {
+            columnMapping['Cornering'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('speeding')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Speeding'] = col;
+          } else {
+            columnMapping['Speeding'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('seatbelt')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Seatbelt'] = col;
+          } else {
+            columnMapping['Seatbelt'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('following')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Following Distance'] = col;
+          } else {
+            columnMapping['Following Distance'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('distraction') || lowerValue.includes('phone')) {
+          if (lowerValue.includes('rating')) {
+            columnMapping['Phone Distraction'] = col;
+          } else {
+            columnMapping['Phone Distraction'] = String.fromCharCode(col.charCodeAt(0) + 1);
+          }
+        }
+        else if (lowerValue.includes('overall') || lowerValue.includes('fico') || lowerValue.includes('score')) {
+          columnMapping['Overall Rating'] = col;
+        }
+      });
+    }
     
-    // Standardspalten verwenden, wenn keine Zuordnung gefunden wurde
+    // Fallback-Werte für nicht gefundene Spalten
     if (!columnMapping['Driver First Name']) columnMapping['Driver First Name'] = 'A';
     if (!columnMapping['Driver Last Name']) columnMapping['Driver Last Name'] = 'B';
-    if (!columnMapping['Station']) columnMapping['Station'] = 'C';
-    if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'D';
-    if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'E';
-    if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'F';
-    if (!columnMapping['Braking']) columnMapping['Braking'] = 'G';
-    if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'H';
-    if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'J';
-    if (!columnMapping['Seatbelt']) columnMapping['Seatbelt'] = 'L';
-    if (!columnMapping['Following Distance']) columnMapping['Following Distance'] = 'N';
-    if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'R';
-    if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'V';
+    if (!columnMapping['Station']) columnMapping['Station'] = 'D';
+    if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'E';
+    if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G';
+    if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';
+    if (!columnMapping['Braking']) columnMapping['Braking'] = 'K';
+    if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'M';
+    if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'O';
+    if (!columnMapping['Seatbelt']) columnMapping['Seatbelt'] = 'Q';
+    if (!columnMapping['Following Distance']) columnMapping['Following Distance'] = 'S';
+    if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'U';
+    if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'W';
     
     console.log("Spaltenzuordnung:", columnMapping);
     
-    // Header-Zeile und leere Zeilen überspringen
-    const dataRows = rawData.filter((row, index) => {
-      // Überspringe die Header-Zeile selbst
-      if (row === headerRow) return false;
-      
-      // Überspringe leere Zeilen oder Zeilen ohne Fahrernamen
+    // Header-Zeile überspringen und leere Zeilen filtern
+    const startRow = headerRow ? rawData.indexOf(headerRow) + 1 : 1;
+    const dataRows = rawData.slice(startRow).filter(row => {
+      // Überprüfe, ob die Zeile wesentliche Daten enthält
       const firstNameCol = columnMapping['Driver First Name'];
-      return row[firstNameCol] && typeof row[firstNameCol] === 'string' && row[firstNameCol].trim() !== '';
+      const lastNameCol = columnMapping['Driver Last Name'];
+      const stationCol = columnMapping['Station'];
+      
+      return (
+        // Prüfe, ob Name oder Stationswert vorhanden ist
+        (row[firstNameCol] || row[lastNameCol] || row[stationCol]) &&
+        // Stelle sicher, dass es keine leere Header-Zeile ist
+        !(typeof row[firstNameCol] === 'string' && row[firstNameCol].toLowerCase().includes('first'))
+      );
     });
     
     // Transformiere die Daten mit den richtigen Spaltennamen
