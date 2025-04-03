@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorTable from "./mentor/MentorTable";
 import NoDataMessage from "./NoDataMessage";
+import { format } from "date-fns";
 
 interface MentorContentProps {
   mentorData: any | null;
@@ -15,6 +16,18 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
   if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return <NoDataMessage category="Mentor" />;
   }
+
+  // Datum im deutschen Format anzeigen
+  const getFormattedDate = () => {
+    if (!mentorData.reportDate) return "";
+    
+    try {
+      const date = new Date(mentorData.reportDate);
+      return format(date, "dd.MM.yyyy");
+    } catch (error) {
+      return mentorData.reportDate;
+    }
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -37,6 +50,9 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <CalendarIcon className="h-4 w-4" />
             <span>Dateiname: {mentorData.fileName}</span>
+            <span className="text-sm text-muted-foreground mx-2">
+              • Daten vom {getFormattedDate()}
+            </span>
             <span className="text-sm text-muted-foreground">
               • {mentorData.drivers?.length || 0} Fahrer
             </span>

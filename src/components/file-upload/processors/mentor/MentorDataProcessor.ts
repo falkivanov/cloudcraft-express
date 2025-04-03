@@ -4,7 +4,7 @@ import { MentorReport, WeekInfo } from "./types";
 import { processMentorData, extractWeekInfo } from "./utils";
 
 /**
- * Class for processing Mentor Excel file data
+ * Klasse zur Verarbeitung von Mentor Excel-Dateidaten
  */
 export class MentorDataProcessor {
   private file: File;
@@ -14,35 +14,38 @@ export class MentorDataProcessor {
   }
   
   /**
-   * Process the file content and extract data
+   * Verarbeite den Dateiinhalt und extrahiere Daten
    */
   public async processFileData(): Promise<MentorReport> {
     try {
-      // Extract week number from filename
+      // Extrahiere Wochennummer und Jahr aus dem Dateinamen
       const weekInfo = extractWeekInfo(this.file.name);
+      console.log(`Verarbeite Mentor-Datei für KW${weekInfo.weekNumber}/${weekInfo.year}`);
       
-      // Read and parse the Excel file
+      // Excel-Datei lesen und parsen
       const content = await this.readFileAsArrayBuffer();
       const workbook = XLSX.read(content, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
-      // Convert to JSON
+      // In JSON konvertieren
       const rawData = XLSX.utils.sheet_to_json(worksheet);
+      console.log(`Excel enthält ${rawData.length} Zeilen`);
       
-      // Process the data
+      // Daten verarbeiten
       const processedData = processMentorData(rawData, weekInfo);
       processedData.fileName = this.file.name;
       
+      console.log(`Mentor-Daten verarbeitet: ${processedData.drivers.length} Fahrer für KW${weekInfo.weekNumber}/${weekInfo.year}`);
       return processedData;
     } catch (error) {
-      console.error("Error processing Mentor data:", error);
+      console.error("Fehler bei der Verarbeitung der Mentor-Daten:", error);
       throw error;
     }
   }
   
   /**
-   * Read the file content as ArrayBuffer
+   * Dateiinhalt als ArrayBuffer lesen
    */
   private readFileAsArrayBuffer(): Promise<ArrayBuffer> {
     return new Promise<ArrayBuffer>((resolve, reject) => {
