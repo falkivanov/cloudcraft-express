@@ -22,6 +22,17 @@ export class MentorProcessor extends BaseFileProcessor {
       // Process the data
       const processedData = await dataProcessor.processFileData();
       
+      // Log data for debugging
+      console.log("Processed Mentor data with risk values:", 
+        processedData.drivers.slice(0, 3).map(d => ({
+          name: `${d.firstName} ${d.lastName}`,
+          accel: d.acceleration,
+          brake: d.braking,
+          corner: d.cornering,
+          speed: d.speeding
+        }))
+      );
+      
       // Prüfung und Warnung bei leeren Daten
       if (!processedData.drivers || processedData.drivers.length === 0) {
         if (showToasts) {

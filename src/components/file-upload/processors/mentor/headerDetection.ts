@@ -56,14 +56,14 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     columnMapping['Total Trips'] = 'E';        // Total Trips
     columnMapping['Total Driver km'] = 'F';    // Total Driver km
     columnMapping['Total Hours'] = 'G';        // Total Hours
-    columnMapping['Acceleration'] = 'I';       // Acceleration Rating
-    columnMapping['Braking'] = 'K';            // Braking Rating
-    columnMapping['Cornering'] = 'M';          // Cornering Rating
-    columnMapping['Speeding'] = 'V';           // Speeding Rating - Updated to column V
+    columnMapping['Overall Rating'] = 'C';     // Overall Score or Rating
+    columnMapping['Acceleration'] = 'I';       // Acceleration - direkter Wert, nicht Rating
+    columnMapping['Braking'] = 'K';            // Braking - direkter Wert, nicht Rating
+    columnMapping['Cornering'] = 'M';          // Cornering - direkter Wert, nicht Rating
+    columnMapping['Speeding'] = 'W';           // Speeding - direkter Wert, nicht Rating
     columnMapping['Seatbelt'] = 'Q';           // Seatbelt
     columnMapping['Following Distance'] = 'S'; // Following Distance
-    columnMapping['Phone Distraction'] = 'U';  // Distraction
-    columnMapping['Overall Rating'] = 'C';     // Overall Score or Rating
+    columnMapping['Phone Distraction'] = 'O';  // Distraction
   } else {
     // Für jeden Header nach passenden Spalten suchen
     Object.entries(headerRow).forEach(([col, value]) => {
@@ -103,17 +103,18 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
                lowerValue === 'hours' || lowerValue.includes('stunden')) {
         columnMapping['Total Hours'] = col;
       }
-      // Metriken-Zuordnung mit deutschen und englischen Begriffen
-      else if (lowerValue.includes('acceleration') || lowerValue.includes('beschl')) {
+      // Metriken-Zuordnung: WICHTIG - bei der Standard-Mentor-Datei enthält jede Metrik sowohl ein "Rating" als auch einen direkten Wert
+      // Wir wollen den direkten Wert, nicht das Rating (Rating ist eine Zahl, Wert ist "Low Risk", "Medium Risk", etc.)
+      else if (lowerValue === 'acceleration') {
         columnMapping['Acceleration'] = col;
       }
-      else if (lowerValue.includes('braking') || lowerValue.includes('bremsen')) {
+      else if (lowerValue === 'braking') {
         columnMapping['Braking'] = col;
       }
-      else if (lowerValue.includes('cornering') || lowerValue.includes('kurven')) {
+      else if (lowerValue === 'cornering') {
         columnMapping['Cornering'] = col;
       }
-      else if (lowerValue.includes('speeding') || lowerValue.includes('tempo')) {
+      else if (lowerValue === 'speeding') {
         columnMapping['Speeding'] = col;
       }
       else if (lowerValue.includes('seatbelt') || lowerValue.includes('gurt')) {
@@ -128,7 +129,7 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
     });
   }
   
-  // Scan all column headers for special German terms
+  // Scan all column headers for special German terms and risk values
   if (headerRow) {
     Object.entries(headerRow).forEach(([col, value]) => {
       if (typeof value !== 'string') return;
@@ -148,8 +149,32 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
       else if (lowerValue === 'ablenk.' || lowerValue === 'ablenk') {
         columnMapping['Phone Distraction'] = col;
       }
-      // Look for Speeding Rating - important column V
+      else if (lowerValue === 'tempo') {
+        columnMapping['Speeding'] = col;
+      }
+      // Directly match Risk values
+      else if (lowerValue === 'acceleration rating') {
+        // Skip rating columns in favor of direct value columns
+      }
+      else if (lowerValue === 'acceleration') {
+        columnMapping['Acceleration'] = col;
+      }
+      else if (lowerValue === 'braking rating') {
+        // Skip rating columns
+      }
+      else if (lowerValue === 'braking') {
+        columnMapping['Braking'] = col;
+      }
+      else if (lowerValue === 'cornering rating') {
+        // Skip rating columns
+      }
+      else if (lowerValue === 'cornering') {
+        columnMapping['Cornering'] = col;
+      }
       else if (lowerValue === 'speeding rating') {
+        // Skip rating columns
+      }
+      else if (lowerValue === 'speeding') {
         columnMapping['Speeding'] = col;
       }
     });
@@ -164,12 +189,11 @@ export function createColumnMapping(headerRow: any | null): Record<string, strin
   if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'F';
   if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G';
   
-  // Map Risk columns based on image shown (using appropriate positions)
-  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';
-  if (!columnMapping['Braking']) columnMapping['Braking'] = 'J';
-  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'K';
-  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'V'; // Changed from 'L' to 'V'
-  if (!columnMapping['Phone Distraction']) columnMapping['Phone Distraction'] = 'O';
+  // The Excel screenshot shows that these are the actual data columns we want, not the rating columns
+  if (!columnMapping['Acceleration']) columnMapping['Acceleration'] = 'I';  // Direct risk value, not rating
+  if (!columnMapping['Braking']) columnMapping['Braking'] = 'K';  // Direct risk value, not rating
+  if (!columnMapping['Cornering']) columnMapping['Cornering'] = 'M';  // Direct risk value, not rating
+  if (!columnMapping['Speeding']) columnMapping['Speeding'] = 'W';  // Direct risk value, not rating
   
   console.log("Spaltenzuordnung:", columnMapping);
   return columnMapping;

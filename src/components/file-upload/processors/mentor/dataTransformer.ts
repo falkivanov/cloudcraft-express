@@ -160,6 +160,14 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       return String(value);
     };
     
+    // Debugging: log the risk values we're processing
+    console.log("Processing risk values:", {
+      accel: row['Acceleration'],
+      brake: row['Braking'],
+      corner: row['Cornering'],
+      speed: row['Speeding'] || row['W'],
+    });
+
     return {
       firstName,
       lastName,
@@ -168,10 +176,11 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours,
       totalKm,
       overallRating: String(row['Overall Rating'] || row['FICO Score'] || row['FICO® Safe Driving Score'] || ''),
+      // Use direct risk value columns, not the "Rating" columns
       acceleration: extractRiskRating(row['Acceleration']),
       braking: extractRiskRating(row['Braking']),
       cornering: extractRiskRating(row['Cornering']),
-      speeding: extractRiskRating(row['Speeding'] || row['V']),  // Also check column V which should have speeding data
+      speeding: extractRiskRating(row['Speeding'] || row['W']), // Also check column W which should have speeding data
       seatbelt: extractRiskRating(row['Seatbelt']),
       following: extractRiskRating(row['Following Distance']),
       distraction: extractRiskRating(row['Phone Distraction'])
