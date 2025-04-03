@@ -40,6 +40,17 @@ export const useMentorDrivers = (
     const loadedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
     setEmployees(loadedEmployees);
     console.log('Loaded employee data for Mentor matching:', loadedEmployees.length);
+    
+    // Debug output for mentorFirstName/mentorLastName values
+    if (loadedEmployees.length > 0) {
+      console.log('Sample employee mentor IDs:', 
+        loadedEmployees.slice(0, 5).map(e => ({
+          name: e.name,
+          mentorFirstName: e.mentorFirstName,
+          mentorLastName: e.mentorLastName
+        }))
+      );
+    }
   }, []);
 
   const driversWithNames = useMemo(() => {
@@ -50,79 +61,86 @@ export const useMentorDrivers = (
     // Enhanced matching strategy for anonymized names
     // Create maps for different matching approaches
     const employeesByMentorId = new Map();
-    const employeesByNameParts = new Map();
     
     // Build mapping tables from employee data
     employees.forEach(employee => {
       // Only process employees with mentorFirstName or mentorLastName
       if (employee.mentorFirstName || employee.mentorLastName) {
         // Store by mentor ID - this is the primary matching strategy
-        const mentorIdKey = `${(employee.mentorFirstName || '').toLowerCase()}`;
-        if (mentorIdKey.length > 5) { // Only consider IDs of reasonable length
-          employeesByMentorId.set(mentorIdKey, {
-            name: employee.name,
-            transporterId: employee.transporterId
-          });
+        if (employee.mentorFirstName) {
+          const mentorIdKey = employee.mentorFirstName.trim();
+          if (mentorIdKey.length > 0) {
+            employeesByMentorId.set(mentorIdKey, {
+              name: employee.name,
+              transporterId: employee.transporterId
+            });
+            
+            // Also try with = signs removed (common in base64 encoding)
+            const cleanKey = mentorIdKey.replace(/=+$/, '');
+            if (cleanKey !== mentorIdKey) {
+              employeesByMentorId.set(cleanKey, {
+                name: employee.name,
+                transporterId: employee.transporterId
+              });
+            }
+          }
         }
         
-        // Alternative: store by both first and last name combined
+        // Also try combination of first and last if both exist
         if (employee.mentorFirstName && employee.mentorLastName) {
-          const combinedKey = `${employee.mentorFirstName.toLowerCase()}_${employee.mentorLastName.toLowerCase()}`;
+          const combinedKey = `${employee.mentorFirstName.trim()}_${employee.mentorLastName.trim()}`;
           employeesByMentorId.set(combinedKey, {
             name: employee.name,
             transporterId: employee.transporterId
           });
         }
       }
-      
-      // Fallback: Parse employee name for potential matching
-      const nameParts = employee.name.split(' ');
-      if (nameParts.length >= 2) {
-        const firstName = nameParts[0].toLowerCase();
-        const lastName = nameParts[nameParts.length - 1].toLowerCase();
-        
-        // Store by full name parts
-        const nameKey = `${firstName}_${lastName}`;
-        employeesByNameParts.set(nameKey, {
-          name: employee.name,
-          transporterId: employee.transporterId
-        });
-      }
     });
     
-    console.log('Available employees for matching:', employees.length);
-    console.log('Employees with mentor IDs:', employeesByMentorId.size);
-    console.log('Employees with parsed names:', employeesByNameParts.size);
+    console.log('Employees with mentor IDs for matching:', employeesByMentorId.size);
     
     // Map drivers with employee data using progressively fallback strategies
     const mappedDrivers = data.drivers.map(driver => {
       let matchedEmployee = null;
       
+      // Debug what we're trying to match
+      console.log('Trying to match driver:', {
+        firstName: driver.firstName,
+        lastName: driver.lastName
+      });
+      
       // Strategy 1: Exact match on mentor ID (firstName field in Mentor data)
       if (driver.firstName) {
-        const mentorIdKey = driver.firstName.toLowerCase();
+        const mentorIdKey = driver.firstName.trim();
         matchedEmployee = employeesByMentorId.get(mentorIdKey);
         
-        // Try alternate formats of the ID
+        // Try with trailing equals signs removed (common in base64 encoded data)
         if (!matchedEmployee && mentorIdKey.includes('=')) {
-          // Try without trailing equals signs (common in anonymized data)
           const cleanedKey = mentorIdKey.replace(/=+$/, '');
           matchedEmployee = employeesByMentorId.get(cleanedKey);
+          
+          // If still no match, try more aggressive truncation patterns
+          if (!matchedEmployee) {
+            // Try removing all special characters
+            const veryCleanedKey = cleanedKey.replace(/[^a-zA-Z0-9]/g, '');
+            matchedEmployee = employeesByMentorId.get(veryCleanedKey);
+          }
         }
       }
       
       // Strategy 2: Combined first and last name match
       if (!matchedEmployee && driver.firstName && driver.lastName) {
-        const combinedKey = `${driver.firstName.toLowerCase()}_${driver.lastName.toLowerCase()}`;
+        const combinedKey = `${driver.firstName.trim()}_${driver.lastName.trim()}`;
         matchedEmployee = employeesByMentorId.get(combinedKey);
+        
+        // If no match, try with equals signs removed
+        if (!matchedEmployee && combinedKey.includes('=')) {
+          const cleanedKey = combinedKey.replace(/=+$/, '');
+          matchedEmployee = employeesByMentorId.get(cleanedKey);
+        }
       }
       
-      // Strategy 3: Fallback to name parts matching
-      if (!matchedEmployee && driver.firstName && driver.lastName) {
-        const nameKey = `${driver.firstName.toLowerCase()}_${driver.lastName.toLowerCase()}`;
-        matchedEmployee = employeesByNameParts.get(nameKey);
-      }
-      
+      // Return driver with matched employee info (if found)
       return {
         ...driver,
         employeeName: matchedEmployee?.name || '',

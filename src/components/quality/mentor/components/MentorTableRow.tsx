@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -14,11 +13,8 @@ interface MentorTableRowProps {
 }
 
 const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
-  // Default to "Driver" if firstName is a timestamp or missing
-  const firstName = /^\d+:\d+$/.test(String(driver.firstName))
-    ? String(driver.firstName) // Show timestamp as-is
-    : driver.firstName || "Driver";
-  
+  // Default to showing the anonymized ID as-is
+  const firstName = driver.firstName || "Driver";
   const lastName = driver.lastName || "";
   
   // Format hours correctly
@@ -98,14 +94,14 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
                 {driver.employeeName ? (
                   <span className="text-green-700 font-medium">{driver.employeeName}</span>
                 ) : (
-                  <span>{firstName}</span>
+                  <span className="italic text-muted-foreground">{firstName}</span>
                 )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               {driver.employeeName ? (
                 <div className="max-w-xs">
-                  <p>Matched with employee: {driver.employeeName}</p>
+                  <p className="font-medium">Matched with employee: {driver.employeeName}</p>
                   <p className="text-xs text-muted-foreground mt-1">Original Mentor ID: {firstName}</p>
                 </div>
               ) : (

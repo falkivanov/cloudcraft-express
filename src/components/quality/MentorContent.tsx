@@ -9,7 +9,7 @@ import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
 import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
 
 interface MentorContentProps {
-  mentorData?: any;
+  mentorData?: MentorReport;
 }
 
 const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorData }) => {
@@ -20,6 +20,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
 
   useEffect(() => {
     const handleMentorDataRemoved = () => {
+      console.log("Mentor data removed event detected");
       setMentorData(null);
     };
 

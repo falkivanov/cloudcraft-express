@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { STORAGE_KEYS, clearStorageItem } from "@/utils/storage";
 
@@ -46,7 +45,6 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
     );
     localStorage.setItem('fileUploadHistory', JSON.stringify(updatedHistory));
     
-    // Delete associated data
     if (item.category === "customerContact") {
       localStorage.removeItem("customerContactData");
       localStorage.removeItem("parsedCustomerContactData");
@@ -56,25 +54,22 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
       localStorage.removeItem("concessionsData");
     } else if (item.category === "mentor") {
       localStorage.removeItem("mentorData");
+      window.dispatchEvent(new CustomEvent('mentorDataRemoved'));
     } else if (item.category === "scorecard") {
-      // Remove all scorecard-related data from localStorage
       localStorage.removeItem("scorecard_week");
       localStorage.removeItem("scorecard_year");
       localStorage.removeItem("scorecard_data");
       localStorage.removeItem("scorecardData");
       
-      // Use the improved clearStorageItem function for consistent storage keys
       clearStorageItem(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       localStorage.removeItem("extractedScorecardData");
       
-      // Remove week-specific data - find and remove all week-specific scorecard data
       const year = new Date().getFullYear();
       for (let week = 1; week <= 53; week++) {
         const weekKey = `scorecard_data_week_${week}_${year}`;
         clearStorageItem(weekKey);
       }
       
-      // Also check previous year (for December/January crossover)
       const prevYear = year - 1;
       for (let week = 50; week <= 53; week++) {
         const weekKey = `scorecard_data_week_${week}_${prevYear}`;
@@ -83,7 +78,6 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
       
       console.log("All scorecard data cleared from localStorage");
       
-      // Dispatch event to notify components that scorecard data has been removed
       window.dispatchEvent(new CustomEvent('scorecardDataRemoved'));
     }
     
