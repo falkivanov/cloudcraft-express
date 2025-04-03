@@ -27,11 +27,43 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
             {sortField === 'lastName' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
-        <TableHead className="text-center">Score</TableHead>
+        <TableHead 
+          className="text-center cursor-pointer hover:bg-slate-50"
+          onClick={() => onSort('overallRating')} 
+        >
+          <div className="flex items-center justify-center">
+            <span>Score</span>
+            {sortField === 'overallRating' && <SortIcon direction={sortDirection} />}
+          </div>
+        </TableHead>
         <TableHead className="text-center">Station</TableHead>
-        <TableHead className="text-right">Fahrten</TableHead>
-        <TableHead className="text-right">KM</TableHead>
-        <TableHead className="text-right">Stunden</TableHead>
+        <TableHead 
+          className="text-right cursor-pointer hover:bg-slate-50"
+          onClick={() => onSort('totalTrips')}
+        >
+          <div className="flex items-center justify-end">
+            <span>Fahrten</span>
+            {sortField === 'totalTrips' && <SortIcon direction={sortDirection} />}
+          </div>
+        </TableHead>
+        <TableHead 
+          className="text-right cursor-pointer hover:bg-slate-50"
+          onClick={() => onSort('totalKm')}
+        >
+          <div className="flex items-center justify-end">
+            <span>KM</span>
+            {sortField === 'totalKm' && <SortIcon direction={sortDirection} />}
+          </div>
+        </TableHead>
+        <TableHead 
+          className="text-right cursor-pointer hover:bg-slate-50"
+          onClick={() => onSort('totalHours')}
+        >
+          <div className="flex items-center justify-end">
+            <span>Stunden</span>
+            {sortField === 'totalHours' && <SortIcon direction={sortDirection} />}
+          </div>
+        </TableHead>
         <TableHead className="text-center">Beschl.</TableHead>
         <TableHead className="text-center">Bremsen</TableHead>
         <TableHead className="text-center">Kurven</TableHead>
