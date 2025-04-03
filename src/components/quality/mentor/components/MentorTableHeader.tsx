@@ -68,7 +68,15 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         <TableHead className="text-center whitespace-nowrap">Bremsen</TableHead>
         <TableHead className="text-center whitespace-nowrap">Kurven</TableHead>
         <TableHead className="text-center whitespace-nowrap">Tempo</TableHead>
-        <TableHead className="text-center whitespace-nowrap">Speeding</TableHead>
+        <TableHead 
+          className="text-center whitespace-nowrap cursor-pointer hover:bg-slate-50"
+          onClick={() => onSort('speeding')}
+        >
+          <div className="flex items-center justify-center">
+            <span>Speeding</span>
+            {sortField === 'speeding' && <SortIcon direction={sortDirection} />}
+          </div>
+        </TableHead>
       </TableRow>
     </TableHeader>
   );

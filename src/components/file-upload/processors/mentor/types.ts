@@ -27,6 +27,7 @@ export interface MentorDriverData {
   speeding: string;         // Speeding Rating
   following: string;        // Following Distance Rating
   overallRating: string;    // Overall Rating / FICO Score
+  tempo: string;            // Tempo Rating
 }
 
 /**
