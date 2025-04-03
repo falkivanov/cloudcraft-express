@@ -89,25 +89,25 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
             <TooltipTrigger asChild>
               <div className="cursor-help">
                 {driver.employeeName ? (
-                  <span className="text-green-700 font-medium">{driver.employeeName}</span>
+                  <span className="text-green-700 font-semibold">{driver.employeeName}</span>
                 ) : (
-                  <span className="italic text-muted-foreground">{driver.firstName}</span>
+                  <span className="text-muted-foreground">{driver.firstName}</span>
                 )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               {driver.employeeName ? (
                 <div className="max-w-xs">
-                  <p className="font-medium">Matched with employee: {driver.employeeName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Original Mentor ID: {driver.firstName}</p>
+                  <p className="font-medium">Mitarbeiter: {driver.employeeName}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Mentor ID: {driver.firstName}</p>
                   {driver.transporterId && (
                     <p className="text-xs text-muted-foreground">Transporter ID: {driver.transporterId}</p>
                   )}
                 </div>
               ) : (
                 <div>
-                  <p>Anonymized ID - No employee match found</p>
-                  <p className="text-xs text-muted-foreground mt-1">To match with an employee, edit the employee record and add this Mentor ID</p>
+                  <p>Anonymisierte ID - Kein Mitarbeiter gefunden</p>
+                  <p className="text-xs text-muted-foreground mt-1">Bearbeiten Sie die Mitarbeiterdaten und fügen Sie diese Mentor-ID hinzu</p>
                 </div>
               )}
             </TooltipContent>

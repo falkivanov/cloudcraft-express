@@ -22,6 +22,7 @@ const useMentorDrivers = (
     setEmployees(loadedEmployees);
     console.log('Loaded employee data for Mentor matching:', loadedEmployees.length);
     
+    // Log sample of employee mentor IDs for debugging
     if (loadedEmployees.length > 0) {
       console.log('Sample employee mentor IDs:', 
         loadedEmployees.slice(0, 5).map(e => ({
@@ -39,17 +40,11 @@ const useMentorDrivers = (
     
     console.log(`Processing ${data.drivers.length} drivers for display`);
     
+    // Build employee mappings for matching
     const employeeMappings = buildEmployeeMappings(employees);
     
-    console.log('Built employee mappings for matching');
-    
+    // Map drivers with employee names
     const mappedDrivers = data.drivers.map(driver => {
-      console.log('Matching driver:', {
-        firstName: driver.firstName,
-        lastName: driver.lastName,
-        station: driver.station
-      });
-      
       const matchedEmployee = matchDriverToEmployee(driver, employeeMappings);
       
       return {
@@ -59,6 +54,7 @@ const useMentorDrivers = (
       };
     });
 
+    // Sort based on selected field and direction
     return sortDrivers(mappedDrivers, sortField, sortDirection);
   }, [data, employees, sortField, sortDirection]);
 
