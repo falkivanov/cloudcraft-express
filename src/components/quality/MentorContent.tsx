@@ -17,7 +17,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
     return <NoDataMessage category="Mentor" />;
   }
 
-  // Datum im deutschen Format anzeigen
+  // Format date in German format
   const getFormattedDate = () => {
     if (!mentorData.reportDate) return "";
     
@@ -32,11 +32,11 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
   return (
     <div className="space-y-6 w-full">
       <Card>
-        <CardHeader>
+        <CardHeader className="bg-gradient-to-r from-indigo-50 to-slate-50 border-b">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-green-500" /> 
-              Mentor Programm - KW{mentorData.weekNumber}/{mentorData.year}
+              <FileSpreadsheet className="h-5 w-5 text-indigo-500" /> 
+              <span className="text-indigo-700">Mentor Auswertung - KW{mentorData.weekNumber}/{mentorData.year}</span>
             </div>
             <Button asChild variant="outline" size="sm">
               <Link to="/file-upload" className="flex items-center gap-2">
@@ -46,8 +46,8 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData }) => {
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 flex-wrap">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
             <div className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
               <span>Dateiname: {mentorData.fileName || 'unbekannt'}</span>

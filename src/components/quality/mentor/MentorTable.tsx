@@ -26,7 +26,7 @@ const MentorTable: React.FC<MentorTableProps> = ({ data }) => {
   }
 
   return (
-    <div className="overflow-auto rounded-md border">
+    <div className="overflow-auto rounded-md border border-gray-200 shadow">
       <Table>
         <MentorTableHeader />
         <TableBody>

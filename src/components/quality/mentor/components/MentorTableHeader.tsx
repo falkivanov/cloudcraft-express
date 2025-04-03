@@ -6,9 +6,12 @@ const MentorTableHeader: React.FC = () => {
   return (
     <TableHeader className="bg-slate-50">
       <TableRow>
-        <TableHead className="w-[180px]">Fahrer</TableHead>
-        <TableHead>Station</TableHead>
+        <TableHead className="w-[100px]">Vorname</TableHead>
+        <TableHead className="w-[100px]">Nachname</TableHead>
+        <TableHead className="text-center">FICO® Score</TableHead>
+        <TableHead className="text-center">Station</TableHead>
         <TableHead className="text-right">Fahrten</TableHead>
+        <TableHead className="text-right">Km</TableHead>
         <TableHead className="text-right">Stunden</TableHead>
         <TableHead className="text-center">Beschl.</TableHead>
         <TableHead className="text-center">Bremsen</TableHead>
@@ -17,7 +20,6 @@ const MentorTableHeader: React.FC = () => {
         <TableHead className="text-center">Gurt</TableHead>
         <TableHead className="text-center">Tempo</TableHead>
         <TableHead className="text-center">Abstand</TableHead>
-        <TableHead className="text-center">Score</TableHead>
       </TableRow>
     </TableHeader>
   );

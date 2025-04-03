@@ -9,27 +9,27 @@ import { MentorDriverData } from "./types";
  * @param columnMapping The column mapping from headers to columns
  */
 export function transformDataWithHeaders(rawData: any[], headerRow: any, columnMapping: Record<string, string>): any[] {
-  // Header-Zeile überspringen und leere Zeilen filtern
+  // Skip header row and filter empty rows
   const startRow = headerRow ? rawData.indexOf(headerRow) + 1 : 1;
   const dataRows = rawData.slice(startRow).filter(row => {
-    // Überprüfe, ob die Zeile wesentliche Daten enthält
+    // Check if row contains essential data
     const firstNameCol = columnMapping['Driver First Name'];
     const lastNameCol = columnMapping['Driver Last Name'];
     const stationCol = columnMapping['Station'];
     
     return (
-      // Prüfe, ob Name oder Stationswert vorhanden ist
+      // Check if there's a name or station value
       (row[firstNameCol] || row[lastNameCol] || row[stationCol]) &&
-      // Stelle sicher, dass es keine leere Header-Zeile ist
+      // Make sure it's not an empty header row
       !(typeof row[firstNameCol] === 'string' && row[firstNameCol].toLowerCase().includes('first'))
     );
   });
   
-  // Transformiere die Daten mit den richtigen Spaltennamen
+  // Transform the data with correct column names
   return dataRows.map(row => {
     const transformed: Record<string, any> = {};
     
-    // Für jedes benötigte Feld, hole den Wert aus der richtigen Spalte
+    // For each needed field, get the value from the right column
     Object.entries(columnMapping).forEach(([field, col]) => {
       transformed[field] = row[col];
     });
@@ -44,40 +44,47 @@ export function transformDataWithHeaders(rawData: any[], headerRow: any, columnM
  */
 export function convertToDriverData(transformedData: any[]): MentorDriverData[] {
   return transformedData.map(row => {
-    // Extrahiere Name auf intelligente Weise
+    // Extract name intelligently
     let firstName = row['Driver First Name'] || '';
     let lastName = row['Driver Last Name'] || '';
     
-    // Falls der Name in einer Spalte eine Zahl enthält (Fahrer-ID), versuche den Namen aus nachfolgenden Spalten zu extrahieren
+    // If the name in a column contains a number (driver ID), try to extract the name from subsequent columns
     if (/^\d+$/.test(firstName.toString())) {
-      // Wenn erster Name eine Zahl ist, dann ist es wahrscheinlich eine ID
-      // Versuche den Namen aus anderem Feld zu extrahieren
+      // If first name is a number, it's likely an ID
+      // Try to extract name from another field
       firstName = row['B'] || row['C'] || '';
     }
     
-    // Stationsformat bereinigen
+    // Clean up station format
     let station = row['Station'] || '';
     if (!station && row['D']) {
       station = row['D'];
     }
     
-    // String-Typumwandlung sicherstellen
+    // Ensure string type conversion
     firstName = String(firstName).trim();
     lastName = String(lastName).trim();
     station = String(station).trim();
     
-    // Standardisiere "UNASSIGNED" Werte
+    // Standardize "UNASSIGNED" values
     if (station.toUpperCase().includes('UNASSIGNED')) {
       station = 'UNASSIGNED';
     }
     
-    // Nummerische Werte bereinigen und konvertieren
+    // Clean and convert numeric values
     const totalTrips = cleanNumericValue(String(row['Total Trips'] || 0));
     
-    // Behandle Total Hours als String oder Nummer
+    // Handle Total Hours as string or number
     let totalHours = row['Total Hours'] || 0;
     if (typeof totalHours === 'string') {
       totalHours = cleanNumericValue(totalHours);
+    }
+    
+    // Extract total kilometers if available
+    let totalKm = 0;
+    if (row['Total KM'] || row['Total Kilometers'] || row['Total Distance']) {
+      const kmValue = row['Total KM'] || row['Total Kilometers'] || row['Total Distance'] || 0;
+      totalKm = cleanNumericValue(String(kmValue));
     }
     
     return {
@@ -86,8 +93,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       station,
       totalTrips,
       totalHours,
-      totalKm: 0, // Diese Information ist in der Excel nicht vorhanden
-      overallRating: String(row['Overall Rating'] || ''),
+      totalKm,
+      overallRating: String(row['Overall Rating'] || row['FICO Score'] || ''),
       acceleration: String(row['Acceleration'] || ''),
       braking: String(row['Braking'] || ''),
       cornering: String(row['Cornering'] || ''),
@@ -104,11 +111,10 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
  * @param drivers The array of driver data
  */
 export function filterValidDrivers(drivers: MentorDriverData[]): MentorDriverData[] {
-  // Fahrer mit leeren Namen oder offensichtlichen Headern herausfiltern
+  // Filter out drivers with empty names or obvious headers
   return drivers.filter(driver => {
     const isValid = 
-      driver.firstName && 
-      driver.lastName && 
+      (driver.firstName || driver.lastName) && 
       !driver.firstName.toLowerCase().includes('first') &&
       !driver.lastName.toLowerCase().includes('last');
     

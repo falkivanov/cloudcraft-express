@@ -5,8 +5,8 @@ import { Employee } from "@/types/employee";
 import { loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
 
 interface MentorDriver extends MentorDriverData {
-  employeeName: string;
-  transporterId: string;
+  employeeName?: string;
+  transporterId?: string;
 }
 
 export interface MentorTableData {
@@ -18,26 +18,26 @@ export interface MentorTableData {
 export const useMentorDrivers = (data: MentorTableData | null) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
 
-  // Lade Mitarbeiterdaten aus dem localStorage
+  // Load employee data from localStorage
   useEffect(() => {
     const loadedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
     setEmployees(loadedEmployees);
-    console.log('Geladene Mitarbeiterdaten für Mentor-Matching:', loadedEmployees.length);
+    console.log('Loaded employee data for Mentor matching:', loadedEmployees.length);
   }, []);
 
   const driversWithNames = useMemo(() => {
     if (!data?.drivers || !data.drivers.length) return [];
     
-    console.log(`Verarbeite ${data.drivers.length} Fahrer für die Anzeige`);
+    console.log(`Processing ${data.drivers.length} drivers for display`);
     
-    // Erstelle Maps für verschiedene Matching-Strategien
+    // Create maps for different matching strategies
     const employeesByMentorName = new Map();
     const employeesByNameParts = new Map();
     
     employees.forEach(employee => {
-      // Strategie 1: Matching über Mentor-Namen in Mitarbeiterprofil
+      // Strategy 1: Match by mentor names in employee profile
       if (employee.mentorFirstName || employee.mentorLastName) {
-        // Schlüssel basierend auf Mentor Vor- und Nachname
+        // Keys based on mentor first and last name
         const mentorKey = `${(employee.mentorFirstName || '').toLowerCase()}_${(employee.mentorLastName || '').toLowerCase()}`;
         employeesByMentorName.set(mentorKey, {
           name: employee.name,
@@ -45,21 +45,21 @@ export const useMentorDrivers = (data: MentorTableData | null) => {
         });
       }
       
-      // Strategie 2: Parsen des employee.name-Felds
+      // Strategy 2: Parse employee.name field
       const nameParts = employee.name.split(' ');
       if (nameParts.length >= 2) {
         const lastName = nameParts[nameParts.length - 1].toLowerCase();
-        // Verschiedene Kombinationen für den Vornamen probieren
+        // Try different combinations for first name
         const firstName = nameParts[0].toLowerCase();
         
-        // Schlüssel für exakte Übereinstimmung
+        // Key for exact match
         const exactKey = `${firstName}_${lastName}`;
         employeesByNameParts.set(exactKey, {
           name: employee.name,
           transporterId: employee.transporterId
         });
         
-        // Schlüssel für Teilübereinstimmung (nur erste 3 Zeichen des Vornamens)
+        // Key for partial match (only first 3 chars of first name)
         if (firstName.length > 2) {
           const partialKey = `${firstName.substring(0, 3)}_${lastName}`;
           employeesByNameParts.set(partialKey, {
@@ -70,26 +70,39 @@ export const useMentorDrivers = (data: MentorTableData | null) => {
       }
     });
     
-    console.log('Verfügbare Mitarbeiter für Matching:', employees.length);
-    console.log('Mitarbeiter mit Mentor-Daten:', employeesByMentorName.size);
-    console.log('Mitarbeiter mit Namen-Parsing:', employeesByNameParts.size);
+    console.log('Available employees for matching:', employees.length);
+    console.log('Employees with mentor data:', employeesByMentorName.size);
+    console.log('Employees with name parsing:', employeesByNameParts.size);
     
-    // Ordne Fahrer zu und führe Namensabgleich durch
-    return data.drivers.map(driver => {
-      // Erstelle die gleichen Schlüsselstrukturen für das Matching
-      const mentorKey = `${(driver.firstName || '').toLowerCase()}_${(driver.lastName || '').toLowerCase()}`;
-      const matchedEmployee = employeesByMentorName.get(mentorKey) || 
+    // Sort drivers by station and then name
+    return data.drivers
+      .map(driver => {
+        // Create the same key structures for matching
+        const mentorKey = `${(driver.firstName || '').toLowerCase()}_${(driver.lastName || '').toLowerCase()}`;
+        const matchedEmployee = employeesByMentorName.get(mentorKey) || 
                               employeesByNameParts.get(mentorKey);
-      
-      // Erstelle eine zusammengesetzte Anzeige für den Namen
-      const driverFullName = `${driver.firstName} ${driver.lastName}`.trim();
-      
-      return {
-        ...driver,
-        employeeName: matchedEmployee?.name || driverFullName,
-        transporterId: matchedEmployee?.transporterId || ''
-      };
-    });
+        
+        return {
+          ...driver,
+          employeeName: matchedEmployee?.name || '',
+          transporterId: matchedEmployee?.transporterId || ''
+        };
+      })
+      .sort((a, b) => {
+        // First sort by station
+        if (a.station < b.station) return -1;
+        if (a.station > b.station) return 1;
+        
+        // Then by last name
+        if (a.lastName < b.lastName) return -1;
+        if (a.lastName > b.lastName) return 1;
+        
+        // Then by first name
+        if (a.firstName < b.firstName) return -1;
+        if (a.firstName > b.firstName) return 1;
+        
+        return 0;
+      });
   }, [data, employees]);
 
   return {
