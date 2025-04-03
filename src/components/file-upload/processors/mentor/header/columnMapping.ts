@@ -154,8 +154,8 @@ function setFallbackMappings(columnMapping: Record<string, string>): void {
   
   // Make sure Tempo is mapped (if not already)
   if (!columnMapping['Tempo']) {
-    // Use a different column or create from existing data
-    columnMapping['Tempo'] = 'M'; // Assuming column M might contain Tempo data
+    // Use column M for Tempo data
+    columnMapping['Tempo'] = 'M'; // Column M for Tempo
   }
 }
 

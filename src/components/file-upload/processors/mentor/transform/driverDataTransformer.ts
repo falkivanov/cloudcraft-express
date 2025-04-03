@@ -1,3 +1,4 @@
+
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -106,6 +107,7 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       H: row['H'], // Acceleration
       J: row['J'], // Braking
       L: row['L'], // Cornering
+      M: row['M'], // Tempo
       N: row['N'], // Speeding
       V: row['V']  // Seatbelt
     });
@@ -115,9 +117,9 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       accel: row['Acceleration'], 
       brake: row['Braking'],
       corner: row['Cornering'],
+      tempo: row['Tempo'],
       speed: row['Speeding'],
-      seatbelt: row['Seatbelt'],
-      tempo: row['Tempo'] || row['Speed'] || row['Speeding']  // Add possible Tempo column mappings
+      seatbelt: row['Seatbelt']
     });
     
     // Process risk values from specific columns and with more debugging
@@ -128,7 +130,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
     // Process tempo separately - this allows us to have both tempo and speeding values
-    const tempo = extractRiskRating(row['Tempo'] || '-');
+    // Look specifically for Tempo data in column M as fallback
+    const tempo = extractRiskRating(row['Tempo'] || row['M'] || '-');
 
     // Log processed values for debugging
     console.log("Processed values:", { 
@@ -139,9 +142,9 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       accel: acceleration, 
       brake: braking, 
       corner: cornering, 
+      tempo: tempo,
       speed: speeding,
-      seatbelt: seatbelt,
-      tempo: tempo
+      seatbelt: seatbelt
     });
 
     return {
