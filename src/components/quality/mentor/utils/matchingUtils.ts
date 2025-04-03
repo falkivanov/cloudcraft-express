@@ -17,14 +17,16 @@ export function buildEmployeeMappings(employees: Employee[]) {
     
     // Mentor ID matching - most important for encrypted IDs
     if (employee.mentorFirstName) {
-      employeeByMentorId.set(employee.mentorFirstName, {
+      // Store with lower case key for case-insensitive lookup
+      const lowerCaseKey = employee.mentorFirstName.toLowerCase();
+      employeeByMentorId.set(lowerCaseKey, {
         name: employee.name,
         transporterId: employee.transporterId
       });
       
       // Also try with = signs removed (common in base64 encoding)
       if (employee.mentorFirstName.includes('=')) {
-        const cleanKey = employee.mentorFirstName.replace(/=+$/, '');
+        const cleanKey = employee.mentorFirstName.replace(/=+$/, '').toLowerCase();
         employeeByMentorId.set(cleanKey, {
           name: employee.name,
           transporterId: employee.transporterId
@@ -34,14 +36,16 @@ export function buildEmployeeMappings(employees: Employee[]) {
     
     // Add by last name too if available
     if (employee.mentorLastName) {
-      employeeByMentorId.set(employee.mentorLastName, {
+      // Store with lower case key for case-insensitive lookup
+      const lowerCaseKey = employee.mentorLastName.toLowerCase();
+      employeeByMentorId.set(lowerCaseKey, {
         name: employee.name,
         transporterId: employee.transporterId
       });
       
       // Also try with = signs removed
       if (employee.mentorLastName.includes('=')) {
-        const cleanKey = employee.mentorLastName.replace(/=+$/, '');
+        const cleanKey = employee.mentorLastName.replace(/=+$/, '').toLowerCase();
         employeeByMentorId.set(cleanKey, {
           name: employee.name,
           transporterId: employee.transporterId
@@ -51,7 +55,9 @@ export function buildEmployeeMappings(employees: Employee[]) {
     
     // Try to match by transporterId if it exists
     if (employee.transporterId) {
-      employeeByMentorId.set(employee.transporterId, {
+      // Store with lower case key for case-insensitive lookup
+      const lowerCaseKey = employee.transporterId.toLowerCase();
+      employeeByMentorId.set(lowerCaseKey, {
         name: employee.name,
         transporterId: employee.transporterId
       });
@@ -86,7 +92,9 @@ export function matchDriverToEmployee(
   
   // Try to match by first name which contains the mentor ID
   if (driver.firstName) {
-    const matchedByFirstName = employeesByMentorId.get(driver.firstName);
+    // Convert to lowercase for case-insensitive matching
+    const lowerCaseFirstName = driver.firstName.toLowerCase();
+    const matchedByFirstName = employeesByMentorId.get(lowerCaseFirstName);
     if (matchedByFirstName) {
       console.log(`Found match by first name: ${driver.firstName} -> ${matchedByFirstName.name}`);
       return matchedByFirstName;
@@ -94,7 +102,7 @@ export function matchDriverToEmployee(
     
     // Try without trailing = signs (common in base64)
     if (driver.firstName.includes('=')) {
-      const cleanKey = driver.firstName.replace(/=+$/, '');
+      const cleanKey = driver.firstName.replace(/=+$/, '').toLowerCase();
       const matchedByCleanKey = employeesByMentorId.get(cleanKey);
       if (matchedByCleanKey) {
         console.log(`Found match by cleaned first name: ${cleanKey} -> ${matchedByCleanKey.name}`);
@@ -105,7 +113,9 @@ export function matchDriverToEmployee(
   
   // Try to match by last name if no match by first name
   if (driver.lastName) {
-    const matchedByLastName = employeesByMentorId.get(driver.lastName);
+    // Convert to lowercase for case-insensitive matching
+    const lowerCaseLastName = driver.lastName.toLowerCase();
+    const matchedByLastName = employeesByMentorId.get(lowerCaseLastName);
     if (matchedByLastName) {
       console.log(`Found match by last name: ${driver.lastName} -> ${matchedByLastName.name}`);
       return matchedByLastName;
@@ -113,7 +123,7 @@ export function matchDriverToEmployee(
     
     // Try without trailing = signs
     if (driver.lastName.includes('=')) {
-      const cleanKey = driver.lastName.replace(/=+$/, '');
+      const cleanKey = driver.lastName.replace(/=+$/, '').toLowerCase();
       const matchedByCleanKey = employeesByMentorId.get(cleanKey);
       if (matchedByCleanKey) {
         console.log(`Found match by cleaned last name: ${cleanKey} -> ${matchedByCleanKey.name}`);

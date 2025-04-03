@@ -115,7 +115,7 @@ export class MentorProcessor extends BaseFileProcessor {
 
     console.log(`Updating mentor IDs for ${employees.length} employees from ${drivers.length} drivers`);
     
-    // Create a map to efficiently look up employees by name
+    // Create a map to efficiently look up employees by name (case-insensitive)
     const employeesByName = new Map<string, Employee>();
     employees.forEach(employee => {
       // Use lowercase for case-insensitive matching
