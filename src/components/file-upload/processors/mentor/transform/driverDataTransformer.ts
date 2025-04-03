@@ -1,3 +1,4 @@
+
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -116,7 +117,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       brake: row['Braking'],
       corner: row['Cornering'],
       speed: row['Speeding'],
-      seatbelt: row['Seatbelt']
+      seatbelt: row['Seatbelt'],
+      tempo: row['Tempo'] || row['Speed'] || row['Speeding']  // Add possible Tempo column mappings
     });
     
     // Process risk values from specific columns and with more debugging
@@ -126,6 +128,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const cornering = extractRiskRating(row['Cornering'] || row['L'] || '-');
     const speeding = extractRiskRating(row['Speeding'] || row['N'] || '-');
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
+    // Add tempo field with fallbacks to Speeding or Speed if Tempo is not found
+    const tempo = extractRiskRating(row['Tempo'] || row['Speed'] || speeding || '-');
 
     // Log processed values for debugging
     console.log("Processed values:", { 
@@ -137,7 +141,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       brake: braking, 
       corner: cornering, 
       speed: speeding,
-      seatbelt: seatbelt
+      seatbelt: seatbelt,
+      tempo: tempo
     });
 
     return {
@@ -155,7 +160,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       speeding,
       seatbelt,
       following: extractRiskRating(row['Following Distance']),
-      distraction: extractRiskRating(row['Phone Distraction'])
+      distraction: extractRiskRating(row['Phone Distraction']),
+      tempo: tempo  // Add the tempo property
     };
   });
 }
