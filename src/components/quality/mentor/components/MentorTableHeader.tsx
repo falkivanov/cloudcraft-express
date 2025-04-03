@@ -68,7 +68,7 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         <TableHead className="text-center whitespace-nowrap">Bremsen</TableHead>
         <TableHead className="text-center whitespace-nowrap">Kurven</TableHead>
         <TableHead className="text-center whitespace-nowrap">Tempo</TableHead>
-        <TableHead className="text-center whitespace-nowrap">Gurt</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Speeding</TableHead>
       </TableRow>
     </TableHeader>
   );

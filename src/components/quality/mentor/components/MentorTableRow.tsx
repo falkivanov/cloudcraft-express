@@ -129,7 +129,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
         {displayRiskValue(driver.speeding)}
       </TableCell>
       <TableCell className="text-center whitespace-nowrap">
-        {displayRiskValue(driver.seatbelt)}
+        {displayRiskValue(driver.tempo)}
       </TableCell>
     </TableRow>
   );
