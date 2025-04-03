@@ -62,6 +62,12 @@ export function extractNumericValue(value: any): number {
     return 0;
   }
   
+  // If this looks like an anonymized ID, don't try to extract numeric value
+  if (/^[a-zA-Z0-9+\/=]+$/.test(strValue) && strValue.length > 10) {
+    console.log(`Skipping numeric extraction for what appears to be an ID: ${strValue}`);
+    return 0;
+  }
+  
   // Try to extract numeric values with regex
   const matches = strValue.match(/[-+]?[0-9]*\.?[0-9]+/g);
   if (matches && matches.length > 0) {

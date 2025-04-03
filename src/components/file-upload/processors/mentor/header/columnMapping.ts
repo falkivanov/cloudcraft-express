@@ -16,8 +16,16 @@ function mapEnglishHeaders(headerRow: any, columnMapping: Record<string, string>
     
     const lowerValue = value.toLowerCase();
     
-    // Driver name mapping
-    if (lowerValue.includes('first') || (lowerValue.includes('driver') && !lowerValue.includes('last'))) {
+    // Driver name mapping - Critical for anonymized ID preservation
+    // Always map A and B columns directly regardless of header text
+    if (col === 'A') {
+      columnMapping['Driver First Name'] = 'A';
+    } 
+    else if (col === 'B') {
+      columnMapping['Driver Last Name'] = 'B';
+    }
+    // Also try to map by header text as fallback
+    else if (lowerValue.includes('first') || (lowerValue.includes('driver') && !lowerValue.includes('last'))) {
       columnMapping['Driver First Name'] = col;
     } 
     else if (lowerValue.includes('last name')) {
@@ -116,9 +124,12 @@ function mapGermanHeaders(headerRow: any, columnMapping: Record<string, string>)
  * @param columnMapping The column mapping to fill with fallbacks
  */
 function setFallbackMappings(columnMapping: Record<string, string>): void {
-  // Fallback values for columns not found - using specific column letters requested by user
-  if (!columnMapping['Driver First Name']) columnMapping['Driver First Name'] = 'A';
-  if (!columnMapping['Driver Last Name']) columnMapping['Driver Last Name'] = 'B';
+  // CRITICAL: Always ensure A and B are mapped to first and last name
+  // to preserve the anonymized IDs
+  columnMapping['Driver First Name'] = 'A';
+  columnMapping['Driver Last Name'] = 'B';
+  
+  // Ensure other fallbacks are also set
   if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'C';
   if (!columnMapping['Station']) columnMapping['Station'] = 'D';
   

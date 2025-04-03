@@ -45,6 +45,17 @@ export class MentorDataProcessor {
       // Daten mit korrekten Spaltennamen transformieren
       const transformedData = transformDataWithHeaders(rawData, headerRow, columnMapping);
       
+      // Print out sample raw data for debugging
+      console.log("Raw transformed data sample:", 
+        transformedData.slice(0, 2).map(row => ({
+          firstName: row['Driver First Name'],
+          lastName: row['Driver Last Name'],
+          score: row['Overall Rating'],
+          accel: row['Acceleration'],
+          brake: row['Braking']
+        }))
+      );
+      
       // Konvertiere in Fahrer-Objekte
       const driverData = convertToDriverData(transformedData);
       

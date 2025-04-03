@@ -22,23 +22,22 @@ export class MentorProcessor extends BaseFileProcessor {
       // Process the data
       const processedData = await dataProcessor.processFileData();
       
-      // Enhanced debugging: Log more detailed information about the first few drivers
-      console.log("Raw driver data sample:", 
+      // Enhanced debugging: Log more detailed information about driver IDs and names
+      console.log("Raw driver data sample with anonymized IDs:", 
         processedData.drivers.slice(0, 3).map(d => ({
-          name: `${d.firstName} ${d.lastName}`,
-          accelRaw: d.acceleration,
-          brakeRaw: d.braking,
-          cornerRaw: d.cornering,
-          speedRaw: d.speeding,
-          seatbeltRaw: d.seatbelt
+          firstName: d.firstName, // This should preserve the anonymized ID
+          lastName: d.lastName,
+          station: d.station,
+          trips: d.totalTrips
         }))
       );
 
       // Additional sample data check for risk columns
       if (processedData.drivers.length > 0) {
         const sampleDriver = processedData.drivers[0];
-        console.log("Detailed sample driver data (first driver):", {
-          name: `${sampleDriver.firstName} ${sampleDriver.lastName}`,
+        console.log("Detailed sample driver data (first driver) with anonymized ID:", {
+          firstName: sampleDriver.firstName, // This should be the anonymized ID
+          lastName: sampleDriver.lastName,
           trips: sampleDriver.totalTrips,
           hours: sampleDriver.totalHours,
           km: sampleDriver.totalKm,

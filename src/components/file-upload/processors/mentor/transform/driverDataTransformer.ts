@@ -7,22 +7,15 @@ import { extractRiskRating, extractNumericValue } from "./riskExtractor";
  */
 export function convertToDriverData(transformedData: any[]): MentorDriverData[] {
   return transformedData.map(row => {
-    // Extract name intelligently
+    // Extract name intelligently, but PRESERVE the original anonymized values
     let firstName = row['Driver First Name'] || '';
     let lastName = row['Driver Last Name'] || '';
     
-    // If the name in a column contains a timestamp format (HH:MM), it's not a name
-    // Try to extract from original name field or use a fallback
+    // Important: We want to keep the anonymized IDs for matching, so we don't modify them
+    // But we still need to handle timestamp format for other cases
     if (typeof firstName === 'string' && /^\d+:\d+$/.test(firstName)) {
-      console.log(`Found timestamp in first name field: ${firstName} - treating as driver ID`);
-      firstName = "Driver"; // Generic fallback
-    }
-    
-    // Check if first name is a number (driver ID)
-    if (/^\d+$/.test(firstName.toString())) {
-      // If first name is a number, it's likely an ID
-      // Try to extract name from another field
-      firstName = row['B'] || row['C'] || "Driver";
+      console.log(`Found timestamp in first name field: ${firstName} - keeping as is for ID matching`);
+      // We'll keep the original timestamp as the ID for matching
     }
     
     // Clean up station format
@@ -31,9 +24,9 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       station = row['D'];
     }
     
-    // Ensure string type conversion
-    firstName = String(firstName).trim();
-    lastName = String(lastName).trim();
+    // Ensure string type conversion while preserving the original format
+    firstName = String(firstName);
+    lastName = String(lastName);
     station = String(station).trim();
     
     // Standardize "UNASSIGNED" values
@@ -41,11 +34,10 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       station = 'UNASSIGNED';
     }
     
-    // For debugging - log the trip, km and hours values
-    console.log("Raw trip/km/hours values:", {
-      tripRaw: row['Total Trips'],
-      kmRaw: row['Total Driver km'] || row['Total KM'],
-      hoursRaw: row['Total Hours']
+    // For debugging - log the raw name values
+    console.log("Raw driver identifiers:", {
+      firstNameRaw: firstName,
+      lastNameRaw: lastName
     });
     
     // Handle numeric fields with better fallbacks

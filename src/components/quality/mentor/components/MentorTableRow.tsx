@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +90,31 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
   
   return (
     <TableRow className="hover:bg-slate-50">
-      <TableCell className="font-medium">{firstName}</TableCell>
+      <TableCell className="font-medium">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-help">
+                {driver.employeeName ? (
+                  <span className="text-green-700 font-medium">{driver.employeeName}</span>
+                ) : (
+                  <span>{firstName}</span>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {driver.employeeName ? (
+                <div className="max-w-xs">
+                  <p>Matched with employee: {driver.employeeName}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Original Mentor ID: {firstName}</p>
+                </div>
+              ) : (
+                <p>Anonymized ID - No employee match found</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="font-medium">{lastName}</TableCell>
       <TableCell className="text-center">{getScoreDisplay(driver.overallRating)}</TableCell>
       <TableCell className="text-center">{driver.station}</TableCell>
