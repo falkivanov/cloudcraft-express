@@ -1,8 +1,9 @@
-
 import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import { MentorDataProcessor } from "./mentor/MentorDataProcessor";
 import { addItemToHistory } from "@/utils/fileUploadHistory";
+import { STORAGE_KEYS, loadFromStorage, saveToStorage } from "@/utils/storage";
+import { Employee } from "@/types/employee";
 
 /**
  * Specialized processor for Mentor Excel files
@@ -48,6 +49,9 @@ export class MentorProcessor extends BaseFileProcessor {
           seatbelt: sampleDriver.seatbelt
         });
       }
+      
+      // Update employee records with mentor IDs if not already present
+      this.tryUpdateEmployeeMentorIds(processedData.drivers);
       
       // Prüfung und Warnung bei leeren Daten
       if (!processedData.drivers || processedData.drivers.length === 0) {
@@ -111,6 +115,66 @@ export class MentorProcessor extends BaseFileProcessor {
       throw error;
     } finally {
       this.setProcessing(false);
+    }
+  }
+
+  /**
+   * Try to update employee mentor IDs from the driver data
+   */
+  private tryUpdateEmployeeMentorIds(drivers: any[]): void {
+    // Load current employees
+    const employees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
+    if (employees.length === 0) {
+      console.log("No employees found in storage, skipping mentor ID update");
+      return;
+    }
+
+    console.log(`Attempting to update mentor IDs for ${employees.length} employees from ${drivers.length} drivers`);
+    
+    // For each employee, try to find a match in the mentor data
+    let updatedCount = 0;
+    const updatedEmployees = employees.map(employee => {
+      // Skip if the employee already has mentor IDs
+      if (employee.mentorFirstName && employee.mentorLastName) {
+        return employee;
+      }
+      
+      // Try to find a matching driver by name
+      const matchingDriver = drivers.find(driver => {
+        // If we have an employeeName in the driver data, this is ideal for matching
+        if (driver.employeeName && driver.employeeName === employee.name) {
+          return true;
+        }
+        
+        // Otherwise try various fallback strategies
+        // Check if driver's station matches employee station (if available)
+        // Or try partial name matching
+        return false; // For now, we only use direct matches
+      });
+      
+      if (matchingDriver) {
+        updatedCount++;
+        console.log(`Found mentor ID match for employee ${employee.name}: ${matchingDriver.firstName}`);
+        return {
+          ...employee,
+          mentorFirstName: matchingDriver.firstName || employee.mentorFirstName,
+          mentorLastName: matchingDriver.lastName || employee.mentorLastName
+        };
+      }
+      
+      return employee;
+    });
+    
+    if (updatedCount > 0) {
+      console.log(`Updated mentor IDs for ${updatedCount} employees`);
+      saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+      
+      toast.success(`Mitarbeiter-Daten aktualisiert`, {
+        description: `${updatedCount} Mitarbeiter mit Mentor-IDs aktualisiert.`,
+        duration: 5000,
+      });
+    } else {
+      console.log("No employees needed mentor ID updates");
     }
   }
 }

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +14,6 @@ interface MentorTableRowProps {
 }
 
 const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
-  // Default to showing the anonymized ID as-is
-  const firstName = driver.firstName || "Driver";
-  const lastName = driver.lastName || "";
-  
   // Format hours correctly
   const formatHours = (hours: number | string): string => {
     if (typeof hours === 'number') {
@@ -94,7 +91,7 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
                 {driver.employeeName ? (
                   <span className="text-green-700 font-medium">{driver.employeeName}</span>
                 ) : (
-                  <span className="italic text-muted-foreground">{firstName}</span>
+                  <span className="italic text-muted-foreground">{driver.firstName}</span>
                 )}
               </div>
             </TooltipTrigger>
@@ -102,16 +99,22 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
               {driver.employeeName ? (
                 <div className="max-w-xs">
                   <p className="font-medium">Matched with employee: {driver.employeeName}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Original Mentor ID: {firstName}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Original Mentor ID: {driver.firstName}</p>
+                  {driver.transporterId && (
+                    <p className="text-xs text-muted-foreground">Transporter ID: {driver.transporterId}</p>
+                  )}
                 </div>
               ) : (
-                <p>Anonymized ID - No employee match found</p>
+                <div>
+                  <p>Anonymized ID - No employee match found</p>
+                  <p className="text-xs text-muted-foreground mt-1">To match with an employee, edit the employee record and add this Mentor ID</p>
+                </div>
               )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </TableCell>
-      <TableCell className="font-medium">{lastName}</TableCell>
+      <TableCell className="font-medium">{driver.lastName}</TableCell>
       <TableCell className="text-center">{getScoreDisplay(driver.overallRating)}</TableCell>
       <TableCell className="text-center">{driver.station}</TableCell>
       <TableCell className="text-right">{formatNumericValue(driver.totalTrips)}</TableCell>

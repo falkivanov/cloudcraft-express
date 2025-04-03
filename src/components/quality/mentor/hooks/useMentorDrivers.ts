@@ -27,7 +27,8 @@ const useMentorDrivers = (
         loadedEmployees.slice(0, 5).map(e => ({
           name: e.name,
           mentorFirstName: e.mentorFirstName,
-          mentorLastName: e.mentorLastName
+          mentorLastName: e.mentorLastName,
+          transporterId: e.transporterId
         }))
       );
     }
@@ -38,17 +39,18 @@ const useMentorDrivers = (
     
     console.log(`Processing ${data.drivers.length} drivers for display`);
     
-    const employeesByMentorId = buildEmployeeMappings(employees);
+    const employeeMappings = buildEmployeeMappings(employees);
     
-    console.log('Employees with mentor IDs for matching:', employeesByMentorId.size);
+    console.log('Built employee mappings for matching');
     
     const mappedDrivers = data.drivers.map(driver => {
-      console.log('Trying to match driver:', {
+      console.log('Matching driver:', {
         firstName: driver.firstName,
-        lastName: driver.lastName
+        lastName: driver.lastName,
+        station: driver.station
       });
       
-      const matchedEmployee = matchDriverToEmployee(driver, employeesByMentorId);
+      const matchedEmployee = matchDriverToEmployee(driver, employeeMappings);
       
       return {
         ...driver,
