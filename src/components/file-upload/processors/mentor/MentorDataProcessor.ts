@@ -2,7 +2,7 @@
 import { MentorReport } from "./types";
 import { extractWeekInfo } from "./utils/weekInfoExtractor";
 import { readExcelFile } from "./fileReader";
-import { findHeaderRow, createColumnMapping } from "./headerDetection";
+import { findHeaderRow, createColumnMapping } from "./header";
 import { 
   transformDataWithHeaders, 
   convertToDriverData, 
