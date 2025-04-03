@@ -5,24 +5,10 @@ import {
   TableBody,
 } from "@/components/ui/table";
 import { MentorDriverData } from "@/components/file-upload/processors/mentor/types";
-import { useMentorDrivers } from "./hooks/useMentorDrivers";
+import { useMentorDrivers, SortField } from "./hooks/useMentorDrivers";
 import MentorTableHeader from "./components/MentorTableHeader";
 import MentorTableRow from "./components/MentorTableRow";
 import EmptyState from "./components/EmptyState";
-
-type SortField = 
-  | "firstName" 
-  | "lastName" 
-  | "overallRating" 
-  | "station" 
-  | "totalTrips" 
-  | "totalKm" 
-  | "totalHours" 
-  | "acceleration" 
-  | "braking" 
-  | "cornering" 
-  | "speeding" 
-  | "seatbelt";
 
 interface MentorTableProps {
   data: {
