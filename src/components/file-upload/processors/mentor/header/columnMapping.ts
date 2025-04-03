@@ -122,10 +122,10 @@ function setFallbackMappings(columnMapping: Record<string, string>): void {
   if (!columnMapping['Overall Rating']) columnMapping['Overall Rating'] = 'C';
   if (!columnMapping['Station']) columnMapping['Station'] = 'D';
   
-  // German Excel format specific fallbacks for base data
-  if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'K';
-  if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'L';
-  if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'M';
+  // Explicit numeric column mappings
+  if (!columnMapping['Total Trips']) columnMapping['Total Trips'] = 'E'; // Column E for Trips
+  if (!columnMapping['Total Driver km']) columnMapping['Total Driver km'] = 'F'; // Column F for KM
+  if (!columnMapping['Total Hours']) columnMapping['Total Hours'] = 'G'; // Column G for Hours
   
   // DIRECT TARGETING OF RISK COLUMNS - using the specific columns requested by user
   // Map these columns directly regardless of header detection

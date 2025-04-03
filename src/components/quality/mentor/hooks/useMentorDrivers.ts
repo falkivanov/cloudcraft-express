@@ -112,19 +112,65 @@ export const useMentorDrivers = (
       let valueA: any;
       let valueB: any;
 
-      // Expand sorting logic to cover more fields
+      // Expand sorting logic to cover special cases for timestamp in first name
       switch (sortField) {
         case 'firstName':
+          // Special case for timestamps in first name field
+          const isTimeA = typeof a.firstName === 'string' && /^\d+:\d+$/.test(a.firstName);
+          const isTimeB = typeof b.firstName === 'string' && /^\d+:\d+$/.test(b.firstName);
+          
+          if (isTimeA && isTimeB) {
+            // Both are timestamps, convert to minutes for sorting
+            const [hoursA, minutesA] = a.firstName.split(':').map(Number);
+            const [hoursB, minutesB] = b.firstName.split(':').map(Number);
+            valueA = hoursA * 60 + minutesA;
+            valueB = hoursB * 60 + minutesB;
+          } else if (isTimeA) {
+            // Only A is timestamp, place first or last depending on sort direction
+            return sortDirection === 'asc' ? -1 : 1;
+          } else if (isTimeB) {
+            // Only B is timestamp, place first or last depending on sort direction
+            return sortDirection === 'asc' ? 1 : -1;
+          } else {
+            // Neither are timestamps, sort alphabetically
+            valueA = String(a.firstName || '').toLowerCase();
+            valueB = String(b.firstName || '').toLowerCase();
+          }
+          break;
         case 'lastName':
         case 'station':
           valueA = String(a[sortField] || '').toLowerCase();
           valueB = String(b[sortField] || '').toLowerCase();
           break;
         case 'totalTrips':
+          valueA = typeof a.totalTrips === 'number' ? a.totalTrips : 0;
+          valueB = typeof b.totalTrips === 'number' ? b.totalTrips : 0;
+          break;
         case 'totalKm':
+          valueA = typeof a.totalKm === 'number' ? a.totalKm : 0;
+          valueB = typeof b.totalKm === 'number' ? b.totalKm : 0;
+          break;
         case 'totalHours':
-          valueA = typeof a[sortField] === 'number' ? Number(a[sortField]) : 0;
-          valueB = typeof b[sortField] === 'number' ? Number(b[sortField]) : 0;
+          // Handle different hour formats
+          if (typeof a.totalHours === 'string' && a.totalHours.includes(':') &&
+              typeof b.totalHours === 'string' && b.totalHours.includes(':')) {
+            // Both are in HH:MM format
+            const [hoursA, minutesA] = a.totalHours.split(':').map(Number);
+            const [hoursB, minutesB] = b.totalHours.split(':').map(Number);
+            valueA = hoursA * 60 + minutesA;
+            valueB = hoursB * 60 + minutesB;
+          } else {
+            // Convert to numeric values for comparison
+            valueA = typeof a.totalHours === 'number' ? a.totalHours : 
+                     typeof a.totalHours === 'string' && a.totalHours.includes(':') ? 
+                     parseTimeToMinutes(a.totalHours) :
+                     parseFloat(String(a.totalHours)) || 0;
+            
+            valueB = typeof b.totalHours === 'number' ? b.totalHours : 
+                     typeof b.totalHours === 'string' && b.totalHours.includes(':') ? 
+                     parseTimeToMinutes(b.totalHours) :
+                     parseFloat(String(b.totalHours)) || 0;
+          }
           break;
         case 'acceleration':
         case 'braking':
@@ -165,6 +211,13 @@ export const useMentorDrivers = (
 
     return sortedDrivers;
   }, [data, employees, sortField, sortDirection]);
+
+  // Helper function to parse time string to minutes for sorting
+  function parseTimeToMinutes(timeStr: string): number {
+    if (!timeStr.includes(':')) return parseFloat(timeStr) || 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return (hours * 60) + (minutes || 0);
+  }
 
   return {
     driversWithNames,

@@ -1,4 +1,3 @@
-
 import { MentorDriverData } from "../types";
 import { extractRiskRating, extractNumericValue } from "./riskExtractor";
 
@@ -12,11 +11,18 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     let firstName = row['Driver First Name'] || '';
     let lastName = row['Driver Last Name'] || '';
     
-    // If the name in a column contains a number (driver ID), try to extract the name from subsequent columns
+    // If the name in a column contains a timestamp format (HH:MM), it's not a name
+    // Try to extract from original name field or use a fallback
+    if (typeof firstName === 'string' && /^\d+:\d+$/.test(firstName)) {
+      console.log(`Found timestamp in first name field: ${firstName} - treating as driver ID`);
+      firstName = "Driver"; // Generic fallback
+    }
+    
+    // Check if first name is a number (driver ID)
     if (/^\d+$/.test(firstName.toString())) {
       // If first name is a number, it's likely an ID
       // Try to extract name from another field
-      firstName = row['B'] || row['C'] || '';
+      firstName = row['B'] || row['C'] || "Driver";
     }
     
     // Clean up station format
@@ -35,10 +41,28 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       station = 'UNASSIGNED';
     }
     
-    // Clean and convert numeric values
-    const totalTrips = extractNumericValue(row['Total Trips'] || 0);
+    // For debugging - log the trip, km and hours values
+    console.log("Raw trip/km/hours values:", {
+      tripRaw: row['Total Trips'],
+      kmRaw: row['Total Driver km'] || row['Total KM'],
+      hoursRaw: row['Total Hours']
+    });
     
-    // Handle Total Hours
+    // Handle numeric fields with better fallbacks
+    // Process Trips column - ensure it's treated as a number
+    let totalTrips = 0;
+    if (row['Total Trips'] !== undefined) {
+      if (typeof row['Total Trips'] === 'number') {
+        totalTrips = row['Total Trips'];
+      } else {
+        totalTrips = extractNumericValue(row['Total Trips'] || '0');
+      }
+    } else {
+      // Fallback to column position (often column E contains trips)
+      totalTrips = extractNumericValue(row['E'] || '0');
+    }
+    
+    // Handle Total Hours - ensure proper time format handling
     let totalHours = row['Total Hours'] || 0;
     
     // Check if hours is in time format (HH:MM)
@@ -47,23 +71,28 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       totalHours = String(totalHours).trim();
     } else if (typeof totalHours === 'string') {
       totalHours = extractNumericValue(totalHours);
+    } else if (totalHours === '-' || totalHours === '') {
+      totalHours = 0;
     }
     
-    // Extract total kilometers with improved fallback detection
+    // Extract total kilometers with improved fallbacks
     let totalKm = 0;
     if (row['Total Driver km'] !== undefined) {
-      totalKm = extractNumericValue(row['Total Driver km'] || 0);
+      totalKm = extractNumericValue(row['Total Driver km'] || '0');
     } else if (row['Total KM'] !== undefined) {
-      totalKm = extractNumericValue(row['Total KM'] || 0);
+      totalKm = extractNumericValue(row['Total KM'] || '0');
     } else if (row['Total Kilometers'] !== undefined) {
-      totalKm = extractNumericValue(row['Total Kilometers'] || 0);
+      totalKm = extractNumericValue(row['Total Kilometers'] || '0');
     } else if (row['Total Distance'] !== undefined) {
-      totalKm = extractNumericValue(row['Total Distance'] || 0);
+      totalKm = extractNumericValue(row['Total Distance'] || '0');
     } else if (row['Miles'] !== undefined || row['Total Miles'] !== undefined) {
       // Convert miles to kilometers if that's what we have
-      const miles = extractNumericValue(row['Miles'] || row['Total Miles'] || 0);
+      const miles = extractNumericValue(row['Miles'] || row['Total Miles'] || '0');
       totalKm = miles * 1.60934; // Miles to km conversion
     } else {
+      // Fallback to column position (often column F contains KM)
+      totalKm = extractNumericValue(row['F'] || '0');
+      
       // Additional fallback checks for common patterns
       for (const key of Object.keys(row)) {
         if (
@@ -72,17 +101,6 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
           key.toLowerCase().includes('distance')
         ) {
           const value = row[key];
-          if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
-            totalKm = extractNumericValue(value);
-            break;
-          }
-        }
-      }
-      
-      // Last resort: check columns by position (F, G, H often contain distance)
-      if (totalKm === 0) {
-        for (const col of ['F', 'G', 'H']) {
-          const value = row[col];
           if (value && (typeof value === 'number' || !isNaN(parseFloat(String(value))))) {
             totalKm = extractNumericValue(value);
             break;
@@ -118,8 +136,11 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
     const seatbelt = extractRiskRating(row['Seatbelt'] || row['V'] || '-');
 
     // Log processed values for debugging
-    console.log("Processed risk values:", { 
+    console.log("Processed values:", { 
       firstName, lastName, 
+      trips: totalTrips,
+      km: totalKm,
+      hours: totalHours,
       accel: acceleration, 
       brake: braking, 
       corner: cornering, 
@@ -132,8 +153,8 @@ export function convertToDriverData(transformedData: any[]): MentorDriverData[] 
       lastName,
       station,
       totalTrips,
-      totalHours,
       totalKm,
+      totalHours,
       overallRating: String(row['Overall Rating'] || row['FICO Score'] || row['FICO® Safe Driving Score'] || ''),
       // Use directly processed risk values
       acceleration,
