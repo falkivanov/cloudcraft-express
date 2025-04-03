@@ -1,4 +1,3 @@
-
 /**
  * Core utilities for handling localStorage operations
  */
@@ -127,6 +126,21 @@ export function clearAllStorage(): boolean {
     return true;
   } catch (error) {
     console.error('Error clearing localStorage:', error);
+    return false;
+  }
+}
+
+/**
+ * Clears employees data from localStorage
+ * @returns boolean indicating success
+ */
+export function clearEmployeesStorage(): boolean {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.EMPLOYEES);
+    console.log('Cleared employees from localStorage');
+    return true;
+  } catch (error) {
+    console.error('Error clearing employees from localStorage:', error);
     return false;
   }
 }
