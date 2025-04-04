@@ -27,7 +27,14 @@ export class CustomerContactProcessor extends BaseFileProcessor {
         
         if (showToasts) {
           toast.success(`Customer Contact Daten erfolgreich hochgeladen`, {
-            description: "Die Daten können jetzt in der Customer Contact Ansicht angezeigt werden."
+            description: "Die Daten können jetzt in der Customer Contact Ansicht angezeigt werden.",
+            action: {
+              label: "Zur Übersicht",
+              onClick: () => {
+                window.location.href = "/quality/customer-contact";
+              }
+            },
+            duration: 10000,
           });
         }
         

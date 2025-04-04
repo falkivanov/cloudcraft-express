@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CalendarIcon, UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import CustomerContactTable from "./CustomerContactTable";
+import ComplianceStatistics from "./ComplianceStatistics";
+import { CustomerContactContentProps } from "./types";
 
-interface CustomerContactContentProps {
-  customerContactData: string | null;
-  driversData: any[];
-}
-
-const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ customerContactData, driversData }) => {
+const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ 
+  customerContactData, 
+  driversData 
+}) => {
   if (!customerContactData || driversData.length === 0) {
     return (
       <NoDataMessage
@@ -28,7 +29,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ custome
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-green-500" />
-              Customer Contact Daten
+              Customer Contact Report
             </div>
             <Button asChild variant="outline" size="sm">
               <Link to="/file-upload" className="flex items-center gap-2">
@@ -42,17 +43,14 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ custome
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <CalendarIcon className="h-4 w-4" />
             <span>
-              Geladene HTML-Datei enthält {driversData.length} Fahrer
+              {driversData.length} Fahrer mit Customer Contact Daten
             </span>
-          </div>
-          <div className="border p-4 rounded-md bg-green-50/50">
-            <p className="text-muted-foreground italic">
-              Die Darstellung der Customer Contact Daten kann hier erweitert
-              werden
-            </p>
           </div>
         </CardContent>
       </Card>
+
+      <ComplianceStatistics driversData={driversData} />
+      <CustomerContactTable driversData={driversData} />
     </div>
   );
 };
