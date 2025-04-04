@@ -31,7 +31,7 @@ const ComplianceStatistics: React.FC<ComplianceStatisticsProps> = ({ driversData
             <p className="text-2xl font-bold">{stats.totalAddresses}</p>
           </div>
           <div className="bg-red-50 p-4 rounded-md">
-            <p className="text-sm text-muted-foreground">Critical Drivers (<85%)</p>
+            <p className="text-sm text-muted-foreground">Critical Drivers (&lt;85%)</p>
             <p className="text-2xl font-bold text-red-700">{stats.criticalDrivers}</p>
           </div>
           <div className="bg-amber-50 p-4 rounded-md">
