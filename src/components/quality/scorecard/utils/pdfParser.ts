@@ -34,8 +34,8 @@ export const parseScorecardPDF = async (
     console.info("Starte PDF-Parsing für: ", filename);
     
     // Extrahiere Wochennummer aus Dateinamen mit verbessertem Extraktor
-    const weekNum = extractWeekFromFilename(filename);
-    console.info("Extrahierte Wochennummer:", weekNum);
+    const extractedWeek = extractWeekFromFilename(filename);
+    console.info("Extrahierte Wochennummer:", extractedWeek);
     
     // Lade das PDF-Dokument
     try {
@@ -62,7 +62,7 @@ export const parseScorecardPDF = async (
           success: false,
           data: null,
           error: null,
-          ...await attemptTextBasedExtraction(pdf, weekNum, detailedLogging)
+          ...await attemptTextBasedExtraction(pdf, extractedWeek, detailedLogging)
         };
         
         if (textBasedResult.success && textBasedResult.data && 
@@ -83,7 +83,7 @@ export const parseScorecardPDF = async (
         } else {
           // Letzter Ausweg: Verwende einfache Fallback-Daten
           console.log("Keine Extraktionsmethode hat Fahrer gefunden, verwende Fallback-Daten");
-          extractedData = createFallbackData(weekNum);
+          extractedData = createFallbackData(extractedWeek);
         }
       }
       
@@ -106,11 +106,11 @@ export const parseScorecardPDF = async (
       }
       
       // Stelle sicher, dass die Woche basierend auf dem Dateinamen korrekt festgelegt ist
-      if (weekNum) {
-        // Ensure weekNum is a number for the week property
-        extractedData.week = typeof weekNum === 'number' ? 
-          weekNum : 
-          parseInt(String(weekNum).replace(/\D/g, ''));
+      if (extractedWeek) {
+        // Ensure extractedWeek is a number for the week property
+        extractedData.week = typeof extractedWeek === 'number' ? 
+          extractedWeek : 
+          parseInt(String(extractedWeek).replace(/\D/g, ''));
       }
       
       // Wenn Jahr fehlt, verwende das aktuelle Jahr
@@ -128,7 +128,7 @@ export const parseScorecardPDF = async (
     } catch (error) {
       console.error('Fehler mit dem PDF-Dokument:', error);
       // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-      const weekString = typeof weekNum === 'number' ? weekNum.toString() : String(weekNum);
+      const weekString = typeof extractedWeek === 'number' ? extractedWeek.toString() : String(extractedWeek);
       const data = await getSampleDataWithWeek(weekString);
       console.info("Verwende Beispieldaten aufgrund eines PDF-Verarbeitungsfehlers");
       
@@ -146,15 +146,20 @@ export const parseScorecardPDF = async (
     
     // Handle the case properly
     let weekString = "";
-    if (typeof weekNum !== 'undefined') {
-      weekString = typeof weekNum === 'number' ? weekNum.toString() : String(weekNum);
-    } else {
-      const currentDate = new Date();
-      if (typeof currentDate.getWeek === 'function') {
-        weekString = currentDate.getWeek().toString();
+    try {
+      if (typeof extractedWeek !== 'undefined') {
+        weekString = typeof extractedWeek === 'number' ? extractedWeek.toString() : String(extractedWeek);
       } else {
-        weekString = "1"; // Fallback if getWeek isn't available
+        const currentDate = new Date();
+        if (typeof currentDate.getWeek === 'function') {
+          weekString = currentDate.getWeek().toString();
+        } else {
+          weekString = "1"; // Fallback if getWeek isn't available
+        }
       }
+    } catch (weekError) {
+      weekString = "1"; // Ultimate fallback
+      console.error("Error getting week:", weekError);
     }
     
     // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten

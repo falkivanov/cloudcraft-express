@@ -54,7 +54,8 @@ export const attemptPositionalExtraction = async (
     const overallScore = extractOverallScore(fullText);
     const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
-    const week = extractWeekFromFilename(filename);
+    const weekString = extractWeekFromFilename(filename);
+    const week = typeof weekString === 'string' ? parseInt(weekString.replace(/\D/g, '')) : weekString;
     const year = new Date().getFullYear();
     
     // Erstelle Kategorien für KPIs
@@ -156,9 +157,8 @@ export const attemptTextBasedExtraction = async (
     const rank = extractRank(fullText);
     const year = new Date().getFullYear();
     
-    // Convert weekNum to string if it's a number
-    const weekString = typeof weekNum === 'number' ? weekNum.toString() : weekNum;
-    const weekNumber = typeof weekNum === 'number' ? weekNum : parseInt(weekNum.replace(/\D/g, ''));
+    // Convert weekNum to number if it's a string
+    const weekNumber = typeof weekNum === 'string' ? parseInt(weekNum.replace(/\D/g, '')) : weekNum;
     
     // Stelle die Scorecard-Daten zusammen
     return { 
@@ -208,11 +208,10 @@ export const createFallbackData = (weekNum: string | number): ScoreCardData => {
   console.log("Erstelle Fallback-Daten");
   
   // Parse die Wochennummer
-  const weekString = typeof weekNum === 'number' ? weekNum.toString() : weekNum;
-  const week = typeof weekNum === 'number' ? weekNum : parseInt(weekString.replace(/\D/g, ''));
+  const weekNumber = typeof weekNum === 'string' ? parseInt(weekNum.replace(/\D/g, '')) : weekNum;
   
   return {
-    week,
+    week: weekNumber,
     year: new Date().getFullYear(),
     location: "DSP",
     overallScore: 75,
