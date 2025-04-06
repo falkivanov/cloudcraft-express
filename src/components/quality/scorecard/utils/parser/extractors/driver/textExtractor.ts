@@ -1,3 +1,4 @@
+
 import { determineMetricStatus } from './utils/metricStatus';
 import { createAllStandardMetrics } from './utils/metricUtils';
 
@@ -61,7 +62,50 @@ export const extractDriverKPIsFromText = (text: string) => {
         const driver = {
           id,
           name: id, // Verwende ID als Name, wenn kein Name verfügbar ist
-          metrics: createAllStandardMetrics()
+          metrics: [
+            {
+              name: "Delivered",
+              value: parseFloat(delivered) || 0,
+              target: 0,
+              status: "neutral"
+            },
+            {
+              name: "DCR",
+              value: parseFloat(dcr) || 0,
+              target: 98.5,
+              status: determineMetricStatus("DCR", parseFloat(dcr) || 0)
+            },
+            {
+              name: "DNR DPMO",
+              value: parseFloat(dnrDpmo) || 0,
+              target: 1500,
+              status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo) || 0)
+            },
+            {
+              name: "POD",
+              value: parseFloat(pod) || 0,
+              target: 98,
+              status: determineMetricStatus("POD", parseFloat(pod) || 0)
+            },
+            {
+              name: "CC",
+              value: parseFloat(cc) || 0,
+              target: 95,
+              status: determineMetricStatus("CC", parseFloat(cc) || 0)
+            },
+            {
+              name: "CE",
+              value: parseFloat(ce) || 0,
+              target: 0,
+              status: determineMetricStatus("CE", parseFloat(ce) || 0)
+            },
+            {
+              name: "DEX",
+              value: parseFloat(dex) || 0,
+              target: 95,
+              status: determineMetricStatus("DEX", parseFloat(dex) || 0)
+            }
+          ]
         };
         
         drivers.push(driver);

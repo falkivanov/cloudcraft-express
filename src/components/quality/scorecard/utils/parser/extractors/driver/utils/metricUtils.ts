@@ -1,104 +1,53 @@
-import { determineMetricStatus } from './metricStatus';
-import { KPIStatus } from '../../../../../helpers/statusHelper';
-import { DriverKPI } from '../../../../../types';
+
+
+import { determineStatus, KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
- * Helper function to get the target value for a metric
+ * Erstellt einen vollständigen Satz aller 7 Standardmetriken für einen Fahrer
  */
-export function getTargetForMetric(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 0;
-    case "DCR": return 98.5;
-    case "DNR DPMO": return 1500;
-    case "POD": return 98;
-    case "CC": return 95;
-    case "CE": return 0;
-    case "DEX": return 95;
-    default: return 0;
-  }
-}
-
-/**
- * Helper function to get the unit for a metric
- */
-export function getUnitForMetric(metricName: string): string {
-  switch (metricName) {
-    case "DCR": return "%";
-    case "DNR DPMO": return "DPMO";
-    case "POD": return "%";
-    case "CC": return "%";
-    case "CE": return "";
-    case "DEX": return "%";
-    default: return "";
-  }
-}
-
-/**
- * Creates a metric object with all required properties
- */
-export function createMetric(name: string, value: number, status?: KPIStatus) {
-  const calculatedStatus = status || determineMetricStatus(name, value);
+export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
+  // Namen der vorhandenen Metriken
+  const existingMetricNames = existingMetrics.map(m => m.name);
   
-  return {
-    name,
-    value,
-    target: getTargetForMetric(name),
-    unit: getUnitForMetric(name),
-    status: calculatedStatus
-  };
+  // Standardmetriken, die vorhanden sein sollten
+  const standardMetrics = [
+    {name: "Delivered", target: 0, unit: "", defaultValue: 1000},
+    {name: "DCR", target: 98.5, unit: "%", defaultValue: 98.5},
+    {name: "DNR DPMO", target: 1500, unit: "DPMO", defaultValue: 800},
+    {name: "POD", target: 98, unit: "%", defaultValue: 98},
+    {name: "CC", target: 95, unit: "%", defaultValue: 95},
+    {name: "CE", target: 0, unit: "", defaultValue: 0},
+    {name: "DEX", target: 95, unit: "%", defaultValue: 95}
+  ];
+  
+  // Kopie der Metriken erstellen, um das Original nicht zu verändern
+  const enhancedMetrics = [...existingMetrics];
+  
+  // Fehlende Metriken hinzufügen
+  standardMetrics.forEach(metric => {
+    if (!existingMetricNames.includes(metric.name)) {
+      enhancedMetrics.push({
+        name: metric.name,
+        value: metric.defaultValue,
+        target: metric.target,
+        unit: metric.unit,
+        status: determineStatus(metric.name, metric.defaultValue)
+      });
+    }
+  });
+  
+  return enhancedMetrics;
 }
 
 /**
- * Ensures all drivers have the complete set of standard metrics
+ * Stelle sicher, dass alle Fahrer alle 7 Standardmetriken haben
  */
-export function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
-  if (!drivers || drivers.length === 0) return [];
-  
+export function ensureAllMetrics(drivers: any[]): any[] {
   return drivers.map(driver => {
-    // Create a map of existing metrics by name
-    const metricMap = new Map();
-    driver.metrics.forEach(metric => {
-      metricMap.set(metric.name, metric);
-    });
-    
-    // Create the full array of metrics, using existing ones when available
-    const fullMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].map(name => {
-      if (metricMap.has(name)) {
-        return metricMap.get(name);
-      } else {
-        // Create default metric when missing
-        return createMetric(name, 0);
-      }
-    });
-    
     return {
       ...driver,
-      metrics: fullMetrics
+      metrics: createAllStandardMetrics(driver.metrics)
     };
   });
 }
 
-/**
- * Creates a complete set of standard metrics
- * Note: Modified to accept an optional existing metrics array and merge with it
- */
-export function createAllStandardMetrics(existingMetrics?: any[]): any[] {
-  const standardMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].map((name, index) => {
-    const value = index === 0 ? 900 : index === 2 ? 1500 : 95;
-    return createMetric(name, value);
-  });
-  
-  if (!existingMetrics || existingMetrics.length === 0) {
-    return standardMetrics;
-  }
-  
-  // If existing metrics were provided, merge them with standard metrics
-  const metricMap = new Map();
-  existingMetrics.forEach(metric => {
-    metricMap.set(metric.name, metric);
-  });
-  
-  return standardMetrics.map(metric => {
-    return metricMap.has(metric.name) ? metricMap.get(metric.name) : metric;
-  });
-}

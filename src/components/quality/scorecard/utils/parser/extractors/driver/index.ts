@@ -5,7 +5,6 @@ import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtrac
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
 import { generateSampleDrivers } from './sampleData';
-import { DriverKPI } from '../../types';
 import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
 import { findDriverTable } from './table/gridTableFinder';
 import { extractDriversFromDSPWeekly } from './dsp-weekly';
@@ -14,10 +13,10 @@ import { extractDriversFromDSPWeekly } from './dsp-weekly';
  * Main driver extraction function - tries all strategies in priority order
  * with improved detection for driver KPIs
  */
-export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => {
+export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   console.log("Starting driver KPI extraction with enhanced strategies");
   
-  let extractedDrivers: DriverKPI[] = [];
+  let extractedDrivers = [];
   
   // Priority 0: Check for DSP WEEKLY SUMMARY format which is most reliable when present
   if (text.includes("DSP WEEKLY SUMMARY")) {
