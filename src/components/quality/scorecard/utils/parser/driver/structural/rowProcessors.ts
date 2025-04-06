@@ -1,7 +1,220 @@
+import { determineStatus } from '../../../../helpers/statusHelper';
+import { DriverKPI } from '../../../../../types';
+import { extractNumeric, isNumeric } from './valueExtractor';
 
-import { DriverKPI } from '../../../../types';
-import { determineMetricStatus } from '../utils/metricStatus';
-import { getDefaultTargetForKPI } from '../../../../utils/helpers/statusHelper';
+/**
+ * Process all data rows after the header row
+ */
+export function processDataRows(rows: any[][], headerRowIndex: number, headerIndexes: Record<string, number>): DriverKPI[] {
+  const drivers: DriverKPI[] = [];
+  
+  // Process all rows after the header (headerRowIndex + 1)
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    
+    // Skip if row is too short
+    if (row.length < 4) continue;
+    
+    // Get driver ID from the first column (Transporter ID)
+    const driverIdIndex = headerIndexes["Transporter ID"] !== undefined ? 
+      headerIndexes["Transporter ID"] : 0;
+    
+    if (driverIdIndex < row.length) {
+      const driverId = (row[driverIdIndex]?.str || "").trim();
+      
+      // Skip if driver ID is empty or doesn't look like a valid ID
+      // Driver IDs now start with 'A' and are alphanumeric with length >= 6
+      if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) {
+        // Try looking for the first entry in the row that matches the driver ID pattern
+        const potentialDriverId = row.find(cell => 
+          (cell.str || "").trim().startsWith('A') && (cell.str || "").trim().length >= 6
+        );
+        
+        if (potentialDriverId) {
+          const newDriverId = potentialDriverId.str.trim();
+          console.log(`Found potential driver ID: ${newDriverId} in row despite wrong column index`);
+          processDriverWithId(newDriverId, row, headerIndexes, drivers);
+        }
+        continue;
+      }
+      
+      console.log(`Processing driver: ${driverId}`);
+      processDriverWithId(driverId, row, headerIndexes, drivers);
+    } else {
+      // Try to find a driver ID in the row anyway
+      const firstColumn = row[0]?.str.trim();
+      if (firstColumn && firstColumn.startsWith('A') && firstColumn.length >= 6) {
+        console.log(`Found driver ID in first column: ${firstColumn} despite missing header index`);
+        
+        // Create metrics from the remaining columns
+        const metrics = [];
+        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+        
+        let metricIndex = 0;
+        for (let j = 1; j < row.length && metricIndex < metricNames.length; j++) {
+          const cellText = (row[j]?.str || "").trim();
+          
+          if (isNumeric(cellText) || cellText === "-") {
+            // Apply special handling based on metric type
+            const metricName = metricNames[metricIndex];
+            let value = cellText === "-" ? 0 : extractNumeric(cellText);
+            
+            // For percentage fields, ensure values are in the correct range
+            if ((metricName === "DCR" || metricName === "POD" || metricName === "CC" || metricName === "DEX") && 
+                cellText !== "-") {
+              if (value > 100) {
+                value = value / 100;
+              }
+            }
+            
+            metrics.push({
+              name: metricName,
+              value: value,
+              target: metricTargets[metricIndex],
+              unit: metricUnits[metricIndex],
+              status: cellText === "-" ? "none" : determineStatus(metricName, value)
+            });
+            metricIndex++;
+          }
+        }
+        
+        if (metrics.length > 0) {
+          drivers.push({
+            name: firstColumn,
+            status: "active",
+            metrics
+          });
+        }
+      }
+    }
+  }
+  
+  return drivers;
+}
+
+/**
+ * Helper function to process a driver with known ID
+ */
+function processDriverWithId(driverId: string, row: any[], headerIndexes: Record<string, number>, drivers: DriverKPI[]): void {
+  // Collect metrics for this driver
+  const metrics = [];
+  
+  // Known metric columns that we expect to find
+  const metricColumns = [
+    { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
+    { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
+    { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
+    { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
+    { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
+    { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
+    { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
+  ];
+  
+  // Process each metric column
+  for (const metricDef of metricColumns) {
+    if (metricDef.index !== undefined && metricDef.index < row.length) {
+      const valueStr = (row[metricDef.index]?.str || "").trim();
+      
+      if (valueStr === "-") {
+        // Handle dash values
+        metrics.push({
+          name: metricDef.name,
+          value: 0,
+          target: metricDef.target,
+          unit: metricDef.unit,
+          status: "none" as const
+        });
+      } else {
+        // Extract numeric value
+        let value = extractNumeric(valueStr);
+        
+        // Special handling for percentage fields
+        if ((metricDef.name === "DCR" || metricDef.name === "POD" || 
+            metricDef.name === "CC" || metricDef.name === "DEX") && 
+            valueStr.includes('%') && value > 100) {
+          value = value / 100;
+        }
+        
+        // Only add valid numeric values
+        if (!isNaN(value)) {
+          metrics.push({
+            name: metricDef.name,
+            value,
+            target: metricDef.target,
+            unit: metricDef.unit,
+            status: determineStatus(metricDef.name, value)
+          });
+        }
+      }
+    }
+  }
+  
+  // If we don't have metrics for all columns, try to find them by position
+  if (metrics.length < metricColumns.length) {
+    console.log(`Looking for missing metrics for ${driverId} by position`);
+    
+    // Get numeric cells by position
+    const sortedRow = [...row].sort((a, b) => a.x - b.x);
+    const numericCells = sortedRow.filter((item, index) => 
+      index > 0 && (isNumeric(item.str) || item.str.trim() === "-")
+    );
+    
+    // Create a map of already found metrics
+    const foundMetrics = new Set(metrics.map(m => m.name));
+    
+    // Add missing metrics based on position
+    for (let i = 0; i < metricColumns.length; i++) {
+      const metricName = metricColumns[i].name;
+      
+      // Skip if we already have this metric
+      if (foundMetrics.has(metricName)) continue;
+      
+      // Find the corresponding numeric cell based on position
+      const cellIndex = i + 1; // +1 because first cell is driver ID
+      if (cellIndex < numericCells.length) {
+        const valueStr = numericCells[cellIndex].str.trim();
+        
+        if (valueStr === "-") {
+          metrics.push({
+            name: metricName,
+            value: 0,
+            target: metricColumns[i].target,
+            unit: metricColumns[i].unit,
+            status: "none" as const
+          });
+        } else {
+          let value = extractNumeric(valueStr);
+          
+          // Handle percentage fields correctly
+          if ((metricName === "DCR" || metricName === "POD" || 
+              metricName === "CC" || metricName === "DEX") && 
+              valueStr.includes('%') && value > 100) {
+            value = value / 100;
+          }
+          
+          metrics.push({
+            name: metricName,
+            value,
+            target: metricColumns[i].target,
+            unit: metricColumns[i].unit,
+            status: determineStatus(metricName, value)
+          });
+        }
+      }
+    }
+  }
+  
+  // Only add driver if we found at least some metrics
+  if (metrics.length > 0) {
+    drivers.push({
+      name: driverId,
+      status: "active",
+      metrics
+    });
+  }
+}
 
 /**
  * Process a row of driver data from the PDF
@@ -121,143 +334,6 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   }
   
   return null;
-}
-
-/**
- * Process all data rows from the PDF to extract driver data
- */
-export function processDataRows(rows: any[][], headerRowIndex: number, headerIndexes: Record<string, number>): DriverKPI[] {
-  const drivers: DriverKPI[] = [];
-  
-  // Process each row after the header row
-  for (let i = headerRowIndex + 1; i < rows.length; i++) {
-    const row = rows[i];
-    
-    // Skip empty rows
-    if (!row || row.length === 0) continue;
-    
-    // Get the name item (usually first column)
-    const nameItem = row.find(item => 
-      item.x >= headerIndexes["Transporter ID"] - 20 && 
-      item.x <= headerIndexes["Transporter ID"] + 20
-    );
-    
-    // Skip if no name found or it's empty
-    if (!nameItem || !nameItem.str.trim()) continue;
-    
-    // Skip if this is a header or sub-header row
-    if (nameItem.str.includes('Driver') || 
-        nameItem.str.includes('Transporter') || 
-        nameItem.str.includes('ID') ||
-        nameItem.str.includes('Total')) {
-      continue;
-    }
-    
-    // Get the driver name
-    const name = nameItem.str.trim();
-    
-    // Initialize the driver KPI object with proper type structure
-    const driver: DriverKPI = {
-      name,
-      status: "active",
-      metrics: [] // Initialize with empty array to fix type error
-    };
-    
-    // Map of column headers to their metrics
-    const metricMap: Record<string, string> = {
-      "Delivered": "Delivered",
-      "DCR": "DCR",
-      "DNR DPMO": "DNR DPMO",
-      "POD": "POD",
-      "CC": "CC",
-      "CE": "CE",
-      "DEX": "DEX"
-    };
-    
-    // Process each column
-    for (const [header, metricName] of Object.entries(metricMap)) {
-      if (headerIndexes[header] === undefined) continue;
-      
-      // Find items around this column position
-      const itemsInColumn = row.filter(item => 
-        Math.abs(item.x - headerIndexes[header]) < 20
-      );
-      
-      // Skip if no items found in this column
-      if (itemsInColumn.length === 0) continue;
-      
-      // Check if any item contains both a value and a status
-      const combinedItems = itemsInColumn.filter(item => 
-        item.str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i)
-      );
-      
-      if (combinedItems.length > 0) {
-        // Process combined value and status
-        const combinedMatch = combinedItems[0].str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-        if (combinedMatch) {
-          const value = parseFloat(combinedMatch[1]);
-          const status = combinedMatch[2].toLowerCase();
-          
-          driver.metrics.push({
-            name: metricName,
-            value,
-            target: getTargetForMetric(metricName),
-            unit: getUnitForMetric(metricName),
-            status: status as any
-          });
-          continue;
-        }
-      }
-      
-      // Look for value and status separately
-      const valueItems = itemsInColumn.filter(item => 
-        item.str.match(/\d+(?:\.\d+)?/)
-      );
-      
-      if (valueItems.length > 0) {
-        // Extract the numeric value
-        const valueMatch = valueItems[0].str.match(/(\d+(?:\.\d+)?)/);
-        if (valueMatch) {
-          const value = parseFloat(valueMatch[1]);
-          
-          // Look for status in adjacent items
-          const statusItems = row.filter(item => 
-            Math.abs(item.x - valueItems[0].x - valueItems[0].width) < 20 &&
-            Math.abs(item.y - valueItems[0].y) < 5 &&
-            /poor|fair|great|fantastic/i.test(item.str)
-          );
-          
-          let status;
-          if (statusItems.length > 0) {
-            const statusMatch = statusItems[0].str.match(/(poor|fair|great|fantastic)/i);
-            if (statusMatch) {
-              status = statusMatch[1].toLowerCase();
-            }
-          }
-          
-          if (!status) {
-            // Determine status based on the metric name and value
-            status = determineMetricStatus(metricName, value);
-          }
-          
-          driver.metrics.push({
-            name: metricName,
-            value,
-            target: getTargetForMetric(metricName),
-            unit: getUnitForMetric(metricName),
-            status: status as any
-          });
-        }
-      }
-    }
-    
-    // Only add driver if we found at least one metric
-    if (driver.metrics.length > 0) {
-      drivers.push(driver);
-    }
-  }
-  
-  return drivers;
 }
 
 /**

@@ -56,7 +56,27 @@ export const extractDriverKPIsFromText = (text: string) => {
       const values = line.split(/[,|\t]+/).map(item => item.trim());
       
       if (values.length >= 8) {
-        const [id, delivered, dcr, dnrDpmo, pod, cc, ce, dex] = values;
+        const [id, deliveredStr, dcrStr, dnrDpmoStr, podStr, ccStr, ceStr, dexStr] = values;
+        
+        // Parse and normalize values based on metric type
+        const delivered = parseFloat(deliveredStr) || 0;
+        
+        // Handle percentage values correctly
+        let dcr = parseFloat(dcrStr.replace('%', '')) || 0;
+        if (dcr > 100) dcr = dcr / 100;
+        
+        const dnrDpmo = parseFloat(dnrDpmoStr) || 0;
+        
+        let pod = podStr === "-" ? 0 : parseFloat(podStr.replace('%', '')) || 0;
+        if (pod > 100) pod = pod / 100;
+        
+        let cc = ccStr === "-" ? 0 : parseFloat(ccStr.replace('%', '')) || 0;
+        if (cc > 100) cc = cc / 100;
+        
+        const ce = parseFloat(ceStr) || 0;
+        
+        let dex = dexStr === "-" ? 0 : parseFloat(dexStr.replace('%', '')) || 0;
+        if (dex > 100) dex = dex / 100;
         
         // Erstelle ein Fahrerobjekt mit den extrahierten Werten
         const driver = {
@@ -65,47 +85,55 @@ export const extractDriverKPIsFromText = (text: string) => {
           metrics: [
             {
               name: "Delivered",
-              value: parseFloat(delivered) || 0,
+              value: delivered,
               target: 0,
-              status: "neutral"
+              unit: "",
+              status: "none"
             },
             {
               name: "DCR",
-              value: parseFloat(dcr) || 0,
+              value: dcr,
               target: 98.5,
-              status: determineMetricStatus("DCR", parseFloat(dcr) || 0)
+              unit: "%",
+              status: determineMetricStatus("DCR", dcr)
             },
             {
               name: "DNR DPMO",
-              value: parseFloat(dnrDpmo) || 0,
+              value: dnrDpmo,
               target: 1500,
-              status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo) || 0)
+              unit: "DPMO",
+              status: determineMetricStatus("DNR DPMO", dnrDpmo)
             },
             {
               name: "POD",
-              value: parseFloat(pod) || 0,
+              value: pod,
               target: 98,
-              status: determineMetricStatus("POD", parseFloat(pod) || 0)
+              unit: "%",
+              status: podStr === "-" ? "none" : determineMetricStatus("POD", pod)
             },
             {
               name: "CC",
-              value: parseFloat(cc) || 0,
+              value: cc,
               target: 95,
-              status: determineMetricStatus("CC", parseFloat(cc) || 0)
+              unit: "%",
+              status: ccStr === "-" ? "none" : determineMetricStatus("CC", cc)
             },
             {
               name: "CE",
-              value: parseFloat(ce) || 0,
+              value: ce,
               target: 0,
-              status: determineMetricStatus("CE", parseFloat(ce) || 0)
+              unit: "",
+              status: determineMetricStatus("CE", ce)
             },
             {
               name: "DEX",
-              value: parseFloat(dex) || 0,
+              value: dex,
               target: 95,
-              status: determineMetricStatus("DEX", parseFloat(dex) || 0)
+              unit: "%",
+              status: dexStr === "-" ? "none" : determineMetricStatus("DEX", dex)
             }
-          ]
+          ],
+          status: "active"
         };
         
         drivers.push(driver);
