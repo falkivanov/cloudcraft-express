@@ -1,12 +1,17 @@
 
 import React from "react";
-import { DriverKPIsProps } from "./types";
+import { DriverKPI, ScoreCardData } from "./types";
 import DriverTable from "./driver/DriverTable";
 import { calculateDriverScore } from "./driver/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon, AlertTriangle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+
+export interface DriverKPIsProps {
+  driverKPIs: DriverKPI[];
+  previousWeekData: ScoreCardData | null;
+}
 
 const DriverKPIs: React.FC<DriverKPIsProps> = ({ 
   driverKPIs,
@@ -43,7 +48,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
-    navigate("/upload");
+    navigate("/file-upload");
   };
 
   return (

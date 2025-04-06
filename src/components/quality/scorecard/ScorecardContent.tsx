@@ -21,8 +21,8 @@ interface ScorecardContentProps {
 }
 
 const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData, prevWeekData }) => {
-  const [activeTab, setActiveTab] = useState<string>("summary");
-  const { selectedWeek, setSelectedWeek } = useScorecardWeek();
+  const [activeTab, setActiveTab] = useState<string>("company");
+  const { selectedWeek, setSelectedWeek } = useScorecardWeek(scorecardData);
   
   if (!scorecardData) {
     return <NoDataMessage category="scorecard" />;
@@ -56,34 +56,14 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData, prev
 
       <Card className="w-full p-0">
         {!isDataAvailable ? (
-          <UnavailableWeekMessage weekId={selectedWeek} />
+          <UnavailableWeekMessage weekIdentifier={selectedWeek} />
         ) : (
-          <ScorecardTabsContent 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            scorecardData={scorecardData}
-            prevWeekData={prevWeekData}
-          >
-            {activeTab === "summary" && (
-              <ScorecardSummary 
-                scorecardData={scorecardData} 
-                prevWeekData={prevWeekData}
-              />
-            )}
-            {activeTab === "company" && (
-              <CompanyKPIs 
-                kpis={scorecardData.companyKPIs} 
-                prevWeekKpis={prevWeekData?.companyKPIs} 
-              />
-            )}
-            {activeTab === "drivers" && (
-              <DriverKPIs 
-                weekNo={scorecardData.week} 
-                year={scorecardData.year}
-                scoreCardData={scorecardData} 
-              />
-            )}
-          </ScorecardTabsContent>
+          <ScorecardTabsContent
+            data={scorecardData}
+            previousWeekData={prevWeekData}
+            scorecardTab={activeTab}
+            setScorecardTab={setActiveTab}
+          />
         )}
       </Card>
     </div>

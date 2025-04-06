@@ -8,7 +8,7 @@ import ScorecardSummary from "../ScorecardSummary";
 import { ScoreCardData } from "../types";
 import DriverPerformanceDashboard from "../driver/DriverPerformanceDashboard";
 
-interface ScorecardTabsContentProps {
+export interface ScorecardTabsContentProps {
   data: ScoreCardData;
   previousWeekData: ScoreCardData | null;
   scorecardTab: string;
@@ -38,10 +38,16 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
       <div className="w-full">
         <TabsContent value="company" className="w-full">
           {/* Header with summary information - only shown in Company tab */}
-          <ScorecardSummary data={data} previousWeekData={previousWeekData} />
+          <ScorecardSummary 
+            data={data} 
+            previousWeekData={previousWeekData} 
+          />
           
           <div className="w-full mx-auto">
-            <CompanyKPIs companyKPIs={data.companyKPIs} previousWeekData={previousWeekData} />
+            <CompanyKPIs 
+              companyKPIs={data.companyKPIs} 
+              previousWeekData={previousWeekData} 
+            />
           </div>
         </TabsContent>
         

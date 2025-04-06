@@ -9,19 +9,11 @@ import {
 } from "./summary/utils";
 import SummaryCard from "./summary/SummaryCard";
 import FocusAreasCard from "./summary/FocusAreasCard";
+import { ScoreCardData } from "./types";
 
-interface ScorecardSummaryProps {
-  data: {
-    week: number;
-    year: number;
-    location: string;
-    overallScore: number;
-    overallStatus: string;
-    rank: number;
-    rankNote?: string;
-    recommendedFocusAreas: string[];
-  };
-  previousWeekData: any | null;
+export interface ScorecardSummaryProps {
+  data: ScoreCardData;
+  previousWeekData: ScoreCardData | null;
 }
 
 const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekData }) => {

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CompanyKPIsProps, ScorecardKPI } from "./types";
+import { ScorecardKPI } from "./types";
 import CategoryTable from "./company/CategoryTable";
 
 // Define the KPI categories and their member KPIs to ensure consistency
@@ -36,6 +36,11 @@ const KPI_CATEGORIES = {
   ],
   other: [] // For any KPIs that don't match the predefined categories
 };
+
+export interface CompanyKPIsProps {
+  companyKPIs: ScorecardKPI[];
+  previousWeekData: ScoreCardData | null;
+}
 
 const CompanyKPIs: React.FC<CompanyKPIsProps> = ({ companyKPIs, previousWeekData }) => {
   // Group the KPIs by category
