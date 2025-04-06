@@ -20,20 +20,34 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
   const navigate = useNavigate();
   const { selectedWeek, setSelectedWeek, weekData } = useMentorWeek();
 
+  // Event listener for data updates/removals
   useEffect(() => {
     const handleMentorDataRemoved = () => {
       console.log("Mentor data removed event detected");
       setMentorData(null);
     };
 
+    const handleMentorDataUpdated = (event: CustomEvent) => {
+      console.log("Mentor data updated event detected");
+      // Only reload data if it matches our currently selected week
+      if (event.detail && 
+          event.detail.weekNumber === weekData.weekNumber && 
+          event.detail.year === weekData.year) {
+        loadMentorData();
+      }
+    };
+
     window.addEventListener("mentorDataRemoved", handleMentorDataRemoved);
+    window.addEventListener("mentorDataUpdated", handleMentorDataUpdated as EventListener);
     
     return () => {
       window.removeEventListener("mentorDataRemoved", handleMentorDataRemoved);
+      window.removeEventListener("mentorDataUpdated", handleMentorDataUpdated as EventListener);
     };
-  }, []);
+  }, [weekData]);
 
-  useEffect(() => {
+  // Load mentor data whenever the selected week changes
+  const loadMentorData = () => {
     try {
       // First check if we have data from props
       if (propsMentorData) {
@@ -54,6 +68,8 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
           return;
         } else {
           console.log(`No data found for key: ${weekKey}`);
+          setMentorData(null);
+          return;
         }
       }
       
@@ -69,6 +85,11 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
       console.error("Error loading mentor data:", error);
       setMentorData(null);
     }
+  };
+
+  // Load mentor data when selected week changes
+  useEffect(() => {
+    loadMentorData();
   }, [weekData, propsMentorData]);
 
   const handleUploadClick = () => {

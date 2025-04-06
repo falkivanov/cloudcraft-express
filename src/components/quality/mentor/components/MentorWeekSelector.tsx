@@ -34,25 +34,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
     }
   ]);
 
-  // Load all available weeks on component mount
-  useEffect(() => {
-    loadAvailableWeeks();
-
-    // Listen for mentor data updates
-    const handleMentorUpdate = () => {
-      console.log("Mentor data updated/removed event received, refreshing available weeks");
-      loadAvailableWeeks();
-    };
-
-    window.addEventListener('mentorDataUpdated', handleMentorUpdate);
-    window.addEventListener('mentorDataRemoved', handleMentorUpdate);
-    
-    return () => {
-      window.removeEventListener('mentorDataUpdated', handleMentorUpdate);
-      window.removeEventListener('mentorDataRemoved', handleMentorUpdate);
-    };
-  }, []);
-  
+  // Load all available weeks on component mount and when data changes
   const loadAvailableWeeks = () => {
     try {
       const weeks: AvailableWeek[] = [];
@@ -162,8 +144,6 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
         if (!weeks.some(w => w.id === selectedWeek)) {
           console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${weeks[0].id}`);
           setSelectedWeek(weeks[0].id);
-        } else {
-          console.log(`Keeping current selection ${selectedWeek}`);
         }
       } else {
         // No data available
@@ -186,6 +166,25 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
       }]);
     }
   };
+
+  // Load weeks when component mounts and listen for data changes
+  useEffect(() => {
+    loadAvailableWeeks();
+
+    // Listen for mentor data updates and removals
+    const handleDataChange = () => {
+      console.log("Mentor data updated/removed event received, refreshing available weeks");
+      loadAvailableWeeks();
+    };
+
+    window.addEventListener('mentorDataUpdated', handleDataChange);
+    window.addEventListener('mentorDataRemoved', handleDataChange);
+    
+    return () => {
+      window.removeEventListener('mentorDataUpdated', handleDataChange);
+      window.removeEventListener('mentorDataRemoved', handleDataChange);
+    };
+  }, []);
 
   return (
     <div className="flex items-center space-x-2">

@@ -50,7 +50,7 @@ export class MentorProcessor extends BaseFileProcessor {
         return false;
       }
       
-      // Store by week key instead of overwriting
+      // Store by week key
       const weekKey = `mentor_data_week_${processedData.weekNumber}_${processedData.year}`;
       saveToStorage(weekKey, processedData);
       console.log(`Saved mentor data to key: ${weekKey}`);

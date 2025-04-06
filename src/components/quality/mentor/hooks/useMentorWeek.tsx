@@ -31,8 +31,9 @@ export const useMentorWeek = () => {
 
   // Load mentor data for the selected week
   const loadWeekData = (weekId: string) => {
-    const { weekNumber, year } = parseWeekIdentifier(weekId);
-    setWeekData({ weekId, weekNumber, year });
+    const parsed = parseWeekIdentifier(weekId);
+    console.log(`Setting week data to: weekNumber=${parsed.weekNumber}, year=${parsed.year}`);
+    setWeekData(parsed);
   };
 
   // Update when selected week changes
