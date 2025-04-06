@@ -1,114 +1,223 @@
-/**
- * Extraction strategies for scorecard data
- */
 
 import { ScoreCardData } from '../../types';
-import { extractPDFContentWithPositions, extractTextFromPDF } from './pdf';
-import { extractScorecardData } from '../extractors/dataExtractor';
-import { extractStructuredScorecard } from './extractors/structuredExtractor';
-import { createSimpleScorecard } from './extractors/simpleExtractor';
-import { isValidScorecardData } from './validation/scoreCardValidator';
-import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
+import { extractDriverKPIs } from './extractors/driverKpiExtractor';
+import { extractCompanyKPIs } from './extractors/companyKpiExtractor';
+import { extractTextFromPDF, extractPDFContentWithPositions } from './pdf/contentExtractor';
+import { extractLocation, extractOverallScore, extractOverallStatus, extractRank, extractWeek, extractYear } from './extractors/metadataExtractor';
+import { extractDriversFromAllPages } from './extractors/driver/text/pageExtractor';
+import { extractDriverKPIsFromStructure } from './extractors/driver/structural/structuralExtractor';
 
 /**
- * Attempt positional extraction strategy
+ * Versuche die Extraktion mit dem positionalen Ansatz
+ * @param pdf Das geladene PDF-Dokument
+ * @param filename Original Dateiname
+ * @param detailedLogging Aktiviere detailliertes Logging
+ * @returns Extraktionsergebnis
  */
 export const attemptPositionalExtraction = async (
   pdf: any, 
-  filename: string, 
-  detailedLogging: boolean
-): Promise<{ success: boolean, data?: ScoreCardData, error?: any }> => {
+  filename: string,
+  detailedLogging: boolean = false
+): Promise<{success: boolean, data: ScoreCardData | null, error: any}> => {
   try {
-    if (detailedLogging) console.info("Attempting positional extraction...");
-    const posData = await extractPDFContentWithPositions(pdf);
+    console.log("Versuche positionale Extraktion");
+    
+    // Extrahiere Text und Positionsdaten aus dem PDF
+    const pageData = await extractPDFContentWithPositions(pdf);
+    
+    // Extrahiere auch den Volltext für bestimmte Extraktoren
+    const { companyText, fullText, pageTexts } = await extractTextFromPDF(pdf);
+    
+    // Extrahiere Fahrer-KPIs mit dem strukturellen Ansatz
+    const driverKPIs = extractDriverKPIsFromStructure(pageData);
+    const totalDrivers = driverKPIs.length;
+    console.log(`Extrahiert: ${totalDrivers} Fahrer mit strukturellem Ansatz`);
+    
+    // Fahrer-Extraktion als erfolgreich betrachten, wenn mindestens 8 Fahrer gefunden wurden
+    const driversSuccessful = totalDrivers >= 8;
     
     if (detailedLogging) {
-      console.log("Extracted positional data sample:", 
-        Object.keys(posData).map(key => `Page ${key}: ${posData[Number(key)].items.length} items`));
+      console.log(`Gefundene Fahrer-IDs: ${driverKPIs.slice(0, 5).map(d => d.name).join(', ')}${totalDrivers > 5 ? '...' : ''}`);
     }
     
-    const structuredData = extractStructuredScorecard(posData, filename);
+    // Extrahiere andere Daten
+    const companyKPIs = extractCompanyKPIs(companyText);
+    const location = extractLocation(fullText);
+    const overallScore = extractOverallScore(fullText);
+    const overallStatus = extractOverallStatus(overallScore, companyKPIs);
+    const rank = extractRank(fullText);
+    const week = extractWeek(fullText, filename);
+    const year = extractYear(fullText);
     
-    // Validate the extracted data to ensure it has the minimum required fields
-    if (structuredData && isValidScorecardData(structuredData)) {
-      console.info("Successfully extracted data using positional analysis");
-      
-      // Add flag to indicate real extracted data
-      const resultData = {...structuredData, isSampleData: false};
-      
-      // Save the extracted data to localStorage using both approaches for maximum compatibility
-      saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-      localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
-      
-      return { success: true, data: resultData };
-    } else {
-      return { success: false, error: "Data validation failed" };
-    }
-  } catch (e) {
-    console.warn("Positional extraction failed:", e);
-    return { success: false, error: e };
+    // Erstelle Kategorien für KPIs
+    const categorizedKPIs = {
+      safety: companyKPIs.filter(kpi => kpi.category === "safety"),
+      compliance: companyKPIs.filter(kpi => kpi.category === "compliance"),
+      customer: companyKPIs.filter(kpi => kpi.category === "customer"),
+      standardWork: companyKPIs.filter(kpi => kpi.category === "standardWork"),
+      quality: companyKPIs.filter(kpi => kpi.category === "quality"),
+      capacity: companyKPIs.filter(kpi => kpi.category === "capacity")
+    };
+    
+    // Identifiziere Fokus-Bereiche basierend auf schlechten KPIs
+    const recommendedFocusAreas = companyKPIs
+      .filter(kpi => kpi.status === "poor" || kpi.status === "fair")
+      .sort((a, b) => {
+        // Priorisiere "poor" vor "fair"
+        if (a.status === "poor" && b.status !== "poor") return -1;
+        if (a.status !== "poor" && b.status === "poor") return 1;
+        return 0;
+      })
+      .slice(0, 3)
+      .map(kpi => kpi.name);
+    
+    // Stelle die Scorecard-Daten zusammen
+    const data: ScoreCardData = {
+      week,
+      year,
+      location,
+      overallScore,
+      overallStatus,
+      rank,
+      rankNote: "",
+      companyKPIs,
+      categorizedKPIs,
+      driverKPIs,
+      recommendedFocusAreas,
+      isSampleData: false
+    };
+    
+    return { 
+      success: driversSuccessful, 
+      data, 
+      error: null 
+    };
+  } catch (error) {
+    console.error("Fehler bei positionaler Extraktion:", error);
+    return { 
+      success: false, 
+      data: null, 
+      error 
+    };
   }
 };
 
 /**
- * Attempt text-based extraction strategy
+ * Versuche die Extraktion mit dem textbasierten Ansatz
+ * @param pdf Das geladene PDF-Dokument
+ * @param weekNum Wochennummer aus dem Dateinamen
+ * @param detailedLogging Aktiviere detailliertes Logging
+ * @returns Extraktionsergebnis
  */
 export const attemptTextBasedExtraction = async (
-  pdf: any, 
-  weekNum: number, 
-  detailedLogging: boolean
-): Promise<{ success: boolean, data?: ScoreCardData, error?: any }> => {
+  pdf: any,
+  weekNum: string,
+  detailedLogging: boolean = false
+): Promise<{success: boolean, data: ScoreCardData | null, error: any}> => {
   try {
-    if (detailedLogging) console.info("Attempting text-based extraction...");
-    // Extract text from PDF pages
-    const { companyText, driverText, fullText, pageTexts } = await extractTextFromPDF(pdf);
+    console.log("Versuche textbasierte Extraktion");
+    
+    // Extrahiere Text aus dem PDF
+    const { companyText, fullText, pageTexts } = await extractTextFromPDF(pdf);
+    
+    // Extrahiere Fahrer-KPIs mit dem verbesserten textbasierten Ansatz
+    const driverKPIs = extractDriversFromAllPages(pageTexts);
+    
+    // Wenn keine Fahrer gefunden wurden, versuche den klassischen Extraktor
+    if (driverKPIs.length === 0) {
+      console.log("Keine Fahrer mit dem Seitenextraktor gefunden, versuche klassischen Extraktor");
+      const legacyDriverKPIs = extractDriverKPIs(fullText);
+      driverKPIs.push(...legacyDriverKPIs);
+    }
+    
+    const totalDrivers = driverKPIs.length;
+    console.log(`Extrahiert: ${totalDrivers} Fahrer mit textbasiertem Ansatz`);
+    
+    // Fahrer-Extraktion als erfolgreich betrachten, wenn mindestens 5 Fahrer gefunden wurden
+    const driversSuccessful = totalDrivers >= 5;
     
     if (detailedLogging) {
-      console.log("Text extraction samples:", {
-        page1Sample: companyText.substring(0, 100) + "...",
-        page2Sample: driverText.substring(0, 100) + "...",
-        totalLength: fullText.length
-      });
+      console.log(`Gefundene Fahrer-IDs: ${driverKPIs.slice(0, 5).map(d => d.name).join(', ')}${totalDrivers > 5 ? '...' : ''}`);
     }
     
-    // First try regular text-based extraction
-    const parsedData = extractScorecardData(companyText, driverText, weekNum);
+    // Extrahiere andere Daten
+    const companyKPIs = extractCompanyKPIs(companyText);
+    const location = extractLocation(fullText);
+    const overallScore = extractOverallScore(fullText);
+    const overallStatus = extractOverallStatus(overallScore, companyKPIs);
+    const rank = extractRank(fullText);
+    const week = extractWeek(fullText);
+    const year = extractYear(fullText);
     
-    // Validate the extracted data
-    if (parsedData && isValidScorecardData(parsedData)) {
-      console.info("Successfully parsed scorecard data using text-based extraction");
-      
-      // Add flag to indicate real extracted data
-      const resultData = {...parsedData, isSampleData: false};
-      
-      // Save using both approaches for maximum compatibility
-      saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-      localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
-      
-      return { success: true, data: resultData };
-    } else {
-      return { success: false, error: "Data validation failed" };
-    }
-  } catch (e) {
-    console.warn("Text extraction failed:", e);
-    return { success: false, error: e };
+    // Stelle die Scorecard-Daten zusammen
+    return { 
+      success: driversSuccessful, 
+      data: {
+        week: weekNum ? parseInt(weekNum.replace(/\D/g, '')) : week,
+        year,
+        location,
+        overallScore,
+        overallStatus,
+        rank,
+        rankNote: "",
+        companyKPIs,
+        categorizedKPIs: {
+          safety: companyKPIs.filter(kpi => kpi.category === "safety"),
+          compliance: companyKPIs.filter(kpi => kpi.category === "compliance"),
+          customer: companyKPIs.filter(kpi => kpi.category === "customer"),
+          standardWork: companyKPIs.filter(kpi => kpi.category === "standardWork"),
+          quality: companyKPIs.filter(kpi => kpi.category === "quality"),
+          capacity: companyKPIs.filter(kpi => kpi.category === "capacity")
+        },
+        driverKPIs,
+        recommendedFocusAreas: companyKPIs
+          .filter(kpi => kpi.status === "poor" || kpi.status === "fair")
+          .slice(0, 3)
+          .map(kpi => kpi.name),
+        isSampleData: false
+      }, 
+      error: null 
+    };
+  } catch (error) {
+    console.error("Fehler bei textbasierter Extraktion:", error);
+    return { 
+      success: false, 
+      data: null, 
+      error 
+    };
   }
 };
 
 /**
- * Create fallback sample data
+ * Erstelle Fallback-Daten, wenn keine Extraktion erfolgreich war
+ * @param weekNum Wochennummer aus dem Dateinamen
+ * @returns Fallback-Scorecard-Daten
  */
-export const createFallbackData = (weekNum: number): ScoreCardData => {
-  console.warn("All extraction methods failed, using simple extraction as last resort");
+export const createFallbackData = (weekNum: string): ScoreCardData => {
+  console.log("Erstelle Fallback-Daten");
   
-  // If we get here, all extraction methods failed - use sample data but mark it as such
-  const data = createSimpleScorecard(weekNum);
-  console.info("Generated fallback data for week", weekNum);
+  // Parse die Wochennummer
+  const week = weekNum ? parseInt(weekNum.replace(/\D/g, '')) : new Date().getWeek();
   
-  // Save using both approaches for maximum compatibility
-  const resultData = {...data, isSampleData: true};
-  saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
-  localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
-  
-  return resultData;
+  return {
+    week,
+    year: new Date().getFullYear(),
+    location: "DSP",
+    overallScore: 75,
+    overallStatus: "good",
+    rank: 10,
+    rankNote: "",
+    companyKPIs: [],
+    categorizedKPIs: {
+      safety: [],
+      compliance: [],
+      customer: [],
+      standardWork: [],
+      quality: [],
+      capacity: []
+    },
+    driverKPIs: [],
+    recommendedFocusAreas: [],
+    isSampleData: true
+  };
 };

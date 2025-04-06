@@ -44,7 +44,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   const hasAnyAPrefix = driverKPIs.some(d => d.name.startsWith('A'));
   
   // Check if we might need to update extraction methods (no expected format found)
-  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExpectedFormat;
+  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExpectedFormat && !hasAnyAPrefix;
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -58,7 +58,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
         <div className="text-sm text-gray-500">
           {driversWithScores.length} Fahrer gefunden
-          {hasExpectedFormat && " (14-stellige A-IDs)"}
         </div>
       </div>
       
@@ -80,7 +79,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               <p>
                 Die PDF scheint in einem Format zu sein, das zusätzliche Anpassungen erfordert.
                 {!hasExpectedFormat ? 
-                  " Es wurden keine Fahrer im erwarteten Format (14-stellige IDs beginnend mit 'A') gefunden." : 
+                  " Es wurden keine Fahrer im erwarteten Format gefunden." : 
                   " Nicht alle Fahrer-IDs entsprechen dem erwarteten Format."}
               </p>
             )}
