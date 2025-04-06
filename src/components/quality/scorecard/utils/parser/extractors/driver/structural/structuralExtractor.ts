@@ -1,14 +1,15 @@
-import { determineStatus } from '../../../../helpers/statusHelper';
+
 import { DriverKPI } from '../../../../../types';
+import { determineStatus } from '../../../../helpers/statusHelper';
 import { extractDriverKPIsFromText } from '../textExtractor';
 import { groupItemsIntoRows } from './itemGrouping';
 import { findHeaderRow } from './headerFinder';
 import { 
   processDataRows, 
   processDriverRow,
-  processTableData,
-  getTargetForMetric,
-  getUnitForMetric,
+  processTableData as importedProcessTableData,
+  getTargetForMetric as importedGetTargetForMetric,
+  getUnitForMetric as importedGetUnitForMetric,
   createMetricFromValue
 } from '../../../driver/processors';
 import { extractNumeric, isNumeric } from './valueExtractor';
@@ -58,7 +59,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
           console.log("Found table with driver header");
           
           // Try to extract drivers from this table
-          const tableDrivers = processTableData(table);
+          const tableDrivers = importedProcessTableData(table);
           if (tableDrivers.length > 0) {
             drivers.push(...tableDrivers);
             console.log(`Added ${tableDrivers.length} drivers from table`);
@@ -173,8 +174,8 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
                     metrics.push({
                       name: metricNames[i],
                       value: 0,
-                      target: getTargetForMetric(metricNames[i]),
-                      unit: getUnitForMetric(metricNames[i]),
+                      target: importedGetTargetForMetric(metricNames[i]),
+                      unit: importedGetUnitForMetric(metricNames[i]),
                       status: "none" as const
                     });
                   } else {
@@ -182,9 +183,9 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
                     metrics.push({
                       name: metricNames[i],
                       value,
-                      target: getTargetForMetric(metricNames[i]),
-                      unit: getUnitForMetric(metricNames[i]),
-                      status: determineMetricStatus(metricNames[i], value) as any
+                      target: importedGetTargetForMetric(metricNames[i]),
+                      unit: importedGetUnitForMetric(metricNames[i]),
+                      status: determineStatus(metricNames[i], value) as any
                     });
                   }
                 }
@@ -239,184 +240,5 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
   return extractDriverKPIsFromText(combinedText);
 }
 
-// Process a table structure extracted from the PDF
-function processTableData(table: any): DriverKPI[] {
-  const drivers: DriverKPI[] = [];
-  let headerRow = null;
-  let headerIndexes: Record<string, number> = {};
-  
-  // Find the header row first
-  for (let i = 0; i < table.rows.length; i++) {
-    const row = table.rows[i];
-    
-    // Look for Transporter ID or similar header
-    const hasHeaderCell = row.some((cell: any) => 
-      cell.str && (cell.str.includes("Transporter") || 
-                    cell.str.includes("ID") || 
-                    cell.str.includes("DCR") ||
-                    cell.str.includes("DPMO"))
-    );
-    
-    if (hasHeaderCell) {
-      headerRow = row;
-      
-      // Map header cells to their indices
-      headerRow.forEach((cell: any, index: number) => {
-        const text = cell.str.trim();
-        
-        if (text.includes("Transporter") || text.includes("ID")) {
-          headerIndexes["Transporter ID"] = index;
-        } else if (text.includes("Delivered")) {
-          headerIndexes["Delivered"] = index;
-        } else if (text === "DCR") {
-          headerIndexes["DCR"] = index;
-        } else if (text.includes("DNR") || text.includes("DPMO")) {
-          headerIndexes["DNR DPMO"] = index;
-        } else if (text === "POD") {
-          headerIndexes["POD"] = index;
-        } else if (text === "CC") {
-          headerIndexes["CC"] = index;
-        } else if (text === "CE") {
-          headerIndexes["CE"] = index;
-        } else if (text === "DEX") {
-          headerIndexes["DEX"] = index;
-        }
-      });
-      
-      break;
-    }
-  }
-  
-  if (headerRow) {
-    // Process all rows after the header row
-    const headerIndex = table.rows.indexOf(headerRow);
-    
-    for (let i = headerIndex + 1; i < table.rows.length; i++) {
-      const row = table.rows[i];
-      
-      // Skip if row is too short
-      if (row.length < 3) continue;
-      
-      // Extract driver ID
-      const driverIdIndex = headerIndexes["Transporter ID"] !== undefined ?
-        headerIndexes["Transporter ID"] : 0;
-      
-      if (driverIdIndex < row.length) {
-        const driverId = row[driverIdIndex].str.trim();
-        
-        // Skip if not a valid driver ID
-        if (!driverId || !driverId.startsWith('A') || driverId.length < 6) continue;
-        
-        // Process the driver row
-        const metrics = [];
-        const metricColumns = [
-          { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
-          { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
-          { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
-          { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
-          { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
-          { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
-          { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
-        ];
-        
-        // Process each metric
-        for (const metricDef of metricColumns) {
-          if (metricDef.index !== undefined && metricDef.index < row.length) {
-            const valueStr = row[metricDef.index].str.trim();
-            
-            if (valueStr === "-") {
-              metrics.push({
-                name: metricDef.name,
-                value: 0,
-                target: metricDef.target,
-                unit: metricDef.unit,
-                status: "none" as const
-              });
-            } else {
-              const value = extractNumeric(valueStr);
-              if (!isNaN(value)) {
-                metrics.push({
-                  name: metricDef.name,
-                  value,
-                  target: metricDef.target,
-                  unit: metricDef.unit,
-                  status: determineStatus(metricDef.name, value)
-                });
-              }
-            }
-          }
-        }
-        
-        if (metrics.length > 0) {
-          drivers.push({
-            name: driverId,
-            status: "active",
-            metrics
-          });
-        }
-      }
-    }
-  }
-  
-  return drivers;
-}
+// Remove duplicate function definition and use the imported version
 
-// Helper functions to get target and unit for metrics
-function getTargetForMetric(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 0;
-    case "DCR": return 98.5;
-    case "DNR DPMO": return 1500;
-    case "POD": return 98;
-    case "CC": return 95;
-    case "CE": return 0;
-    case "DEX": return 95;
-    default: return 0;
-  }
-}
-
-function getUnitForMetric(metricName: string): string {
-  switch (metricName) {
-    case "DCR": return "%";
-    case "DNR DPMO": return "DPMO";
-    case "POD": return "%";
-    case "CC": return "%";
-    case "CE": return "";
-    case "DEX": return "%";
-    default: return "";
-  }
-}
-
-// Helper function for determining metric status - this is used directly in this file
-function determineMetricStatus(metricName: string, value: number): string {
-  // Determine status based on metric name and value
-  switch (metricName) {
-    case "DCR":
-      if (value >= 99) return "fantastic";
-      if (value >= 98.5) return "great";
-      if (value >= 95) return "fair";
-      return "poor";
-    case "DNR DPMO":
-      if (value <= 1000) return "fantastic";
-      if (value <= 1500) return "great";
-      if (value <= 2500) return "fair";
-      return "poor";
-    case "POD":
-      if (value >= 99.5) return "fantastic";
-      if (value >= 98) return "great";
-      if (value >= 95) return "fair";
-      return "poor";
-    case "CC":
-      if (value >= 99) return "fantastic";
-      if (value >= 95) return "great";
-      if (value >= 90) return "fair";
-      return "poor";
-    case "DEX":
-      if (value >= 98) return "fantastic";
-      if (value >= 95) return "great";
-      if (value >= 90) return "fair";
-      return "poor";
-    default:
-      return "fair";
-  }
-}
