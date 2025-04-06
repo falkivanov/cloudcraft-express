@@ -1,11 +1,6 @@
 
 import { ScoreCardData } from "../../types";
 import { 
-  getWeek6Data, 
-  getWeek7Data, 
-  getWeek8Data, 
-  getWeek9Data, 
-  getWeek10Data,
   getWeek11Data,
   getDummyScoreCardData 
 } from "../weekData";
@@ -74,17 +69,13 @@ export const getDataFunctionForWeek = (weekNum: number, year: number): (() => Sc
   
   // If no extracted data, use sample data
   if (year === 2025) {
-    switch (weekNum) {
-      case 6: return () => applyCustomTargets(getWeek6Data(), weekNum, year);
-      case 7: return () => applyCustomTargets(getWeek7Data(), weekNum, year);
-      case 8: return () => applyCustomTargets(getWeek8Data(), weekNum, year);
-      case 9: return () => applyCustomTargets(getWeek9Data(), weekNum, year);
-      case 10: return () => applyCustomTargets(getWeek10Data(), weekNum, year);
-      case 11: return () => applyCustomTargets(getWeek11Data(), weekNum, year);
-      default: return () => applyCustomTargets(getDummyScoreCardData(), weekNum, year);
+    // We only have week 11 data now
+    if (weekNum === 11) {
+      return () => applyCustomTargets(getWeek11Data(), weekNum, year);
     }
   }
   
-  // Default to dummy data for any other year
+  // Default to dummy data for any other year/week
   return () => applyCustomTargets(getDummyScoreCardData(), weekNum, year);
 };
+

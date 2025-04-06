@@ -35,7 +35,7 @@ export const getAllAvailableWeeks = (): {id: string; label: string; weekNum: num
   }
   
   // Add only weeks that have actual data from 2025
-  // We'll filter them to only include weeks with data
+  // We only have week 11 data now
   const sampleWeeks = [
     { weekNum: 11, year: 2025 }  // Week 11 has data based on the project structure
   ];
