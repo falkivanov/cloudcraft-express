@@ -20,6 +20,11 @@ export const getWeek11Data = (): ScoreCardData => {
     companyKPIs: companyKPIs,
     driverKPIs: driverKPIs,
     recommendedFocusAreas: metadata.recommendedFocusAreas || [],
+    sectionRatings: metadata.sectionRatings || {
+      complianceAndSafety: "fair",
+      qualityAndSWC: "great",
+      capacity: "fantastic"
+    },
     categorizedKPIs: {
       safety: companyKPIs.filter(kpi => kpi.category === "safety"),
       compliance: companyKPIs.filter(kpi => kpi.category === "compliance"),

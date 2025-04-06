@@ -9,7 +9,7 @@ export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
   const [selectedWeek, setSelectedWeek] = useState<string>(
     scorecardData && scorecardData.week > 0
       ? `week-${scorecardData.week}-${scorecardData.year}`
-      : "week-0-0"
+      : "week-11-2025" // Default to week 11 which has data
   );
   
   // Try to extract week number from data if it exists
@@ -27,15 +27,21 @@ export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
           const weekId = `week-${extractedData.week}-${extractedData.year}`;
           setSelectedWeek(weekId);
           console.log(`Using week ${extractedData.week} from localStorage`);
+        } else {
+          // If no data, default to week 11 which has data
+          setSelectedWeek("week-11-2025");
         }
       } catch (error) {
         console.error("Error loading scorecard data from localStorage:", error);
+        // Default to week with known data
+        setSelectedWeek("week-11-2025");
       }
     }
   }, [scorecardData]);
 
   // Load scorecard data for the selected week
   const loadScorecardDataForWeek = useCallback((weekId: string): ScoreCardData | null => {
+    console.log(`Loading scorecard data for week: ${weekId}`);
     return getScorecardData(null, weekId);
   }, []);
   

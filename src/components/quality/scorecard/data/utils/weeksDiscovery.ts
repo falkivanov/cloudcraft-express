@@ -19,7 +19,7 @@ export const getAllAvailableWeeks = (): {id: string; label: string; weekNum: num
           const weekNum = parseInt(match[1], 10);
           const year = parseInt(match[2], 10);
           
-          if (!isNaN(weekNum) && !isNaN(year)) {
+          if (!isNaN(weekNum) && !isNaN(year) && isDataAvailableForWeek(weekNum, year)) {
             weeks.push({
               id: `week-${weekNum}-${year}`,
               label: `KW ${weekNum}/${year}`,
@@ -34,15 +34,20 @@ export const getAllAvailableWeeks = (): {id: string; label: string; weekNum: num
     }
   }
   
-  // Add sample weeks from 2025
-  for (let weekNum = 6; weekNum <= 11; weekNum++) {
-    if (isDataAvailableForWeek(weekNum, 2025) && 
-        !weeks.some(w => w.weekNum === weekNum && w.year === 2025)) {
+  // Add only weeks that have actual data from 2025
+  // We'll filter them to only include weeks with data
+  const sampleWeeks = [
+    { weekNum: 11, year: 2025 }  // Week 11 has data based on the project structure
+  ];
+  
+  for (const { weekNum, year } of sampleWeeks) {
+    if (isDataAvailableForWeek(weekNum, year) && 
+        !weeks.some(w => w.weekNum === weekNum && w.year === year)) {
       weeks.push({
-        id: `week-${weekNum}-2025`,
-        label: `KW ${weekNum}/2025 (Beispiel)`,
+        id: `week-${weekNum}-${year}`,
+        label: `KW ${weekNum}/${year}`,
         weekNum,
-        year: 2025
+        year
       });
     }
   }

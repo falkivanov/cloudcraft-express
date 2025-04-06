@@ -30,6 +30,7 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData, prev
   useEffect(() => {
     if (selectedWeek) {
       const weekData = loadScorecardDataForWeek(selectedWeek);
+      console.log("Loaded data for selected week:", weekData);
       setCurrentWeekData(weekData);
       
       // Get previous week data for comparison
