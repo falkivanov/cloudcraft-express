@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { parseWeekIdentifier, isDataAvailableForWeek, getScorecardData } from "../data";
 import { ScoreCardData } from "../types";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
@@ -35,18 +35,18 @@ export const useScorecardWeek = (scorecardData: ScoreCardData | null) => {
   }, [scorecardData]);
 
   // Load scorecard data for the selected week
-  const loadScorecardDataForWeek = (weekId: string): ScoreCardData | null => {
+  const loadScorecardDataForWeek = useCallback((weekId: string): ScoreCardData | null => {
     return getScorecardData(null, weekId);
-  };
+  }, []);
   
   // Check if selected week has available data
-  const isUnavailableWeek = () => {
+  const isUnavailableWeek = useCallback(() => {
     const parsedWeek = parseWeekIdentifier(selectedWeek);
     if (!parsedWeek) return true;
     
     const { weekNum, year } = parsedWeek;
     return !isDataAvailableForWeek(weekNum, year);
-  };
+  }, [selectedWeek]);
 
   return { 
     selectedWeek, 
