@@ -1,83 +1,31 @@
 
-import React, { useState } from "react";
+import React from "react";
 import NoDataMessage from "./NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  FileSpreadsheet, 
-  CalendarIcon, 
-  UploadIcon, 
-  ArrowUpDown,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  User
-} from "lucide-react";
+import { FileSpreadsheet, CalendarIcon, UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody } from "@/components/ui/table";
 import { ConcessionsContentProps } from "./concessions/types";
 import { formatCurrency } from "./concessions/utils";
 import { Badge } from "@/components/ui/badge";
 import { useConcessionsData } from "./hooks/quality-data/useConcessionsData";
+import ConcessionsTableHeader from "./concessions/components/ConcessionsTableHeader";
+import ConcessionsTableRow from "./concessions/components/ConcessionsTableRow";
+import ConcessionsDetailView from "./concessions/components/ConcessionsDetailView";
+import ConcessionsSearch from "./concessions/components/ConcessionsSearch";
+import ConcessionsEmptyState from "./concessions/components/ConcessionsEmptyState";
+import { useConcessionsSorting } from "./concessions/hooks/useConcessionsSorting";
+import { useConcessionsExpand } from "./concessions/hooks/useConcessionsExpand";
 
 const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData: propConcessionsData }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: 'ascending' | 'descending';
-  }>({ key: '', direction: 'ascending' });
-
-  const {
-    groupedConcessions,
-    expandedTransportId,
-    toggleExpandTransportId
-  } = useConcessionsData();
+  const { groupedConcessions } = useConcessionsData();
+  const { expandedTransportId, toggleExpandTransportId } = useConcessionsExpand();
+  const { searchTerm, setSearchTerm, sortConfig, requestSort, sortedGroups } = useConcessionsSorting(groupedConcessions);
 
   if (!propConcessionsData || !propConcessionsData.fileName) {
     return <NoDataMessage category="concessions" />;
   }
-
-  // Filter grouped items based on search term
-  const filteredGroups = groupedConcessions.filter(group => 
-    group.transportId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.items.some(item => 
-      item.trackingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.reason.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
-
-  // Apply sorting to groups
-  const sortedGroups = [...filteredGroups].sort((a, b) => {
-    if (sortConfig.key === '') return 0;
-    
-    let valueA: any = a[sortConfig.key as keyof typeof a];
-    let valueB: any = b[sortConfig.key as keyof typeof b];
-    
-    if (valueA < valueB) {
-      return sortConfig.direction === 'ascending' ? -1 : 1;
-    }
-    if (valueA > valueB) {
-      return sortConfig.direction === 'ascending' ? 1 : -1;
-    }
-    return 0;
-  });
-
-  const requestSort = (key: string) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-  };
 
   return (
     <div className="space-y-6 w-full">
@@ -112,130 +60,34 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
             </Badge>
           </div>
           
-          <div className="relative mt-2">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Suchen nach Fahrer, Transport ID, Tracking ID oder Grund..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <ConcessionsSearch 
+            searchTerm={searchTerm} 
+            onSearchChange={setSearchTerm} 
+          />
         </CardHeader>
 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10"></TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => requestSort('driverName')}>
-                    <div className="flex items-center gap-1">
-                      Fahrer
-                      {sortConfig.key === 'driverName' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => requestSort('transportId')}>
-                    <div className="flex items-center gap-1">
-                      Transport ID
-                      {sortConfig.key === 'transportId' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => requestSort('count')}>
-                    <div className="flex items-center gap-1">
-                      Anzahl
-                      {sortConfig.key === 'count' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-right cursor-pointer" onClick={() => requestSort('totalCost')}>
-                    <div className="flex items-center justify-end gap-1">
-                      Kosten
-                      {sortConfig.key === 'totalCost' && (
-                        <ArrowUpDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+              <ConcessionsTableHeader 
+                sortConfig={sortConfig} 
+                requestSort={requestSort} 
+              />
+              
               <TableBody>
                 {sortedGroups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Daten vorhanden'}
-                    </TableCell>
-                  </TableRow>
+                  <ConcessionsEmptyState searchTerm={searchTerm} />
                 ) : (
                   sortedGroups.map((group) => (
                     <React.Fragment key={group.transportId}>
-                      <TableRow 
-                        className="cursor-pointer hover:bg-muted/80"
-                        onClick={() => toggleExpandTransportId(group.transportId)}
-                      >
-                        <TableCell className="p-2">
-                          {expandedTransportId === group.transportId ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {group.driverName}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {group.transportId}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{group.count}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(group.totalCost)}
-                        </TableCell>
-                      </TableRow>
+                      <ConcessionsTableRow
+                        group={group}
+                        isExpanded={expandedTransportId === group.transportId}
+                        onToggleExpand={() => toggleExpandTransportId(group.transportId)}
+                      />
 
                       {expandedTransportId === group.transportId && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="p-0 border-0">
-                            <div className="bg-muted/30 p-2">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="text-xs">Tracking ID</TableHead>
-                                    <TableHead className="text-xs">Lieferdatum</TableHead>
-                                    <TableHead className="text-xs">Grund</TableHead>
-                                    <TableHead className="text-xs text-right">Kosten</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {group.items.map((item, index) => (
-                                    <TableRow key={`${item.trackingId}-${index}`} className="border-0 hover:bg-muted/50">
-                                      <TableCell className="text-xs py-2">{item.trackingId}</TableCell>
-                                      <TableCell className="text-xs py-2">
-                                        {new Date(item.deliveryDateTime).toLocaleString('de-DE', { 
-                                          year: 'numeric',
-                                          month: '2-digit',
-                                          day: '2-digit',
-                                          hour: '2-digit',
-                                          minute: '2-digit'
-                                        })}
-                                      </TableCell>
-                                      <TableCell className="text-xs py-2">{item.reason}</TableCell>
-                                      <TableCell className="text-xs py-2 text-right">
-                                        {formatCurrency(item.cost)}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <ConcessionsDetailView items={group.items} />
                       )}
                     </React.Fragment>
                   ))
