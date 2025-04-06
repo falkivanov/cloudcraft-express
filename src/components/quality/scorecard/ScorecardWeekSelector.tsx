@@ -1,15 +1,9 @@
 
 import React, { useEffect, useState } from "react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 import { ScoreCardData } from "./types";
 import { parseWeekIdentifier, isDataAvailableForWeek, getAllAvailableWeeks } from "./data";
+import WeekSelectorWithArrows, { WeekOption } from "../shared/WeekSelectorWithArrows";
 
 interface ScorecardWeekSelectorProps {
   selectedWeek: string;
@@ -20,21 +14,13 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
   selectedWeek,
   setSelectedWeek
 }) => {
-  const [availableWeeks, setAvailableWeeks] = useState<{
-    id: string;
-    label: string;
-    weekNum: number;
-    year: number;
-    date?: Date;
-  }[]>([
+  const [availableWeeks, setAvailableWeeks] = useState<WeekOption[]>([
     {
       id: "week-0-0",
-      label: "Keine Daten vorhanden",
-      weekNum: 0,
-      year: 0,
-      date: new Date()
+      label: "Keine Daten vorhanden"
     }
   ]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Load all available weeks on component mount
   useEffect(() => {
@@ -53,7 +39,9 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
   
   const loadAvailableWeeks = () => {
     try {
-      // Get all available weeks using the new helper function
+      setIsLoading(true);
+      
+      // Get all available weeks using the helper function
       const weeks = getAllAvailableWeeks();
       
       // Get extracted data from storage for marking "current" week
@@ -90,33 +78,24 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
         // No data available
         setAvailableWeeks([{
           id: "week-0-0",
-          label: "Keine Daten vorhanden",
-          weekNum: 0,
-          year: 0,
-          date: new Date()
+          label: "Keine Daten vorhanden"
         }]);
       }
+      
+      setIsLoading(false);
     } catch (error) {
       console.error("Error loading available weeks:", error);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <span className="text-sm text-muted-foreground whitespace-nowrap">Kalenderwoche:</span>
-      <Select value={selectedWeek} onValueChange={setSelectedWeek}>
-        <SelectTrigger className="w-[180px] bg-white">
-          <SelectValue placeholder="Woche auswählen..." />
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          {availableWeeks.map((week) => (
-            <SelectItem key={week.id} value={week.id}>
-              {week.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <WeekSelectorWithArrows
+      selectedWeek={selectedWeek}
+      setSelectedWeek={setSelectedWeek}
+      availableWeeks={availableWeeks}
+      isLoading={isLoading}
+    />
   );
 };
 
