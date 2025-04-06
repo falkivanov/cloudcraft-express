@@ -1,7 +1,7 @@
 
 import { ScoreCardData } from '../../types';
 import { extractDriverKPIs } from './extractors/driver';
-import { extractCompanyKPIs } from '../extractors/companyKpiExtractor';
+import { extractCompanyKPIs } from './extractors/companyKpiExtractor';
 import { extractTextFromPDF, extractPDFContentWithPositions } from './pdf/contentExtractor';
 import { 
   extractLocation, 
@@ -10,7 +10,7 @@ import {
   extractRank, 
   extractRankChange,
   extractFocusAreas
-} from '../extractors/metadataExtractor';
+} from './extractors/metadataExtractor';
 import { extractDriversFromAllPages } from './extractors/driver/text/pageExtractor';
 import { extractDriverKPIsFromStructure } from './extractors/driver/structural/structuralExtractor';
 import { extractWeekFromFilename } from './weekUtils';
@@ -54,8 +54,12 @@ export const attemptPositionalExtraction = async (
     const overallScore = extractOverallScore(fullText);
     const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
+    // Fix: Make sure weekString is a string before passing it to parseInt
     const weekString = extractWeekFromFilename(filename);
-    const week = typeof weekString === 'string' ? parseInt(weekString.replace(/\D/g, '')) : weekString;
+    // Fix: Convert weekString to number properly
+    const week = typeof weekString === 'string' ? 
+      parseInt(weekString.replace(/\D/g, '')) : 
+      weekString;
     const year = new Date().getFullYear();
     
     // Erstelle Kategorien für KPIs
@@ -157,7 +161,7 @@ export const attemptTextBasedExtraction = async (
     const rank = extractRank(fullText);
     const year = new Date().getFullYear();
     
-    // Convert weekNum to number if it's a string
+    // Fix: Convert weekNum to number if it's a string
     const weekNumber = typeof weekNum === 'string' ? parseInt(weekNum.replace(/\D/g, '')) : weekNum;
     
     // Stelle die Scorecard-Daten zusammen

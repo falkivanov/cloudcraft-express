@@ -165,7 +165,8 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   
   // Fallback: return sample data if all extraction methods failed
   console.log("All extraction methods failed, returning sample drivers");
-  return generateSampleDrivers(3);
+  // Fix: Call generateSampleDrivers without arguments or with a default count
+  return generateSampleDrivers();
 };
 
 // Export these functions for usage in other extractors

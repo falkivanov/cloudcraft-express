@@ -1,13 +1,13 @@
 
 import { DriverKPI } from '../../../../../types';
 import { generateSampleDrivers } from '../sampleData';
-import { tryAllExtractionStrategies } from './multiStrategy';
+import { extractDriverKPIs } from '../index';
 
 /**
  * Try to extract drivers or return sample data as a last resort
  */
 export function extractDriversOrUseSampleData(text: string): DriverKPI[] {
-  const drivers = tryAllExtractionStrategies(text);
+  const drivers = extractDriverKPIs(text);
   
   if (drivers.length > 3) {
     console.log(`Successfully extracted ${drivers.length} unique drivers`);

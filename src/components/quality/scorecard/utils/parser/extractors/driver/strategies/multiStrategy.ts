@@ -74,6 +74,13 @@ export const extractDriversWithCombinedStrategies = (text: string, pageData?: an
 };
 
 /**
+ * Legacy compatibility function - export this to fix the error
+ */
+export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
+  return extractDriverKPIs(text);
+};
+
+/**
  * Legacy compatibility function
  */
 export const tryAllStrategiesForDriver = (text: string): DriverKPI[] => {

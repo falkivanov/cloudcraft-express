@@ -147,12 +147,14 @@ export const parseScorecardPDF = async (
     // Handle the case properly
     let weekString = "";
     try {
+      // Fix: Define extractedWeek in this scope
+      const extractedWeek = extractWeekFromFilename(filename);
       if (typeof extractedWeek !== 'undefined') {
         weekString = typeof extractedWeek === 'number' ? extractedWeek.toString() : String(extractedWeek);
       } else {
         const currentDate = new Date();
-        if (typeof currentDate.getWeek === 'function') {
-          weekString = currentDate.getWeek().toString();
+        if (typeof (currentDate as any).getWeek === 'function') {
+          weekString = (currentDate as any).getWeek().toString();
         } else {
           weekString = "1"; // Fallback if getWeek isn't available
         }
