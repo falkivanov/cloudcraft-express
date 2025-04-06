@@ -1,5 +1,5 @@
 
-import { KPIStatus } from "../../../helpers/statusHelper";
+import { KPIStatus } from '../../helpers/statusHelper';
 
 /**
  * Driver KPI interface used for structural parsing

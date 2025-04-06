@@ -1,5 +1,3 @@
-
-
 import { determineStatus, KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
@@ -50,4 +48,3 @@ export function ensureAllMetrics(drivers: any[]): any[] {
     };
   });
 }
-

@@ -1,5 +1,6 @@
 
-import { DriverKPI, KPIStatus } from "../../../types";
+import { DriverKPI } from "../../../../types";
+import { KPIStatus } from "../../../../helpers/statusHelper";
 import { determineMetricStatus } from '../utils/metricStatus';
 import { createMetric } from '../utils/metricUtils';
 

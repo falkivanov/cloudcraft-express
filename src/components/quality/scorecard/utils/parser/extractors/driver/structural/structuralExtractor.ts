@@ -1,7 +1,8 @@
+
 import { DriverKPI } from "../../../../types";
 import { groupItemsIntoRows } from './itemGrouping';
 import { findHeaderRow } from './headerFinder';
-import { processDataRows, processDriverRow } from '../../../driver/structural/rowProcessors';
+import { processDataRows, processDriverRow } from './rowProcessors';
 
 /**
  * Extract driver KPIs from structured PDF data
@@ -11,10 +12,11 @@ export function extractDriverKPIsFromStructure(pageData: any): DriverKPI[] {
 
   // Process each page
   Object.values(pageData).forEach(page => {
-    if (!page.items) return;
+    if (!page || !(page as any).items) return;
     
     // Group items into rows
-    const rows = groupItemsIntoRows(page.items);
+    const items = (page as any).items;
+    const rows = groupItemsIntoRows(items);
     
     // Find header row for tabular data
     const expectedHeaders = ["Transporter ID", "Delivered", "DCR", "DNR DPMO"];
