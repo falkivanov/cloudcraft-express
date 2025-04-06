@@ -1,11 +1,17 @@
-
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { DriverKPI } from '../../../../../types';
 import { extractDriverKPIsFromText } from '../textExtractor';
 import { groupItemsIntoRows } from './itemGrouping';
 import { findHeaderRow } from './headerFinder';
-import { processDataRows, processDriverRow } from './rowProcessors';
-import { extractNumeric } from './valueExtractor';
+import { 
+  processDataRows, 
+  processDriverRow,
+  processTableData,
+  getTargetForMetric,
+  getUnitForMetric,
+  createMetricFromValue
+} from '../../../driver/processors';
+import { extractNumeric, isNumeric } from './valueExtractor';
 
 /**
  * Extract driver KPIs from structural analysis of the PDF
@@ -381,6 +387,7 @@ function getUnitForMetric(metricName: string): string {
   }
 }
 
+// Helper function for determining metric status - this is used directly in this file
 function determineMetricStatus(metricName: string, value: number): string {
   // Determine status based on metric name and value
   switch (metricName) {
