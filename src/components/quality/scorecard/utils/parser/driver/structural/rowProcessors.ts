@@ -1,7 +1,7 @@
 import { determineStatus } from '../../../../../helpers/statusHelper';
-import { DriverKPI } from '../../../../../../types';
-import { extractNumeric, isNumeric } from '../../../extractors/driver/structural/valueExtractor';
-import { determineMetricStatus } from '../../../extractors/driver/utils/metricStatus';
+import { DriverKPI } from '../../../../../types';
+import { extractNumeric, isNumeric } from '../../extractors/driver/structural/valueExtractor';
+import { determineMetricStatus } from '../../extractors/driver/utils/metricStatus';
 
 /**
  * Process all data rows after the header row
@@ -270,7 +270,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
       const value = parseFloat(itemText.replace(/[^\d.]/g, ''));
       
       // Determine status based on the metric name and value
-      const status = determineMetricStatus(metricNames[currentMetricIndex], value);
+      const status = determineStatus(metricNames[currentMetricIndex], value);
       
       metrics[metricNames[currentMetricIndex]] = { 
         value, 
@@ -300,7 +300,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
         const value = parseFloat(numericMatch[1]);
         
         // Determine status based on the metric name and value
-        const status = determineMetricStatus(metricNames[currentMetricIndex], value);
+        const status = determineStatus(metricNames[currentMetricIndex], value);
         
         metrics[metricNames[currentMetricIndex]] = { 
           value, 
