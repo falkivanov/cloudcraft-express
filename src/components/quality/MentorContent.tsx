@@ -41,16 +41,19 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         return;
       }
       
-      // Check if we have data for the selected week
+      // Always check if we have data for the selected week first
       if (weekData.weekNumber > 0 && weekData.year > 0) {
         // Try to load data for the selected week
         const weekKey = `mentor_data_week_${weekData.weekNumber}_${weekData.year}`;
+        console.log(`Looking for mentor data with key: ${weekKey}`);
         const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
         
         if (weekSpecificData) {
           console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`);
           setMentorData(weekSpecificData);
           return;
+        } else {
+          console.log(`No data found for key: ${weekKey}`);
         }
       }
       

@@ -40,6 +40,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
 
     // Listen for mentor data updates
     const handleMentorUpdate = () => {
+      console.log("Mentor data updated/removed event received, refreshing available weeks");
       loadAvailableWeeks();
     };
 
@@ -67,12 +68,21 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
             const year = parseInt(match[2], 10);
             
             const weekId = `week-${weekNum}-${year}`;
-            weeks.push({
-              id: weekId,
-              label: `KW ${weekNum}/${year}`,
-              weekNum,
-              year
-            });
+            
+            // Check if this week already exists in our array
+            if (!weeks.some(w => w.id === weekId)) {
+              // Verify the data exists and is valid
+              const weekData = loadFromStorage(key);
+              if (weekData) {
+                weeks.push({
+                  id: weekId,
+                  label: `KW ${weekNum}/${year}`,
+                  weekNum,
+                  year
+                });
+                console.log(`Added week ${weekNum}/${year} to available weeks`);
+              }
+            }
           }
         }
       }
@@ -80,50 +90,63 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
       // Check current mentor data (for backward compatibility)
       const mentorDataString = localStorage.getItem("mentorData");
       if (mentorDataString) {
-        const mentorData = JSON.parse(mentorDataString);
-        if (mentorData && mentorData.weekNumber && mentorData.year) {
-          const weekId = `week-${mentorData.weekNumber}-${mentorData.year}`;
-          // Only add if not already in the list
-          if (!weeks.some(w => w.id === weekId)) {
-            weeks.push({
-              id: weekId,
-              label: `KW ${mentorData.weekNumber}/${mentorData.year} (aktuell)`,
-              weekNum: mentorData.weekNumber,
-              year: mentorData.year
-            });
+        try {
+          const mentorData = JSON.parse(mentorDataString);
+          if (mentorData && mentorData.weekNumber && mentorData.year) {
+            const weekId = `week-${mentorData.weekNumber}-${mentorData.year}`;
+            // Only add if not already in the list
+            if (!weeks.some(w => w.id === weekId)) {
+              weeks.push({
+                id: weekId,
+                label: `KW ${mentorData.weekNumber}/${mentorData.year} (aktuell)`,
+                weekNum: mentorData.weekNumber,
+                year: mentorData.year
+              });
+              console.log(`Added current mentor data week ${mentorData.weekNumber}/${mentorData.year}`);
+            }
           }
+        } catch (e) {
+          console.error("Error parsing current mentor data:", e);
         }
       }
       
       // Check upload history for additional mentor files
       const historyString = localStorage.getItem('fileUploadHistory');
       if (historyString) {
-        const history = JSON.parse(historyString);
-        const mentorUploads = history.filter((item: any) => 
-          item.category === "mentor" && 
-          item.weekNumber && 
-          item.year
-        );
-        
-        // Add unique weeks from history
-        mentorUploads.forEach((upload: any) => {
-          const weekId = `week-${upload.weekNumber}-${upload.year}`;
-          if (!weeks.some(w => w.id === weekId)) {
-            // Check if data exists for this week
-            const weekKey = `mentor_data_week_${upload.weekNumber}_${upload.year}`;
-            const weekData = loadFromStorage(weekKey);
-            
-            if (weekData) {
-              weeks.push({
-                id: weekId,
-                label: `KW ${upload.weekNumber}/${upload.year}`,
-                weekNum: upload.weekNumber,
-                year: upload.year
-              });
+        try {
+          const history = JSON.parse(historyString);
+          const mentorUploads = history.filter((item: any) => 
+            item.category === "mentor" && 
+            item.weekNumber && 
+            item.year
+          );
+          
+          // Add unique weeks from history
+          mentorUploads.forEach((upload: any) => {
+            const weekId = `week-${upload.weekNumber}-${upload.year}`;
+            if (!weeks.some(w => w.id === weekId)) {
+              // Check if data exists for this week
+              const weekKey = `mentor_data_week_${upload.weekNumber}_${upload.year}`;
+              const weekData = loadFromStorage(weekKey);
+              
+              if (weekData) {
+                weeks.push({
+                  id: weekId,
+                  label: `KW ${upload.weekNumber}/${upload.year}`,
+                  weekNum: upload.weekNumber,
+                  year: upload.year
+                });
+                console.log(`Added week ${upload.weekNumber}/${upload.year} from history`);
+              }
             }
-          }
-        });
+          });
+        } catch (e) {
+          console.error("Error processing upload history:", e);
+        }
       }
+      
+      // Log all found weeks for debugging
+      console.log("Available mentor weeks:", weeks.map(w => w.label));
       
       // Sort weeks by year and week number (newest first)
       weeks.sort((a, b) => {
@@ -137,7 +160,10 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
         
         // If current selection is not valid, select the latest week
         if (!weeks.some(w => w.id === selectedWeek)) {
+          console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${weeks[0].id}`);
           setSelectedWeek(weeks[0].id);
+        } else {
+          console.log(`Keeping current selection ${selectedWeek}`);
         }
       } else {
         // No data available
@@ -147,9 +173,17 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
           weekNum: 0,
           year: 0
         }]);
+        setSelectedWeek("week-0-0");
+        console.log("No available mentor weeks found");
       }
     } catch (error) {
       console.error("Error loading available mentor weeks:", error);
+      setAvailableWeeks([{
+        id: "week-0-0",
+        label: "Fehler beim Laden",
+        weekNum: 0,
+        year: 0
+      }]);
     }
   };
 
