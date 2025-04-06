@@ -1,0 +1,48 @@
+
+import { determineMetricStatus } from './metricStatus';
+
+/**
+ * Helper function to get the target value for a metric
+ */
+export function getTargetForMetric(metricName: string): number {
+  switch (metricName) {
+    case "Delivered": return 0;
+    case "DCR": return 98.5;
+    case "DNR DPMO": return 1500;
+    case "POD": return 98;
+    case "CC": return 95;
+    case "CE": return 0;
+    case "DEX": return 95;
+    default: return 0;
+  }
+}
+
+/**
+ * Helper function to get the unit for a metric
+ */
+export function getUnitForMetric(metricName: string): string {
+  switch (metricName) {
+    case "DCR": return "%";
+    case "DNR DPMO": return "DPMO";
+    case "POD": return "%";
+    case "CC": return "%";
+    case "CE": return "";
+    case "DEX": return "%";
+    default: return "";
+  }
+}
+
+/**
+ * Creates a metric object with all required properties
+ */
+export function createMetric(name: string, value: number, status?: string) {
+  const calculatedStatus = status || determineMetricStatus(name, value);
+  
+  return {
+    name,
+    value,
+    target: getTargetForMetric(name),
+    unit: getUnitForMetric(name),
+    status: calculatedStatus
+  };
+}
