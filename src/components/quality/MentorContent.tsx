@@ -4,11 +4,12 @@ import MentorTable from "./mentor/MentorTable";
 import { MentorReport } from "@/components/file-upload/processors/mentor/types";
 import NoDataMessage from "./NoDataMessage";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
 import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UploadIcon } from "lucide-react";
 
 interface MentorContentProps {
   mentorData?: MentorReport;
@@ -34,21 +35,26 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     }
   }, [propsMentorData, selectedWeek, setSelectedWeek]);
 
-  // Handle upload button click
-  const handleUploadClick = () => {
-    navigate("/file-upload");
-  };
-
   // Display loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Mentor Übersicht</h2>
+        </div>
+
+        <div className="flex justify-between items-center">
           <MentorWeekSelector 
             selectedWeek={selectedWeek}
             setSelectedWeek={setSelectedWeek}
           />
-          <Button onClick={handleUploadClick}>Mentor Daten hochladen</Button>
+          
+          <Button asChild variant="outline" size="sm">
+            <Link to="/file-upload" className="flex items-center gap-2">
+              <UploadIcon className="h-4 w-4" />
+              <span>Neue Datei hochladen</span>
+            </Link>
+          </Button>
         </div>
         
         <Card>
@@ -75,18 +81,29 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Mentor Übersicht</h2>
+        </div>
+        
+        <div className="flex justify-between items-center">
           <MentorWeekSelector 
             selectedWeek={selectedWeek}
             setSelectedWeek={setSelectedWeek}
           />
-          <Button onClick={handleUploadClick}>Mentor Daten hochladen</Button>
+          
+          <Button asChild variant="outline" size="sm">
+            <Link to="/file-upload" className="flex items-center gap-2">
+              <UploadIcon className="h-4 w-4" />
+              <span>Neue Datei hochladen</span>
+            </Link>
+          </Button>
         </div>
+
         <NoDataMessage
           category="mentor"
           title="Keine Mentor Daten verfügbar"
           description={`Keine Daten für KW${weekData.weekNumber}/${weekData.year} vorhanden`}
           buttonText="Mentor Daten hochladen"
-          onButtonClick={handleUploadClick}
+          onButtonClick={() => navigate("/file-upload")}
         />
       </div>
     );
@@ -95,11 +112,21 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Mentor Übersicht</h2>
+      </div>
+      
+      <div className="flex justify-between items-center">
         <MentorWeekSelector 
           selectedWeek={selectedWeek}
           setSelectedWeek={setSelectedWeek}
         />
-        <Button onClick={handleUploadClick}>Neue Mentor Daten hochladen</Button>
+        
+        <Button asChild variant="outline" size="sm">
+          <Link to="/file-upload" className="flex items-center gap-2">
+            <UploadIcon className="h-4 w-4" />
+            <span>Neue Datei hochladen</span>
+          </Link>
+        </Button>
       </div>
 
       <Card>

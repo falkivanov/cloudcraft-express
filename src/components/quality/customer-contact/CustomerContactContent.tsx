@@ -64,19 +64,21 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Customer Contact Report</h2>
-        <div className="flex items-center gap-4">
-          <CustomerContactWeekSelector 
-            selectedWeek={selectedWeek} 
-            setSelectedWeek={setSelectedWeek}
-            availableWeeks={availableWeeks}
-          />
-          <Button asChild variant="outline" size="sm">
-            <Link to="/file-upload" className="flex items-center gap-2">
-              <UploadIcon className="h-4 w-4" />
-              <span>Neue Datei hochladen</span>
-            </Link>
-          </Button>
-        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <CustomerContactWeekSelector 
+          selectedWeek={selectedWeek} 
+          setSelectedWeek={setSelectedWeek}
+          availableWeeks={availableWeeks}
+        />
+          
+        <Button asChild variant="outline" size="sm">
+          <Link to="/file-upload" className="flex items-center gap-2">
+            <UploadIcon className="h-4 w-4" />
+            <span>Neue Datei hochladen</span>
+          </Link>
+        </Button>
       </div>
 
       <ComplianceStatistics driversData={weekDriversData.length > 0 ? weekDriversData : driversData} />

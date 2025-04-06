@@ -42,6 +42,15 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
           <FileSpreadsheet className="h-6 w-6 text-orange-500" /> 
           Concessions Daten
         </h2>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <ConcessionsWeekSelector
+          selectedWeek={selectedWeek}
+          setSelectedWeek={setSelectedWeek}
+          availableWeeks={availableWeeks}
+        />
+        
         <Button asChild variant="outline" size="sm">
           <Link to="/file-upload" className="flex items-center gap-2">
             <UploadIcon className="h-4 w-4" />
@@ -69,12 +78,6 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
           </div>
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
-            <ConcessionsWeekSelector
-              selectedWeek={selectedWeek}
-              setSelectedWeek={setSelectedWeek}
-              availableWeeks={availableWeeks}
-            />
-            
             <ConcessionsSearch 
               searchTerm={searchTerm} 
               onSearchChange={setSearchTerm} 
