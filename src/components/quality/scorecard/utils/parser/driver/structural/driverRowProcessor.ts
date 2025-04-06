@@ -1,8 +1,6 @@
-
-
-import { determineStatus } from '../../../helpers/statusHelper';
-import { DriverKPI } from '../../../types';
-import { extractNumeric, isNumeric } from '../../../extractors/driver/structural/valueExtractor';
+import { determineStatus } from '../../../../helpers/statusHelper';
+import { DriverKPI } from '../../../../../types';
+import { extractNumeric, isNumeric } from '../../extractors/driver/structural/valueExtractor';
 
 /**
  * Process all data rows after the header row
