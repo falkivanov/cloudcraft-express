@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
@@ -23,7 +22,7 @@ export function getRatingBackground(rating: string | number | undefined): string
 }
 
 /**
- * Formats and displays a score value with appropriate styling
+ * Formats and displays a score value without color emphasis
  */
 export function getScoreDisplay(score: string | number | undefined): React.ReactNode {
   if (!score) return '-';
@@ -33,25 +32,8 @@ export function getScoreDisplay(score: string | number | undefined): React.React
     : score;
   
   if (!isNaN(numScore)) {
-    // Updated score thresholds based on new requirements
-    if (numScore >= 800 && numScore <= 850) {
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-        {numScore.toFixed(0)}
-      </Badge>;
-    } else if (numScore >= 710 && numScore <= 799) {
-      return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
-        {numScore.toFixed(0)}
-      </Badge>;
-    } else if (numScore <= 709) {
-      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-        {numScore.toFixed(0)}
-      </Badge>;
-    } else {
-      // For any scores outside the specified ranges
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
-        {numScore.toFixed(0)}
-      </Badge>;
-    }
+    // Simply return the score as plain text
+    return numScore.toFixed(0);
   }
   
   // If not a number, just display the raw value
