@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Select, 
   SelectContent, 
@@ -21,27 +21,9 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
   const [availableWeeks, setAvailableWeeks] = useState<string[]>([]);
   const [weekLabels, setWeekLabels] = useState<Record<string, string>>({});
 
-  // Find all available weeks when component mounts
-  useEffect(() => {
-    findAvailableWeeks();
-
-    // Listen for storage changes to refresh available weeks
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("mentorDataUpdated", handleStorageChange);
-    
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("mentorDataUpdated", handleStorageChange);
-    };
-  }, []);
-
-  // Handle storage changes
-  const handleStorageChange = () => {
-    findAvailableWeeks();
-  };
-
-  // Find all available weeks in localStorage
-  const findAvailableWeeks = () => {
+  // Find all available weeks when component mounts or when storage changes
+  const findAvailableWeeks = useCallback(() => {
+    console.log("Finding available mentor weeks...");
     const weeks: string[] = [];
     const labels: Record<string, string> = {};
     
@@ -97,6 +79,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       return bWeek - aWeek; // Newer week first
     });
     
+    console.log("Found available weeks:", weeks);
     setAvailableWeeks(weeks);
     setWeekLabels(labels);
     
@@ -105,10 +88,28 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       console.log("Auto-selecting first available week:", weeks[0]);
       setSelectedWeek(weeks[0]);
     }
-  };
+  }, [selectedWeek, setSelectedWeek]);
+
+  // Load available weeks on component mount
+  useEffect(() => {
+    findAvailableWeeks();
+
+    // Listen for storage changes to refresh available weeks
+    const handleStorageChange = () => {
+      findAvailableWeeks();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("mentorDataUpdated", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("mentorDataUpdated", handleStorageChange);
+    };
+  }, [findAvailableWeeks]);
 
   // Handle week navigation
-  const navigateWeek = (direction: 'prev' | 'next') => {
+  const navigateWeek = useCallback((direction: 'prev' | 'next') => {
     const currentIndex = availableWeeks.indexOf(selectedWeek);
     if (currentIndex === -1) return;
     
@@ -123,7 +124,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
     
     console.log(`Navigating ${direction} from week ${selectedWeek} to week ${availableWeeks[newIndex]}`);
     setSelectedWeek(availableWeeks[newIndex]);
-  };
+  }, [availableWeeks, selectedWeek, setSelectedWeek]);
 
   // If no weeks are available, show a message
   if (availableWeeks.length === 0) {

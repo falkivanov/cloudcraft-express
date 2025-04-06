@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { loadFromStorage } from "@/utils/storage";
 
 export interface MentorWeekData {
   weekId: string;
@@ -14,9 +15,10 @@ export const useMentorWeek = () => {
     weekNumber: 0,
     year: 0
   });
+  const [forceRefresh, setForceRefresh] = useState<number>(0);
 
   // Parse the week identifier (e.g., "week-12-2023" -> { weekNumber: 12, year: 2023 })
-  const parseWeekIdentifier = (weekId: string): MentorWeekData => {
+  const parseWeekIdentifier = useCallback((weekId: string): MentorWeekData => {
     const parts = weekId.split("-");
     if (parts.length !== 3) {
       return { weekId, weekNumber: 0, year: 0 };
@@ -27,29 +29,26 @@ export const useMentorWeek = () => {
       weekNumber: parseInt(parts[1], 10),
       year: parseInt(parts[2], 10)
     };
-  };
+  }, []);
 
-  // Handle week selection - update immediately
-  const handleWeekSelection = (weekId: string) => {
+  // Handle week selection with forced refresh to trigger data reload
+  const handleWeekSelection = useCallback((weekId: string) => {
     console.log(`Switching to week: ${weekId}`);
     setSelectedWeek(weekId);
     
-    // Update the week data immediately
+    // Parse the week ID immediately
     const parsed = parseWeekIdentifier(weekId);
     setWeekData(parsed);
-  };
-
-  // Update when selected week changes
-  useEffect(() => {
-    const parsed = parseWeekIdentifier(selectedWeek);
-    console.log(`Setting week data to: weekNumber=${parsed.weekNumber}, year=${parsed.year}, weekId=${selectedWeek}`);
-    setWeekData(parsed);
-  }, [selectedWeek]);
+    
+    // Force a refresh to ensure data reloading
+    setForceRefresh(prev => prev + 1);
+  }, [parseWeekIdentifier]);
 
   return {
     selectedWeek,
     setSelectedWeek: handleWeekSelection,
     weekData,
-    parseWeekIdentifier
+    parseWeekIdentifier,
+    forceRefresh
   };
 };

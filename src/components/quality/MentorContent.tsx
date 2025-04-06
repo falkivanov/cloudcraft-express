@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import MentorTable from "./mentor/MentorTable";
 import { MentorDriverData, MentorReport } from "@/components/file-upload/processors/mentor/types";
 import NoDataMessage from "./NoDataMessage";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
 import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
 import { loadFromStorage } from "@/utils/storage";
+import { toast } from "sonner";
 
 interface MentorContentProps {
   mentorData?: MentorReport;
@@ -18,7 +19,53 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
   const [mentorData, setMentorData] = useState<MentorReport | null>(null);
   
   const navigate = useNavigate();
-  const { selectedWeek, setSelectedWeek, weekData } = useMentorWeek();
+  const { selectedWeek, setSelectedWeek, weekData, forceRefresh } = useMentorWeek();
+
+  // Load mentor data based on the current week selection
+  const loadMentorData = useCallback(() => {
+    try {
+      // First check if we have data from props
+      if (propsMentorData) {
+        console.log("Using mentor data from props");
+        setMentorData(propsMentorData);
+        return;
+      }
+      
+      // If there's a selected week, try to load data for that specific week
+      if (weekData.weekNumber > 0 && weekData.year > 0) {
+        const weekKey = `mentor_data_week_${weekData.weekNumber}_${weekData.year}`;
+        console.log(`Looking for mentor data with key: ${weekKey}`);
+        const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
+        
+        if (weekSpecificData && weekSpecificData.drivers && weekSpecificData.drivers.length > 0) {
+          console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`, weekSpecificData);
+          setMentorData(weekSpecificData);
+          return;
+        } else {
+          console.log(`No valid data found for key: ${weekKey}`);
+          setMentorData(null);
+          return;
+        }
+      }
+      
+      // Fallback to legacy storage
+      const storedData = localStorage.getItem("mentorData");
+      if (storedData) {
+        const data = JSON.parse(storedData) as MentorReport;
+        if (data && data.drivers && data.drivers.length > 0) {
+          setMentorData(data);
+        } else {
+          setMentorData(null);
+        }
+      } else {
+        setMentorData(null);
+      }
+    } catch (error) {
+      console.error("Error loading mentor data:", error);
+      setMentorData(null);
+      toast.error("Fehler beim Laden der Mentor-Daten");
+    }
+  }, [weekData.weekNumber, weekData.year, propsMentorData]);
 
   // Event listener for data updates/removals
   useEffect(() => {
@@ -45,51 +92,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
       window.removeEventListener("mentorDataRemoved", handleMentorDataRemoved);
       window.removeEventListener("mentorDataUpdated", handleMentorDataUpdated as EventListener);
     };
-  }, [weekData]);
-
-  // Load mentor data whenever the selected week changes
-  const loadMentorData = () => {
-    try {
-      // First check if we have data from props
-      if (propsMentorData) {
-        console.log("Using mentor data from props");
-        setMentorData(propsMentorData);
-        return;
-      }
-      
-      // If there's a selected week, try to load data for that specific week
-      if (weekData.weekNumber > 0 && weekData.year > 0) {
-        const weekKey = `mentor_data_week_${weekData.weekNumber}_${weekData.year}`;
-        console.log(`Looking for mentor data with key: ${weekKey}`);
-        const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
-        
-        if (weekSpecificData && weekSpecificData.drivers && weekSpecificData.drivers.length > 0) {
-          console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`, weekSpecificData);
-          setMentorData(weekSpecificData);
-        } else {
-          console.log(`No valid data found for key: ${weekKey}`);
-          setMentorData(null);
-        }
-        return;
-      }
-      
-      // Fallback to legacy storage
-      const storedData = localStorage.getItem("mentorData");
-      if (storedData) {
-        const data = JSON.parse(storedData) as MentorReport;
-        if (data && data.drivers && data.drivers.length > 0) {
-          setMentorData(data);
-        } else {
-          setMentorData(null);
-        }
-      } else {
-        setMentorData(null);
-      }
-    } catch (error) {
-      console.error("Error loading mentor data:", error);
-      setMentorData(null);
-    }
-  };
+  }, [weekData.weekNumber, weekData.year, loadMentorData]);
 
   // Handle upload button click
   const handleUploadClick = () => {
@@ -98,13 +101,14 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
 
   // Load mentor data when selected week changes or props change
   useEffect(() => {
-    console.log("Selected week or week data changed, loading mentor data", {
+    console.log("Loading mentor data for week:", {
       weekNumber: weekData.weekNumber,
       year: weekData.year,
-      weekId: selectedWeek
+      weekId: selectedWeek,
+      forceRefresh
     });
     loadMentorData();
-  }, [selectedWeek, weekData, propsMentorData]);
+  }, [selectedWeek, weekData, propsMentorData, loadMentorData, forceRefresh]);
 
   if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return (
@@ -119,7 +123,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         <NoDataMessage
           category="mentor"
           title="Keine Mentor Daten verfügbar"
-          description="Bitte laden Sie eine Mentor Excel-Datei hoch."
+          description={`Keine Daten für KW${weekData.weekNumber}/${weekData.year} vorhanden`}
           buttonText="Mentor Daten hochladen"
           onButtonClick={handleUploadClick}
         />
