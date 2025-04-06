@@ -59,6 +59,7 @@ export function useAvailableWeeks({ selectedWeek, setSelectedWeek }: UseAvailabl
                 weekNum: mentorData.weekNumber,
                 year: mentorData.year
               });
+              console.log(`Added week ${mentorData.weekNumber}/${mentorData.year} from current mentor data`);
             }
           }
         } catch (e) {
@@ -92,6 +93,7 @@ export function useAvailableWeeks({ selectedWeek, setSelectedWeek }: UseAvailabl
                   weekNum: upload.weekNumber,
                   year: upload.year
                 });
+                console.log(`Added week ${upload.weekNumber}/${upload.year} from upload history`);
               }
             }
           });
@@ -103,14 +105,20 @@ export function useAvailableWeeks({ selectedWeek, setSelectedWeek }: UseAvailabl
       // Sort weeks by year and week number (newest first)
       const sortedWeeks = sortWeeks(weeks);
       
+      // Debug: Print all available weeks
+      console.log('Available weeks after sorting:', sortedWeeks.map(w => w.id));
+      
       // If we have weeks, update the state
       if (sortedWeeks.length > 0) {
         setAvailableWeeks(sortedWeeks);
         
-        // If current selection is not valid, select the latest week
-        if (!selectedWeek || !sortedWeeks.some(w => w.id === selectedWeek)) {
-          console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${sortedWeeks[0].id}`);
+        // Only set selected week if it's not already valid or if we have no selection yet
+        const weekExists = sortedWeeks.some(w => w.id === selectedWeek);
+        if (!selectedWeek || selectedWeek === "week-0-0" || !weekExists) {
+          console.log(`Selected week "${selectedWeek}" not found in available weeks, selecting newest week "${sortedWeeks[0].id}"`);
           setSelectedWeek(sortedWeeks[0].id);
+        } else {
+          console.log(`Keeping selected week "${selectedWeek}" as it's valid`);
         }
       } else {
         // No data available

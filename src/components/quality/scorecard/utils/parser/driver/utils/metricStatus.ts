@@ -1,22 +1,10 @@
 
-import { KPIStatus } from '../../../../helpers/statusHelper';
+import { KPIStatus } from '../../helpers/statusHelper';
 
 /**
- * Determine the status of a metric based on its value and any provided status text
+ * Determine the status of a metric based on its value
  */
-export function determineMetricStatus(metricName: string, value: number, statusText?: string): KPIStatus {
-  // If status text is provided, use it directly
-  if (statusText) {
-    const lowerStatus = statusText.toLowerCase().trim();
-    if (lowerStatus === "poor") return "poor";
-    if (lowerStatus === "fair") return "fair";
-    if (lowerStatus === "great") return "great";
-    if (lowerStatus === "fantastic") return "fantastic";
-    if (lowerStatus === "in compliance") return "in compliance";
-    if (lowerStatus === "not in compliance") return "not in compliance";
-  }
-  
-  // Otherwise determine based on metric type and value
+export function determineMetricStatus(metricName: string, value: number): KPIStatus {
   switch (metricName) {
     case "Delivered":
       return value >= 1000 ? "fantastic" : value >= 800 ? "great" : "fair";
