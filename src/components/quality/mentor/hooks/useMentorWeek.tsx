@@ -29,16 +29,11 @@ export const useMentorWeek = () => {
     };
   };
 
-  // Load mentor data for the selected week
-  const loadWeekData = (weekId: string) => {
-    const parsed = parseWeekIdentifier(weekId);
-    console.log(`Setting week data to: weekNumber=${parsed.weekNumber}, year=${parsed.year}, weekId=${weekId}`);
-    setWeekData(parsed);
-  };
-
   // Update when selected week changes
   useEffect(() => {
-    loadWeekData(selectedWeek);
+    const parsed = parseWeekIdentifier(selectedWeek);
+    console.log(`Setting week data to: weekNumber=${parsed.weekNumber}, year=${parsed.year}, weekId=${selectedWeek}`);
+    setWeekData(parsed);
   }, [selectedWeek]);
 
   return {

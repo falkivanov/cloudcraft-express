@@ -1,5 +1,12 @@
 
 import React, { useState, useEffect } from "react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MentorReport } from "@/components/file-upload/processors/mentor/types";
@@ -117,9 +124,25 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
-      <span className="min-w-24 text-center">
-        {weekLabels[selectedWeek] || "Woche wählen"}
-      </span>
+      <div className="relative min-w-24">
+        <Select
+          value={selectedWeek}
+          onValueChange={setSelectedWeek}
+        >
+          <SelectTrigger className="h-9 bg-white">
+            <SelectValue>
+              {weekLabels[selectedWeek] || "Woche wählen"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            {availableWeeks.map(weekId => (
+              <SelectItem key={weekId} value={weekId}>
+                {weekLabels[weekId]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       
       <Button
         variant="outline"

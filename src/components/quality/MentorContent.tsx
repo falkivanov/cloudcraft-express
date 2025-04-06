@@ -108,6 +108,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
             selectedWeek={selectedWeek}
             setSelectedWeek={setSelectedWeek}
           />
+          <Button onClick={handleUploadClick}>Mentor Daten hochladen</Button>
         </div>
         <NoDataMessage
           category="mentor"
