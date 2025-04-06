@@ -1,5 +1,5 @@
 
-import { determineStatus, KPIStatus } from '../../../../../helpers/statusHelper';
+import { determineMetricStatus } from "./metricStatus";
 
 /**
  * Erstellt einen vollständigen Satz aller 7 Standardmetriken für einen Fahrer
@@ -30,7 +30,7 @@ export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
         value: metric.defaultValue,
         target: metric.target,
         unit: metric.unit,
-        status: determineStatus(metric.name, metric.defaultValue)
+        status: determineMetricStatus(metric.name, metric.defaultValue)
       });
     }
   });

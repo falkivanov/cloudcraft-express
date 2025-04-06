@@ -1,5 +1,4 @@
-
-import { KPIStatus } from '../../../../helpers/statusHelper';
+export type KPIStatus = "poor" | "fair" | "great" | "fantastic" | "none" | "in compliance" | "not in compliance" | "at risk" | "needs improvement" | "on track" | "not applicable";
 
 /**
  * Determine the status of a metric based on its value and any provided status text

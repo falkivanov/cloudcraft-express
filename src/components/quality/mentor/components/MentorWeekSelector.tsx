@@ -1,180 +1,134 @@
 
-import React, { useEffect, useState } from "react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { loadFromStorage } from "@/utils/storage";
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { MentorReport } from "@/components/file-upload/processors/mentor/types";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
 
 interface MentorWeekSelectorProps {
   selectedWeek: string;
-  setSelectedWeek: (value: string) => void;
+  setSelectedWeek: (week: string) => void;
 }
 
-interface AvailableWeek {
-  id: string;
-  label: string;
-  weekNum: number;
-  year: number;
-}
+const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, setSelectedWeek }) => {
+  const [availableWeeks, setAvailableWeeks] = useState<string[]>([]);
+  const [weekLabels, setWeekLabels] = useState<Record<string, string>>({});
 
-const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
-  selectedWeek,
-  setSelectedWeek
-}) => {
-  const [availableWeeks, setAvailableWeeks] = useState<AvailableWeek[]>([
-    {
-      id: "week-0-0",
-      label: "Keine Daten vorhanden",
-      weekNum: 0,
-      year: 0,
-    }
-  ]);
-
-  // Load all available weeks on component mount and when data changes
-  const loadAvailableWeeks = () => {
-    try {
-      const weeks: AvailableWeek[] = [];
+  // Find all available weeks when component mounts
+  useEffect(() => {
+    const weeks: string[] = [];
+    const labels: Record<string, string> = {};
+    
+    // Check local storage for mentor data with pattern: mentor_data_week_X_YYYY
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
       
-      // Scan all localStorage keys for mentor data by week
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('mentor_data_week_')) {
-          // Parse week number and year from key
-          const match = key.match(/mentor_data_week_(\d+)_(\d+)/);
-          if (match) {
-            const weekNum = parseInt(match[1], 10);
-            const year = parseInt(match[2], 10);
-            
-            const weekId = `week-${weekNum}-${year}`;
-            
-            // Verify the data exists and is valid before adding the week
-            const weekData = loadFromStorage(key);
-            if (weekData && weekData.drivers && weekData.drivers.length > 0) {
-              // Check if this week already exists in our array
-              if (!weeks.some(w => w.id === weekId)) {
-                weeks.push({
-                  id: weekId,
-                  label: `KW ${weekNum}/${year}`,
-                  weekNum,
-                  year
-                });
-                console.log(`Added week ${weekNum}/${year} to available weeks`);
-              }
-            }
-          }
-        }
-      }
-      
-      // Check current mentor data (for backward compatibility)
-      const mentorDataString = localStorage.getItem("mentorData");
-      if (mentorDataString) {
-        try {
-          const mentorData = JSON.parse(mentorDataString);
-          if (mentorData && mentorData.weekNumber && mentorData.year) {
-            const weekId = `week-${mentorData.weekNumber}-${mentorData.year}`;
-            // Only add if not already in the list
-            if (!weeks.some(w => w.id === weekId)) {
-              const hasData = mentorData.drivers && mentorData.drivers.length > 0;
-              if (hasData) {
-                weeks.push({
-                  id: weekId,
-                  label: `KW ${mentorData.weekNumber}/${mentorData.year}`,
-                  weekNum: mentorData.weekNumber,
-                  year: mentorData.year
-                });
-                console.log(`Added current mentor data week ${mentorData.weekNumber}/${mentorData.year}`);
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Error parsing current mentor data:", e);
-        }
-      }
-      
-      // Sort weeks by year and week number (newest first)
-      weeks.sort((a, b) => {
-        if (a.year !== b.year) return b.year - a.year;
-        return b.weekNum - a.weekNum;
-      });
-      
-      // Debug log
-      console.log("Available mentor weeks:", weeks.map(w => w.label));
-      
-      // If we have weeks, update the state
-      if (weeks.length > 0) {
-        setAvailableWeeks(weeks);
+      const match = key.match(/^mentor_data_week_(\d+)_(\d+)$/);
+      if (match) {
+        const weekNum = parseInt(match[1], 10);
+        const year = parseInt(match[2], 10);
         
-        // If current selection is not valid, select the latest week
-        const isCurrentSelectionValid = selectedWeek && weeks.some(w => w.id === selectedWeek);
-        if (!isCurrentSelectionValid) {
-          console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${weeks[0].id}`);
-          setSelectedWeek(weeks[0].id);
+        try {
+          // Verify data is valid by checking if it has drivers array
+          const data = loadFromStorage<MentorReport>(key);
+          if (data && Array.isArray(data.drivers) && data.drivers.length > 0) {
+            const weekId = `week-${weekNum}-${year}`;
+            weeks.push(weekId);
+            labels[weekId] = `KW${weekNum}/${year}`;
+          }
+        } catch (error) {
+          console.error(`Error loading mentor data for key ${key}:`, error);
         }
-      } else {
-        // No data available
-        setAvailableWeeks([{
-          id: "week-0-0",
-          label: "Keine Daten vorhanden",
-          weekNum: 0,
-          year: 0
-        }]);
-        setSelectedWeek("week-0-0");
-        console.log("No available mentor weeks found");
+      }
+    }
+    
+    // Check for legacy data (using the old storage key)
+    try {
+      const legacyData = localStorage.getItem("mentorData");
+      if (legacyData) {
+        const data = JSON.parse(legacyData) as MentorReport;
+        if (data && data.weekNumber && data.year) {
+          const weekId = `week-${data.weekNumber}-${data.year}`;
+          if (!weeks.includes(weekId)) {
+            weeks.push(weekId);
+            labels[weekId] = `KW${data.weekNumber}/${data.year}`;
+          }
+        }
       }
     } catch (error) {
-      console.error("Error loading available mentor weeks:", error);
-      setAvailableWeeks([{
-        id: "week-0-0",
-        label: "Fehler beim Laden",
-        weekNum: 0,
-        year: 0
-      }]);
+      console.error("Error loading legacy mentor data:", error);
     }
-  };
-
-  // Load weeks when component mounts and listen for data changes
-  useEffect(() => {
-    loadAvailableWeeks();
-
-    // Listen for mentor data updates and removals
-    const handleDataChange = () => {
-      console.log("Mentor data updated/removed event received, refreshing available weeks");
-      loadAvailableWeeks();
-    };
-
-    window.addEventListener('mentorDataUpdated', handleDataChange);
-    window.addEventListener('mentorDataRemoved', handleDataChange);
     
-    return () => {
-      window.removeEventListener('mentorDataUpdated', handleDataChange);
-      window.removeEventListener('mentorDataRemoved', handleDataChange);
-    };
-  }, []);
+    // Sort weeks by year and week number (newest first)
+    weeks.sort((a, b) => {
+      const [, aWeek, aYear] = a.split('-').map(Number);
+      const [, bWeek, bYear] = b.split('-').map(Number);
+      
+      if (aYear !== bYear) {
+        return bYear - aYear; // Newer year first
+      }
+      return bWeek - aWeek; // Newer week first
+    });
+    
+    setAvailableWeeks(weeks);
+    setWeekLabels(labels);
+    
+    // If no week is currently selected but we have weeks, select the first one
+    if (selectedWeek === "week-0-0" && weeks.length > 0) {
+      setSelectedWeek(weeks[0]);
+    }
+  }, [selectedWeek, setSelectedWeek]);
 
-  const handleWeekChange = (weekId: string) => {
-    console.log(`Week selected from dropdown: ${weekId}`);
-    setSelectedWeek(weekId);
+  // Handle week navigation
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const currentIndex = availableWeeks.indexOf(selectedWeek);
+    if (currentIndex === -1) return;
+    
+    let newIndex: number;
+    if (direction === 'prev') {
+      newIndex = currentIndex + 1;
+      if (newIndex >= availableWeeks.length) newIndex = 0;
+    } else {
+      newIndex = currentIndex - 1;
+      if (newIndex < 0) newIndex = availableWeeks.length - 1;
+    }
+    
+    setSelectedWeek(availableWeeks[newIndex]);
   };
+
+  // If no weeks are available, show a message
+  if (availableWeeks.length === 0) {
+    return (
+      <div className="flex items-center space-x-2">
+        <span className="text-sm text-muted-foreground">Keine Daten verfügbar</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center space-x-2">
-      <span className="text-sm text-muted-foreground whitespace-nowrap">Kalenderwoche:</span>
-      <Select value={selectedWeek} onValueChange={handleWeekChange}>
-        <SelectTrigger className="w-[180px] bg-white">
-          <SelectValue placeholder="Woche auswählen..." />
-        </SelectTrigger>
-        <SelectContent className="bg-white">
-          {availableWeeks.map((week) => (
-            <SelectItem key={week.id} value={week.id}>
-              {week.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigateWeek('prev')}
+        disabled={availableWeeks.length <= 1}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      
+      <span className="min-w-24 text-center">
+        {weekLabels[selectedWeek] || "Woche wählen"}
+      </span>
+      
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigateWeek('next')}
+        disabled={availableWeeks.length <= 1}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 };
