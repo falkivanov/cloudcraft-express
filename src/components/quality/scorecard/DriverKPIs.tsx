@@ -31,6 +31,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Check if we have any drivers with the expected 14-character A-prefix format
   const hasExpectedFormat = driverKPIs.some(d => /^A[A-Z0-9]{13}$/.test(d.name));
   
+  // Check if we have any drivers with 'A' prefix (not necessarily 14 characters)
+  const hasAnyAPrefix = driverKPIs.some(d => d.name.startsWith('A'));
+  
   // Show an info message if we suspect the data is sample data
   const isSuspectedSampleData = 
     (driverKPIs.length <= 3 && 
@@ -40,11 +43,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Determine if we have too few drivers (likely extraction issue)
   const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 8;
   
-  // Check if we have any drivers with 'A' prefix but not in the expected format
-  const hasAnyAPrefix = driverKPIs.some(d => d.name.startsWith('A'));
-  
-  // Check if we might need to update extraction methods (no expected format found)
-  const needsExtractionUpdate = driverKPIs.length > 0 && !hasExpectedFormat;
+  // Check if we might need to update extraction methods
+  const needsExtractionUpdate = driverKPIs.length > 0 && 
+                               (!hasExpectedFormat && !hasAnyAPrefix);
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -58,6 +59,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
         <div className="text-sm text-gray-500">
           {driversWithScores.length} Fahrer gefunden
+          {hasAnyAPrefix && " (A-IDs)" }
           {hasExpectedFormat && " (14-stellige A-IDs)"}
         </div>
       </div>

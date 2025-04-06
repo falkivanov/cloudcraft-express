@@ -1,149 +1,94 @@
 
-import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
-import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dsp-weekly/extractors';
+import { DriverKPI } from '../../../../types';
+import { extractDriversFromDSPWeekly } from './dsp-weekly';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
-import { generateSampleDrivers } from './sampleData';
-import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
-import { findDriverTable } from './table/gridTableFinder';
-import { extractDriversFromDSPWeekly } from './dsp-weekly';
+import { ensureAllMetrics } from './utils/metricUtils';
+import { extractDriverKPIsFromText } from './textExtractor';
 
 /**
- * Main driver extraction function - tries all strategies in priority order
- * with improved detection for driver KPIs
+ * Extract driver KPIs from text content using multiple strategies
+ * @param text Text content from which to extract driver KPIs
+ * @param pageData Optional structured page data for enhanced extraction
+ * @returns Array of DriverKPIs
  */
-export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
-  console.log("Starting driver KPI extraction with enhanced strategies");
+export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => {
+  console.log("Starting driver KPI extraction with multiple strategies");
   
-  let extractedDrivers = [];
+  let drivers: DriverKPI[] = [];
   
-  // Priority 0: Check for DSP WEEKLY SUMMARY format which is most reliable when present
+  // First check if we have the DSP WEEKLY SUMMARY format that we see in the image
   if (text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("Found DSP WEEKLY SUMMARY format, trying specialized extractors first");
+    console.log("DSP WEEKLY SUMMARY format detected, using specialized extractor");
+    drivers = extractDriversFromDSPWeekly(text);
     
-    // Use our refactored DSP Weekly extractor
-    const dspWeeklyDrivers = extractDriversFromDSPWeekly(text);
-    if (dspWeeklyDrivers.length >= 10) {
-      console.log(`Found ${dspWeeklyDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
-      return ensureAllMetrics(dspWeeklyDrivers);
+    // If we found a good number of drivers, return them
+    if (drivers.length > 10) {
+      console.log(`DSP WEEKLY SUMMARY extraction successful, found ${drivers.length} drivers`);
+      return drivers;
     }
     
-    // If we found some drivers but not enough, keep them and continue with other methods
-    if (dspWeeklyDrivers.length > 0) {
-      extractedDrivers = [...dspWeeklyDrivers];
-      console.log(`Added ${dspWeeklyDrivers.length} drivers from DSP WEEKLY SUMMARY extraction`);
+    if (drivers.length > 0) {
+      console.log(`DSP WEEKLY SUMMARY extraction found ${drivers.length} drivers, but trying more methods`);
     }
   }
   
-  let hasAlphaNumericIds = text.includes("A1") || text.includes("A2") || text.includes("A3") || /\bA[A-Z0-9]{5,}\b/.test(text);
+  // If DSP WEEKLY format didn't yield good results, try the enhanced pattern extractor
+  console.log("Trying enhanced pattern extractor");
+  const enhancedDrivers = extractDriversWithEnhancedPatterns(text);
   
-  // Priority 1: Try table grid extraction with all pages (most reliable for structured tables)
-  if (pageData && Object.keys(pageData).length > 0) {
-    console.log("Attempting table grid extraction with page data");
-    const gridDrivers = findDriverTable(pageData);
+  if (enhancedDrivers.length > drivers.length) {
+    console.log(`Enhanced pattern extraction found ${enhancedDrivers.length} drivers, using these results`);
+    drivers = enhancedDrivers;
     
-    if (gridDrivers.length >= 5) {
-      console.log(`Found ${gridDrivers.length} drivers with table grid extraction`);
-      return ensureAllMetrics(gridDrivers);
-    } else {
-      console.log(`Only found ${gridDrivers.length} drivers with table grid extraction, trying other methods`);
+    // If we found a good number of drivers, return them
+    if (drivers.length > 10) {
+      return drivers;
     }
   }
   
-  // Priority 2: Try enhanced pattern extraction first for newer PDF formats
-  // This works better for formats where driver IDs start with 'A' followed by alphanumeric characters
-  if (hasAlphaNumericIds) {
-    console.log("PDF likely contains alphanumeric IDs, trying enhanced pattern extraction first");
-    const enhancedDrivers = extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
+  // Try line-based extraction
+  console.log("Trying line-based extraction");
+  const lineBasedDrivers = extractDriversLineByLine(text);
+  
+  if (lineBasedDrivers.length > drivers.length) {
+    console.log(`Line-based extraction found ${lineBasedDrivers.length} drivers, using these results`);
+    drivers = lineBasedDrivers;
     
-    if (enhancedDrivers.length >= 8) {
-      console.log(`Found ${enhancedDrivers.length} drivers with enhanced pattern extraction`);
-      return ensureAllMetrics(enhancedDrivers);
-    } else if (enhancedDrivers.length > 0) {
-      extractedDrivers = [...extractedDrivers, ...enhancedDrivers];
-      console.log(`Added ${enhancedDrivers.length} drivers from enhanced pattern extraction`);
+    // If we found a good number of drivers, return them
+    if (drivers.length > 10) {
+      return drivers;
     }
   }
   
-  // Priority 3: Try structural extraction if page data is available
-  if (pageData && Object.keys(pageData).length > 0) {
-    console.log("Attempting structural extraction with page data");
-    const structuralDrivers = extractDriverKPIsFromStructure(pageData);
+  // Try flexible pattern extraction
+  console.log("Trying flexible pattern extraction");
+  const flexibleDrivers = extractDriversWithFlexiblePattern(text);
+  
+  if (flexibleDrivers.length > drivers.length) {
+    console.log(`Flexible pattern extraction found ${flexibleDrivers.length} drivers, using these results`);
+    drivers = flexibleDrivers;
+  }
+  
+  // If we still don't have many drivers, try the original extractor as a fallback
+  if (drivers.length < 5) {
+    console.log("Few drivers found with new extractors, trying original extractor");
+    const originalDrivers = extractDriverKPIsFromText(text);
     
-    if (structuralDrivers.length > 0) {
-      console.log(`Found ${structuralDrivers.length} drivers with structural extraction`);
-      // Combine with any drivers found so far
-      const combinedDrivers = [...extractedDrivers];
-      
-      // Add only new drivers that weren't found already
-      structuralDrivers.forEach(driver => {
-        if (!combinedDrivers.some(d => d.name === driver.name)) {
-          combinedDrivers.push(driver);
-        }
-      });
-      
-      if (combinedDrivers.length >= 10) {
-        console.log(`Combined extraction found ${combinedDrivers.length} drivers, returning results`);
-        return ensureAllMetrics(combinedDrivers);
-      }
-      
-      extractedDrivers = combinedDrivers;
+    if (originalDrivers.length > drivers.length) {
+      console.log(`Original extractor found ${originalDrivers.length} drivers, using these results`);
+      drivers = originalDrivers;
     }
   }
   
-  // Priority 4: Try line-by-line extraction
-  console.log("Trying line-by-line extraction");
-  const lineByLineDrivers = extractDriversLineByLine(text);
-  
-  if (lineByLineDrivers.length > 0) {
-    console.log(`Found ${lineByLineDrivers.length} drivers with line-by-line extraction`);
-    // Combine with any drivers found so far
-    const combinedDrivers = [...extractedDrivers];
-    
-    // Add only new drivers that weren't found already
-    lineByLineDrivers.forEach(driver => {
-      if (!combinedDrivers.some(d => d.name === driver.name)) {
-        combinedDrivers.push(driver);
-      }
-    });
-    
-    extractedDrivers = combinedDrivers;
-  }
-  
-  // Priority 5: Try flexible pattern extraction as last resort for text-based extraction
-  if (extractedDrivers.length < 5) {
-    console.log("Trying flexible pattern extraction");
-    const flexibleDrivers = extractDriversWithFlexiblePattern(text);
-    
-    if (flexibleDrivers.length > 0) {
-      console.log(`Found ${flexibleDrivers.length} drivers with flexible pattern extraction`);
-      // Combine with any drivers found so far
-      const combinedDrivers = [...extractedDrivers];
-      
-      // Add only new drivers that weren't found already
-      flexibleDrivers.forEach(driver => {
-        if (!combinedDrivers.some(d => d.name === driver.name)) {
-          combinedDrivers.push(driver);
-        }
-      });
-      
-      extractedDrivers = combinedDrivers;
-    }
-  }
-  
-  // If we found any drivers, return them with ensured metrics
-  if (extractedDrivers.length > 0) {
-    console.log(`Returning ${extractedDrivers.length} total drivers from combined extraction methods`);
-    return ensureAllMetrics(extractedDrivers);
-  }
-  
-  // If we got here, we couldn't extract any drivers
-  console.warn("No drivers could be extracted with any method, returning sample data");
-  return generateSampleDrivers();
+  // Ensure all drivers have complete metrics
+  console.log(`Final driver extraction result: ${drivers.length} drivers`);
+  return ensureAllMetrics(drivers);
 };
 
 export {
   generateSampleDrivers,
+  determineMetricStatus,
   ensureAllMetrics
-};
+} from './driver';
