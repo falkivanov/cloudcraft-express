@@ -6,7 +6,7 @@ import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtrac
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
 import { generateSampleDrivers } from './sampleData';
-import { DriverKPI } from '../../../types';
+import { DriverKPI } from '../../types/index';
 import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
 import { findDriverTable } from './table/gridTableFinder';
 import { extractDriversFromDSPWeekly } from './dsp-weekly';
@@ -149,3 +149,4 @@ export {
   generateSampleDrivers,
   ensureAllMetrics
 };
+
