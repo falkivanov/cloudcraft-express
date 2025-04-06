@@ -96,7 +96,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     navigate("/file-upload");
   };
 
-  if (!mentorData) {
+  if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">

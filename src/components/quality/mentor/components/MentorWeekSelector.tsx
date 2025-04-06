@@ -51,11 +51,11 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
             
             const weekId = `week-${weekNum}-${year}`;
             
-            // Check if this week already exists in our array
-            if (!weeks.some(w => w.id === weekId)) {
-              // Verify the data exists and is valid
-              const weekData = loadFromStorage(key);
-              if (weekData) {
+            // Verify the data exists and is valid before adding the week
+            const weekData = loadFromStorage(key);
+            if (weekData && weekData.drivers && weekData.drivers.length > 0) {
+              // Check if this week already exists in our array
+              if (!weeks.some(w => w.id === weekId)) {
                 weeks.push({
                   id: weekId,
                   label: `KW ${weekNum}/${year}`,
@@ -78,13 +78,16 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
             const weekId = `week-${mentorData.weekNumber}-${mentorData.year}`;
             // Only add if not already in the list
             if (!weeks.some(w => w.id === weekId)) {
-              weeks.push({
-                id: weekId,
-                label: `KW ${mentorData.weekNumber}/${mentorData.year}`,
-                weekNum: mentorData.weekNumber,
-                year: mentorData.year
-              });
-              console.log(`Added current mentor data week ${mentorData.weekNumber}/${mentorData.year}`);
+              const hasData = mentorData.drivers && mentorData.drivers.length > 0;
+              if (hasData) {
+                weeks.push({
+                  id: weekId,
+                  label: `KW ${mentorData.weekNumber}/${mentorData.year}`,
+                  weekNum: mentorData.weekNumber,
+                  year: mentorData.year
+                });
+                console.log(`Added current mentor data week ${mentorData.weekNumber}/${mentorData.year}`);
+              }
             }
           }
         } catch (e) {
@@ -92,56 +95,22 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
         }
       }
       
-      // Check upload history for additional mentor files
-      const historyString = localStorage.getItem('fileUploadHistory');
-      if (historyString) {
-        try {
-          const history = JSON.parse(historyString);
-          const mentorUploads = history.filter((item: any) => 
-            item.category === "mentor" && 
-            item.weekNumber && 
-            item.year
-          );
-          
-          // Add unique weeks from history
-          mentorUploads.forEach((upload: any) => {
-            const weekId = `week-${upload.weekNumber}-${upload.year}`;
-            if (!weeks.some(w => w.id === weekId)) {
-              // Check if data exists for this week
-              const weekKey = `mentor_data_week_${upload.weekNumber}_${upload.year}`;
-              const weekData = loadFromStorage(weekKey);
-              
-              if (weekData) {
-                weeks.push({
-                  id: weekId,
-                  label: `KW ${upload.weekNumber}/${upload.year}`,
-                  weekNum: upload.weekNumber,
-                  year: upload.year
-                });
-                console.log(`Added week ${upload.weekNumber}/${upload.year} from history`);
-              }
-            }
-          });
-        } catch (e) {
-          console.error("Error processing upload history:", e);
-        }
-      }
-      
-      // Log all found weeks for debugging
-      console.log("Available mentor weeks:", weeks.map(w => w.label));
-      
       // Sort weeks by year and week number (newest first)
       weeks.sort((a, b) => {
         if (a.year !== b.year) return b.year - a.year;
         return b.weekNum - a.weekNum;
       });
       
+      // Debug log
+      console.log("Available mentor weeks:", weeks.map(w => w.label));
+      
       // If we have weeks, update the state
       if (weeks.length > 0) {
         setAvailableWeeks(weeks);
         
         // If current selection is not valid, select the latest week
-        if (!selectedWeek || !weeks.some(w => w.id === selectedWeek)) {
+        const isCurrentSelectionValid = selectedWeek && weeks.some(w => w.id === selectedWeek);
+        if (!isCurrentSelectionValid) {
           console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${weeks[0].id}`);
           setSelectedWeek(weeks[0].id);
         }
