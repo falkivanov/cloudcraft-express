@@ -11,12 +11,11 @@ import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable }
  * Run a specific extraction strategy and combine results
  */
 const runStrategy = (
-  strategyFn: (text: string, options?: any) => DriverKPI[],
+  strategyFn: (text: string) => DriverKPI[],
   text: string,
-  options?: any,
   existingDrivers: DriverKPI[] = []
 ): DriverKPI[] => {
-  const newDrivers = strategyFn(text, options);
+  const newDrivers = strategyFn(text);
   console.log(`Strategy found ${newDrivers.length} drivers`);
   
   if (newDrivers.length === 0) return existingDrivers;
@@ -36,7 +35,7 @@ const runStrategy = (
  * Extract drivers by trying different strategies based on content type,
  * prioritizing DSP WEEKLY SUMMARY format
  */
-export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] => {
+export const extractDriversByPage = (text: string): DriverKPI[] => {
   console.log("Extracting drivers with page-based approach");
   let drivers: DriverKPI[] = [];
   
@@ -49,7 +48,7 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
     
     // If we didn't get enough drivers, try the general DSP WEEKLY SUMMARY extractor
     if (drivers.length < 15) {
-      drivers = runStrategy(extractDriversFromDSPWeeklySummary, text, undefined, drivers);
+      drivers = runStrategy(extractDriversFromDSPWeeklySummary, text, drivers);
     }
     
     // If we found enough drivers, return them
@@ -65,12 +64,8 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
   if (hasAIDs) {
     console.log("Detected 14-character A-prefixed IDs, prioritizing enhanced pattern extraction");
     // Try the enhanced pattern extractor optimized for A-prefixed IDs
-    drivers = runStrategy(
-      extractDriversWithEnhancedPatterns, 
-      text, 
-      { prioritizeAIds: true },
-      drivers
-    );
+    const enhancedPatternExtractor = (text: string) => extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
+    drivers = runStrategy(enhancedPatternExtractor, text, drivers);
     
     // If we found enough drivers, return them
     if (drivers.length >= 15) {
@@ -82,7 +77,7 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
   // If we don't have enough drivers yet, try the main extraction function
   if (drivers.length < 15) {
     console.log("Trying main extraction function");
-    const mainDrivers = extractDriverKPIs(text, pageData);
+    const mainDrivers = extractDriverKPIs(text);
     
     // Combine with any drivers found so far
     drivers.forEach(driver => {
@@ -99,11 +94,11 @@ export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] 
     console.log("Still need more drivers, trying additional strategies");
     
     // Try line-by-line extraction
-    drivers = runStrategy(extractDriversLineByLine, text, undefined, drivers);
+    drivers = runStrategy(extractDriversLineByLine, text, drivers);
     
     // Try flexible pattern extraction as a last resort
     if (drivers.length < 15) {
-      drivers = runStrategy(extractDriversWithFlexiblePattern, text, undefined, drivers);
+      drivers = runStrategy(extractDriversWithFlexiblePattern, text, drivers);
     }
   }
   
@@ -124,7 +119,7 @@ export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
     drivers = runStrategy(extractDriversFromFixedWidthTable, text);
     
     if (drivers.length < 10) {
-      drivers = runStrategy(extractDriversFromDSPWeeklySummary, text, undefined, drivers);
+      drivers = runStrategy(extractDriversFromDSPWeeklySummary, text, drivers);
     }
     
     if (drivers.length >= 10) {
@@ -139,12 +134,8 @@ export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
   if (hasAIDs) {
     console.log("Detected 14-character A-prefixed IDs, using enhanced pattern extraction");
     // Try the enhanced pattern extractor optimized for A-prefixed IDs
-    drivers = runStrategy(
-      extractDriversWithEnhancedPatterns, 
-      text, 
-      { prioritizeAIds: true },
-      drivers
-    );
+    const enhancedPatternExtractor = (text: string) => extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
+    drivers = runStrategy(enhancedPatternExtractor, text, drivers);
     
     if (drivers.length >= 10) {
       console.log(`Found ${drivers.length} drivers with enhanced pattern extraction, returning directly`);
@@ -159,7 +150,7 @@ export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
 /**
  * Extract drivers or fall back to sample data
  */
-export const extractDriversOrUseSampleData = (text: string, pageData?: any): DriverKPI[] => {
+export const extractDriversOrUseSampleData = (text: string): DriverKPI[] => {
   try {
     // First check if we have a DSP WEEKLY SUMMARY table
     if (text.includes("DSP WEEKLY SUMMARY")) {
@@ -181,7 +172,7 @@ export const extractDriversOrUseSampleData = (text: string, pageData?: any): Dri
     
     // If DSP WEEKLY SUMMARY extraction didn't yield enough results, try page-based approach
     console.log("Attempting extract with extractDriversByPage");
-    const drivers = extractDriversByPage(text, pageData);
+    const drivers = extractDriversByPage(text);
     
     if (drivers && drivers.length > 0) {
       console.log(`Successfully extracted ${drivers.length} drivers`);
@@ -199,10 +190,10 @@ export const extractDriversOrUseSampleData = (text: string, pageData?: any): Dri
     
     // Last resort - fallback to direct extraction
     console.log("All strategies failed, using direct extraction");
-    return extractDriverKPIs(text, pageData);
+    return extractDriverKPIs(text);
   } catch (error) {
     // If all extraction methods fail, log and use direct extraction
     console.error("Error in driver extraction:", error);
-    return extractDriverKPIs(text, pageData);
+    return extractDriverKPIs(text);
   }
 };

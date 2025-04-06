@@ -5,8 +5,8 @@ import { extractDriverKPIs } from '../';
 /**
  * Simplified extractor that uses our consolidated extraction approach
  */
-export const extractDriversOrUseSampleData = (text: string, pageData?: any): DriverKPI[] => {
-  return extractDriverKPIs(text, pageData);
+export const extractDriversOrUseSampleData = (text: string): DriverKPI[] => {
+  return extractDriverKPIs(text);
 };
 
 /**
@@ -19,8 +19,8 @@ export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
 /**
  * Legacy compatibility function
  */
-export const extractDriversByPage = (text: string, pageData?: any): DriverKPI[] => {
-  return extractDriverKPIs(text, pageData);
+export const extractDriversByPage = (text: string): DriverKPI[] => {
+  return extractDriverKPIs(text);
 };
 
 // No need to re-export since these functions are already exported above

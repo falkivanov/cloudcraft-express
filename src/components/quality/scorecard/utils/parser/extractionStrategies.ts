@@ -1,4 +1,3 @@
-
 import { ScoreCardData } from '../../types';
 import { extractDriverKPIs } from './extractors/driver';
 import { extractCompanyKPIs } from './extractors/companyKpiExtractor';
@@ -55,15 +54,16 @@ export const attemptPositionalExtraction = async (
     const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
     
-    // Fix: Extract week as a number
-    const weekNum = extractWeekFromFilename(filename);
-    // Fix: Ensure we have a number for week
+    // Extract week as a number
+    const weekRaw = extractWeekFromFilename(filename);
+    // Ensure we have a number for week
     let week: number;
-    if (typeof weekNum === 'number') {
-      week = weekNum;
-    } else if (typeof weekNum === 'string') {
+    if (typeof weekRaw === 'number') {
+      week = weekRaw;
+    } else if (typeof weekRaw === 'string') {
       // Convert string to number, removing any non-digit characters
-      week = parseInt(weekNum.replace(/\D/g, ''));
+      const match = weekRaw.match(/\d+/);
+      week = match ? parseInt(match[0], 10) : new Date().getWeek();
     } else {
       // Default to current week if we can't parse
       week = new Date().getWeek();
@@ -170,7 +170,7 @@ export const attemptTextBasedExtraction = async (
     const rank = extractRank(fullText);
     const year = new Date().getFullYear();
     
-    // Fix: Ensure we have a number for week
+    // Ensure we have a number for week
     let weekNumber: number;
     if (typeof weekNum === 'number') {
       weekNumber = weekNum;

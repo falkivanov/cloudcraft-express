@@ -34,8 +34,21 @@ export const parseScorecardPDF = async (
     console.info("Starte PDF-Parsing für: ", filename);
     
     // Extrahiere Wochennummer aus Dateinamen mit verbessertem Extraktor
-    const extractedWeek = extractWeekFromFilename(filename);
-    console.info("Extrahierte Wochennummer:", extractedWeek);
+    const weekRaw = extractWeekFromFilename(filename);
+    console.info("Extrahierte Wochennummer:", weekRaw);
+    
+    // Convert week to a number
+    let week: number;
+    if (typeof weekRaw === 'number') {
+      week = weekRaw;
+    } else if (typeof weekRaw === 'string') {
+      // Convert string to number, removing any non-digit characters
+      const match = weekRaw.match(/\d+/);
+      week = match ? parseInt(match[0], 10) : 1;
+    } else {
+      // Default to week 1 if we can't parse
+      week = 1;
+    }
     
     // Lade das PDF-Dokument
     try {
@@ -62,7 +75,7 @@ export const parseScorecardPDF = async (
           success: false,
           data: null,
           error: null,
-          ...await attemptTextBasedExtraction(pdf, extractedWeek, detailedLogging)
+          ...await attemptTextBasedExtraction(pdf, week, detailedLogging)
         };
         
         if (textBasedResult.success && textBasedResult.data && 
@@ -83,7 +96,7 @@ export const parseScorecardPDF = async (
         } else {
           // Letzter Ausweg: Verwende einfache Fallback-Daten
           console.log("Keine Extraktionsmethode hat Fahrer gefunden, verwende Fallback-Daten");
-          extractedData = createFallbackData(extractedWeek);
+          extractedData = createFallbackData(week);
         }
       }
       
@@ -106,17 +119,7 @@ export const parseScorecardPDF = async (
       }
       
       // Ensure week and year are properly set
-      if (extractedWeek) {
-        let week: number;
-        if (typeof extractedWeek === 'number') {
-          week = extractedWeek;
-        } else if (typeof extractedWeek === 'string') {
-          // Convert string to number, removing any non-digit characters
-          week = parseInt(extractedWeek.replace(/\D/g, ''));
-        } else {
-          // Default to current week if we can't parse
-          week = new Date().getWeek();
-        }
+      if (week) {
         extractedData.week = week;
       }
       
@@ -135,16 +138,7 @@ export const parseScorecardPDF = async (
     } catch (error) {
       console.error('Fehler mit dem PDF-Dokument:', error);
       // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-      let weekString: string;
-      if (typeof extractedWeek === 'number') {
-        weekString = extractedWeek.toString();
-      } else if (typeof extractedWeek === 'string') {
-        weekString = extractedWeek;
-      } else {
-        weekString = "1"; // Default when we can't get a week
-      }
-      
-      const data = await getSampleDataWithWeek(weekString);
+      const data = await getSampleDataWithWeek(week.toString());
       console.info("Verwende Beispieldaten aufgrund eines PDF-Verarbeitungsfehlers");
       
       // Speichere Daten an beiden Stellen
@@ -160,27 +154,19 @@ export const parseScorecardPDF = async (
     console.error('Fehler beim Parsen der PDF:', error);
     
     // Handle the case properly
-    let weekString = "";
+    let weekStr = "1";
     try {
-      // Fix: Define extractedWeek in this scope
-      const extractedWeek = extractWeekFromFilename(filename);
-      if (typeof extractedWeek !== 'undefined') {
-        weekString = typeof extractedWeek === 'number' ? extractedWeek.toString() : String(extractedWeek);
-      } else {
-        const currentDate = new Date();
-        if (typeof (currentDate as any).getWeek === 'function') {
-          weekString = (currentDate as any).getWeek().toString();
-        } else {
-          weekString = "1"; // Fallback if getWeek isn't available
-        }
+      if (typeof weekRaw !== 'undefined') {
+        weekStr = typeof weekRaw === 'number' ? weekRaw.toString() : 
+                  typeof weekRaw === 'string' ? weekRaw : "1";
       }
     } catch (weekError) {
-      weekString = "1"; // Ultimate fallback
+      weekStr = "1"; // Ultimate fallback
       console.error("Error getting week:", weekError);
     }
     
     // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-    const data = await getSampleDataWithWeek(weekString);
+    const data = await getSampleDataWithWeek(weekStr);
     console.info("Verwende Beispieldaten aufgrund eines allgemeinen Parsing-Fehlers");
     
     // Speichere die Beispieldaten konsistent mit beiden Methoden

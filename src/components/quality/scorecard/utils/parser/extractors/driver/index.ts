@@ -1,6 +1,8 @@
 import { DriverKPI } from "../../../../types";
 import { extractDriversUsingMultipleStrategies } from "./strategies/multiStrategy";
 import { extractDriversOrUseSampleData } from "./strategies/fallbackStrategy";
+import { createAllStandardMetrics } from "./utils/metricUtils";
+import { generateSampleDrivers } from "./sampleData";
 
 /**
  * Extract driver KPIs from text content using multiple strategies
@@ -23,3 +25,5 @@ export const extractDriverKPIs = (text: string): DriverKPI[] => {
 // Re-export other driver extraction functions for use in other modules
 export * from './textExtractor';
 export * from './structural/structuralExtractor';
+export * from './sampleData';
+export * from './utils/metricUtils';

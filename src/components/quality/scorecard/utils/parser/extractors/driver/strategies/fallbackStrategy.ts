@@ -1,7 +1,6 @@
 
 import { DriverKPI } from '../../../../../types';
 import { generateSampleDrivers } from '../sampleData';
-import { extractDriverKPIs } from '../index';
 import { extractDriversUsingMultipleStrategies } from './multiStrategy';
 
 /**

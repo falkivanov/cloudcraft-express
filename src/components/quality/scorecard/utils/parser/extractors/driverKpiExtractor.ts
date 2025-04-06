@@ -1,24 +1,23 @@
 
 import { 
   extractDriverKPIs as extractDriverKPIsFromDriver,
-  generateSampleDrivers,
-  ensureAllMetrics
 } from './driver';
 import { determineMetricStatus } from './driver/utils/metricStatus';
 import { DriverKPI } from '../../../types';
 import { KPIStatus } from '../../helpers/statusHelper';
+import { generateSampleDrivers } from './driver/sampleData';
+import { ensureAllMetrics } from './driver/utils/metricUtils';
 
 /**
  * Extrahiere Fahrer-KPIs aus dem Textinhalt
  * @param text Textinhalt, aus dem Fahrer-KPIs extrahiert werden sollen
- * @param pageData Optional strukturierte Seitendaten für erweiterte Extraktion
  * @returns Array von DriverKPIs
  */
-export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => {
+export const extractDriverKPIs = (text: string): DriverKPI[] => {
   console.log("Extrahiere Fahrer-KPIs aus dem Textinhalt");
   
   // Extraktion mit optimiertem Ansatz versuchen
-  const drivers = extractDriverKPIsFromText(text, pageData);
+  const drivers = extractDriverKPIsFromText(text);
   
   // Sicherstellen, dass alle Fahrer vollständige Metriksätze haben
   const enhancedDrivers = ensureAllMetrics(drivers);
@@ -30,9 +29,9 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
 /**
  * Legacy API-kompatibler Wrapper für die neue extractDriverKPIs-Funktion
  */
-export const extractDriverKPIsFromText = (text: string, pageData?: any): DriverKPI[] => {
+export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
   // Verwendet die konsolidierte Extraktionsfunktion aus ./driver/index.ts
-  return extractDriverKPIsFromDriver(text, pageData);
+  return extractDriverKPIsFromDriver(text);
 };
 
 export {
