@@ -18,8 +18,12 @@ export class CustomerContactProcessor extends BaseFileProcessor {
       const htmlContent = await this.readFileAsText();
       
       if (htmlContent) {
+        console.log("Processing customer contact data...");
+        
         // Parse the HTML content
         const contactData = parseCustomerContactData(htmlContent);
+        
+        console.log("Parsed contact data:", contactData);
         
         // Store the raw HTML and parsed data
         localStorage.setItem("customerContactData", htmlContent);

@@ -1,5 +1,7 @@
 import { DriverComplianceData } from "../customer-contact/types";
 import { getKW11TestData } from "../customer-contact/data/testData";
+import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
+import { Employee } from "@/types/employee";
 
 export const parseCustomerContactData = (htmlContent: string): DriverComplianceData[] => {
   try {
@@ -17,50 +19,33 @@ export const parseCustomerContactData = (htmlContent: string): DriverComplianceD
     const rows = doc.querySelectorAll("table tr");
     const extractedData: DriverComplianceData[] = [];
     
+    // Get employees from storage to map transporter IDs to names
+    const storedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
+    
+    // Create a map of transporterIds to employee names
+    const transporterIdToNameMap: Record<string, string> = {};
+    storedEmployees.forEach(employee => {
+      if (employee.transporterId) {
+        transporterIdToNameMap[employee.transporterId] = employee.name;
+      }
+    });
+    
+    console.log("TransporterID to Name Map:", transporterIdToNameMap);
+    
     // Skip header row, start from index 1
     for (let i = 1; i < rows.length; i++) {
       const cells = rows[i].querySelectorAll("td");
       if (cells.length >= 4) { // Make sure we have enough cells
         const transporterId = cells[0].textContent?.trim() || "";
         
-        // Map the transporter ID to your actual employees
-        // Using a simplified map with just the real employees
-        const nameMap: Record<string, string> = {
-          "A152NJJUHX8M2KZ": "Seif Jidi",
-          "A196ZSP1F736F2": "Yozdshan Mehmedaliev", 
-          "A1926P63C711MX": "Ivan Stanev Ivanov",
-          "A1OPT5SF1TG664": "Ahmad Nikdan",
-          "A2B3B877JZL11I": "Anca Radu",
-          "A2MJVR7N7XD7Q8": "Marian Asavaoei",
-          "A2UHP1W6T1BCMC": "Samuel Kłein",
-          "A2Q07SAZ5Y0VFY": "Ayman Gozdalski",
-          "A2V82R55OSF7X8": "Marios Zlatanov",
-          "A2V82R55OSFX14": "Dennis Benna",
-          "A3C3GA8F8JETVE": "Paul Atandi",
-          "A3DIG631DG25QY": "Robert Toma",
-          "A3N2BRRNP752ZQ": "Dumitru Tarlev",
-          "A3N2BRRXP752ZR": "Tim Zimmermann",
-          "A3S17VUAGX6DON": "Paul Atandi",
-          "A3SL76UAGX66QN": "Ionut Paraschiv",
-          "A3TNJMKRYZAJT": "Laurentiu Plaveti",
-          "A3VCXA6YWV5RY2": "Ghamgin Abdullah",
-          "A8IR8HQXDC559": "Oleksandr Voitenko",
-          "A10VZ0WWQQNSX1": "Yusufi Bilyal",
-          "A202LSZPWHAUZ8": "Aleks Mihaylov",
-          "A202LSZPWHAUZ7": "Dorinel Draghiceanu",
-          "A3SLMUAGX66QM": "Razvan Plaveti",
-          "A3TNJMKFYZAJS": "Salar Kafli",
-          "A3S1VUGX6QM": "Maksym Shamov",
-          "A3TN7KRYZAJS": "Vladyslav Plakhotin",
-          "A3PWR98298A4D": "Rodica Pall",
-          "A3PWRO87291A4C": "Petre Nicolae",
-          "AFE1GTT1R068B": "Razvan Plaveti",
-          "AFEWTT1RO68B": "Kim Uwe Rixecker",
-          "A3G57M6GUHDOR1": "Razvan Stan"
-        };
+        // Try to get name from employees data first
+        let fullName = transporterIdToNameMap[transporterId] || "";
         
-        // If the ID isn't in our map, use a generic format
-        const fullName = nameMap[transporterId] || `Driver (${transporterId})`;
+        // If not found in employees, use the generic format
+        if (!fullName) {
+          fullName = `Driver (${transporterId})`;
+        }
+        
         const firstName = fullName.split(" ")[0];
         
         const totalAddresses = parseInt(cells[1].textContent?.trim() || "0", 10);
