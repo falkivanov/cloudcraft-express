@@ -1,4 +1,3 @@
-
 import { DriverKPI } from "../types";
 
 // Function to get status badge styling
@@ -23,50 +22,13 @@ export const getStatusClass = (status: string | undefined) => {
 
 // Get the appropriate color class based on metric name and value
 export const getMetricColorClass = (metricName: string, value: number): string => {
-  // Special case for metrics with value 0 and status "none" (representing "-" in the data)
+  // For values that were previously zero or represented "-", keep gray color
   if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE" && metricName !== "Delivered") {
     return "text-gray-400";
   }
   
-  switch (metricName) {
-    case "DCR":
-      if (value >= 99.5) return "text-blue-600 font-semibold";
-      if (value >= 98) return "text-orange-500 font-semibold";
-      return "text-red-500 font-semibold";
-      
-    case "DNR DPMO":
-      if (value <= 1000) return "text-blue-600 font-semibold";
-      if (value <= 1600) return "text-orange-500 font-semibold";
-      return "text-red-500 font-semibold";
-      
-    case "POD":
-      if (value >= 99) return "text-blue-600 font-semibold";
-      if (value >= 97) return "text-orange-500 font-semibold";
-      return "text-red-500 font-semibold";
-      
-    case "Contact Compliance":
-    case "CC":
-      if (value === 0) return "text-gray-400"; // For "-" value
-      if (value >= 99) return "text-blue-600 font-semibold";
-      if (value >= 94) return "text-orange-500 font-semibold";
-      return "text-red-500 font-semibold";
-      
-    case "CE":
-      return value === 0 ? "text-blue-600 font-semibold" : "text-red-500 font-semibold";
-      
-    case "DEX":
-      if (value >= 95) return "text-blue-600 font-semibold";
-      if (value >= 90) return "text-orange-500 font-semibold";
-      return "text-red-500 font-semibold";
-      
-    case "Delivered":
-      if (value >= 1000) return "text-blue-600 font-semibold";
-      if (value >= 800) return "text-orange-500 font-semibold";
-      return "text-gray-700";
-      
-    default:
-      return "text-gray-700";
-  }
+  // Return a neutral text color for all metrics
+  return "text-gray-700";
 };
 
 // Find previous week's data for a driver
