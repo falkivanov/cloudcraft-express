@@ -107,16 +107,10 @@ export const parseScorecardPDF = async (
       
       // Stelle sicher, dass die Woche basierend auf dem Dateinamen korrekt festgelegt ist
       if (weekNum) {
-        // Convert weekNum to number if it's a string with a number
-        const weekNumInt = typeof weekNum === 'string' ? 
-          parseInt(weekNum.replace(/\D/g, '')) : 
-          typeof weekNum === 'number' ? 
-            weekNum : 
-            null;
-            
-        if (weekNumInt !== null && !isNaN(weekNumInt) && weekNumInt > 0) {
-          extractedData.week = weekNumInt;
-        }
+        // Ensure weekNum is a number for the week property
+        extractedData.week = typeof weekNum === 'number' ? 
+          weekNum : 
+          parseInt(String(weekNum).replace(/\D/g, ''));
       }
       
       // Wenn Jahr fehlt, verwende das aktuelle Jahr
@@ -134,7 +128,8 @@ export const parseScorecardPDF = async (
     } catch (error) {
       console.error('Fehler mit dem PDF-Dokument:', error);
       // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-      const data = await getSampleDataWithWeek(weekNum);
+      const weekString = typeof weekNum === 'number' ? weekNum.toString() : String(weekNum);
+      const data = await getSampleDataWithWeek(weekString);
       console.info("Verwende Beispieldaten aufgrund eines PDF-Verarbeitungsfehlers");
       
       // Speichere Daten an beiden Stellen
@@ -148,11 +143,22 @@ export const parseScorecardPDF = async (
     }
   } catch (error) {
     console.error('Fehler beim Parsen der PDF:', error);
-    // Make sure we're passing a string to getWeek()
-    const weekNum = typeof weekNum === 'number' ? weekNum.toString() : (new Date().getWeek().toString());
+    
+    // Handle the case properly
+    let weekString = "";
+    if (typeof weekNum !== 'undefined') {
+      weekString = typeof weekNum === 'number' ? weekNum.toString() : String(weekNum);
+    } else {
+      const currentDate = new Date();
+      if (typeof currentDate.getWeek === 'function') {
+        weekString = currentDate.getWeek().toString();
+      } else {
+        weekString = "1"; // Fallback if getWeek isn't available
+      }
+    }
     
     // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-    const data = await getSampleDataWithWeek(weekNum);
+    const data = await getSampleDataWithWeek(weekString);
     console.info("Verwende Beispieldaten aufgrund eines allgemeinen Parsing-Fehlers");
     
     // Speichere die Beispieldaten konsistent mit beiden Methoden

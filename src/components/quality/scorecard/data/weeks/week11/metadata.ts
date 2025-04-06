@@ -2,10 +2,10 @@
 export const getMetadata = () => {
   return {
     sectionRatings: {
-      complianceAndSafety: "",
-      qualityAndSWC: "",
-      capacity: ""
+      complianceAndSafety: "Good",
+      qualityAndSWC: "Fair",
+      capacity: "Great"
     },
-    currentWeekTips: ""
+    currentWeekTips: "Focus on POD compliance and DNRs this week."
   };
 };

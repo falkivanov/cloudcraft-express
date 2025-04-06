@@ -3,9 +3,17 @@ import { ScoreCardData } from '../../types';
 import { extractDriverKPIs } from './extractors/driver';
 import { extractCompanyKPIs } from '../extractors/companyKpiExtractor';
 import { extractTextFromPDF, extractPDFContentWithPositions } from './pdf/contentExtractor';
-import { extractLocation, extractOverallScore, extractOverallStatus, extractRank, extractWeek, extractYear } from '../extractors/metadataExtractor';
+import { 
+  extractLocation, 
+  extractOverallScore, 
+  extractOverallStatus, 
+  extractRank, 
+  extractRankChange,
+  extractFocusAreas
+} from '../extractors/metadataExtractor';
 import { extractDriversFromAllPages } from './extractors/driver/text/pageExtractor';
 import { extractDriverKPIsFromStructure } from './extractors/driver/structural/structuralExtractor';
+import { extractWeekFromFilename } from './weekUtils';
 
 /**
  * Versuche die Extraktion mit dem positionalen Ansatz
@@ -44,10 +52,10 @@ export const attemptPositionalExtraction = async (
     const companyKPIs = extractCompanyKPIs(companyText);
     const location = extractLocation(fullText);
     const overallScore = extractOverallScore(fullText);
-    const overallStatus = extractOverallStatus(overallScore, companyKPIs);
+    const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
-    const week = extractWeek(fullText, filename);
-    const year = extractYear(fullText);
+    const week = extractWeekFromFilename(filename);
+    const year = new Date().getFullYear();
     
     // Erstelle Kategorien für KPIs
     const categorizedKPIs = {
@@ -111,7 +119,7 @@ export const attemptPositionalExtraction = async (
  */
 export const attemptTextBasedExtraction = async (
   pdf: any,
-  weekNum: string,
+  weekNum: string | number,
   detailedLogging: boolean = false
 ): Promise<{success: boolean, data: ScoreCardData | null, error: any}> => {
   try {
@@ -144,16 +152,19 @@ export const attemptTextBasedExtraction = async (
     const companyKPIs = extractCompanyKPIs(companyText);
     const location = extractLocation(fullText);
     const overallScore = extractOverallScore(fullText);
-    const overallStatus = extractOverallStatus(overallScore, companyKPIs);
+    const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
-    const week = extractWeek(fullText);
-    const year = extractYear(fullText);
+    const year = new Date().getFullYear();
+    
+    // Convert weekNum to string if it's a number
+    const weekString = typeof weekNum === 'number' ? weekNum.toString() : weekNum;
+    const weekNumber = typeof weekNum === 'number' ? weekNum : parseInt(weekNum.replace(/\D/g, ''));
     
     // Stelle die Scorecard-Daten zusammen
     return { 
       success: driversSuccessful, 
       data: {
-        week: weekNum ? parseInt(weekNum.replace(/\D/g, '')) : week,
+        week: weekNumber,
         year,
         location,
         overallScore,
@@ -193,11 +204,12 @@ export const attemptTextBasedExtraction = async (
  * @param weekNum Wochennummer aus dem Dateinamen
  * @returns Fallback-Scorecard-Daten
  */
-export const createFallbackData = (weekNum: string): ScoreCardData => {
+export const createFallbackData = (weekNum: string | number): ScoreCardData => {
   console.log("Erstelle Fallback-Daten");
   
   // Parse die Wochennummer
-  const week = weekNum ? parseInt(weekNum.replace(/\D/g, '')) : new Date().getWeek();
+  const weekString = typeof weekNum === 'number' ? weekNum.toString() : weekNum;
+  const week = typeof weekNum === 'number' ? weekNum : parseInt(weekString.replace(/\D/g, ''));
   
   return {
     week,

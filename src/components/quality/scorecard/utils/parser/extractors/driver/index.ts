@@ -167,3 +167,6 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
   console.log("All extraction methods failed, returning sample drivers");
   return generateSampleDrivers(3);
 };
+
+// Export these functions for usage in other extractors
+export { generateSampleDrivers, ensureAllMetrics };
