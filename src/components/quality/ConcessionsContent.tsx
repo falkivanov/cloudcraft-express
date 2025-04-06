@@ -1,3 +1,4 @@
+
 import React from "react";
 import NoDataMessage from "./NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +24,9 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
     selectedWeek,
     setSelectedWeek,
     availableWeeks,
-    totalCost 
+    totalCost,
+    expandedTransportId,
+    toggleExpandTransportId
   } = useConcessionsData();
   
   const { searchTerm, setSearchTerm, sortConfig, requestSort, sortedGroups } = useConcessionsSorting(groupedConcessions);
