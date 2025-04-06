@@ -61,11 +61,29 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
             // Apply special handling based on metric type
             const metricName = metricNames[metricIndex];
             let value: number;
+            let status: string;
             
             if (cellText === "-") {
               value = 0;
+              status = "none";
             } else {
               value = extractNumeric(cellText);
+              
+              // For "DCR" - Handle low percentages (like 2.1%, 5.2% in the image)
+              // Keep the percentage value without transforming
+              if (metricName === "DCR" && value < 50) {
+                // Already correct decimal value, no transform needed
+              }
+              // For DNR DPMO - these should remain as integers
+              else if (metricName === "DNR DPMO") {
+                // Keep integers as-is
+              }
+              // For percentage fields, don't divide already correct percentages
+              else if ((metricName === "POD" || metricName === "CC" || metricName === "DEX") && value < 150) {
+                // Already correct percentage, no transform needed
+              }
+              
+              status = determineStatus(metricName, value);
             }
             
             metrics.push({
@@ -73,7 +91,7 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
               value: value,
               target: metricTargets[metricIndex],
               unit: metricUnits[metricIndex],
-              status: cellText === "-" ? "none" : determineStatus(metricName, value)
+              status: status as any
             });
             metricIndex++;
           }
@@ -117,7 +135,7 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
       const valueStr = (row[metricDef.index]?.str || "").trim();
       
       if (valueStr === "-") {
-        // Handle dash values - these should be treated as missing data
+        // Handle dash values - these should be treated as missing data or 0
         metrics.push({
           name: metricDef.name,
           value: 0,
@@ -126,62 +144,30 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
           status: "none" as const
         });
       } else {
-        // Extract numeric value - use appropriate extraction method based on the type
+        // Extract numeric value
         let value = extractNumeric(valueStr);
         
-        // For "Delivered" and "CE" we want to keep the integer values as they are
-        // but they should not be treated as percentages or divided
+        // Leave integer values as they are for "Delivered" and "CE" metrics
+        // These should NOT be transformed (as seen in the image with values like 1266, 8, 97, etc.)
         
-        // For percentage fields (DCR, POD, CC, DEX), ensure the values are in the correct format
-        if ((metricDef.name === "DCR" || metricDef.name === "POD" || 
-            metricDef.name === "CC" || metricDef.name === "DEX") && 
-            valueStr.includes('%')) {
-          // Already a percentage, just keep it as is
-          // No need to divide by 100 unless it's over 100 (which would indicate it needs normalization)
-          if (value > 100) {
-            value = value / 100;
-          }
+        // Special handling for "DCR" - these appear to be actual percentages in the image (4.3%, 12.8%, etc.)
+        // Don't convert these to ratios - use them as percentages
+        if (metricDef.name === "DCR" && value < 50) {
+          // Already the correct percentage value, don't transform
+        }
+        // For DNR DPMO - these should remain as integers (like 2370, 100, 99, etc.)
+        else if (metricDef.name === "DNR DPMO") {
+          // Keep integers as-is
+        }
+        // For other percentage fields (POD, CC, DEX)
+        // Don't divide values that are already percentages (like 99.3%, 96.7%, etc.)
+        else if ((metricDef.name === "POD" || metricDef.name === "CC" || metricDef.name === "DEX") && 
+                value < 150) {
+          // Already correct percentage values, don't transform
         }
         
         // Only add valid numeric values
         if (!isNaN(value)) {
-          metrics.push({
-            name: metricDef.name,
-            value,
-            target: metricDef.target,
-            unit: metricDef.unit,
-            status: determineStatus(metricDef.name, value)
-          });
-        }
-      }
-    } else {
-      // If we don't have an index for this metric, try to find it by position in a sorted list
-      const sortedRow = [...row].sort((a, b) => a.x - b.x);
-      const numericCells = sortedRow.filter(item => isNumeric(item.str) || item.str.trim() === "-");
-      
-      // Based on the metric name, determine which cell might contain this data
-      const cellIndex = getFallbackCellIndex(metricDef.name);
-      if (cellIndex < numericCells.length) {
-        const valueStr = numericCells[cellIndex].str.trim();
-        
-        if (valueStr === "-") {
-          metrics.push({
-            name: metricDef.name,
-            value: 0,
-            target: metricDef.target,
-            unit: metricDef.unit,
-            status: "none" as const
-          });
-        } else {
-          let value = extractNumeric(valueStr);
-          
-          // Handle percentage values
-          if ((metricDef.name === "DCR" || metricDef.name === "POD" || 
-              metricDef.name === "CC" || metricDef.name === "DEX") && 
-              valueStr.includes('%') && value > 100) {
-            value = value / 100;
-          }
-          
           metrics.push({
             name: metricDef.name,
             value,
@@ -208,43 +194,53 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
     const foundMetrics = new Set(metrics.map(m => m.name));
     
     // Add missing metrics based on position
-    for (let i = 0; i < metricColumns.length; i++) {
-      const metricName = metricColumns[i].name;
+    let metricIndex = 0;
+    for (const metricDef of metricColumns) {
+      const metricName = metricDef.name;
       
       // Skip if we already have this metric
       if (foundMetrics.has(metricName)) continue;
       
       // Find the corresponding numeric cell based on position
-      const cellIndex = i + 1; // +1 because first cell is driver ID
-      if (cellIndex < numericCells.length) {
-        const valueStr = numericCells[cellIndex].str.trim();
+      if (metricIndex < numericCells.length) {
+        const valueStr = numericCells[metricIndex].str.trim();
         
         if (valueStr === "-") {
           metrics.push({
             name: metricName,
             value: 0,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
+            target: metricDef.target,
+            unit: metricDef.unit,
             status: "none" as const
           });
         } else {
           let value = extractNumeric(valueStr);
           
-          // Handle percentage fields correctly
-          if ((metricName === "DCR" || metricName === "POD" || 
-              metricName === "CC" || metricName === "DEX") && 
-              valueStr.includes('%') && value > 100) {
-            value = value / 100;
+          // Apply the same percentage handling as above
+          // Special handling for "DCR" - these appear to be actual percentages
+          if (metricName === "DCR" && value < 50) {
+            // Already correct percentage value, don't transform
+          }
+          // For DNR DPMO - keep as integers
+          else if (metricName === "DNR DPMO") {
+            // Keep integers as-is
+          }
+          // For other percentage fields
+          else if ((metricName === "POD" || metricName === "CC" || metricName === "DEX") && 
+                  value < 150) {
+            // Already correct percentage values, don't transform
           }
           
           metrics.push({
             name: metricName,
             value,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
+            target: metricDef.target,
+            unit: metricDef.unit,
             status: determineStatus(metricName, value)
           });
         }
+        
+        metricIndex++;
       }
     }
   }
@@ -263,67 +259,58 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
  * Process a row of driver data from the PDF
  */
 export function processDriverRow(row: any[]): DriverKPI | null {
-  // Check if this is likely a driver row by looking for a name or ID
-  const firstItem = row[0]?.str;
-  if (!firstItem || firstItem.trim().length === 0) return null;
+  // First item should be driver ID
+  const driverId = (row[0]?.str || "").trim();
   
-  // Skip header rows and rows with less than 2 items
-  if (row.length < 2 || 
-      firstItem.includes('Transporter') || 
-      firstItem.includes('Driver') || 
-      firstItem.includes('ID')) {
-    return null;
-  }
+  // Driver IDs in the image start with 'A' and are alphanumeric with at least 6 characters
+  if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) return null;
   
-  // Extract driver name from first column
-  const name = firstItem.trim();
+  console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   
-  // Initialize metrics array
+  // Extract all values from the row
   const metrics = [];
-  const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'POD', 'CC', 'CE', 'DEX'];
+  const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
   const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
   const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Sort row by horizontal position to ensure correct order
-  const sortedRow = [...row].sort((a, b) => a.x - b.x);
-  
-  // Skip the first item (driver ID) and process the rest as metrics
-  const metricItems = sortedRow.slice(1);
-  
-  // Process metric values
-  for (let i = 0; i < Math.min(metricItems.length, metricNames.length); i++) {
-    const item = metricItems[i];
-    const valueStr = (item?.str || "").trim();
-    
-    // Skip empty cells
-    if (!valueStr) continue;
+  // Process each metric column starting from index 1 (after the driver ID)
+  for (let i = 1; i < Math.min(row.length, metricNames.length + 1); i++) {
+    const valueStr = (row[i]?.str || "").trim();
+    const metricName = metricNames[i-1];
     
     if (valueStr === "-") {
       // Handle dash values
       metrics.push({
-        name: metricNames[i],
+        name: metricName,
         value: 0,
-        target: metricTargets[i],
-        unit: metricUnits[i],
+        target: metricTargets[i-1],
+        unit: metricUnits[i-1],
         status: "none" as const
       });
-    } else {
-      // Extract numeric value
+    } else if (valueStr) {
       let value = extractNumeric(valueStr);
       
-      // Handle percentage fields correctly
-      if ((metricNames[i] === "DCR" || metricNames[i] === "POD" || 
-          metricNames[i] === "CC" || metricNames[i] === "DEX") && 
-          valueStr.includes('%') && value > 100) {
-        value = value / 100;
+      // Apply special handling for percentage values
+      // For DCR - these are already percentages
+      if (metricName === "DCR" && value < 50) {
+        // Already correct percentage value, don't transform
+      }
+      // For DNR DPMO - keep as integers
+      else if (metricName === "DNR DPMO") {
+        // Keep integers as-is
+      }
+      // For other percentage fields
+      else if ((metricName === "POD" || metricName === "CC" || metricName === "DEX") && 
+              value < 150) {
+        // Already correct percentage values, don't transform
       }
       
       metrics.push({
-        name: metricNames[i],
+        name: metricName,
         value,
-        target: metricTargets[i],
-        unit: metricUnits[i],
-        status: determineStatus(metricNames[i], value)
+        target: metricTargets[i-1],
+        unit: metricUnits[i-1],
+        status: determineStatus(metricName, value)
       });
     }
   }
@@ -331,7 +318,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   // Only create driver if we found at least some metrics
   if (metrics.length > 0) {
     return {
-      name,
+      name: driverId,
       status: "active",
       metrics
     };
