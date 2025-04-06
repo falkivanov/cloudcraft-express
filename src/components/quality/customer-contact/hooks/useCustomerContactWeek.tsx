@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { WeekOption } from "./types";
+import type { WeekOption } from "./types";
 import { useAvailableWeeks } from "./useAvailableWeeks";
 import { useWeekData } from "./useWeekData";
 
-export { WeekOption } from "./types";
+export type { WeekOption } from "./types";
 
 export const useCustomerContactWeek = () => {
   // Try to load from localStorage or use default
