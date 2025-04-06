@@ -28,7 +28,7 @@ export class MentorProcessor extends BaseFileProcessor {
       // Enhanced debugging: Log more detailed information about driver IDs and names
       console.log("Raw driver data sample with anonymized IDs:", 
         processedData.drivers.slice(0, 3).map(d => ({
-          firstName: d.firstName, // This should preserve the anonymized ID
+          firstName: d.firstName, 
           lastName: d.lastName,
           station: d.station,
           trips: d.totalTrips
@@ -63,7 +63,8 @@ export class MentorProcessor extends BaseFileProcessor {
       window.dispatchEvent(new CustomEvent('mentorDataUpdated', {
         detail: {
           weekNumber: processedData.weekNumber,
-          year: processedData.year
+          year: processedData.year,
+          weekId: `week-${processedData.weekNumber}-${processedData.year}`
         }
       }));
       

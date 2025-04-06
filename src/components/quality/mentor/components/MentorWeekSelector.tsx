@@ -80,7 +80,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
             if (!weeks.some(w => w.id === weekId)) {
               weeks.push({
                 id: weekId,
-                label: `KW ${mentorData.weekNumber}/${mentorData.year} (aktuell)`,
+                label: `KW ${mentorData.weekNumber}/${mentorData.year}`,
                 weekNum: mentorData.weekNumber,
                 year: mentorData.year
               });
@@ -141,7 +141,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
         setAvailableWeeks(weeks);
         
         // If current selection is not valid, select the latest week
-        if (!weeks.some(w => w.id === selectedWeek)) {
+        if (!selectedWeek || !weeks.some(w => w.id === selectedWeek)) {
           console.log(`Current selection ${selectedWeek} not found in available weeks, selecting newest ${weeks[0].id}`);
           setSelectedWeek(weeks[0].id);
         }
@@ -186,10 +186,15 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
     };
   }, []);
 
+  const handleWeekChange = (weekId: string) => {
+    console.log(`Week selected from dropdown: ${weekId}`);
+    setSelectedWeek(weekId);
+  };
+
   return (
     <div className="flex items-center space-x-2">
       <span className="text-sm text-muted-foreground whitespace-nowrap">Kalenderwoche:</span>
-      <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+      <Select value={selectedWeek} onValueChange={handleWeekChange}>
         <SelectTrigger className="w-[180px] bg-white">
           <SelectValue placeholder="Woche auswählen..." />
         </SelectTrigger>

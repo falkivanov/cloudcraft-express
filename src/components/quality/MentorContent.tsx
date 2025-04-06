@@ -28,11 +28,12 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     };
 
     const handleMentorDataUpdated = (event: CustomEvent) => {
-      console.log("Mentor data updated event detected");
+      console.log("Mentor data updated event detected", event.detail);
       // Only reload data if it matches our currently selected week
       if (event.detail && 
           event.detail.weekNumber === weekData.weekNumber && 
           event.detail.year === weekData.year) {
+        console.log("Reloading data for the current week due to update");
         loadMentorData();
       }
     };
@@ -55,9 +56,8 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         return;
       }
       
-      // Always check if we have data for the selected week first
+      // If there's a selected week, try to load data for that specific week
       if (weekData.weekNumber > 0 && weekData.year > 0) {
-        // Try to load data for the selected week
         const weekKey = `mentor_data_week_${weekData.weekNumber}_${weekData.year}`;
         console.log(`Looking for mentor data with key: ${weekKey}`);
         const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
@@ -65,15 +65,14 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         if (weekSpecificData) {
           console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`);
           setMentorData(weekSpecificData);
-          return;
         } else {
           console.log(`No data found for key: ${weekKey}`);
           setMentorData(null);
-          return;
         }
+        return;
       }
       
-      // Otherwise try to load from localStorage
+      // Fallback to legacy storage
       const storedData = localStorage.getItem("mentorData");
       if (storedData) {
         const data = JSON.parse(storedData);
@@ -89,6 +88,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
 
   // Load mentor data when selected week changes
   useEffect(() => {
+    console.log("Selected week or week data changed, loading mentor data");
     loadMentorData();
   }, [weekData, propsMentorData]);
 
