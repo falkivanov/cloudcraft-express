@@ -9,7 +9,7 @@ import CustomerContactTable from "./CustomerContactTable";
 import ComplianceStatistics from "./ComplianceStatistics";
 import { CustomerContactContentProps } from "./types";
 import CustomerContactWeekSelector from "./CustomerContactWeekSelector";
-import { useCustomerContactWeek } from "./hooks/useCustomerContactWeek";
+import { useCustomerContactWeek } from "./hooks";
 import { toast } from "sonner";
 
 const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ 
@@ -23,7 +23,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
   useEffect(() => {
     if (availableWeeks.length > 0) {
       try {
-        const weekData = loadWeekData();
+        const weekData = loadWeekData(selectedWeek);
         console.log(`Loaded ${weekData.length} drivers for week ${selectedWeek}`);
         setWeekDriversData(weekData);
         

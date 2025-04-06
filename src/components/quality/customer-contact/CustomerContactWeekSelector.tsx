@@ -7,7 +7,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { WeekOption } from "./hooks/useCustomerContactWeek";
+import { WeekOption } from "./hooks/types";
 
 interface CustomerContactWeekSelectorProps {
   selectedWeek: string;
