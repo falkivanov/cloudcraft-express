@@ -4,8 +4,8 @@ import { extractDriversFromDSPWeekly } from './dsp-weekly';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
 import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
-import { ensureAllMetrics } from './utils/metricUtils';
 import { extractDriverKPIsFromText } from './textExtractor';
+import { KPIStatus } from '../../../../utils/helpers/statusHelper';
 
 /**
  * Extract driver KPIs from text content using multiple strategies
@@ -26,7 +26,7 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
     // If we found a good number of drivers, return them
     if (drivers.length > 10) {
       console.log(`DSP WEEKLY SUMMARY extraction successful, found ${drivers.length} drivers`);
-      return drivers;
+      return ensureAllMetrics(drivers);
     }
     
     if (drivers.length > 0) {
@@ -44,7 +44,7 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
     
     // If we found a good number of drivers, return them
     if (drivers.length > 10) {
-      return drivers;
+      return ensureAllMetrics(drivers);
     }
   }
   
@@ -58,7 +58,7 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
     
     // If we found a good number of drivers, return them
     if (drivers.length > 10) {
-      return drivers;
+      return ensureAllMetrics(drivers);
     }
   }
   
@@ -94,30 +94,30 @@ export const generateSampleDrivers = (): DriverKPI[] => {
       name: "TR-001",
       status: "active",
       metrics: [
-        { name: "Delivered", value: 98, target: 100, unit: "%", status: "great" },
-        { name: "DNR DPMO", value: 2500, target: 3000, unit: "DPMO", status: "great" },
-        { name: "Contact Compliance", value: 92, target: 95, unit: "%", status: "fair" }
+        { name: "Delivered", value: 98, target: 100, unit: "%", status: "great" as KPIStatus },
+        { name: "DNR DPMO", value: 2500, target: 3000, unit: "DPMO", status: "great" as KPIStatus },
+        { name: "Contact Compliance", value: 92, target: 95, unit: "%", status: "fair" as KPIStatus }
       ]
     },
     {
       name: "TR-002",
       status: "active",
       metrics: [
-        { name: "Delivered", value: 99, target: 100, unit: "%", status: "fantastic" },
-        { name: "DNR DPMO", value: 2000, target: 3000, unit: "DPMO", status: "fantastic" },
-        { name: "Contact Compliance", value: 96, target: 95, unit: "%", status: "fantastic" }
+        { name: "Delivered", value: 99, target: 100, unit: "%", status: "fantastic" as KPIStatus },
+        { name: "DNR DPMO", value: 2000, target: 3000, unit: "DPMO", status: "fantastic" as KPIStatus },
+        { name: "Contact Compliance", value: 96, target: 95, unit: "%", status: "fantastic" as KPIStatus }
       ]
     }
   ];
 };
 
 // Function to determine metric status based on value and target
-export const determineMetricStatus = (metricName: string, value: number): "poor" | "fair" | "good" | "great" | "fantastic" => {
+export const determineMetricStatus = (metricName: string, value: number): KPIStatus => {
   // Default thresholds for common metrics
   if (metricName === "Delivered" || metricName.includes("Delivered")) {
     if (value >= 99.5) return "fantastic";
     if (value >= 98.5) return "great";
-    if (value >= 97) return "good";
+    if (value >= 97) return "fair";  // Changed from "good" to "fair" to match KPIStatus type
     if (value >= 95) return "fair";
     return "poor";
   }
@@ -126,7 +126,7 @@ export const determineMetricStatus = (metricName: string, value: number): "poor"
     // Lower is better for DPMO metrics
     if (value <= 1000) return "fantastic";
     if (value <= 2000) return "great";
-    if (value <= 3000) return "good";
+    if (value <= 3000) return "fair";  // Changed from "good" to "fair"
     if (value <= 4000) return "fair";
     return "poor";
   }
@@ -134,7 +134,7 @@ export const determineMetricStatus = (metricName: string, value: number): "poor"
   if (metricName === "Contact Compliance" || metricName.includes("Compliance") || metricName.includes("CC")) {
     if (value >= 98) return "fantastic";
     if (value >= 95) return "great";
-    if (value >= 92) return "good";
+    if (value >= 92) return "fair";  // Changed from "good" to "fair"
     if (value >= 90) return "fair";
     return "poor";
   }
@@ -142,7 +142,7 @@ export const determineMetricStatus = (metricName: string, value: number): "poor"
   // Default generic thresholds for other metrics
   if (value >= 95) return "fantastic";
   if (value >= 90) return "great";
-  if (value >= 80) return "good";
+  if (value >= 80) return "fair";  // Changed from "good" to "fair"
   if (value >= 70) return "fair";
   return "poor";
 };
