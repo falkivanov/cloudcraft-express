@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { TableCell, TableRow, Table, TableHeader, TableHead, TableBody } from "@/components/ui/table";
 import { ConcessionItem } from "../types";
 import { formatCurrency } from "../utils";
@@ -9,6 +9,15 @@ interface ConcessionsDetailViewProps {
 }
 
 const ConcessionsDetailView: React.FC<ConcessionsDetailViewProps> = ({ items }) => {
+  // Sortiere die Items nach Lieferdatum (älteste zuerst)
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const dateA = new Date(a.deliveryDateTime).getTime();
+      const dateB = new Date(b.deliveryDateTime).getTime();
+      return dateA - dateB; // Sortierung aufsteigend (älteste zuerst)
+    });
+  }, [items]);
+  
   return (
     <TableRow>
       <TableCell colSpan={5} className="p-0 border-0">
@@ -23,7 +32,7 @@ const ConcessionsDetailView: React.FC<ConcessionsDetailViewProps> = ({ items }) 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, index) => (
+              {sortedItems.map((item, index) => (
                 <TableRow key={`${item.trackingId}-${index}`} className="border-0 hover:bg-muted/50">
                   <TableCell className="text-xs py-2">{item.trackingId}</TableCell>
                   <TableCell className="text-xs py-2">
