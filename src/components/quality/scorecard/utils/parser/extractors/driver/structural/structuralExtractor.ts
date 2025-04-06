@@ -4,7 +4,6 @@ import { extractDriverKPIsFromText } from '../textExtractor';
 import { findAndProcessTables, processIdentifiedTables } from './tableFinder';
 import { extractDriversWithAlternativeApproach, extractDriversAggressively } from './alternativeExtractor';
 import { deduplicateDrivers } from './deduplicationUtils';
-import { processTableData, getTargetForMetric, getUnitForMetric } from '../../../driver/processors';
 
 /**
  * Extract driver KPIs from structural analysis of the PDF
