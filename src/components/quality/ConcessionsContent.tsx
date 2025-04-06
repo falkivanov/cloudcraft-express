@@ -1,4 +1,3 @@
-
 import React from "react";
 import NoDataMessage from "./NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +24,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
     setSelectedWeek,
     availableWeeks,
     totalCost,
-    filteredItems, // Added this to get the count of concessions
+    filteredItems,
     expandedTransportId,
     toggleExpandTransportId
   } = useConcessionsData();
@@ -74,7 +73,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
             </div>
             
             <Badge variant="outline" className="bg-orange-100 border-orange-200 text-orange-800 px-3 py-1">
-              Gesamt: {formatCurrency(totalCost)} ({filteredItems.length} Concessions)
+              {filteredItems.length} Concessions / Gesamt: {formatCurrency(totalCost)}
             </Badge>
           </div>
           
