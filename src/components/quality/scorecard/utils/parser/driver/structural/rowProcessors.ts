@@ -1,6 +1,7 @@
-import { determineStatus } from '../../../../helpers/statusHelper';
-import { DriverKPI } from '../../../../../types';
-import { extractNumeric, isNumeric } from './valueExtractor';
+import { determineStatus } from '../../../../../helpers/statusHelper';
+import { DriverKPI } from '../../../../../../types';
+import { extractNumeric, isNumeric } from '../../../extractors/driver/structural/valueExtractor';
+import { determineMetricStatus } from '../../../extractors/driver/utils/metricStatus';
 
 /**
  * Process all data rows after the header row
@@ -340,14 +341,6 @@ export function processDriverRow(row: any[]): DriverKPI | null {
  * Helper function to get the target value for a metric
  */
 function getTargetForMetric(metricName: string): number {
-  // First try to get the target from our helper function
-  const target = getDefaultTargetForKPI(`Driver ${metricName}`);
-  if (target !== 95) {
-    // If we got a non-default value, use it
-    return target;
-  }
-  
-  // Otherwise use our hardcoded values
   switch (metricName) {
     case "Delivered": return 0;
     case "DCR": return 98.5;
