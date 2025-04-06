@@ -104,7 +104,7 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
             name: driverId,
             status: "active",
             metrics: [
-              { name: "Delivered", value: 0, target: 0, unit: "", status: "neutral" },
+              { name: "Delivered", value: 0, target: 0, unit: "", status: "none" },
               { name: "DCR", value: 0, target: 98.5, unit: "%", status: "none" },
               { name: "DNR DPMO", value: 0, target: 1500, unit: "DPMO", status: "none" },
               { name: "POD", value: 0, target: 98, unit: "%", status: "none" },
@@ -144,7 +144,7 @@ export const generateSampleDrivers = (): DriverKPI[] => {
     name: `A${String(index + 1).padStart(3, '0')}SAMPLE`,
     status: "active",
     metrics: [
-      { name: "Delivered", value: 850 + index * 20, target: 0, unit: "", status: "neutral" },
+      { name: "Delivered", value: 850 + index * 20, target: 0, unit: "", status: "none" },
       { name: "DCR", value: 97 + index * 0.5, target: 98.5, unit: "%", status: index > 1 ? "great" : "fair" },
       { name: "DNR DPMO", value: 2000 - index * 250, target: 1500, unit: "DPMO", status: index > 2 ? "great" : "poor" },
       { name: "POD", value: 96 + index * 0.7, target: 98, unit: "%", status: index > 1 ? "great" : "fair" },
@@ -166,3 +166,4 @@ export const ensureAllMetrics = (drivers: DriverKPI[]): DriverKPI[] => {
     metrics: createAllStandardMetrics(driver.metrics)
   }));
 };
+
