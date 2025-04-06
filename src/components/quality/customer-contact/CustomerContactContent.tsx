@@ -8,11 +8,15 @@ import { UploadIcon } from "lucide-react";
 import CustomerContactTable from "./CustomerContactTable";
 import ComplianceStatistics from "./ComplianceStatistics";
 import { CustomerContactContentProps } from "./types";
+import CustomerContactWeekSelector from "./CustomerContactWeekSelector";
+import { useCustomerContactWeek } from "./hooks/useCustomerContactWeek";
 
 const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ 
   customerContactData, 
   driversData 
 }) => {
+  const { selectedWeek, setSelectedWeek } = useCustomerContactWeek();
+  
   if (!customerContactData || driversData.length === 0) {
     return (
       <NoDataMessage
@@ -24,19 +28,21 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
 
   return (
     <div className="space-y-6 w-full">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div>Customer Contact Report</div>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/file-upload" className="flex items-center gap-2">
-                <UploadIcon className="h-4 w-4" />
-                <span>Neue Datei hochladen</span>
-              </Link>
-            </Button>
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Customer Contact Report</h2>
+        <div className="flex items-center gap-4">
+          <CustomerContactWeekSelector 
+            selectedWeek={selectedWeek} 
+            setSelectedWeek={setSelectedWeek} 
+          />
+          <Button asChild variant="outline" size="sm">
+            <Link to="/file-upload" className="flex items-center gap-2">
+              <UploadIcon className="h-4 w-4" />
+              <span>Neue Datei hochladen</span>
+            </Link>
+          </Button>
+        </div>
+      </div>
 
       <ComplianceStatistics driversData={driversData} />
       <CustomerContactTable driversData={driversData} />
