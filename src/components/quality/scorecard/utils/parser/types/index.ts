@@ -1,4 +1,5 @@
 
+
 import { KPIStatus } from '../../helpers/statusHelper';
 
 /**
@@ -31,4 +32,4 @@ export const METRIC_UNITS = ["", "%", "DPMO", "%", "%", "", "%"];
 /**
  * Re-export KPIStatus from statusHelper for convenience
  */
-export { KPIStatus };
+export type { KPIStatus };

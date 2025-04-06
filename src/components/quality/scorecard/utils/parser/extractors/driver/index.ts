@@ -1,4 +1,5 @@
 
+
 import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
 import { extractDriversFromDSPWeeklySummary, extractDriversFromFixedWidthTable } from './dsp-weekly/extractors';
 import { extractDriversWithEnhancedPatterns } from './text/enhancedPatternExtractor';
@@ -6,7 +7,7 @@ import { extractDriversLineByLine } from './text/lineBasedExtractor';
 import { extractDriversWithFlexiblePattern } from './text/flexiblePatternExtractor';
 import { generateSampleDrivers } from './sampleData';
 import { DriverKPI } from '../../../types';
-import { ensureAllMetrics, createAllStandardMetrics } from '../driver/utils/metricUtils';
+import { ensureAllMetrics, createAllStandardMetrics } from './utils/metricUtils';
 import { findDriverTable } from './table/gridTableFinder';
 import { extractDriversFromDSPWeekly } from './dsp-weekly';
 
