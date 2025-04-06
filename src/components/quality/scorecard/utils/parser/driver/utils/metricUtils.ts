@@ -1,6 +1,6 @@
 
 import { determineMetricStatus } from './metricStatus';
-import { KPIStatus } from '../../../helpers/statusHelper';
+import { KPIStatus } from "../../../types";
 
 /**
  * Helper function to get the target value for a metric

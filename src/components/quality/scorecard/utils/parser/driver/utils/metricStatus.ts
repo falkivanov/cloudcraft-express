@@ -1,5 +1,5 @@
 
-import { KPIStatus } from '../../../helpers/statusHelper';
+import { KPIStatus } from "../../../types";
 
 /**
  * Determine the status of a metric based on its value
