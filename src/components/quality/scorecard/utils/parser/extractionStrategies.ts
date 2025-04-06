@@ -54,12 +54,21 @@ export const attemptPositionalExtraction = async (
     const overallScore = extractOverallScore(fullText);
     const overallStatus = extractOverallStatus(overallScore);
     const rank = extractRank(fullText);
-    // Fix: Make sure weekString is a string before passing it to parseInt
-    const weekString = extractWeekFromFilename(filename);
-    // Fix: Convert weekString to number properly
-    const week = typeof weekString === 'string' ? 
-      parseInt(weekString.replace(/\D/g, '')) : 
-      weekString;
+    
+    // Fix: Extract week as a number
+    const weekNum = extractWeekFromFilename(filename);
+    // Fix: Ensure we have a number for week
+    let week: number;
+    if (typeof weekNum === 'number') {
+      week = weekNum;
+    } else if (typeof weekNum === 'string') {
+      // Convert string to number, removing any non-digit characters
+      week = parseInt(weekNum.replace(/\D/g, ''));
+    } else {
+      // Default to current week if we can't parse
+      week = new Date().getWeek();
+    }
+    
     const year = new Date().getFullYear();
     
     // Erstelle Kategorien für KPIs
@@ -161,8 +170,17 @@ export const attemptTextBasedExtraction = async (
     const rank = extractRank(fullText);
     const year = new Date().getFullYear();
     
-    // Fix: Convert weekNum to number if it's a string
-    const weekNumber = typeof weekNum === 'string' ? parseInt(weekNum.replace(/\D/g, '')) : weekNum;
+    // Fix: Ensure we have a number for week
+    let weekNumber: number;
+    if (typeof weekNum === 'number') {
+      weekNumber = weekNum;
+    } else if (typeof weekNum === 'string') {
+      // Convert string to number, removing any non-digit characters
+      weekNumber = parseInt(weekNum.replace(/\D/g, ''));
+    } else {
+      // Default to current week if we can't parse
+      weekNumber = new Date().getWeek();
+    }
     
     // Stelle die Scorecard-Daten zusammen
     return { 
@@ -212,7 +230,16 @@ export const createFallbackData = (weekNum: string | number): ScoreCardData => {
   console.log("Erstelle Fallback-Daten");
   
   // Parse die Wochennummer
-  const weekNumber = typeof weekNum === 'string' ? parseInt(weekNum.replace(/\D/g, '')) : weekNum;
+  let weekNumber: number;
+  if (typeof weekNum === 'number') {
+    weekNumber = weekNum;
+  } else if (typeof weekNum === 'string') {
+    // Convert string to number, removing any non-digit characters
+    weekNumber = parseInt(weekNum.replace(/\D/g, ''));
+  } else {
+    // Default to current week if we can't parse
+    weekNumber = new Date().getWeek();
+  }
   
   return {
     week: weekNumber,

@@ -105,12 +105,19 @@ export const parseScorecardPDF = async (
         }
       }
       
-      // Stelle sicher, dass die Woche basierend auf dem Dateinamen korrekt festgelegt ist
+      // Ensure week and year are properly set
       if (extractedWeek) {
-        // Ensure extractedWeek is a number for the week property
-        extractedData.week = typeof extractedWeek === 'number' ? 
-          extractedWeek : 
-          parseInt(String(extractedWeek).replace(/\D/g, ''));
+        let week: number;
+        if (typeof extractedWeek === 'number') {
+          week = extractedWeek;
+        } else if (typeof extractedWeek === 'string') {
+          // Convert string to number, removing any non-digit characters
+          week = parseInt(extractedWeek.replace(/\D/g, ''));
+        } else {
+          // Default to current week if we can't parse
+          week = new Date().getWeek();
+        }
+        extractedData.week = week;
       }
       
       // Wenn Jahr fehlt, verwende das aktuelle Jahr
@@ -128,7 +135,15 @@ export const parseScorecardPDF = async (
     } catch (error) {
       console.error('Fehler mit dem PDF-Dokument:', error);
       // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-      const weekString = typeof extractedWeek === 'number' ? extractedWeek.toString() : String(extractedWeek);
+      let weekString: string;
+      if (typeof extractedWeek === 'number') {
+        weekString = extractedWeek.toString();
+      } else if (typeof extractedWeek === 'string') {
+        weekString = extractedWeek;
+      } else {
+        weekString = "1"; // Default when we can't get a week
+      }
+      
       const data = await getSampleDataWithWeek(weekString);
       console.info("Verwende Beispieldaten aufgrund eines PDF-Verarbeitungsfehlers");
       

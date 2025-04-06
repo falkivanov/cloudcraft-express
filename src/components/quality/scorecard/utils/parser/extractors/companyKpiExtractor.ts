@@ -1,15 +1,15 @@
 
-import { CompanyKPI } from "../../../types";
+import { ScorecardKPI } from "../../../types";
 import { determineStatus } from "../../helpers/statusHelper";
 
 /**
  * Extract company KPIs from text content
  */
-export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
+export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
   console.log("Extracting company KPIs from text");
   
   // Extract company KPIs using patterns
-  const kpis: CompanyKPI[] = [];
+  const kpis: ScorecardKPI[] = [];
   
   // Typical safety metrics
   const safetyPattern = /Safety.*?(\d+(?:\.\d+)?)%?/i;
@@ -21,6 +21,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
       target: 95,
       unit: "%",
       category: "safety",
+      trend: "neutral",
       status: determineStatus("Safety", parseFloat(safetyMatch[1]))
     });
   }
@@ -35,6 +36,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
       target: 98.5,
       unit: "%",
       category: "customer",
+      trend: "neutral",
       status: determineStatus("DNR", parseFloat(dnrMatch[1]))
     });
   }
@@ -48,6 +50,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
       target: 98,
       unit: "%",
       category: "customer",
+      trend: "neutral",
       status: determineStatus("DCR", parseFloat(dcrMatch[1]))
     });
   }
@@ -62,6 +65,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
       target: 99,
       unit: "%",
       category: "compliance",
+      trend: "neutral",
       status: determineStatus("POD", parseFloat(podMatch[1]))
     });
   }
@@ -75,6 +79,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
       target: 95,
       unit: "%",
       category: "compliance",
+      trend: "neutral",
       status: determineStatus("Customer Contact", parseFloat(ccMatch[1]))
     });
   }
@@ -89,6 +94,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
         target: 95,
         unit: "%",
         category: "safety",
+        trend: "neutral",
         status: "great"
       },
       {
@@ -97,6 +103,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
         target: 98.5,
         unit: "%",
         category: "customer",
+        trend: "neutral",
         status: "great"
       },
       {
@@ -105,6 +112,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
         target: 98,
         unit: "%",
         category: "customer",
+        trend: "neutral",
         status: "fair"
       },
       {
@@ -113,6 +121,7 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
         target: 99,
         unit: "%",
         category: "compliance",
+        trend: "neutral",
         status: "great"
       },
       {
@@ -121,10 +130,21 @@ export const extractCompanyKPIs = (text: string): CompanyKPI[] => {
         target: 95,
         unit: "%",
         category: "compliance",
+        trend: "neutral",
         status: "fair"
       }
     ];
   }
   
   return kpis;
+};
+
+// Add a function to extract from structured data (for mainExtractor.ts)
+export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>): ScorecardKPI[] => {
+  // For now, just combine text from all pages and use the regular extractor
+  const combinedText = Object.values(pageData)
+    .map(page => page.text || "")
+    .join("\n\n");
+  
+  return extractCompanyKPIs(combinedText);
 };

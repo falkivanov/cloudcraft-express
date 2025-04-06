@@ -5,7 +5,7 @@ import { extractBOC } from './bocExtractor';
 import { extractLocation } from './locationExtractor';
 import { extractOverallScore } from './scoreExtractor';
 import { extractRankInfo } from './rankExtractor';
-import { extractCompanyKPIsFromStructure } from '../companyKpiExtractor';
+import { extractCompanyKPIs, extractCompanyKPIsFromStructure } from '../companyKpiExtractor';
 import { extractDriverKPIsFromStructure } from '../driver/structural/structuralExtractor';
 import { extractFocusAreasFromStructure } from '../focus-areas';
 import { extractDriverKPIsFromText } from '../driver/textExtractor';
@@ -21,6 +21,17 @@ export type KPIStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in c
 export const extractStructuredScorecard = (pageData: Record<number, any>, filename: string): ScoreCardData => {
   const weekNum = extractWeekFromFilename(filename);
   const currentYear = new Date().getFullYear();
+  
+  let week: number;
+  if (typeof weekNum === 'number') {
+    week = weekNum;
+  } else if (typeof weekNum === 'string') {
+    // Convert string to number, removing any non-digit characters
+    week = parseInt(weekNum.replace(/\D/g, ''));
+  } else {
+    // Default to current week if we can't parse
+    week = new Date().getWeek();
+  }
   
   // Extract location
   const location = extractLocation(pageData);
@@ -74,7 +85,7 @@ export const extractStructuredScorecard = (pageData: Record<number, any>, filena
   };
   
   return {
-    week: weekNum,
+    week,
     year: currentYear,
     location,
     overallScore,

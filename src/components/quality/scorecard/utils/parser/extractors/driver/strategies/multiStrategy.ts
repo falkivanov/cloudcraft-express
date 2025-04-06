@@ -1,88 +1,56 @@
 
-import { DriverKPI } from '../../../../../types';
-import { extractDriverKPIs } from '../';
-import { extractDriverKPIsFromStructure } from '../structural/structuralExtractor';
-import { extractDriversWithEnhancedPatterns } from '../text/enhancedPatternExtractor';
-import { extractDriversLineByLine } from '../text/lineBasedExtractor';
-import { ensureAllMetrics } from '../utils/metricUtils';
+import { DriverKPI } from "../../../../../types";
+import { extractDriversFromAllPages } from "../text/pageExtractor";
+import { extractDriverKPIsFromText } from "../textExtractor";
 
 /**
- * Extract drivers using multiple strategies and combine results
+ * Try multiple strategies to extract drivers from text
+ * @param text The PDF text content
+ * @returns Array of driver KPIs
  */
-export const extractDriversWithCombinedStrategies = (text: string, pageData?: any): DriverKPI[] => {
-  console.log("Attempting driver extraction with combined strategies approach");
+export const extractDriversUsingMultipleStrategies = (text: string): DriverKPI[] => {
+  console.log("Trying multiple driver extraction strategies");
   
-  // Start with an empty result set
   let allDrivers: DriverKPI[] = [];
-  let existingDriverNames = new Set<string>();
+  const driverIds = new Set<string>();
   
-  // Try structure-based extraction if we have page data
-  if (pageData) {
-    console.log("Trying structural extraction with page data");
-    const structuralDrivers = extractDriverKPIsFromStructure(pageData);
+  // Strategy 1: Use the page extractor (usually most accurate)
+  try {
+    const pageTexts = text.split("\f"); // Form feed character usually separates PDF pages
+    const pageDrivers = extractDriversFromAllPages(pageTexts);
     
-    if (structuralDrivers.length > 0) {
-      console.log(`Found ${structuralDrivers.length} drivers with structural extraction`);
+    // Add unique drivers
+    pageDrivers.forEach(driver => {
+      if (!driverIds.has(driver.name)) {
+        allDrivers.push(driver);
+        driverIds.add(driver.name);
+      }
+    });
+    
+    console.log(`Found ${pageDrivers.length} drivers using page extraction`);
+  } catch (error) {
+    console.error("Error in page extraction strategy:", error);
+  }
+  
+  // Strategy 2: Use the text-based extractor if we don't have enough drivers
+  if (allDrivers.length < 5) {
+    try {
+      const textDrivers = extractDriverKPIsFromText(text);
       
-      // Add all structural drivers
-      allDrivers = [...structuralDrivers];
-      existingDriverNames = new Set(allDrivers.map(d => d.name));
+      // Add unique drivers not already found
+      textDrivers.forEach(driver => {
+        if (!driverIds.has(driver.name)) {
+          allDrivers.push(driver);
+          driverIds.add(driver.name);
+        }
+      });
+      
+      console.log(`Found ${textDrivers.length} additional drivers using text extraction`);
+    } catch (error) {
+      console.error("Error in text extraction strategy:", error);
     }
   }
   
-  // Try enhanced pattern extraction next
-  console.log("Trying enhanced pattern extraction");
-  const patternDrivers = extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
-  
-  if (patternDrivers.length > 0) {
-    console.log(`Found ${patternDrivers.length} drivers with enhanced pattern extraction`);
-    
-    // Add drivers that don't already exist
-    for (const driver of patternDrivers) {
-      if (!existingDriverNames.has(driver.name)) {
-        allDrivers.push(driver);
-        existingDriverNames.add(driver.name);
-      }
-    }
-  }
-  
-  // Try line-based extraction
-  console.log("Trying line-based extraction");
-  const lineBasedDrivers = extractDriversLineByLine(text);
-  
-  if (lineBasedDrivers.length > 0) {
-    console.log(`Found ${lineBasedDrivers.length} drivers with line-based extraction`);
-    
-    // Add drivers that don't already exist
-    for (const driver of lineBasedDrivers) {
-      if (!existingDriverNames.has(driver.name)) {
-        allDrivers.push(driver);
-        existingDriverNames.add(driver.name);
-      }
-    }
-  }
-  
-  // If we found any drivers, ensure they all have complete metrics
-  if (allDrivers.length > 0) {
-    console.log(`Returning ${allDrivers.length} drivers from combined strategies`);
-    return ensureAllMetrics(allDrivers);
-  }
-  
-  // If all specialized methods failed, fall back to the main extraction function
-  console.log("All specialized methods failed, falling back to main extraction function");
-  return extractDriverKPIs(text, pageData);
-};
-
-/**
- * Legacy compatibility function - export this to fix the error
- */
-export const tryAllExtractionStrategies = (text: string): DriverKPI[] => {
-  return extractDriverKPIs(text);
-};
-
-/**
- * Legacy compatibility function
- */
-export const tryAllStrategiesForDriver = (text: string): DriverKPI[] => {
-  return extractDriverKPIs(text);
+  console.log(`Total unique drivers found across all strategies: ${allDrivers.length}`);
+  return allDrivers;
 };
