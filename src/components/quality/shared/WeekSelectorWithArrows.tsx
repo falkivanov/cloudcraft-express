@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export interface WeekOption {
   id: string;
   label: string;
+  weekNum?: number;
+  year?: number;
+  date?: Date;
 }
 
 interface WeekSelectorWithArrowsProps {
