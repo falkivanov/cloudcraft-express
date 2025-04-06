@@ -2,7 +2,6 @@
 import React from "react";
 import { DriverKPI, ScoreCardData } from "./types";
 import DriverTable from "./driver/DriverTable";
-import { calculateDriverScore } from "./driver/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon, AlertTriangle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,12 +20,6 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   
   // Filter only active drivers
   const activeDrivers = driverKPIs.filter(driver => driver.status === "active");
-
-  // Calculate score for each driver
-  const driversWithScores = activeDrivers.map(driver => {
-    const score = calculateDriverScore(driver);
-    return { ...driver, score };
-  });
 
   // Check if we have any drivers with the expected 14-character A-prefix format
   const hasExpectedFormat = driverKPIs.some(d => /^A[A-Z0-9]{13}$/.test(d.name));
@@ -58,7 +51,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium">Fahrerkennzahlen</h2>
         <div className="text-sm text-gray-500">
-          {driversWithScores.length} Fahrer gefunden
+          {activeDrivers.length} Fahrer gefunden
           {hasAnyAPrefix && " (A-IDs)" }
           {hasExpectedFormat && " (14-stellige A-IDs)"}
         </div>
@@ -108,8 +101,8 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
         </Alert>
       )}
       
-      {driversWithScores.length > 0 ? (
-        <DriverTable drivers={driversWithScores} />
+      {activeDrivers.length > 0 ? (
+        <DriverTable drivers={activeDrivers} />
       ) : (
         <div className="py-8 text-center text-gray-500 border rounded-md">
           <p className="mb-4">Keine Fahrerdaten verfügbar</p>

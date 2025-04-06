@@ -16,17 +16,6 @@ const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">
       <TableCell className="py-2 px-3 text-sm font-medium">{displayName}</TableCell>
       
-      {/* Score cell */}
-      <TableCell className="py-2 px-3 text-center">
-        {driver.score && (
-          <div className="flex flex-col items-center">
-            <div className={`font-bold text-sm ${driver.score.color}`}>
-              {driver.score.total}
-            </div>
-          </div>
-        )}
-      </TableCell>
-      
       {driver.metrics.map((metric) => (
         <MetricCell 
           key={metric.name} 
