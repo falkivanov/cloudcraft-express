@@ -20,6 +20,7 @@ export interface ConcessionsData {
   availableWeeks: string[];
   items: ConcessionItem[];
   totalCost: number;
+  weekToItems?: Record<string, ConcessionItem[]>; // Items organized by week
 }
 
 export interface ConcessionsContentProps {

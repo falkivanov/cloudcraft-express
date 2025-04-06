@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import * as XLSX from "xlsx";
@@ -20,17 +19,25 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       
       // Check if DNR Concessions sheet exists
-      const sheetName = "DNR Concessions";
+      let sheetName = "DNR Concessions";
       if (!workbook.SheetNames.includes(sheetName)) {
-        if (showToasts) {
-          toast.error(`Fehlerhafte Excel-Datei: Sheet "${sheetName}" nicht gefunden`, {
-            description: "Bitte überprüfen Sie die Datei und versuchen Sie es erneut."
-          });
+        // Try alternative sheet names
+        const possibleSheetNames = ["DNR Concessions", "DNR", "Concessions", "Concession", "DNR_Concessions"];
+        for (const name of possibleSheetNames) {
+          if (workbook.SheetNames.includes(name)) {
+            sheetName = name;
+            break;
+          }
         }
-        return false;
+
+        if (!workbook.SheetNames.includes(sheetName)) {
+          // Still not found, try to use the first sheet
+          sheetName = workbook.SheetNames[0];
+          console.log(`DNR Concessions sheet not found, using first sheet: ${sheetName}`);
+        }
       }
       
-      // Process the DNR Concessions sheet
+      // Process the sheet
       const sheet = workbook.Sheets[sheetName];
       const rawData = XLSX.utils.sheet_to_json<any>(sheet, { header: 1 });
       
@@ -43,20 +50,28 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         return false;
       }
       
-      // Extract header row and find column indices
+      // Extract header row and find column indices with flexible matching
       const headers = rawData[0];
-      const weekColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("wk"));
-      const transportIdColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("transport id"));
-      const trackingIdColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("tracking id"));
-      const deliveryDateColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("delivery date"));
-      const reasonColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("shipment reason") || 
-                                                    h?.toString().toLowerCase().includes("reason code"));
-      const costColIndex = headers.findIndex((h: string) => h?.toString().toLowerCase().includes("concession cost") || 
-                                                 h?.toString().toLowerCase().includes("cost"));
+      
+      // Define possible column name patterns
+      const weekPatterns = ["wk", "week", "kw", "kalenderwoche"];
+      const transportIdPatterns = ["transport id", "transport-id", "transport_id", "transportid"];
+      const trackingIdPatterns = ["tracking id", "tracking-id", "tracking_id", "trackingid"];
+      const deliveryDatePatterns = ["delivery date", "delivery-date", "delivery_date", "deliverydate", "datum"];
+      const reasonPatterns = ["shipment reason", "reason code", "reason", "grund"];
+      const costPatterns = ["concession cost", "cost", "kosten", "amount"];
+      
+      // Find columns using flexible matching
+      const weekColIndex = this.findColumnIndex(headers, weekPatterns);
+      const transportIdColIndex = this.findColumnIndex(headers, transportIdPatterns);
+      const trackingIdColIndex = this.findColumnIndex(headers, trackingIdPatterns);
+      const deliveryDateColIndex = this.findColumnIndex(headers, deliveryDatePatterns);
+      const reasonColIndex = this.findColumnIndex(headers, reasonPatterns);
+      const costColIndex = this.findColumnIndex(headers, costPatterns);
       
       // Check if we found all required columns
       const missingColumns = [];
-      if (weekColIndex === -1) missingColumns.push("Week");
+      if (weekColIndex === -1) missingColumns.push("Week/KW");
       if (transportIdColIndex === -1) missingColumns.push("Transport ID");
       if (trackingIdColIndex === -1) missingColumns.push("Tracking ID");
       if (deliveryDateColIndex === -1) missingColumns.push("Delivery Date");
@@ -72,7 +87,7 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         return false;
       }
       
-      // Determine current week from the newest data in the file
+      // Determine current week from the newest data in the file or from filename
       const weeks = new Set<string>();
       for (let i = 1; i < rawData.length; i++) {
         const row = rawData[i];
@@ -81,14 +96,27 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         }
       }
       
-      const weeksList = Array.from(weeks).sort((a, b) => {
-        // Sort in descending order (newest week first)
-        const numA = parseInt(a.replace(/\D/g, ''));
-        const numB = parseInt(b.replace(/\D/g, ''));
-        return numB - numA;
-      });
+      let currentWeek = "";
       
-      const currentWeek = weeksList.length > 0 ? weeksList[0] : null;
+      // Try to extract week from filename first (e.g., Week13, KW13, WK13)
+      const weekPattern = /(?:week|kw|wk)[- _]?(\d+)/i;
+      const weekMatch = this.file.name.match(weekPattern);
+      
+      if (weekMatch && weekMatch[1]) {
+        currentWeek = `WK${weekMatch[1]}`;
+        console.log(`Extracted week from filename: ${currentWeek}`);
+      } else {
+        // Otherwise use the newest week from the data
+        const weeksList = Array.from(weeks).sort((a, b) => {
+          // Sort in descending order (newest week first)
+          const numA = parseInt(a.replace(/\D/g, ''));
+          const numB = parseInt(b.replace(/\D/g, ''));
+          return numB - numA;
+        });
+        
+        currentWeek = weeksList.length > 0 ? weeksList[0] : "";
+        console.log(`Using newest week from data: ${currentWeek}`);
+      }
       
       if (!currentWeek) {
         if (showToasts) {
@@ -101,24 +129,40 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       
       // Filter and transform the data
       const concessionItems: ConcessionItem[] = [];
+      const allConcessionItems: ConcessionItem[] = [];
+      
+      // Process all rows, organizing data by week
+      const weekToItems: Record<string, ConcessionItem[]> = {};
       
       for (let i = 1; i < rawData.length; i++) {
         const row = rawData[i];
         
-        // Skip if row is empty or doesn't match the current week
-        if (!row || !row[weekColIndex] || row[weekColIndex].toString() !== currentWeek) {
-          continue;
+        // Skip empty rows
+        if (!row || row.length === 0) continue;
+        
+        // Extract week value
+        let weekValue = row[weekColIndex]?.toString() || "";
+        if (!weekValue) continue;
+        
+        // Normalize week format
+        if (!/^wk\d+$/i.test(weekValue)) {
+          const weekNum = weekValue.replace(/\D/g, '');
+          if (weekNum) {
+            weekValue = `WK${weekNum}`;
+          }
         }
         
         // Extract the values we need
         const transportId = row[transportIdColIndex]?.toString() || "";
         const trackingId = row[trackingIdColIndex]?.toString() || "";
         let deliveryDate = row[deliveryDateColIndex];
+        
         if (deliveryDate instanceof Date) {
           deliveryDate = deliveryDate.toISOString();
         } else {
           deliveryDate = deliveryDate?.toString() || "";
         }
+        
         const reason = row[reasonColIndex]?.toString() || "";
         let cost = 0;
         if (row[costColIndex] !== undefined && row[costColIndex] !== null) {
@@ -128,23 +172,56 @@ export class ConcessionsProcessor extends BaseFileProcessor {
           }
         }
         
-        concessionItems.push({
+        const item = {
           transportId,
           trackingId,
           deliveryDateTime: deliveryDate,
           reason,
           cost
-        });
+        };
+        
+        // Store all items and organize by week
+        allConcessionItems.push(item);
+        
+        if (!weekToItems[weekValue]) {
+          weekToItems[weekValue] = [];
+        }
+        weekToItems[weekValue].push(item);
+        
+        // Also add to current week items if it matches
+        if (weekValue.toUpperCase() === currentWeek.toUpperCase()) {
+          concessionItems.push(item);
+        }
       }
+      
+      // Get sorted list of available weeks
+      const availableWeeks = Object.keys(weekToItems).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, ''));
+        const numB = parseInt(b.replace(/\D/g, ''));
+        return numB - numA; // descending order
+      });
+      
+      if (concessionItems.length === 0 && allConcessionItems.length > 0) {
+        // No items matched the current week, use all items from the newest week
+        const newestWeek = availableWeeks[0];
+        if (newestWeek && weekToItems[newestWeek]) {
+          concessionItems.push(...weekToItems[newestWeek]);
+          currentWeek = newestWeek;
+        }
+      }
+      
+      // Calculate total cost
+      const totalCost = concessionItems.reduce((sum, item) => sum + item.cost, 0);
       
       // Create the data object to store
       const concessionsData: ConcessionsData = {
         fileName: this.file.name,
         uploadDate: new Date().toISOString(),
         currentWeek,
-        availableWeeks: weeksList,
-        items: concessionItems,
-        totalCost: concessionItems.reduce((sum, item) => sum + item.cost, 0)
+        availableWeeks,
+        items: allConcessionItems, // Store all items
+        totalCost,
+        weekToItems // Store items organized by week
       };
       
       // Save to local storage
@@ -201,5 +278,20 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       
       reader.readAsArrayBuffer(this.file);
     });
+  }
+
+  /**
+   * Find column index based on flexible pattern matching
+   */
+  private findColumnIndex(headers: any[], patterns: string[]): number {
+    for (const pattern of patterns) {
+      for (let i = 0; i < headers.length; i++) {
+        const header = headers[i]?.toString().toLowerCase() || "";
+        if (header.includes(pattern)) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 }
