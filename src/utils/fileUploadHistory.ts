@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { STORAGE_KEYS, clearStorageItem } from "@/utils/storage";
 
@@ -53,7 +54,27 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
     } else if (item.category === "concessions") {
       localStorage.removeItem("concessionsData");
     } else if (item.category === "mentor") {
-      localStorage.removeItem("mentorData");
+      // For Mentor data, also remove week-specific data
+      if (item.weekNumber && item.year) {
+        const weekKey = `mentor_data_week_${item.weekNumber}_${item.year}`;
+        clearStorageItem(weekKey);
+        console.log(`Removed week-specific mentor data: ${weekKey}`);
+      }
+      
+      // Remove current mentor data only if it's for the same week
+      const currentMentorData = localStorage.getItem("mentorData");
+      if (currentMentorData) {
+        try {
+          const data = JSON.parse(currentMentorData);
+          if (data.weekNumber === item.weekNumber && data.year === item.year) {
+            localStorage.removeItem("mentorData");
+            console.log("Removed current mentor data that matches deleted week");
+          }
+        } catch (e) {
+          console.error("Error parsing current mentor data:", e);
+        }
+      }
+      
       window.dispatchEvent(new CustomEvent('mentorDataRemoved'));
     } else if (item.category === "scorecard") {
       localStorage.removeItem("scorecard_week");

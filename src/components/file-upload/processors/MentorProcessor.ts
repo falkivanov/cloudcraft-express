@@ -5,6 +5,7 @@ import { MentorDataProcessor } from "./mentor/MentorDataProcessor";
 import { addItemToHistory } from "@/utils/fileUploadHistory";
 import { STORAGE_KEYS, loadFromStorage, saveToStorage } from "@/utils/storage";
 import { Employee } from "@/types/employee";
+import { MentorReport } from "./mentor/types";
 
 /**
  * Specialized processor for Mentor Excel files
@@ -49,8 +50,20 @@ export class MentorProcessor extends BaseFileProcessor {
         return false;
       }
       
-      // Store in localStorage
+      // Store by week key instead of overwriting
+      const weekKey = `mentor_data_week_${processedData.weekNumber}_${processedData.year}`;
+      saveToStorage(weekKey, processedData);
+      
+      // Also store as current data for backward compatibility
       localStorage.setItem("mentorData", JSON.stringify(processedData));
+      
+      // Trigger event to notify components data has changed
+      window.dispatchEvent(new CustomEvent('mentorDataUpdated', {
+        detail: {
+          weekNumber: processedData.weekNumber,
+          year: processedData.year
+        }
+      }));
       
       // Add to upload history
       addItemToHistory({

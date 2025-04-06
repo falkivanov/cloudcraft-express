@@ -7,6 +7,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { loadFromStorage } from "@/utils/storage";
 
 interface MentorWeekSelectorProps {
   selectedWeek: string;
@@ -53,20 +54,44 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
   
   const loadAvailableWeeks = () => {
     try {
-      // Attempt to load the current mentor data
-      const mentorDataString = localStorage.getItem("mentorData");
       const weeks: AvailableWeek[] = [];
       
+      // Scan all localStorage keys for mentor data by week
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('mentor_data_week_')) {
+          // Parse week number and year from key
+          const match = key.match(/mentor_data_week_(\d+)_(\d+)/);
+          if (match) {
+            const weekNum = parseInt(match[1], 10);
+            const year = parseInt(match[2], 10);
+            
+            const weekId = `week-${weekNum}-${year}`;
+            weeks.push({
+              id: weekId,
+              label: `KW ${weekNum}/${year}`,
+              weekNum,
+              year
+            });
+          }
+        }
+      }
+      
+      // Check current mentor data (for backward compatibility)
+      const mentorDataString = localStorage.getItem("mentorData");
       if (mentorDataString) {
         const mentorData = JSON.parse(mentorDataString);
         if (mentorData && mentorData.weekNumber && mentorData.year) {
           const weekId = `week-${mentorData.weekNumber}-${mentorData.year}`;
-          weeks.push({
-            id: weekId,
-            label: `KW ${mentorData.weekNumber}/${mentorData.year} (aktuell)`,
-            weekNum: mentorData.weekNumber,
-            year: mentorData.year
-          });
+          // Only add if not already in the list
+          if (!weeks.some(w => w.id === weekId)) {
+            weeks.push({
+              id: weekId,
+              label: `KW ${mentorData.weekNumber}/${mentorData.year} (aktuell)`,
+              weekNum: mentorData.weekNumber,
+              year: mentorData.year
+            });
+          }
         }
       }
       
@@ -84,15 +109,27 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({
         mentorUploads.forEach((upload: any) => {
           const weekId = `week-${upload.weekNumber}-${upload.year}`;
           if (!weeks.some(w => w.id === weekId)) {
-            weeks.push({
-              id: weekId,
-              label: `KW ${upload.weekNumber}/${upload.year}`,
-              weekNum: upload.weekNumber,
-              year: upload.year
-            });
+            // Check if data exists for this week
+            const weekKey = `mentor_data_week_${upload.weekNumber}_${upload.year}`;
+            const weekData = loadFromStorage(weekKey);
+            
+            if (weekData) {
+              weeks.push({
+                id: weekId,
+                label: `KW ${upload.weekNumber}/${upload.year}`,
+                weekNum: upload.weekNumber,
+                year: upload.year
+              });
+            }
           }
         });
       }
+      
+      // Sort weeks by year and week number (newest first)
+      weeks.sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.weekNum - a.weekNum;
+      });
       
       // If we have weeks, update the state
       if (weeks.length > 0) {
