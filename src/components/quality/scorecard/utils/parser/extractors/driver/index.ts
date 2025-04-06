@@ -87,8 +87,108 @@ export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => 
   return ensureAllMetrics(drivers);
 };
 
-export {
-  generateSampleDrivers,
-  determineMetricStatus,
-  ensureAllMetrics
-} from './driver';
+// Create utility functions for generating sample data
+export const generateSampleDrivers = (): DriverKPI[] => {
+  return [
+    {
+      name: "TR-001",
+      status: "active",
+      metrics: [
+        { name: "Delivered", value: 98, target: 100, unit: "%", status: "great" },
+        { name: "DNR DPMO", value: 2500, target: 3000, unit: "DPMO", status: "great" },
+        { name: "Contact Compliance", value: 92, target: 95, unit: "%", status: "fair" }
+      ]
+    },
+    {
+      name: "TR-002",
+      status: "active",
+      metrics: [
+        { name: "Delivered", value: 99, target: 100, unit: "%", status: "fantastic" },
+        { name: "DNR DPMO", value: 2000, target: 3000, unit: "DPMO", status: "fantastic" },
+        { name: "Contact Compliance", value: 96, target: 95, unit: "%", status: "fantastic" }
+      ]
+    }
+  ];
+};
+
+// Function to determine metric status based on value and target
+export const determineMetricStatus = (metricName: string, value: number): "poor" | "fair" | "good" | "great" | "fantastic" => {
+  // Default thresholds for common metrics
+  if (metricName === "Delivered" || metricName.includes("Delivered")) {
+    if (value >= 99.5) return "fantastic";
+    if (value >= 98.5) return "great";
+    if (value >= 97) return "good";
+    if (value >= 95) return "fair";
+    return "poor";
+  }
+  
+  if (metricName === "DNR DPMO" || metricName.includes("DNR") || metricName.includes("DPMO")) {
+    // Lower is better for DPMO metrics
+    if (value <= 1000) return "fantastic";
+    if (value <= 2000) return "great";
+    if (value <= 3000) return "good";
+    if (value <= 4000) return "fair";
+    return "poor";
+  }
+  
+  if (metricName === "Contact Compliance" || metricName.includes("Compliance") || metricName.includes("CC")) {
+    if (value >= 98) return "fantastic";
+    if (value >= 95) return "great";
+    if (value >= 92) return "good";
+    if (value >= 90) return "fair";
+    return "poor";
+  }
+  
+  // Default generic thresholds for other metrics
+  if (value >= 95) return "fantastic";
+  if (value >= 90) return "great";
+  if (value >= 80) return "good";
+  if (value >= 70) return "fair";
+  return "poor";
+};
+
+// Ensure all drivers have complete metrics
+export const ensureAllMetrics = (drivers: DriverKPI[]): DriverKPI[] => {
+  return drivers.map(driver => {
+    const metrics = [...driver.metrics];
+    
+    // Check if required metrics exist, add if missing
+    const requiredMetrics = ["Delivered", "DNR DPMO", "Contact Compliance"];
+    
+    requiredMetrics.forEach(metricName => {
+      if (!metrics.some(m => m.name === metricName)) {
+        // Add default metric
+        let defaultValue = 0;
+        let defaultTarget = 0;
+        let defaultUnit = "";
+        
+        if (metricName === "Delivered") {
+          defaultValue = 97;
+          defaultTarget = 100;
+          defaultUnit = "%";
+        } else if (metricName === "DNR DPMO") {
+          defaultValue = 3000;
+          defaultTarget = 3000;
+          defaultUnit = "DPMO";
+        } else if (metricName === "Contact Compliance") {
+          defaultValue = 92;
+          defaultTarget = 95;
+          defaultUnit = "%";
+        }
+        
+        metrics.push({
+          name: metricName,
+          value: defaultValue,
+          target: defaultTarget,
+          unit: defaultUnit,
+          status: determineMetricStatus(metricName, defaultValue)
+        });
+      }
+    });
+    
+    return {
+      ...driver,
+      metrics
+    };
+  });
+};
