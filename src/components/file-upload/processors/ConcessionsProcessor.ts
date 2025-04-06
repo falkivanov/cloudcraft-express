@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import * as XLSX from "xlsx";
@@ -78,10 +77,71 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       // Get sorted list of available weeks
       const availableWeeks = getSortedAvailableWeeks(weekToItems);
       
-      // Handle case where no items matched the current week
-      const finalItems = this.handleEmptyCurrentWeek(concessionItems, allConcessionItems, weekToItems, availableWeeks, currentWeek);
+      // Merge with existing data if available to preserve all weeks
+      let finalWeekToItems = { ...weekToItems };
+      let finalAvailableWeeks = [...availableWeeks];
+      let finalAllItems = [...allConcessionItems];
       
-      // Calculate total cost
+      try {
+        const existingData = localStorage.getItem("concessionsData");
+        if (existingData) {
+          const parsedData = JSON.parse(existingData) as ConcessionsData;
+          
+          // Merge weekly items, giving priority to new data for current week
+          if (parsedData.weekToItems) {
+            Object.keys(parsedData.weekToItems).forEach(week => {
+              // Keep existing week data unless it's the current week being uploaded
+              if (week !== currentWeek && parsedData.weekToItems[week]) {
+                finalWeekToItems[week] = parsedData.weekToItems[week];
+              }
+            });
+          }
+          
+          // Merge available weeks
+          if (parsedData.availableWeeks) {
+            // Add existing weeks that aren't in the new data
+            parsedData.availableWeeks.forEach(week => {
+              if (!finalAvailableWeeks.includes(week) && week !== currentWeek) {
+                finalAvailableWeeks.push(week);
+              }
+            });
+            // Re-sort the weeks
+            finalAvailableWeeks.sort((a, b) => {
+              const numA = parseInt(a.replace(/\D/g, ''));
+              const numB = parseInt(b.replace(/\D/g, ''));
+              return numB - numA; // descending order
+            });
+          }
+          
+          // Merge all items but remove duplicates
+          if (parsedData.items) {
+            // Get tracking IDs from new items
+            const newItemTrackingIds = new Set(
+              allConcessionItems.map(item => item.trackingId)
+            );
+            
+            // Add old items that aren't in the new data
+            parsedData.items.forEach(item => {
+              if (!newItemTrackingIds.has(item.trackingId)) {
+                finalAllItems.push(item);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error merging with existing data:", error);
+      }
+      
+      // Handle case where no items matched the current week
+      const finalItems = this.handleEmptyCurrentWeek(
+        concessionItems, 
+        finalAllItems, 
+        finalWeekToItems, 
+        finalAvailableWeeks, 
+        currentWeek
+      );
+      
+      // Calculate total cost for the current week
       const totalCost = finalItems.reduce((sum, item) => sum + item.cost, 0);
       
       // Create the data object to store
@@ -89,10 +149,10 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         fileName: this.file.name,
         uploadDate: new Date().toISOString(),
         currentWeek,
-        availableWeeks,
-        items: allConcessionItems, // Store all items
+        availableWeeks: finalAvailableWeeks,
+        items: finalAllItems,
         totalCost,
-        weekToItems // Store items organized by week
+        weekToItems: finalWeekToItems
       };
       
       // Save to local storage

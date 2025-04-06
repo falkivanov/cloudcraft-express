@@ -1,3 +1,4 @@
+
 /**
  * Utilities for handling week data in concessions files
  */
@@ -8,11 +9,20 @@
  * @returns Extracted week identifier or empty string if not found
  */
 export function extractWeekFromFilename(filename: string): string {
-  const weekPattern = /(?:week|kw|wk)[- _]?(\d+)/i;
-  const weekMatch = filename.match(weekPattern);
+  // Try matching "Week XX" or "KW XX" patterns (case insensitive)
+  const weekPatterns = [
+    /(?:week|kw|wk)[- _]?(\d+)/i,        // Week 12, KW12, WK 12
+    /w(\d+)/i,                           // W12
+    /week(\d+)/i,                        // Week12
+    /kw(\d+)/i                           // KW12
+  ];
   
-  if (weekMatch && weekMatch[1]) {
-    return `WK${weekMatch[1]}`;
+  for (const pattern of weekPatterns) {
+    const weekMatch = filename.match(pattern);
+    if (weekMatch && weekMatch[1]) {
+      const weekNum = weekMatch[1].padStart(2, '0');
+      return `WK${weekNum}`;
+    }
   }
   
   return "";
@@ -31,7 +41,10 @@ export function extractWeeksFromData(rawData: any[][], weekColIndex: number): Se
     for (let i = 1; i < rawData.length; i++) {
       const row = rawData[i];
       if (row && row[weekColIndex]) {
-        weeks.add(row[weekColIndex].toString());
+        const weekValue = normalizeWeekFormat(row[weekColIndex].toString());
+        if (weekValue) {
+          weeks.add(weekValue);
+        }
       }
     }
   }
@@ -75,12 +88,11 @@ export function determineCurrentWeek(filename: string, weeks: Set<string>): stri
 export function normalizeWeekFormat(weekValue: string): string {
   if (!weekValue) return "";
   
-  if (!/^wk\d+$/i.test(weekValue)) {
-    const weekNum = weekValue.replace(/\D/g, '');
-    if (weekNum) {
-      return `WK${weekNum}`;
-    }
-  }
+  // Extract numeric part
+  const weekNum = weekValue.replace(/\D/g, '');
+  if (!weekNum) return "";
   
-  return weekValue.toUpperCase();
+  // Ensure week number is padded to 2 digits
+  const paddedWeekNum = weekNum.padStart(2, '0');
+  return `WK${paddedWeekNum}`;
 }

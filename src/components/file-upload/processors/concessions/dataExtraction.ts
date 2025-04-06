@@ -81,19 +81,24 @@ export function extractConcessionItems(
       cost
     };
     
-    // Store all items and organize by week
+    // Store all items
     allConcessionItems.push(item);
     
+    // Organize by week
     if (!weekToItems[weekValue]) {
       weekToItems[weekValue] = [];
     }
     weekToItems[weekValue].push(item);
     
-    // Also add to current week items if it matches
+    // Add to current week items if it matches the target week exactly
     if (weekValue.toUpperCase() === currentWeek.toUpperCase()) {
       concessionItems.push(item);
     }
   }
+  
+  console.log(`Total items extracted: ${allConcessionItems.length}`);
+  console.log(`Items for week ${currentWeek}: ${concessionItems.length}`);
+  console.log(`Weeks found: ${Object.keys(weekToItems).join(", ")}`);
   
   return {
     concessionItems,

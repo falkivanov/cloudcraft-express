@@ -73,11 +73,13 @@ const useFilterByWeek = (concessionsData: ConcessionsData | null, selectedWeek: 
   
   useEffect(() => {
     if (concessionsData && selectedWeek) {
+      // If data for this week exists, use it
       if (concessionsData.weekToItems && concessionsData.weekToItems[selectedWeek]) {
         setFilteredItems(concessionsData.weekToItems[selectedWeek]);
         return;
       }
       
+      // Fallback: filter based on week matching
       const items = concessionsData.items.filter(item => {
         if (selectedWeek === concessionsData.currentWeek) {
           return true;
@@ -88,7 +90,10 @@ const useFilterByWeek = (concessionsData: ConcessionsData | null, selectedWeek: 
       setFilteredItems(items);
     } else if (concessionsData) {
       // If no week is selected, use current week as default
-      setFilteredItems(concessionsData.items);
+      const currentWeekItems = concessionsData.weekToItems && concessionsData.currentWeek ? 
+        concessionsData.weekToItems[concessionsData.currentWeek] || [] : [];
+        
+      setFilteredItems(currentWeekItems.length > 0 ? currentWeekItems : concessionsData.items);
     } else {
       setFilteredItems([]);
     }
