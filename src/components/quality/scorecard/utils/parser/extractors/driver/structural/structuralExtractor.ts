@@ -1,4 +1,3 @@
-
 import { DriverKPI } from "../../../../types";
 import { groupItemsIntoRows } from './itemGrouping';
 import { findHeaderRow } from './headerFinder';
@@ -7,7 +6,7 @@ import { processDataRows, processDriverRow } from '../../../driver/structural/ro
 /**
  * Extract driver KPIs from structured PDF data
  */
-export function extractDriverKPIsFromStructure(pageData: Record<number, any>): DriverKPI[] {
+export function extractDriverKPIsFromStructure(pageData: any): DriverKPI[] {
   const drivers: DriverKPI[] = [];
 
   // Process each page
