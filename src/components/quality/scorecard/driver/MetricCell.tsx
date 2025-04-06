@@ -20,11 +20,17 @@ const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
   } else if (unit === "%") {
     // Handle percentage values
     // Check if the value is already formatted as a percentage (>100)
-    if (value > 100 && value <= 10000) {
-      // Value is likely already multiplied by 100, display with 1-2 decimal places
+    if (value > 1 && value <= 100) {
+      // Normal percentage value (e.g. 95.5%)
+      displayValue = `${value}%`;
+    } else if (value > 0 && value <= 1) {
+      // Value is likely in decimal form (e.g. 0.955)
+      displayValue = `${(value * 100).toFixed(value % 0.1 === 0 ? 0 : 2)}%`;
+    } else if (value > 100) {
+      // Value might be multiplied by 100 already (e.g. 9550 meaning 95.5%)
       displayValue = `${(value/100).toFixed(value % 100 === 0 ? 0 : 2)}%`;
     } else {
-      // Normal percentage display
+      // Fallback
       displayValue = `${value}%`;
     }
   } else {

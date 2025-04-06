@@ -1,4 +1,3 @@
-
 /**
  * Extract a numeric value from a string, handling various formats
  */
@@ -34,6 +33,15 @@ export function extractNumeric(value: string): number {
     result = -result;
   }
   
+  // Handle percentages - if the original string contains '%', and the number is not already small (< 1),
+  // divide by 100 to ensure consistent percentage representation
+  if (value.includes('%') && result > 1) {
+    // Only convert if not already a decimal percentage
+    if (result > 100) {
+      result = result / 100;
+    }
+  }
+  
   return isNaN(result) ? 0 : result;
 }
 
@@ -55,8 +63,20 @@ export function extractCellValue(cell: string): { value: number; isPercentage: b
   const trimmed = cell.trim();
   const isPercentage = trimmed.includes('%');
   
+  // Extract the numeric value
+  let value = extractNumeric(trimmed);
+  
+  // For percentages, ensure consistent representation
+  if (isPercentage && value > 1 && value <= 100) {
+    // Keep as-is, this is a proper percentage representation
+    // value = value / 100; - We'll handle the display in MetricCell
+  } else if (isPercentage && value > 100) {
+    // This is likely already multiplied by 100, so we bring it back to decimal form
+    value = value / 100;
+  }
+  
   return {
-    value: extractNumeric(trimmed),
+    value,
     isPercentage
   };
 }
