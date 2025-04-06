@@ -24,7 +24,7 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
       const driverId = (row[driverIdIndex]?.str || "").trim();
       
       // Skip if driver ID is empty or doesn't look like a valid ID
-      // Driver IDs now start with 'A' and are alphanumeric with length >= 6
+      // Driver IDs start with 'A' and are alphanumeric with length >= 6
       if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) {
         // Try looking for the first entry in the row that matches the driver ID pattern
         const potentialDriverId = row.find(cell => 
@@ -60,14 +60,12 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
           if (isNumeric(cellText) || cellText === "-") {
             // Apply special handling based on metric type
             const metricName = metricNames[metricIndex];
-            let value = cellText === "-" ? 0 : extractNumeric(cellText);
+            let value: number;
             
-            // For percentage fields, ensure values are in the correct range
-            if ((metricName === "DCR" || metricName === "POD" || metricName === "CC" || metricName === "DEX") && 
-                cellText !== "-") {
-              if (value > 100) {
-                value = value / 100;
-              }
+            if (cellText === "-") {
+              value = 0;
+            } else {
+              value = extractNumeric(cellText);
             }
             
             metrics.push({
@@ -119,7 +117,7 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
       const valueStr = (row[metricDef.index]?.str || "").trim();
       
       if (valueStr === "-") {
-        // Handle dash values
+        // Handle dash values - these should be treated as missing data
         metrics.push({
           name: metricDef.name,
           value: 0,
@@ -128,18 +126,62 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
           status: "none" as const
         });
       } else {
-        // Extract numeric value
+        // Extract numeric value - use appropriate extraction method based on the type
         let value = extractNumeric(valueStr);
         
-        // Special handling for percentage fields
+        // For "Delivered" and "CE" we want to keep the integer values as they are
+        // but they should not be treated as percentages or divided
+        
+        // For percentage fields (DCR, POD, CC, DEX), ensure the values are in the correct format
         if ((metricDef.name === "DCR" || metricDef.name === "POD" || 
             metricDef.name === "CC" || metricDef.name === "DEX") && 
-            valueStr.includes('%') && value > 100) {
-          value = value / 100;
+            valueStr.includes('%')) {
+          // Already a percentage, just keep it as is
+          // No need to divide by 100 unless it's over 100 (which would indicate it needs normalization)
+          if (value > 100) {
+            value = value / 100;
+          }
         }
         
         // Only add valid numeric values
         if (!isNaN(value)) {
+          metrics.push({
+            name: metricDef.name,
+            value,
+            target: metricDef.target,
+            unit: metricDef.unit,
+            status: determineStatus(metricDef.name, value)
+          });
+        }
+      }
+    } else {
+      // If we don't have an index for this metric, try to find it by position in a sorted list
+      const sortedRow = [...row].sort((a, b) => a.x - b.x);
+      const numericCells = sortedRow.filter(item => isNumeric(item.str) || item.str.trim() === "-");
+      
+      // Based on the metric name, determine which cell might contain this data
+      const cellIndex = getFallbackCellIndex(metricDef.name);
+      if (cellIndex < numericCells.length) {
+        const valueStr = numericCells[cellIndex].str.trim();
+        
+        if (valueStr === "-") {
+          metrics.push({
+            name: metricDef.name,
+            value: 0,
+            target: metricDef.target,
+            unit: metricDef.unit,
+            status: "none" as const
+          });
+        } else {
+          let value = extractNumeric(valueStr);
+          
+          // Handle percentage values
+          if ((metricDef.name === "DCR" || metricDef.name === "POD" || 
+              metricDef.name === "CC" || metricDef.name === "DEX") && 
+              valueStr.includes('%') && value > 100) {
+            value = value / 100;
+          }
+          
           metrics.push({
             name: metricDef.name,
             value,
@@ -236,102 +278,63 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   // Extract driver name from first column
   const name = firstItem.trim();
   
-  // Initialize metrics object
-  const metrics: Record<string, { value: number, status: string }> = {};
+  // Initialize metrics array
+  const metrics = [];
   const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'POD', 'CC', 'CE', 'DEX'];
+  const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+  const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Sort remaining items horizontally to ensure correct order
-  const sortedItems = row.slice(1).sort((a, b) => a.x - b.x);
+  // Sort row by horizontal position to ensure correct order
+  const sortedRow = [...row].sort((a, b) => a.x - b.x);
   
-  // Process each metric column
-  let currentMetricIndex = 0;
+  // Skip the first item (driver ID) and process the rest as metrics
+  const metricItems = sortedRow.slice(1);
   
-  for (const item of sortedItems) {
-    if (currentMetricIndex >= metricNames.length) break;
+  // Process metric values
+  for (let i = 0; i < Math.min(metricItems.length, metricNames.length); i++) {
+    const item = metricItems[i];
+    const valueStr = (item?.str || "").trim();
     
-    const itemText = item.str.trim();
-    if (!itemText) continue;
+    // Skip empty cells
+    if (!valueStr) continue;
     
-    // Check if this item contains both a value and a status (e.g., "98.5% | Great")
-    const combinedMatch = itemText.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-    
-    if (combinedMatch) {
-      const value = parseFloat(combinedMatch[1]);
-      const status = combinedMatch[2].toLowerCase();
+    if (valueStr === "-") {
+      // Handle dash values
+      metrics.push({
+        name: metricNames[i],
+        value: 0,
+        target: metricTargets[i],
+        unit: metricUnits[i],
+        status: "none" as const
+      });
+    } else {
+      // Extract numeric value
+      let value = extractNumeric(valueStr);
       
-      metrics[metricNames[currentMetricIndex]] = { 
-        value, 
-        status 
-      };
-      currentMetricIndex++;
-    } 
-    // Check if it's just a numeric value
-    else if (/^\d+(?:\.\d+)?(?:\s*(?:%|DPMO))?$/.test(itemText)) {
-      const value = parseFloat(itemText.replace(/[^\d.]/g, ''));
-      
-      // Determine status based on the metric name and value
-      const status = determineStatus(metricNames[currentMetricIndex], value);
-      
-      metrics[metricNames[currentMetricIndex]] = { 
-        value, 
-        status 
-      };
-      currentMetricIndex++;
-    }
-    // Check if it's just a status indication
-    else if (/^(?:poor|fair|great|fantastic)$/i.test(itemText)) {
-      // This is likely a status for the previous value
-      // Only use it if we've already started processing metrics and the previous one has no status
-      if (currentMetricIndex > 0) {
-        const prevMetric = metricNames[currentMetricIndex - 1];
-        if (metrics[prevMetric]) {
-          metrics[prevMetric].status = itemText.toLowerCase();
-        }
+      // Handle percentage fields correctly
+      if ((metricNames[i] === "DCR" || metricNames[i] === "POD" || 
+          metricNames[i] === "CC" || metricNames[i] === "DEX") && 
+          valueStr.includes('%') && value > 100) {
+        value = value / 100;
       }
-    }
-    // Otherwise increment counter if this looks like a separator or empty column
-    else if (itemText === '|' || itemText === '-' || itemText === '' || /^\s+$/.test(itemText)) {
-      // Skip separators
-    } 
-    // Otherwise try to parse a number from whatever text is there
-    else {
-      const numericMatch = itemText.match(/(\d+(?:\.\d+)?)/);
-      if (numericMatch) {
-        const value = parseFloat(numericMatch[1]);
-        
-        // Determine status based on the metric name and value
-        const status = determineStatus(metricNames[currentMetricIndex], value);
-        
-        metrics[metricNames[currentMetricIndex]] = { 
-          value, 
-          status 
-        };
-        currentMetricIndex++;
-      }
+      
+      metrics.push({
+        name: metricNames[i],
+        value,
+        target: metricTargets[i],
+        unit: metricUnits[i],
+        status: determineStatus(metricNames[i], value)
+      });
     }
   }
   
   // Only create driver if we found at least some metrics
-  if (Object.keys(metrics).length > 0) {
-    // Build the driver object with proper type structure
-    const driver: DriverKPI = {
+  if (metrics.length > 0) {
+    return {
       name,
-      status: "active", // Set default status to active
-      metrics: [] // Initialize with empty array to fix type error
+      status: "active",
+      metrics
     };
-    
-    // Add each metric to the driver's metrics array
-    for (const [metricName, data] of Object.entries(metrics)) {
-      driver.metrics.push({
-        name: metricName,
-        value: data.value,
-        target: getTargetForMetric(metricName),
-        unit: getUnitForMetric(metricName),
-        status: data.status as any
-      });
-    }
-    
-    return driver;
   }
   
   return null;
@@ -365,5 +368,21 @@ function getUnitForMetric(metricName: string): string {
     case "CE": return "";
     case "DEX": return "%";
     default: return "";
+  }
+}
+
+/**
+ * Get fallback cell index for a specific metric
+ */
+function getFallbackCellIndex(metricName: string): number {
+  switch (metricName) {
+    case "Delivered": return 1;
+    case "DCR": return 2;
+    case "DNR DPMO": return 3;
+    case "POD": return 4;
+    case "CC": return 5;
+    case "CE": return 6;
+    case "DEX": return 7;
+    default: return 0;
   }
 }
