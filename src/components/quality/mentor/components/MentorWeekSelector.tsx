@@ -21,7 +21,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
   const [availableWeeks, setAvailableWeeks] = useState<string[]>([]);
   const [weekLabels, setWeekLabels] = useState<Record<string, string>>({});
 
-  // Find all available weeks when component mounts or when storage changes
+  // Find all available weeks using a similar approach to Scorecard
   const findAvailableWeeks = useCallback(() => {
     console.log("Finding available mentor weeks...");
     const weeks: string[] = [];
@@ -44,6 +44,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
             const weekId = `week-${weekNum}-${year}`;
             weeks.push(weekId);
             labels[weekId] = `KW${weekNum}/${year}`;
+            console.log(`Found valid mentor data for KW${weekNum}/${year}`);
           }
         } catch (error) {
           console.error(`Error loading mentor data for key ${key}:`, error);
@@ -61,6 +62,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
           if (!weeks.includes(weekId)) {
             weeks.push(weekId);
             labels[weekId] = `KW${data.weekNumber}/${data.year}`;
+            console.log(`Found legacy mentor data for KW${data.weekNumber}/${data.year}`);
           }
         }
       }
@@ -79,18 +81,18 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       return bWeek - aWeek; // Newer week first
     });
     
-    console.log("Found available weeks:", weeks);
+    console.log("Found available mentor weeks:", weeks);
     setAvailableWeeks(weeks);
     setWeekLabels(labels);
     
     // If no week is currently selected but we have weeks, select the first one
     if ((selectedWeek === "week-0-0" || !selectedWeek) && weeks.length > 0) {
-      console.log("Auto-selecting first available week:", weeks[0]);
+      console.log("Auto-selecting first available mentor week:", weeks[0]);
       setSelectedWeek(weeks[0]);
     }
   }, [selectedWeek, setSelectedWeek]);
 
-  // Load available weeks on component mount
+  // Load available weeks on component mount and when storage changes
   useEffect(() => {
     findAvailableWeeks();
 
@@ -150,7 +152,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
         <Select
           value={selectedWeek}
           onValueChange={(value) => {
-            console.log(`Select changed to: ${value}`);
+            console.log(`Mentor select changed to: ${value}`);
             setSelectedWeek(value);
           }}
         >

@@ -19,7 +19,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
   const [mentorData, setMentorData] = useState<MentorReport | null>(null);
   
   const navigate = useNavigate();
-  const { selectedWeek, setSelectedWeek, weekData, forceRefresh } = useMentorWeek();
+  const { selectedWeek, setSelectedWeek, weekData, loadMentorDataForWeek } = useMentorWeek();
 
   // Load mentor data based on the current week selection
   const loadMentorData = useCallback(() => {
@@ -32,17 +32,16 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
       }
       
       // If there's a selected week, try to load data for that specific week
-      if (weekData.weekNumber > 0 && weekData.year > 0) {
-        const weekKey = `mentor_data_week_${weekData.weekNumber}_${weekData.year}`;
-        console.log(`Looking for mentor data with key: ${weekKey}`);
-        const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
+      if (selectedWeek && selectedWeek !== "week-0-0") {
+        // Use the hook's loadMentorDataForWeek function
+        const weekSpecificData = loadMentorDataForWeek(selectedWeek);
         
-        if (weekSpecificData && weekSpecificData.drivers && weekSpecificData.drivers.length > 0) {
+        if (weekSpecificData) {
           console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`, weekSpecificData);
           setMentorData(weekSpecificData);
           return;
         } else {
-          console.log(`No valid data found for key: ${weekKey}`);
+          console.log(`No valid data found for week: ${selectedWeek}`);
           setMentorData(null);
           return;
         }
@@ -65,7 +64,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
       setMentorData(null);
       toast.error("Fehler beim Laden der Mentor-Daten");
     }
-  }, [weekData.weekNumber, weekData.year, propsMentorData]);
+  }, [selectedWeek, weekData.weekNumber, weekData.year, propsMentorData, loadMentorDataForWeek]);
 
   // Event listener for data updates/removals
   useEffect(() => {
@@ -104,11 +103,10 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     console.log("Loading mentor data for week:", {
       weekNumber: weekData.weekNumber,
       year: weekData.year,
-      weekId: selectedWeek,
-      forceRefresh
+      weekId: selectedWeek
     });
     loadMentorData();
-  }, [selectedWeek, weekData, propsMentorData, loadMentorData, forceRefresh]);
+  }, [selectedWeek, loadMentorData]);
 
   if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return (
