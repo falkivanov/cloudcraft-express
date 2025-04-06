@@ -25,6 +25,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
     setSelectedWeek,
     availableWeeks,
     totalCost,
+    filteredItems, // Added this to get the count of concessions
     expandedTransportId,
     toggleExpandTransportId
   } = useConcessionsData();
@@ -73,7 +74,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
             </div>
             
             <Badge variant="outline" className="bg-orange-100 border-orange-200 text-orange-800 px-3 py-1">
-              Gesamt: {formatCurrency(totalCost)}
+              Gesamt: {formatCurrency(totalCost)} ({filteredItems.length} Concessions)
             </Badge>
           </div>
           
