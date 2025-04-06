@@ -1,12 +1,5 @@
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import "./utils/dateExtensions"; // Import our date extensions
-import App from "./App";
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<App />);

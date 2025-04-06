@@ -28,151 +28,108 @@ interface ExtractionResult {
 export const parseScorecardPDF = async (
   pdfData: ArrayBuffer,
   filename: string,
-  detailedLogging: boolean = true  // Default auf true für beste Fehlerbehebung
+  detailedLogging: boolean = false
 ): Promise<ScoreCardData> => {
   try {
-    console.info("Starte PDF-Parsing für: ", filename);
+    console.info("Starting PDF parsing for: ", filename);
     
-    // Extrahiere Wochennummer aus Dateinamen mit verbessertem Extraktor
-    const weekRaw = extractWeekFromFilename(filename);
-    console.info("Extrahierte Wochennummer:", weekRaw);
+    // Extract week number from filename using the enhanced extractor
+    const weekNum = extractWeekFromFilename(filename);
+    console.info("Extracted week number:", weekNum);
     
-    // Convert week to a number
-    let week: number;
-    if (typeof weekRaw === 'number') {
-      week = weekRaw;
-    } else if (typeof weekRaw === 'string') {
-      // Convert string to number, removing any non-digit characters
-      const match = weekRaw.match(/\d+/);
-      week = match ? parseInt(match[0], 10) : 1;
-    } else {
-      // Default to week 1 if we can't parse
-      week = 1;
-    }
-    
-    // Lade das PDF-Dokument
+    // Load the PDF document
     try {
       const pdf = await loadPDFDocument(pdfData);
-      console.info(`PDF geladen mit ${pdf.numPages} Seiten`);
+      console.info(`PDF loaded with ${pdf.numPages} pages`);
       
-      // Versuche mehrere Extraktionsansätze, um die Fahrererkennung zu maximieren
+      // Try multiple extraction attempts to maximize driver detection
       
-      // Erster Versuch: Positionale Extraktion (am zuverlässigsten, wenn es funktioniert)
+      // First try: Positional extraction (most reliable when it works)
       const positionalResult = await attemptPositionalExtraction(pdf, filename, detailedLogging);
       let extractedData;
       
       if (positionalResult.success && positionalResult.data && 
           positionalResult.data.driverKPIs && positionalResult.data.driverKPIs.length >= 10) {
-        // Positionale Extraktion hat gut funktioniert
+        // Positional extraction worked well
         extractedData = positionalResult.data;
-        console.log(`Positionale Extraktion erfolgreich mit ${extractedData.driverKPIs?.length || 0} Fahrern`);
+        console.log(`Positional extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
       } else {
-        // Wenn die positionale Extraktion fehlgeschlagen ist oder wenige Fahrer gefunden hat, versuche textbasierte Extraktion
-        console.log("Positionale Extraktion hat nicht genug Fahrer gefunden, versuche textbasierte Extraktion");
+        // If positional extraction failed or found few drivers, try text-based extraction
+        console.log("Positional extraction didn't find enough drivers, trying text-based extraction");
         
-        // Cast um sicherzustellen, dass wir alle erforderlichen Eigenschaften haben
+        // Cast to ensure we have all required properties
         const textBasedResult: ExtractionResult = {
           success: false,
           data: null,
           error: null,
-          ...await attemptTextBasedExtraction(pdf, week, detailedLogging)
+          ...await attemptTextBasedExtraction(pdf, weekNum, detailedLogging)
         };
         
         if (textBasedResult.success && textBasedResult.data && 
             textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 5) {
-          // Textbasierte Extraktion hat funktioniert
+          // Text-based extraction worked
           extractedData = textBasedResult.data;
-          console.log(`Textbasierte Extraktion erfolgreich mit ${extractedData.driverKPIs?.length || 0} Fahrern`);
+          console.log(`Text-based extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
         } else if (positionalResult.data && positionalResult.data.driverKPIs && 
                   positionalResult.data.driverKPIs.length > 0) {
-          // Fallback auf teilweise positionale Ergebnisse, wenn sie zumindest einige Fahrer gefunden haben
+          // Fall back to partial positional results if it found at least some drivers
           extractedData = positionalResult.data;
-          console.log(`Verwende teilweise positionale Ergebnisse mit ${extractedData.driverKPIs?.length || 0} Fahrern`);
+          console.log(`Using partial positional results with ${extractedData.driverKPIs?.length || 0} drivers`);
         } else if (textBasedResult.data && textBasedResult.data.driverKPIs && 
                   textBasedResult.data.driverKPIs.length > 0) {
-          // Fallback auf teilweise textbasierte Ergebnisse
+          // Fall back to partial text-based results
           extractedData = textBasedResult.data;
-          console.log(`Verwende teilweise textbasierte Ergebnisse mit ${extractedData.driverKPIs?.length || 0} Fahrern`);
+          console.log(`Using partial text-based results with ${extractedData.driverKPIs?.length || 0} drivers`);
         } else {
-          // Letzter Ausweg: Verwende einfache Fallback-Daten
-          console.log("Keine Extraktionsmethode hat Fahrer gefunden, verwende Fallback-Daten");
-          extractedData = createFallbackData(week);
+          // Last resort: use simple fallback data creation
+          console.log("No extraction method found drivers, using fallback data");
+          extractedData = createFallbackData(weekNum);
         }
       }
       
-      // Kombination aus beiden Ergebnissen für maximale Fahrererkennung
-      if (positionalResult.data?.driverKPIs && extractedData.driverKPIs && 
-          positionalResult.data.driverKPIs.length > 0 &&
-          extractedData !== positionalResult.data) {
-        
-        const existingDriverIds = new Set(extractedData.driverKPIs.map(d => d.name));
-        
-        // Füge Fahrer hinzu, die wir noch nicht haben
-        const additionalDrivers = positionalResult.data.driverKPIs.filter(
-          d => !existingDriverIds.has(d.name)
-        );
-        
-        if (additionalDrivers.length > 0) {
-          console.log(`Füge ${additionalDrivers.length} zusätzliche Fahrer aus anderer Extraktionsmethode hinzu`);
-          extractedData.driverKPIs = [...extractedData.driverKPIs, ...additionalDrivers];
-        }
+      // Make sure the week is set correctly based on filename
+      if (weekNum > 0) {
+        extractedData.week = weekNum;
       }
       
-      // Ensure week and year are properly set
-      if (week) {
-        extractedData.week = week;
-      }
-      
-      // Wenn Jahr fehlt, verwende das aktuelle Jahr
+      // If year is missing, use current year
       if (!extractedData.year) {
         extractedData.year = new Date().getFullYear();
       }
       
-      console.log(`Endergebnis der Extraktion: ${extractedData.driverKPIs?.length || 0} Fahrer`);
+      console.log(`Final extraction result: ${extractedData.driverKPIs?.length || 0} drivers`);
       
-      // Speichere Daten an beiden Stellen für Kompatibilität
+      // Store data in both locations for compatibility
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, extractedData);
       localStorage.setItem("extractedScorecardData", JSON.stringify(extractedData));
       
       return extractedData;
     } catch (error) {
-      console.error('Fehler mit dem PDF-Dokument:', error);
-      // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-      const data = await getSampleDataWithWeek(week.toString());
-      console.info("Verwende Beispieldaten aufgrund eines PDF-Verarbeitungsfehlers");
+      console.error('Error with PDF document:', error);
+      // Use sample data as fallback but mark it as sample data
+      const data = await getSampleDataWithWeek(weekNum);
+      console.info("Using sample data due to PDF processing error");
       
-      // Speichere Daten an beiden Stellen
+      // Store data in both locations
       const resultData = {...data, isSampleData: true};
       
-      // Speichere Daten an beiden Stellen
+      // Store data in both locations
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
       localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
       
       return resultData;
     }
   } catch (error) {
-    console.error('Fehler beim Parsen der PDF:', error);
+    console.error('Error parsing PDF:', error);
+    const weekNum = new Date().getWeek();
+    // Use sample data as fallback but mark it as sample data
+    const data = await getSampleDataWithWeek(weekNum);
+    console.info("Using sample data due to general parsing error");
     
-    // Handle the case properly
-    let weekStr = "1";
-    try {
-      if (typeof weekRaw !== 'undefined') {
-        weekStr = typeof weekRaw === 'number' ? weekRaw.toString() : 
-                  typeof weekRaw === 'string' ? weekRaw : "1";
-      }
-    } catch (weekError) {
-      weekStr = "1"; // Ultimate fallback
-      console.error("Error getting week:", weekError);
-    }
-    
-    // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
-    const data = await getSampleDataWithWeek(weekStr);
-    console.info("Verwende Beispieldaten aufgrund eines allgemeinen Parsing-Fehlers");
-    
-    // Speichere die Beispieldaten konsistent mit beiden Methoden
+    // Save the sample data consistently using both methods
     const resultData = {...data, isSampleData: true};
     
-    // Speichere Daten an beiden Stellen
+    // Store data in both locations
     saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, resultData);
     localStorage.setItem("extractedScorecardData", JSON.stringify(resultData));
     

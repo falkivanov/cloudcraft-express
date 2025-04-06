@@ -1,88 +1,97 @@
 
-import { DriverKPI } from "../../../../../types";
-import { determineMetricStatus } from "../utils/metricStatus";
+import { DriverKPI } from '../../../../../types';
+import { determineStatus } from '../../../../helpers/statusHelper';
+import { extractNumeric } from '../structural/valueExtractor';
+
+type MetricStatus = "fantastic" | "great" | "fair" | "poor" | "none" | "in compliance" | "not in compliance";
 
 /**
- * Extract drivers by analyzing text line by line
+ * Extract drivers by processing the text content line by line
  */
-export function extractDriversLineByLine(text: string): DriverKPI[] {
-  console.log("Using line-based driver extraction");
-  
+export const extractDriversLineByLine = (text: string): DriverKPI[] => {
+  console.log("Trying line-based extraction approach");
+  const lines = text.split(/\r?\n/);
   const drivers: DriverKPI[] = [];
-  const lines = text.split('\n');
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  // First, identify potential driver ID patterns
+  const driverIdPatterns = [
+    /^([A-Z][A-Z0-9]{5,})/,         // Standard Amazon driver ID (e.g., ABCD123456)
+    /^(TR[-\s]?\d{3,})/,             // TR pattern with optional dash (e.g., TR-001)
+    /^([A-Z]{3}\d{5,})/              // Three letters followed by numbers (e.g., ABC12345)
+  ];
+  
+  for (const line of lines) {
+    let driverId = null;
     
-    // Skip empty lines
-    if (!line) continue;
+    // Try all driver ID patterns
+    for (const pattern of driverIdPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        driverId = match[1].trim();
+        break;
+      }
+    }
     
-    // Look for driver IDs in common formats
-    const idMatch = line.match(/^(TR[-\s]?\d+|A[A-Z0-9]{5,})/);
-    if (!idMatch) continue;
-    
-    const driverId = idMatch[1];
-    
-    // Look for numeric values in this line
-    const valueMatches = line.match(/\b\d+(?:\.\d+)?\b/g);
-    
-    if (valueMatches && valueMatches.length >= 2) {
-      const metrics = [];
-      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-      
-      // Add metrics based on values found
-      for (let j = 0; j < Math.min(valueMatches.length, metricNames.length); j++) {
-        const value = parseFloat(valueMatches[j]);
-        metrics.push({
-          name: metricNames[j],
-          value,
-          target: getTargetForMetric(metricNames[j]),
-          unit: getUnitForMetric(metricNames[j]),
-          status: determineMetricStatus(metricNames[j], value)
-        });
+    if (driverId) {
+      // Skip if it's likely a header row or doesn't look like a driver ID
+      if (driverId.toLowerCase().includes('transporter') || driverId.toLowerCase() === 'id') {
+        continue;
       }
       
-      if (metrics.length > 0) {
+      console.log(`Found potential driver line: ${line}`);
+      
+      // Try to extract all numbers and dash symbols from this line
+      const valueMatches = line.match(/[\d,.]+%?|-/g) || [];
+      
+      if (valueMatches.length >= 3) {  // Reduced from 7 to 3 minimum metrics
+        console.log(`Extracted ${valueMatches.length} metrics for driver ${driverId}`);
+        
+        // Create base metrics
+        const metrics = [];
+        
+        // Map available numbers to metrics based on their likely position
+        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+        
+        // Add metrics based on available values
+        for (let i = 0; i < Math.min(valueMatches.length, metricNames.length); i++) {
+          const value = valueMatches[i];
+          // Handle dash case
+          if (value === "-") {
+            metrics.push({
+              name: metricNames[i],
+              value: 0,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: "none" as MetricStatus
+            });
+          } else {
+            const numericValue = extractNumeric(value);
+            metrics.push({
+              name: metricNames[i],
+              value: numericValue,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: determineStatus(metricNames[i], numericValue)
+            });
+          }
+        }
+        
         drivers.push({
           name: driverId,
           status: "active",
           metrics
         });
+        
+        console.log(`Added driver ${driverId} with ${metrics.length} metrics from line-based extraction`);
       }
     }
   }
   
-  console.log(`Line-based extraction found ${drivers.length} drivers`);
+  if (drivers.length > 0) {
+    console.log(`Successfully extracted ${drivers.length} drivers with line-based approach`);
+  }
+  
   return drivers;
-}
-
-/**
- * Helper function to get the target value for a metric
- */
-function getTargetForMetric(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 0;
-    case "DCR": return 98.5;
-    case "DNR DPMO": return 1500;
-    case "POD": return 98;
-    case "CC": return 95;
-    case "CE": return 0;
-    case "DEX": return 95;
-    default: return 0;
-  }
-}
-
-/**
- * Helper function to get the unit for a metric
- */
-function getUnitForMetric(metricName: string): string {
-  switch (metricName) {
-    case "DCR": return "%";
-    case "DNR DPMO": return "DPMO";
-    case "POD": return "%";
-    case "CC": return "%";
-    case "CE": return "";
-    case "DEX": return "%";
-    default: return "";
-  }
 }

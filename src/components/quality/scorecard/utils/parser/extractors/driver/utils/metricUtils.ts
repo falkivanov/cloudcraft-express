@@ -1,38 +1,51 @@
 
-import { DriverKPI } from "../../../../../types";
 import { determineMetricStatus } from "./metricStatus";
-import { METRIC_NAMES, METRIC_TARGETS, METRIC_UNITS } from "./metricDefinitions";
 
 /**
- * Makes sure all metrics are present on a driver, adding any missing ones with defaults
+ * Erstellt einen vollständigen Satz aller 7 Standardmetriken für einen Fahrer
  */
 export function createAllStandardMetrics(existingMetrics: any[] = []): any[] {
-  const metrics = [...existingMetrics];
-  const existingNames = metrics.map(m => m.name);
+  // Namen der vorhandenen Metriken
+  const existingMetricNames = existingMetrics.map(m => m.name);
   
-  // Add any missing metrics with default values
-  for (let i = 0; i < METRIC_NAMES.length; i++) {
-    const metricName = METRIC_NAMES[i];
-    if (!existingNames.includes(metricName)) {
-      metrics.push({
-        name: metricName,
-        value: metricName === "DNR DPMO" ? 1500 : metricName === "CE" ? 0 : 95,
-        target: METRIC_TARGETS[i],
-        unit: METRIC_UNITS[i],
-        status: determineMetricStatus(metricName, metricName === "DNR DPMO" ? 1500 : metricName === "CE" ? 0 : 95)
+  // Standardmetriken, die vorhanden sein sollten
+  const standardMetrics = [
+    {name: "Delivered", target: 0, unit: "", defaultValue: 1000},
+    {name: "DCR", target: 98.5, unit: "%", defaultValue: 98.5},
+    {name: "DNR DPMO", target: 1500, unit: "DPMO", defaultValue: 800},
+    {name: "POD", target: 98, unit: "%", defaultValue: 98},
+    {name: "CC", target: 95, unit: "%", defaultValue: 95},
+    {name: "CE", target: 0, unit: "", defaultValue: 0},
+    {name: "DEX", target: 95, unit: "%", defaultValue: 95}
+  ];
+  
+  // Kopie der Metriken erstellen, um das Original nicht zu verändern
+  const enhancedMetrics = [...existingMetrics];
+  
+  // Fehlende Metriken hinzufügen
+  standardMetrics.forEach(metric => {
+    if (!existingMetricNames.includes(metric.name)) {
+      enhancedMetrics.push({
+        name: metric.name,
+        value: metric.defaultValue,
+        target: metric.target,
+        unit: metric.unit,
+        status: determineMetricStatus(metric.name, metric.defaultValue)
       });
     }
-  }
+  });
   
-  return metrics;
+  return enhancedMetrics;
 }
 
 /**
- * Ensures all drivers have complete metrics
+ * Stelle sicher, dass alle Fahrer alle 7 Standardmetriken haben
  */
-export function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
-  return drivers.map(driver => ({
-    ...driver,
-    metrics: createAllStandardMetrics(driver.metrics)
-  }));
+export function ensureAllMetrics(drivers: any[]): any[] {
+  return drivers.map(driver => {
+    return {
+      ...driver,
+      metrics: createAllStandardMetrics(driver.metrics)
+    };
+  });
 }

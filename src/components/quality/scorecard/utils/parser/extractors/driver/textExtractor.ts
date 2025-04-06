@@ -1,73 +1,125 @@
 
-import { DriverKPI } from "../../../../types";
-import { determineStatus } from "../../../helpers/statusHelper";
+import { determineMetricStatus } from './utils/metricStatus';
+import { createAllStandardMetrics } from './utils/metricUtils';
 
 /**
- * Extract driver KPIs from text content using pattern matching
+ * Extrahiert Fahrer-KPIs aus dem Textinhalt mit Fokus auf den Bereich nach "DSP WEEKLY SUMMARY"
+ * @param text Textinhalt, aus dem Fahrer-KPIs extrahiert werden sollen
+ * @returns Array von DriverKPIs
  */
-export const extractDriverKPIsFromText = (text: string): DriverKPI[] => {
-  console.log("Extracting driver KPIs from text using pattern matching");
-  const drivers: DriverKPI[] = [];
+export const extractDriverKPIsFromText = (text: string) => {
+  // Suche nach "DSP WEEKLY SUMMARY" als Anker im Text
+  const dspSummaryIndex = text.indexOf("DSP WEEKLY SUMMARY");
   
-  // Common pattern for drivers - ID followed by metric values
-  const driverPattern = /(?:TR[-\s]?\d+|[A-Z][a-z]+\s+[A-Z][a-z]+)[\s\n]+(?:\d+[\.\,]\d+|\d+)%?\s+(?:\d+[\.\,]\d+|\d+)%?/g;
-  const driverMatches = text.match(driverPattern);
-  
-  if (driverMatches && driverMatches.length > 0) {
-    console.log(`Found ${driverMatches.length} potential driver matches`);
-    
-    // Process each driver match
-    driverMatches.forEach(match => {
-      // Extract driver ID or name
-      const nameMatch = match.match(/^(TR-\d+|[A-Z][a-z]+\s+[A-Z][a-z]+)/);
-      if (!nameMatch) return;
-      
-      const driverName = nameMatch[1];
-      
-      // Extract numerical metrics that follow the name
-      const metricMatches = match.match(/(\d+(?:[.,]\d+)?)/g);
-      if (!metricMatches || metricMatches.length < 2) return;
-      
-      // Create metrics based on the numbers found (assign reasonable names)
-      const metrics = [
-        {
-          name: "Delivered",
-          value: parseFloat(metricMatches[0].replace(',', '.')),
-          target: 100,
-          unit: "%",
-          status: determineStatus("Delivered", parseFloat(metricMatches[0].replace(',', '.')))
-        },
-        {
-          name: "DNR DPMO", 
-          value: parseFloat(metricMatches[1].replace(',', '.')),
-          target: 3000,
-          unit: "DPMO",
-          status: determineStatus("DNR DPMO", parseFloat(metricMatches[1].replace(',', '.')))
-        }
-      ];
-      
-      // Add more metrics if available
-      if (metricMatches.length > 2) {
-        metrics.push({
-          name: "Contact Compliance",
-          value: parseFloat(metricMatches[2].replace(',', '.')),
-          target: 95,
-          unit: "%",
-          status: determineStatus("Contact Compliance", parseFloat(metricMatches[2].replace(',', '.')))
-        });
-      }
-      
-      // Add driver if not already in array (prevent duplicates)
-      if (!drivers.some(d => d.name === driverName)) {
-        drivers.push({
-          name: driverName,
-          status: "active",
-          metrics
-        });
-      }
-    });
+  if (dspSummaryIndex === -1) {
+    console.log("DSP WEEKLY SUMMARY nicht gefunden");
+    return [];
   }
   
-  console.log(`Extracted ${drivers.length} unique drivers from text`);
-  return drivers;
+  // Extrahiere den Text nach "DSP WEEKLY SUMMARY"
+  const relevantText = text.substring(dspSummaryIndex);
+  
+  // Identifiziere die Tabellenüberschrift
+  const headerPattern = /Transport\s*ID\s*[,|]\s*Delivered\s*[,|]\s*DCR\s*[,|]\s*DNR\s*DPMO\s*[,|]\s*POD\s*[,|]\s*CC\s*[,|]\s*CE\s*[,|]\s*DEX/i;
+  const headerMatch = relevantText.match(headerPattern);
+  
+  if (!headerMatch) {
+    console.log("Tabellenüberschrift nicht gefunden");
+    return [];
+  }
+  
+  // Teile den Text in Zeilen
+  const lines = relevantText.split('\n');
+  
+  // Finde den Tabellenanfang
+  let tableStartIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (headerPattern.test(lines[i])) {
+      tableStartIndex = i;
+      break;
+    }
+  }
+  
+  if (tableStartIndex === -1) {
+    console.log("Tabellenanfang nicht gefunden");
+    return [];
+  }
+  
+  // Extrahiere die Fahrerdaten ab der Zeile nach der Überschrift
+  const drivers = [];
+  for (let i = tableStartIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Überprüfe, ob die Zeile eine Fahrer-ID enthält (beginnt mit "A")
+    if (line.match(/^A\w+/)) {
+      // Extrahiere die Werte aus der Zeile
+      const values = line.split(/[,|\t]+/).map(item => item.trim());
+      
+      if (values.length >= 8) {
+        const [id, delivered, dcr, dnrDpmo, pod, cc, ce, dex] = values;
+        
+        // Erstelle ein Fahrerobjekt mit den extrahierten Werten
+        const driver = {
+          id,
+          name: id, // Verwende ID als Name, wenn kein Name verfügbar ist
+          metrics: [
+            {
+              name: "Delivered",
+              value: parseFloat(delivered) || 0,
+              target: 0,
+              status: "neutral"
+            },
+            {
+              name: "DCR",
+              value: parseFloat(dcr) || 0,
+              target: 98.5,
+              status: determineMetricStatus("DCR", parseFloat(dcr) || 0)
+            },
+            {
+              name: "DNR DPMO",
+              value: parseFloat(dnrDpmo) || 0,
+              target: 1500,
+              status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo) || 0)
+            },
+            {
+              name: "POD",
+              value: parseFloat(pod) || 0,
+              target: 98,
+              status: determineMetricStatus("POD", parseFloat(pod) || 0)
+            },
+            {
+              name: "CC",
+              value: parseFloat(cc) || 0,
+              target: 95,
+              status: determineMetricStatus("CC", parseFloat(cc) || 0)
+            },
+            {
+              name: "CE",
+              value: parseFloat(ce) || 0,
+              target: 0,
+              status: determineMetricStatus("CE", parseFloat(ce) || 0)
+            },
+            {
+              name: "DEX",
+              value: parseFloat(dex) || 0,
+              target: 95,
+              status: determineMetricStatus("DEX", parseFloat(dex) || 0)
+            }
+          ]
+        };
+        
+        drivers.push(driver);
+      }
+    }
+  }
+  
+  console.log(`Extrahiert: ${drivers.length} Fahrer aus DSP WEEKLY SUMMARY Tabelle`);
+  
+  // Stelle sicher, dass alle Fahrer vollständige Metriken haben
+  const enhancedDrivers = drivers.map(driver => ({
+    ...driver,
+    metrics: createAllStandardMetrics(driver.metrics)
+  }));
+  
+  return enhancedDrivers;
 };
