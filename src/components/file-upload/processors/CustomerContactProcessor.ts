@@ -42,6 +42,12 @@ export class CustomerContactProcessor extends BaseFileProcessor {
           });
         }
         
+        // Add to the file upload history with driver count metadata
+        this.addToUploadHistory(this.file, "html", "customerContact", {
+          driversCount: contactData.length
+        });
+        
+        // Call the onFileUpload callback if provided
         if (this.onFileUpload) {
           this.onFileUpload(this.file, "html", "customerContact");
         }

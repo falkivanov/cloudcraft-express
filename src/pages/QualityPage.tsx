@@ -24,7 +24,7 @@ const QualityPage = () => {
     loadScoreCardData
   } = useQualityData(pathname);
 
-  // Add a listener for the scorecardDataRemoved event to force a refresh
+  // Add a listener for data removed events to force a refresh
   useEffect(() => {
     const handleDataRemoved = () => {
       console.log("QualityPage: Data removed event detected, forcing refresh");
@@ -36,10 +36,23 @@ const QualityPage = () => {
       }
     };
     
+    const handleCustomerContactDataRemoved = () => {
+      console.log("QualityPage: Customer contact data removed event detected");
+      if (pathname.includes("/quality/customer-contact")) {
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+    
     window.addEventListener('scorecardDataRemoved', handleDataRemoved);
+    window.addEventListener('customerContactDataRemoved', handleCustomerContactDataRemoved);
+    window.addEventListener('concessionsDataRemoved', handleDataRemoved);
+    window.addEventListener('mentorDataRemoved', handleDataRemoved);
     
     return () => {
       window.removeEventListener('scorecardDataRemoved', handleDataRemoved);
+      window.removeEventListener('customerContactDataRemoved', handleCustomerContactDataRemoved);
+      window.removeEventListener('concessionsDataRemoved', handleDataRemoved);
+      window.removeEventListener('mentorDataRemoved', handleDataRemoved);
     };
   }, [pathname, loadScoreCardData]);
 

@@ -49,6 +49,9 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
     if (item.category === "customerContact") {
       localStorage.removeItem("customerContactData");
       localStorage.removeItem("parsedCustomerContactData");
+      
+      // Dispatch event to notify components that customer contact data was removed
+      window.dispatchEvent(new CustomEvent('customerContactDataRemoved'));
     } else if (item.category === "pod") {
       localStorage.removeItem("podData");
     } else if (item.category === "concessions") {
