@@ -48,7 +48,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       const legacyData = localStorage.getItem("mentorData");
       if (legacyData) {
         const data = JSON.parse(legacyData) as MentorReport;
-        if (data && data.weekNumber && data.year) {
+        if (data && data.weekNumber && data.year && Array.isArray(data.drivers) && data.drivers.length > 0) {
           const weekId = `week-${data.weekNumber}-${data.year}`;
           if (!weeks.includes(weekId)) {
             weeks.push(weekId);
@@ -75,7 +75,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
     setWeekLabels(labels);
     
     // If no week is currently selected but we have weeks, select the first one
-    if (selectedWeek === "week-0-0" && weeks.length > 0) {
+    if ((selectedWeek === "week-0-0" || !selectedWeek) && weeks.length > 0) {
       setSelectedWeek(weeks[0]);
     }
   }, [selectedWeek, setSelectedWeek]);

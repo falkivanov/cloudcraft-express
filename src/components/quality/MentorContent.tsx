@@ -62,11 +62,11 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         console.log(`Looking for mentor data with key: ${weekKey}`);
         const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
         
-        if (weekSpecificData) {
+        if (weekSpecificData && weekSpecificData.drivers && weekSpecificData.drivers.length > 0) {
           console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`);
           setMentorData(weekSpecificData);
         } else {
-          console.log(`No data found for key: ${weekKey}`);
+          console.log(`No valid data found for key: ${weekKey}`);
           setMentorData(null);
         }
         return;
@@ -75,8 +75,12 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
       // Fallback to legacy storage
       const storedData = localStorage.getItem("mentorData");
       if (storedData) {
-        const data = JSON.parse(storedData);
-        setMentorData(data);
+        const data = JSON.parse(storedData) as MentorReport;
+        if (data && data.drivers && data.drivers.length > 0) {
+          setMentorData(data);
+        } else {
+          setMentorData(null);
+        }
       } else {
         setMentorData(null);
       }
