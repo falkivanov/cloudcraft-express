@@ -86,6 +86,9 @@ const useFilterByWeek = (concessionsData: ConcessionsData | null, selectedWeek: 
       });
       
       setFilteredItems(items);
+    } else if (concessionsData) {
+      // If no week is selected, use current week as default
+      setFilteredItems(concessionsData.items);
     } else {
       setFilteredItems([]);
     }
@@ -152,13 +155,18 @@ export const useConcessionsData = () => {
     );
   };
 
+  // Calculate total cost based on filtered items
+  const totalCost = useMemo(() => {
+    return filteredItems.reduce((sum, item) => sum + item.cost, 0);
+  }, [filteredItems]);
+
   return { 
     concessionsData, 
     selectedWeek, 
     setSelectedWeek,
     filteredItems,
     isLoading,
-    totalCost: filteredItems.reduce((sum, item) => sum + item.cost, 0),
+    totalCost,
     availableWeeks: concessionsData?.availableWeeks || [],
     groupedConcessions,
     expandedTransportId,

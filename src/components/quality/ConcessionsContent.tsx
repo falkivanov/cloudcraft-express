@@ -1,4 +1,3 @@
-
 import React from "react";
 import NoDataMessage from "./NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +15,17 @@ import ConcessionsDetailView from "./concessions/components/ConcessionsDetailVie
 import ConcessionsSearch from "./concessions/components/ConcessionsSearch";
 import ConcessionsEmptyState from "./concessions/components/ConcessionsEmptyState";
 import { useConcessionsSorting } from "./concessions/hooks/useConcessionsSorting";
-import { useConcessionsExpand } from "./concessions/hooks/useConcessionsExpand";
+import ConcessionsWeekSelector from "./concessions/components/ConcessionsWeekSelector";
 
 const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData: propConcessionsData }) => {
-  const { groupedConcessions } = useConcessionsData();
-  const { expandedTransportId, toggleExpandTransportId } = useConcessionsExpand();
+  const { 
+    groupedConcessions,
+    selectedWeek,
+    setSelectedWeek,
+    availableWeeks,
+    totalCost 
+  } = useConcessionsData();
+  
   const { searchTerm, setSearchTerm, sortConfig, requestSort, sortedGroups } = useConcessionsSorting(groupedConcessions);
 
   if (!propConcessionsData || !propConcessionsData.fileName) {
@@ -47,7 +52,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <CardTitle className="text-lg">
-                Concessions für Woche {propConcessionsData.currentWeek}
+                Concessions für Woche {selectedWeek || propConcessionsData.currentWeek}
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CalendarIcon className="h-4 w-4" />
@@ -56,14 +61,22 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
             </div>
             
             <Badge variant="outline" className="bg-orange-100 border-orange-200 text-orange-800 px-3 py-1">
-              Gesamt: {formatCurrency(propConcessionsData.totalCost)}
+              Gesamt: {formatCurrency(totalCost)}
             </Badge>
           </div>
           
-          <ConcessionsSearch 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
+            <ConcessionsWeekSelector
+              selectedWeek={selectedWeek}
+              setSelectedWeek={setSelectedWeek}
+              availableWeeks={availableWeeks}
+            />
+            
+            <ConcessionsSearch 
+              searchTerm={searchTerm} 
+              onSearchChange={setSearchTerm} 
+            />
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">
