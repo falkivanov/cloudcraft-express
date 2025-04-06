@@ -1,6 +1,6 @@
 
 import React from "react";
-import { ScorecardKPI } from "./types";
+import { ScorecardKPI, ScoreCardData } from "./types";
 import CategoryTable from "./company/CategoryTable";
 
 // Define the KPI categories and their member KPIs to ensure consistency
@@ -22,9 +22,9 @@ const KPI_CATEGORIES = {
     "Customer Delivery Feedback"
   ],
   quality: [
-    "Delivery Completion Rate (DCR)",
     "Delivered Not Received (DNR DPMO)",
-    "Lost on Road (LoR) DPMO"
+    "Lost on Road (LoR) DPMO",
+    "Delivery Completion Rate (DCR)"
   ],
   standardWork: [
     "Photo-On-Delivery",
