@@ -29,6 +29,16 @@ export const useMentorWeek = () => {
     };
   };
 
+  // Handle week selection - update immediately
+  const handleWeekSelection = (weekId: string) => {
+    console.log(`Switching to week: ${weekId}`);
+    setSelectedWeek(weekId);
+    
+    // Update the week data immediately
+    const parsed = parseWeekIdentifier(weekId);
+    setWeekData(parsed);
+  };
+
   // Update when selected week changes
   useEffect(() => {
     const parsed = parseWeekIdentifier(selectedWeek);
@@ -38,7 +48,8 @@ export const useMentorWeek = () => {
 
   return {
     selectedWeek,
-    setSelectedWeek,
-    weekData
+    setSelectedWeek: handleWeekSelection,
+    weekData,
+    parseWeekIdentifier
   };
 };

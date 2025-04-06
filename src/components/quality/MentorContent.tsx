@@ -52,6 +52,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     try {
       // First check if we have data from props
       if (propsMentorData) {
+        console.log("Using mentor data from props");
         setMentorData(propsMentorData);
         return;
       }
@@ -63,7 +64,7 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
         const weekSpecificData = loadFromStorage<MentorReport>(weekKey);
         
         if (weekSpecificData && weekSpecificData.drivers && weekSpecificData.drivers.length > 0) {
-          console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`);
+          console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`, weekSpecificData);
           setMentorData(weekSpecificData);
         } else {
           console.log(`No valid data found for key: ${weekKey}`);
@@ -90,15 +91,20 @@ const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorDa
     }
   };
 
-  // Load mentor data when selected week changes
-  useEffect(() => {
-    console.log("Selected week or week data changed, loading mentor data");
-    loadMentorData();
-  }, [weekData, propsMentorData]);
-
+  // Handle upload button click
   const handleUploadClick = () => {
     navigate("/file-upload");
   };
+
+  // Load mentor data when selected week changes or props change
+  useEffect(() => {
+    console.log("Selected week or week data changed, loading mentor data", {
+      weekNumber: weekData.weekNumber,
+      year: weekData.year,
+      weekId: selectedWeek
+    });
+    loadMentorData();
+  }, [selectedWeek, weekData, propsMentorData]);
 
   if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return (

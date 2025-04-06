@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MentorReport } from "@/components/file-upload/processors/mentor/types";
-import { STORAGE_KEYS, loadFromStorage } from "@/utils/storage";
+import { loadFromStorage } from "@/utils/storage";
 
 interface MentorWeekSelectorProps {
   selectedWeek: string;
@@ -23,6 +23,25 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
 
   // Find all available weeks when component mounts
   useEffect(() => {
+    findAvailableWeeks();
+
+    // Listen for storage changes to refresh available weeks
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("mentorDataUpdated", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("mentorDataUpdated", handleStorageChange);
+    };
+  }, []);
+
+  // Handle storage changes
+  const handleStorageChange = () => {
+    findAvailableWeeks();
+  };
+
+  // Find all available weeks in localStorage
+  const findAvailableWeeks = () => {
     const weeks: string[] = [];
     const labels: Record<string, string> = {};
     
@@ -83,9 +102,10 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
     
     // If no week is currently selected but we have weeks, select the first one
     if ((selectedWeek === "week-0-0" || !selectedWeek) && weeks.length > 0) {
+      console.log("Auto-selecting first available week:", weeks[0]);
       setSelectedWeek(weeks[0]);
     }
-  }, [selectedWeek, setSelectedWeek]);
+  };
 
   // Handle week navigation
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -101,6 +121,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       if (newIndex < 0) newIndex = availableWeeks.length - 1;
     }
     
+    console.log(`Navigating ${direction} from week ${selectedWeek} to week ${availableWeeks[newIndex]}`);
     setSelectedWeek(availableWeeks[newIndex]);
   };
 
@@ -127,14 +148,17 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
       <div className="relative min-w-24">
         <Select
           value={selectedWeek}
-          onValueChange={setSelectedWeek}
+          onValueChange={(value) => {
+            console.log(`Select changed to: ${value}`);
+            setSelectedWeek(value);
+          }}
         >
           <SelectTrigger className="h-9 bg-white">
             <SelectValue>
               {weekLabels[selectedWeek] || "Woche wählen"}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-white">
+          <SelectContent className="bg-white z-50">
             {availableWeeks.map(weekId => (
               <SelectItem key={weekId} value={weekId}>
                 {weekLabels[weekId]}
