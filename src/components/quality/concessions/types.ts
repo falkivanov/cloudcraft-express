@@ -11,6 +11,16 @@ export interface ConcessionItem {
 }
 
 /**
+ * Represents a grouped concession by transport ID
+ */
+export interface GroupedConcession {
+  transportId: string;
+  count: number;
+  totalCost: number;
+  items: ConcessionItem[];
+}
+
+/**
  * Represents the concessions data stored in localStorage
  */
 export interface ConcessionsData {

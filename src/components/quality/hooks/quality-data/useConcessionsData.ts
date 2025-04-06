@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { ConcessionsData } from "@/components/quality/concessions/types";
+import { useState, useEffect, useMemo } from "react";
+import { ConcessionsData, GroupedConcession } from "@/components/quality/concessions/types";
 import { toast } from "sonner";
 
 export const useConcessionsData = () => {
@@ -8,6 +8,7 @@ export const useConcessionsData = () => {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [filteredItems, setFilteredItems] = useState<ConcessionsData['items']>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedTransportId, setExpandedTransportId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -54,6 +55,34 @@ export const useConcessionsData = () => {
     }
   }, [concessionsData, selectedWeek]);
 
+  // Groupieren der Concessions nach Transport ID
+  const groupedConcessions = useMemo(() => {
+    const grouped: Record<string, GroupedConcession> = {};
+    
+    filteredItems.forEach(item => {
+      if (!grouped[item.transportId]) {
+        grouped[item.transportId] = {
+          transportId: item.transportId,
+          count: 0,
+          totalCost: 0,
+          items: []
+        };
+      }
+      
+      grouped[item.transportId].count += 1;
+      grouped[item.transportId].totalCost += item.cost;
+      grouped[item.transportId].items.push(item);
+    });
+    
+    return Object.values(grouped).sort((a, b) => b.totalCost - a.totalCost);
+  }, [filteredItems]);
+
+  const toggleExpandTransportId = (transportId: string) => {
+    setExpandedTransportId(current => 
+      current === transportId ? null : transportId
+    );
+  };
+
   return { 
     concessionsData, 
     selectedWeek, 
@@ -61,6 +90,9 @@ export const useConcessionsData = () => {
     filteredItems,
     isLoading,
     totalCost: filteredItems.reduce((sum, item) => sum + item.cost, 0),
-    availableWeeks: concessionsData?.availableWeeks || []
+    availableWeeks: concessionsData?.availableWeeks || [],
+    groupedConcessions,
+    expandedTransportId,
+    toggleExpandTransportId
   };
 };
