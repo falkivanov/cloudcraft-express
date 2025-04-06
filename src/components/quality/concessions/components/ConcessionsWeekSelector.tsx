@@ -14,11 +14,17 @@ const ConcessionsWeekSelector: React.FC<ConcessionsWeekSelectorProps> = ({
   setSelectedWeek,
   availableWeeks
 }) => {
-  // Convert string array to WeekOption array
-  const weekOptions: WeekOption[] = availableWeeks.map(week => ({
-    id: week,
-    label: week
-  }));
+  // Convert string array to WeekOption array with proper formatting including year
+  const weekOptions: WeekOption[] = availableWeeks.map(week => {
+    // Try to extract year if the format contains it
+    const yearMatch = week.match(/(\d{4})/);
+    const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+    
+    return {
+      id: week,
+      label: week.includes(year) ? week : `${week}/${year}`
+    };
+  });
 
   return (
     <WeekSelectorWithArrows

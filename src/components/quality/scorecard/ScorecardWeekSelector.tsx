@@ -44,20 +44,20 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
       // Get all available weeks using the helper function
       const weeks = getAllAvailableWeeks();
       
-      // Get extracted data from storage for marking "current" week
+      // Get extracted data from storage for marking current week
       const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       
-      // Mark currently extracted data as latest
+      // Mark currently extracted data
       if (extractedData && extractedData.week && extractedData.year) {
         const extractedWeekId = `week-${extractedData.week}-${extractedData.year}`;
         const existingWeekIndex = weeks.findIndex(w => w.id === extractedWeekId);
         
         if (existingWeekIndex >= 0) {
-          weeks[existingWeekIndex].label = `KW ${extractedData.week}/${extractedData.year} (aktuell)`;
+          weeks[existingWeekIndex].label = `KW ${extractedData.week}/${extractedData.year}`;
         } else {
           weeks.unshift({
             id: extractedWeekId,
-            label: `KW ${extractedData.week}/${extractedData.year} (aktuell)`,
+            label: `KW ${extractedData.week}/${extractedData.year}`,
             weekNum: extractedData.week,
             year: extractedData.year
           });
@@ -71,7 +71,7 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
         // If current selection is not valid, select the latest week
         const parsedWeek = parseWeekIdentifier(selectedWeek);
         if (!parsedWeek || !weeks.some(w => w.id === selectedWeek)) {
-          const latestWeek = weeks.find(w => w.label.includes("aktuell")) || weeks[0];
+          const latestWeek = weeks[0];
           setSelectedWeek(latestWeek.id);
         }
       } else {

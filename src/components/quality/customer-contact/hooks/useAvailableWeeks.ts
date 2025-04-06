@@ -35,7 +35,7 @@ export const useAvailableWeeks = (selectedWeek: string, setSelectedWeek: (week: 
           
           weeks.push({
             id: weekKey,
-            label: `KW ${weekNum}${weekNum === getCurrentWeek() ? " (aktuell)" : ""}`,
+            label: `KW ${weekNum}/${year}${weekNum === getCurrentWeek() ? " (aktuell)" : ""}`,
             weekNum,
             year
           });
@@ -51,13 +51,13 @@ export const useAvailableWeeks = (selectedWeek: string, setSelectedWeek: (week: 
       weeks.push(
         {
           id: `week-${currentWeek}-${currentYear}`,
-          label: `KW ${currentWeek} (aktuell)`,
+          label: `KW ${currentWeek}/${currentYear} (aktuell)`,
           weekNum: currentWeek,
           year: currentYear
         },
         {
           id: `week-${currentWeek - 1}-${currentYear}`,
-          label: `KW ${currentWeek - 1}`,
+          label: `KW ${currentWeek - 1}/${currentYear}`,
           weekNum: currentWeek - 1,
           year: currentYear
         }
