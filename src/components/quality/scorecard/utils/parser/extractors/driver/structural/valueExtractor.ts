@@ -27,20 +27,12 @@ export function extractNumeric(value: string): number {
     cleanNumber = cleanNumber.replace(/,/g, '');
   }
   
-  // Handle percentage values (e.g., 98.45%)
-  if (value.includes('%')) {
-    cleanNumber = cleanNumber.replace(/%/g, '');
-  }
-  
   let result = parseFloat(cleanNumber);
   
   // Apply negative sign if needed
   if (isNegative) {
     result = -result;
   }
-  
-  // If the original string had a percentage sign, we don't need to divide by 100
-  // as the value is already presented as a percentage in the UI
   
   return isNaN(result) ? 0 : result;
 }

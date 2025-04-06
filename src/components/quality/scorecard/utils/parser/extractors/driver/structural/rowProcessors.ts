@@ -17,9 +17,10 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
     if (row.length < 4) continue;
     
     // Get driver ID from the first column (Transporter ID)
-    const driverIdIndex = headerIndexes["Transporter ID"];
+    const driverIdIndex = headerIndexes["Transporter ID"] !== undefined ? 
+      headerIndexes["Transporter ID"] : 0;
     
-    if (driverIdIndex !== undefined && driverIdIndex < row.length) {
+    if (driverIdIndex < row.length) {
       const driverId = (row[driverIdIndex]?.str || "").trim();
       
       // Skip if driver ID is empty or doesn't look like a valid ID
@@ -35,7 +36,6 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
           console.log(`Found potential driver ID: ${newDriverId} in row despite wrong column index`);
           processDriverWithId(newDriverId, row, headerIndexes, drivers);
         }
-        
         continue;
       }
       
@@ -57,8 +57,8 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
         for (let j = 1; j < row.length && metricIndex < metricNames.length; j++) {
           const cellText = (row[j]?.str || "").trim();
           
-          if (isNumeric(cellText)) {
-            const value = extractNumeric(cellText);
+          if (isNumeric(cellText) || cellText === "-") {
+            const value = cellText === "-" ? 0 : extractNumeric(cellText);
             metrics.push({
               name: metricNames[metricIndex],
               value: value,
@@ -91,141 +91,93 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
   // Collect metrics for this driver
   const metrics = [];
   
-  // Delivered
-  if (headerIndexes["Delivered"] !== undefined && headerIndexes["Delivered"] < row.length) {
-    const deliveredStr = (row[headerIndexes["Delivered"]]?.str || "").trim();
-    const deliveredValue = extractNumeric(deliveredStr);
-    
-    if (!isNaN(deliveredValue)) {
-      metrics.push({
-        name: "Delivered",
-        value: deliveredValue,
-        target: 0,
-        unit: "",
-        status: determineStatus("Delivered", deliveredValue)
-      });
+  // Known metric columns that we expect to find
+  const metricColumns = [
+    { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
+    { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
+    { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
+    { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
+    { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
+    { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
+    { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
+  ];
+  
+  // Process each metric column
+  for (const metricDef of metricColumns) {
+    if (metricDef.index !== undefined && metricDef.index < row.length) {
+      const valueStr = (row[metricDef.index]?.str || "").trim();
+      
+      if (valueStr === "-") {
+        // Handle dash values
+        metrics.push({
+          name: metricDef.name,
+          value: 0,
+          target: metricDef.target,
+          unit: metricDef.unit,
+          status: "none" as const
+        });
+      } else {
+        // Extract numeric value
+        const numericValue = extractNumeric(valueStr);
+        
+        // Only add valid numeric values
+        if (!isNaN(numericValue)) {
+          metrics.push({
+            name: metricDef.name,
+            value: numericValue,
+            target: metricDef.target,
+            unit: metricDef.unit,
+            status: determineStatus(metricDef.name, numericValue)
+          });
+        }
+      }
     }
   }
   
-  // DCR
-  if (headerIndexes["DCR"] !== undefined && headerIndexes["DCR"] < row.length) {
-    const dcrStr = (row[headerIndexes["DCR"]]?.str || "").trim();
-    const dcrValue = extractNumeric(dcrStr);
+  // If we don't have metrics for all columns, try to find them by position
+  if (metrics.length < metricColumns.length) {
+    console.log(`Looking for missing metrics for ${driverId} by position`);
     
-    if (!isNaN(dcrValue)) {
-      metrics.push({
-        name: "DCR",
-        value: dcrValue,
-        target: 98.5,
-        unit: "%",
-        status: determineStatus("DCR", dcrValue)
-      });
-    }
-  }
-  
-  // DNR DPMO
-  if (headerIndexes["DNR DPMO"] !== undefined && headerIndexes["DNR DPMO"] < row.length) {
-    const dpmoStr = (row[headerIndexes["DNR DPMO"]]?.str || "").trim();
-    const dpmoValue = extractNumeric(dpmoStr);
-    
-    if (!isNaN(dpmoValue)) {
-      metrics.push({
-        name: "DNR DPMO",
-        value: dpmoValue,
-        target: 1500,
-        unit: "DPMO",
-        status: determineStatus("DNR DPMO", dpmoValue)
-      });
-    }
-  }
-  
-  // POD
-  if (headerIndexes["POD"] !== undefined && headerIndexes["POD"] < row.length) {
-    const podStr = (row[headerIndexes["POD"]]?.str || "").trim();
-    const podValue = extractNumeric(podStr);
-    
-    if (!isNaN(podValue)) {
-      metrics.push({
-        name: "POD",
-        value: podValue,
-        target: 98,
-        unit: "%",
-        status: determineStatus("POD", podValue)
-      });
-    }
-  }
-  
-  // CC (Contact Compliance)
-  if (headerIndexes["CC"] !== undefined && headerIndexes["CC"] < row.length) {
-    const ccStr = (row[headerIndexes["CC"]]?.str || "").trim();
-    const ccValue = extractNumeric(ccStr);
-    
-    if (!isNaN(ccValue)) {
-      metrics.push({
-        name: "CC",
-        value: ccValue,
-        target: 95,
-        unit: "%",
-        status: determineStatus("Contact Compliance", ccValue)
-      });
-    }
-  }
-  
-  // CE (Customer Escalations)
-  if (headerIndexes["CE"] !== undefined && headerIndexes["CE"] < row.length) {
-    const ceStr = (row[headerIndexes["CE"]]?.str || "").trim();
-    const ceValue = extractNumeric(ceStr);
-    
-    if (!isNaN(ceValue)) {
-      metrics.push({
-        name: "CE",
-        value: ceValue,
-        target: 0,
-        unit: "",
-        status: ceValue === 0 ? "fantastic" as const : "poor" as const
-      });
-    }
-  }
-  
-  // DEX
-  if (headerIndexes["DEX"] !== undefined && headerIndexes["DEX"] < row.length) {
-    const dexStr = (row[headerIndexes["DEX"]]?.str || "").trim();
-    const dexValue = extractNumeric(dexStr);
-    
-    if (!isNaN(dexValue)) {
-      metrics.push({
-        name: "DEX",
-        value: dexValue,
-        target: 95,
-        unit: "%",
-        status: determineStatus("DEX", dexValue)
-      });
-    }
-  }
-  
-  // If we couldn't find metrics using the header indexes, try a positional approach
-  if (metrics.length === 0) {
-    console.log(`Couldn't find metrics using header indexes for ${driverId}, trying positional approach`);
-    
-    // Find all numeric values in the row
-    const numericCells = row.filter((cell, index) => 
-      index !== headerIndexes["Transporter ID"] && 
-      isNumeric((cell.str || "").trim())
+    // Get numeric cells by position
+    const sortedRow = [...row].sort((a, b) => a.x - b.x);
+    const numericCells = sortedRow.filter((item, index) => 
+      index > 0 && (isNumeric(item.str) || item.str.trim() === "-")
     );
     
-    const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-    const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
-    const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+    // Create a map of already found metrics
+    const foundMetrics = new Set(metrics.map(m => m.name));
     
-    for (let i = 0; i < Math.min(numericCells.length, metricNames.length); i++) {
-      const value = extractNumeric(numericCells[i].str);
-      metrics.push({
-        name: metricNames[i],
-        value: value,
-        target: metricTargets[i],
-        unit: metricUnits[i],
-        status: determineStatus(metricNames[i], value)
-      });
+    // Add missing metrics based on position
+    for (let i = 0; i < metricColumns.length; i++) {
+      const metricName = metricColumns[i].name;
+      
+      // Skip if we already have this metric
+      if (foundMetrics.has(metricName)) continue;
+      
+      // Find the corresponding numeric cell based on position
+      const cellIndex = i + 1; // +1 because first cell is driver ID
+      if (cellIndex < numericCells.length) {
+        const valueStr = numericCells[cellIndex].str.trim();
+        
+        if (valueStr === "-") {
+          metrics.push({
+            name: metricName,
+            value: 0,
+            target: metricColumns[i].target,
+            unit: metricColumns[i].unit,
+            status: "none" as const
+          });
+        } else {
+          const value = extractNumeric(valueStr);
+          metrics.push({
+            name: metricName,
+            value,
+            target: metricColumns[i].target,
+            unit: metricColumns[i].unit,
+            status: determineStatus(metricName, value)
+          });
+        }
+      }
     }
   }
   
@@ -253,11 +205,19 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   // Extract all numeric values from the row
   const numericValues: number[] = [];
+  const valueStrings: string[] = [];
+  
   for (let i = 1; i < row.length; i++) {
     const valueStr = (row[i]?.str || "").trim();
-    const numericValue = extractNumeric(valueStr);
-    if (!isNaN(numericValue)) {
-      numericValues.push(numericValue);
+    valueStrings.push(valueStr);
+    
+    if (valueStr === "-") {
+      numericValues.push(0);
+    } else {
+      const numericValue = extractNumeric(valueStr);
+      if (!isNaN(numericValue)) {
+        numericValues.push(numericValue);
+      }
     }
   }
   
@@ -271,12 +231,14 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   for (let i = 0; i < Math.min(numericValues.length, metricNames.length); i++) {
     const value = numericValues[i];
+    const valueStr = valueStrings[i] || "";
+    
     metrics.push({
       name: metricNames[i],
       value: value,
       target: metricTargets[i],
       unit: metricUnits[i],
-      status: determineStatus(metricNames[i], value)
+      status: valueStr === "-" ? "none" as const : determineStatus(metricNames[i], value)
     });
   }
   

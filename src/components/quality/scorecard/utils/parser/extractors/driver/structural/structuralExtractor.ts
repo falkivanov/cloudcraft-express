@@ -13,8 +13,7 @@ import { extractNumeric } from './valueExtractor';
 export function extractDriverKPIsFromStructure(pageData: Record<number, any>): DriverKPI[] {
   console.log("Extracting driver KPIs with structural analysis");
   
-  // We'll focus on pages 2 and 3 which typically contain driver data
-  // Changed to include page 2 since some PDFs might start the table there
+  // We'll focus on pages 2, 3, and 4 which typically contain driver data
   const relevantPages = [2, 3, 4].filter(num => pageData[num]);
   const drivers: DriverKPI[] = [];
   
@@ -32,18 +31,41 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
     }
   }
   
-  // Process all relevant pages that might contain driver data
+  // For improved extraction, look through all tables in all relevant pages
   for (const pageNum of relevantPages) {
     const page = pageData[pageNum];
     if (!page || !page.items || page.items.length === 0) continue;
     
-    console.log(`Processing page ${pageNum} with ${page.items.length} items`);
+    console.log(`Processing page ${pageNum} with ${page.items.length} items and ${page.tables?.length || 0} tables`);
+    
+    // If we have detected tables, process them first
+    if (page.tables && page.tables.length > 0) {
+      for (const table of page.tables) {
+        console.log(`Processing table with ${table.rows.length} rows`);
+        
+        // Only process tables with headers that match our expected pattern
+        const tableHasDriverHeader = table.headers && table.headers.some(h => 
+          h.text && (h.text.includes("Transporter") || h.text.includes("ID"))
+        );
+        
+        if (tableHasDriverHeader) {
+          console.log("Found table with driver header");
+          
+          // Try to extract drivers from this table
+          const tableDrivers = processTableData(table);
+          if (tableDrivers.length > 0) {
+            drivers.push(...tableDrivers);
+            console.log(`Added ${tableDrivers.length} drivers from table`);
+          }
+        }
+      }
+    }
     
     // Group items by rows based on y-coordinate
     const rows: any[][] = groupItemsIntoRows(page.items);
     console.log(`Grouped ${page.items.length} items into ${rows.length} rows on page ${pageNum}`);
     
-    // Headers we expect based on the provided image
+    // Expected headers for driver metrics
     const expectedHeaders = [
       "Transporter ID", 
       "Delivered", 
@@ -94,7 +116,6 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
         }
         
         // If we're in the driver section and find an 'A' prefixed code that looks like a driver ID
-        // Enhanced pattern to match more driver ID formats
         if (inDriverSection && /^A[A-Z0-9]{5,}/.test(firstColumn.trim())) {
           const driverRow = processDriverRow(sortedRow);
           if (driverRow) {
@@ -122,12 +143,16 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
           for (const item of row) {
             const text = item.str.trim();
             // Look for driver IDs starting with 'A'
-            if (/^A[A-Z0-9]{3,}/.test(text)) {
+            if (/^A[A-Z0-9]{5,}/.test(text)) {
               console.log(`Found potential driver ID: ${text} on page ${pageNum}`);
               
               // Now try to find numerical values in the same row
               const rowItems = row.filter(r => r !== item);
-              const numericalItems = rowItems.filter(r => /\d+(?:\.\d+)?/.test(r.str));
+              // Sort by x-coordinate to ensure proper order
+              const sortedItems = [...rowItems].sort((a, b) => a.x - b.x);
+              
+              // Extract all numeric values from this row
+              const numericalItems = sortedItems.filter(r => /\d+(?:\.\d+)?|\-/.test(r.str));
               
               if (numericalItems.length >= 3) {
                 // This looks like a driver row with metrics
@@ -136,14 +161,26 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
                 
                 // Extract up to 7 metrics (or as many as we have values for)
                 for (let i = 0; i < Math.min(numericalItems.length, metricNames.length); i++) {
-                  const value = extractNumeric(numericalItems[i].str);
-                  metrics.push({
-                    name: metricNames[i],
-                    value,
-                    target: getTargetForMetric(metricNames[i]),
-                    unit: getUnitForMetric(metricNames[i]),
-                    status: determineMetricStatus(metricNames[i], value)
-                  });
+                  const valueStr = numericalItems[i].str.trim();
+                  
+                  if (valueStr === "-") {
+                    metrics.push({
+                      name: metricNames[i],
+                      value: 0,
+                      target: getTargetForMetric(metricNames[i]),
+                      unit: getUnitForMetric(metricNames[i]),
+                      status: "none" as const
+                    });
+                  } else {
+                    const value = extractNumeric(valueStr);
+                    metrics.push({
+                      name: metricNames[i],
+                      value,
+                      target: getTargetForMetric(metricNames[i]),
+                      unit: getUnitForMetric(metricNames[i]),
+                      status: determineMetricStatus(metricNames[i], value) as any
+                    });
+                  }
                 }
                 
                 if (metrics.length > 0) {
@@ -194,6 +231,128 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
   ).join("\n\n");
   
   return extractDriverKPIsFromText(combinedText);
+}
+
+// Process a table structure extracted from the PDF
+function processTableData(table: any): DriverKPI[] {
+  const drivers: DriverKPI[] = [];
+  let headerRow = null;
+  let headerIndexes: Record<string, number> = {};
+  
+  // Find the header row first
+  for (let i = 0; i < table.rows.length; i++) {
+    const row = table.rows[i];
+    
+    // Look for Transporter ID or similar header
+    const hasHeaderCell = row.some((cell: any) => 
+      cell.str && (cell.str.includes("Transporter") || 
+                    cell.str.includes("ID") || 
+                    cell.str.includes("DCR") ||
+                    cell.str.includes("DPMO"))
+    );
+    
+    if (hasHeaderCell) {
+      headerRow = row;
+      
+      // Map header cells to their indices
+      headerRow.forEach((cell: any, index: number) => {
+        const text = cell.str.trim();
+        
+        if (text.includes("Transporter") || text.includes("ID")) {
+          headerIndexes["Transporter ID"] = index;
+        } else if (text.includes("Delivered")) {
+          headerIndexes["Delivered"] = index;
+        } else if (text === "DCR") {
+          headerIndexes["DCR"] = index;
+        } else if (text.includes("DNR") || text.includes("DPMO")) {
+          headerIndexes["DNR DPMO"] = index;
+        } else if (text === "POD") {
+          headerIndexes["POD"] = index;
+        } else if (text === "CC") {
+          headerIndexes["CC"] = index;
+        } else if (text === "CE") {
+          headerIndexes["CE"] = index;
+        } else if (text === "DEX") {
+          headerIndexes["DEX"] = index;
+        }
+      });
+      
+      break;
+    }
+  }
+  
+  if (headerRow) {
+    // Process all rows after the header row
+    const headerIndex = table.rows.indexOf(headerRow);
+    
+    for (let i = headerIndex + 1; i < table.rows.length; i++) {
+      const row = table.rows[i];
+      
+      // Skip if row is too short
+      if (row.length < 3) continue;
+      
+      // Extract driver ID
+      const driverIdIndex = headerIndexes["Transporter ID"] !== undefined ?
+        headerIndexes["Transporter ID"] : 0;
+      
+      if (driverIdIndex < row.length) {
+        const driverId = row[driverIdIndex].str.trim();
+        
+        // Skip if not a valid driver ID
+        if (!driverId || !driverId.startsWith('A') || driverId.length < 6) continue;
+        
+        // Process the driver row
+        const metrics = [];
+        const metricColumns = [
+          { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
+          { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
+          { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
+          { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
+          { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
+          { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
+          { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
+        ];
+        
+        // Process each metric
+        for (const metricDef of metricColumns) {
+          if (metricDef.index !== undefined && metricDef.index < row.length) {
+            const valueStr = row[metricDef.index].str.trim();
+            
+            if (valueStr === "-") {
+              metrics.push({
+                name: metricDef.name,
+                value: 0,
+                target: metricDef.target,
+                unit: metricDef.unit,
+                status: "none" as const
+              });
+            } else {
+              const value = extractNumeric(valueStr);
+              if (!isNaN(value)) {
+                metrics.push({
+                  name: metricDef.name,
+                  value,
+                  target: metricDef.target,
+                  unit: metricDef.unit,
+                  status: determineStatus(metricDef.name, value)
+                });
+              }
+            }
+          }
+        }
+        
+        if (metrics.length > 0) {
+          drivers.push({
+            name: driverId,
+            status: "active",
+            metrics
+          });
+        }
+      }
+    }
+  }
+  
+  return drivers;
 }
 
 // Helper functions to get target and unit for metrics
@@ -251,6 +410,6 @@ function determineMetricStatus(metricName: string, value: number): string {
       if (value >= 90) return "fair";
       return "poor";
     default:
-      return "neutral";
+      return "fair";
   }
 }
