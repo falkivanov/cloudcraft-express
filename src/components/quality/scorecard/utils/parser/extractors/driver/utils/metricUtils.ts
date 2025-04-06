@@ -1,6 +1,7 @@
+
 import { determineMetricStatus } from './metricStatus';
-import { KPIStatus } from "../../../helpers/statusHelper";
-import { DriverKPI } from "../../../types/index";
+import { KPIStatus } from "../../../../helpers/statusHelper";
+import { DriverKPI } from "../../../../types";
 
 /**
  * Helper function to get the target value for a metric
@@ -80,10 +81,25 @@ export function ensureAllMetrics(drivers: DriverKPI[]): DriverKPI[] {
 
 /**
  * Creates a complete set of standard metrics
+ * Note: Modified to accept an optional existing metrics array and merge with it
  */
-export function createAllStandardMetrics(): any[] {
-  return ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].map((name, index) => {
+export function createAllStandardMetrics(existingMetrics?: any[]): any[] {
+  const standardMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"].map((name, index) => {
     const value = index === 0 ? 900 : index === 2 ? 1500 : 95;
     return createMetric(name, value);
+  });
+  
+  if (!existingMetrics || existingMetrics.length === 0) {
+    return standardMetrics;
+  }
+  
+  // If existing metrics were provided, merge them with standard metrics
+  const metricMap = new Map();
+  existingMetrics.forEach(metric => {
+    metricMap.set(metric.name, metric);
+  });
+  
+  return standardMetrics.map(metric => {
+    return metricMap.has(metric.name) ? metricMap.get(metric.name) : metric;
   });
 }

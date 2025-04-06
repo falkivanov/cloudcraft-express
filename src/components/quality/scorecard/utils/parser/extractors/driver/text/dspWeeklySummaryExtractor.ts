@@ -1,4 +1,3 @@
-
 import { DriverKPI } from '../../../../../types';
 import { determineMetricStatus } from '../utils/metricStatus';
 import { createAllStandardMetrics } from '../utils/metricUtils';
@@ -98,7 +97,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
   // Fill in missing metrics for each driver
   return drivers.map(driver => ({
     ...driver,
-    metrics: createAllStandardMetrics(driver.metrics)
+    metrics: createAllStandardMetrics()
   }));
 }
 

@@ -1,7 +1,5 @@
-
-
-import { DriverKPI } from "../../../types/index";
-import { KPIStatus } from "../../../helpers/statusHelper";
+import { DriverKPI } from "../../../../types";
+import { KPIStatus } from "../../../../helpers/statusHelper";
 import { determineMetricStatus } from '../utils/metricStatus';
 import { createMetric } from '../utils/metricUtils';
 
@@ -118,4 +116,3 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   return null;
 }
-
