@@ -1,26 +1,29 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { ConcessionsData, GroupedConcession } from "@/components/quality/concessions/types";
+import { ConcessionsData, GroupedConcession, ConcessionItem } from "@/components/quality/concessions/types";
 import { toast } from "sonner";
 import { loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
 import { Employee } from "@/types/employee";
 
-export const useConcessionsData = () => {
-  const [concessionsData, setConcessionsData] = useState<ConcessionsData | null>(null);
-  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
-  const [filteredItems, setFilteredItems] = useState<ConcessionsData['items']>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [expandedTransportId, setExpandedTransportId] = useState<string | null>(null);
+/**
+ * Load employees data from storage
+ */
+const useEmployeeData = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
-
-  // Load employees data to map transport IDs to names
+  
   useEffect(() => {
     const storedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
     setEmployees(storedEmployees);
   }, []);
+  
+  return employees;
+};
 
-  // Create a mapping of transport IDs to employee names
-  const transportIdToNameMap = useMemo(() => {
+/**
+ * Create a mapping of transport IDs to employee names
+ */
+const useTransportIdMapping = (employees: Employee[]) => {
+  return useMemo(() => {
     const mapping: Record<string, string> = {};
     employees.forEach(employee => {
       if (employee.transporterId) {
@@ -29,7 +32,15 @@ export const useConcessionsData = () => {
     });
     return mapping;
   }, [employees]);
+};
 
+/**
+ * Load concessions data from storage
+ */
+const useLoadConcessionsData = () => {
+  const [concessionsData, setConcessionsData] = useState<ConcessionsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
     try {
       setIsLoading(true);
@@ -38,10 +49,6 @@ export const useConcessionsData = () => {
       if (data) {
         const parsedData = JSON.parse(data) as ConcessionsData;
         setConcessionsData(parsedData);
-        
-        if (parsedData.currentWeek && !selectedWeek) {
-          setSelectedWeek(parsedData.currentWeek);
-        }
       } else {
         setConcessionsData(null);
       }
@@ -53,8 +60,17 @@ export const useConcessionsData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedWeek]);
+  }, []);
+  
+  return { concessionsData, isLoading };
+};
 
+/**
+ * Filter concessions data by selected week
+ */
+const useFilterByWeek = (concessionsData: ConcessionsData | null, selectedWeek: string | null) => {
+  const [filteredItems, setFilteredItems] = useState<ConcessionsData['items']>([]);
+  
   useEffect(() => {
     if (concessionsData && selectedWeek) {
       if (concessionsData.weekToItems && concessionsData.weekToItems[selectedWeek]) {
@@ -74,9 +90,15 @@ export const useConcessionsData = () => {
       setFilteredItems([]);
     }
   }, [concessionsData, selectedWeek]);
+  
+  return filteredItems;
+};
 
-  // Groupieren der Concessions nach Transport ID
-  const groupedConcessions = useMemo(() => {
+/**
+ * Group concessions by transport ID
+ */
+const useGroupConcessions = (filteredItems: ConcessionItem[], transportIdToNameMap: Record<string, string>) => {
+  return useMemo(() => {
     const grouped: Record<string, GroupedConcession> = {};
     
     filteredItems.forEach(item => {
@@ -100,6 +122,29 @@ export const useConcessionsData = () => {
     
     return Object.values(grouped).sort((a, b) => b.totalCost - a.totalCost);
   }, [filteredItems, transportIdToNameMap]);
+};
+
+/**
+ * Main hook for concessions data
+ */
+export const useConcessionsData = () => {
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
+  const [expandedTransportId, setExpandedTransportId] = useState<string | null>(null);
+
+  // Use the extracted hooks
+  const employees = useEmployeeData();
+  const transportIdToNameMap = useTransportIdMapping(employees);
+  const { concessionsData, isLoading } = useLoadConcessionsData();
+  
+  // Set selected week from loaded data if not already set
+  useEffect(() => {
+    if (concessionsData?.currentWeek && !selectedWeek) {
+      setSelectedWeek(concessionsData.currentWeek);
+    }
+  }, [concessionsData, selectedWeek]);
+  
+  const filteredItems = useFilterByWeek(concessionsData, selectedWeek);
+  const groupedConcessions = useGroupConcessions(filteredItems, transportIdToNameMap);
 
   const toggleExpandTransportId = (transportId: string) => {
     setExpandedTransportId(current => 
