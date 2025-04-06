@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { BaseFileProcessor, ProcessOptions } from "./BaseFileProcessor";
 import * as XLSX from "xlsx";
@@ -53,13 +54,13 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       // Extract header row and find column indices with flexible matching
       const headers = rawData[0];
       
-      // Define possible column name patterns
+      // Define possible column name patterns - updated with exact column names
       const weekPatterns = ["wk", "week", "kw", "kalenderwoche"];
-      const transportIdPatterns = ["transport id", "transport-id", "transport_id", "transportid"];
-      const trackingIdPatterns = ["tracking id", "tracking-id", "tracking_id", "trackingid"];
-      const deliveryDatePatterns = ["delivery date", "delivery-date", "delivery_date", "deliverydate", "datum"];
-      const reasonPatterns = ["shipment reason", "reason code", "reason", "grund"];
-      const costPatterns = ["concession cost", "cost", "kosten", "amount"];
+      const transportIdPatterns = ["transporter_id", "transport id", "transport-id", "transport_id", "transportid"];
+      const trackingIdPatterns = ["tracking_id", "tracking id", "tracking-id", "tracking_id", "trackingid"];
+      const deliveryDatePatterns = ["delivery_date_time", "delivery date", "delivery-date", "delivery_date", "deliverydate", "datum"];
+      const reasonPatterns = ["shipment_reason", "shipment reason", "reason code", "reason", "grund"];
+      const costPatterns = ["concession cost", "Concession Cost", "cost", "kosten", "amount"];
       
       // Find columns using flexible matching
       const weekColIndex = this.findColumnIndex(headers, weekPatterns);
@@ -71,7 +72,6 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       
       // Check if we found all required columns
       const missingColumns = [];
-      if (weekColIndex === -1) missingColumns.push("Week/KW");
       if (transportIdColIndex === -1) missingColumns.push("Transport ID");
       if (trackingIdColIndex === -1) missingColumns.push("Tracking ID");
       if (deliveryDateColIndex === -1) missingColumns.push("Delivery Date");
@@ -84,6 +84,8 @@ export class ConcessionsProcessor extends BaseFileProcessor {
             description: "Bitte überprüfen Sie das Format der Excel-Datei."
           });
         }
+        console.error("Missing columns in Excel file:", missingColumns);
+        console.log("Available headers:", headers);
         return false;
       }
       
@@ -91,7 +93,7 @@ export class ConcessionsProcessor extends BaseFileProcessor {
       const weeks = new Set<string>();
       for (let i = 1; i < rawData.length; i++) {
         const row = rawData[i];
-        if (row && row[weekColIndex]) {
+        if (row && weekColIndex !== -1 && row[weekColIndex]) {
           weeks.add(row[weekColIndex].toString());
         }
       }
@@ -118,7 +120,7 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         console.log(`Using newest week from data: ${currentWeek}`);
       }
       
-      if (!currentWeek) {
+      if (!currentWeek && weekColIndex === -1) {
         if (showToasts) {
           toast.error("Konnte keine Wochendaten in der Excel-Datei finden", {
             description: "Bitte überprüfen Sie die Datei und versuchen Sie es erneut."
@@ -141,15 +143,21 @@ export class ConcessionsProcessor extends BaseFileProcessor {
         if (!row || row.length === 0) continue;
         
         // Extract week value
-        let weekValue = row[weekColIndex]?.toString() || "";
-        if (!weekValue) continue;
-        
-        // Normalize week format
-        if (!/^wk\d+$/i.test(weekValue)) {
-          const weekNum = weekValue.replace(/\D/g, '');
-          if (weekNum) {
-            weekValue = `WK${weekNum}`;
+        let weekValue = "";
+        if (weekColIndex !== -1) {
+          weekValue = row[weekColIndex]?.toString() || "";
+          if (!weekValue) continue;
+          
+          // Normalize week format
+          if (!/^wk\d+$/i.test(weekValue)) {
+            const weekNum = weekValue.replace(/\D/g, '');
+            if (weekNum) {
+              weekValue = `WK${weekNum}`;
+            }
           }
+        } else {
+          // If we couldn't find a week column, assign all items to the current week
+          weekValue = currentWeek;
         }
         
         // Extract the values we need

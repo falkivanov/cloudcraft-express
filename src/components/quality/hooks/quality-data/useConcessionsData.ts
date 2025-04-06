@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ConcessionsData } from "@/components/quality/concessions/types";
 import { toast } from "sonner";
