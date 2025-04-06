@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MentorReport } from "@/components/file-upload/processors/mentor/types";
 import { loadFromStorage } from "@/utils/storage";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MentorWeekSelectorProps {
   selectedWeek: string;
@@ -20,9 +21,11 @@ interface MentorWeekSelectorProps {
 const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, setSelectedWeek }) => {
   const [availableWeeks, setAvailableWeeks] = useState<string[]>([]);
   const [weekLabels, setWeekLabels] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Find all available weeks using a similar approach to Scorecard
   const findAvailableWeeks = useCallback(() => {
+    setIsLoading(true);
     console.log("Finding available mentor weeks...");
     const weeks: string[] = [];
     const labels: Record<string, string> = {};
@@ -84,6 +87,7 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
     console.log("Found available mentor weeks:", weeks);
     setAvailableWeeks(weeks);
     setWeekLabels(labels);
+    setIsLoading(false);
     
     // If no week is currently selected but we have weeks, select the first one
     if ((selectedWeek === "week-0-0" || !selectedWeek) && weeks.length > 0) {
@@ -127,6 +131,21 @@ const MentorWeekSelector: React.FC<MentorWeekSelectorProps> = ({ selectedWeek, s
     console.log(`Navigating ${direction} from week ${selectedWeek} to week ${availableWeeks[newIndex]}`);
     setSelectedWeek(availableWeeks[newIndex]);
   }, [availableWeeks, selectedWeek, setSelectedWeek]);
+
+  // If loading, show skeleton
+  if (isLoading) {
+    return (
+      <div className="flex items-center space-x-2">
+        <Button variant="outline" size="sm" disabled>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Skeleton className="h-9 w-24" />
+        <Button variant="outline" size="sm" disabled>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
 
   // If no weeks are available, show a message
   if (availableWeeks.length === 0) {

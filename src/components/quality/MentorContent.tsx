@@ -1,113 +1,76 @@
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import MentorTable from "./mentor/MentorTable";
-import { MentorDriverData, MentorReport } from "@/components/file-upload/processors/mentor/types";
+import { MentorReport } from "@/components/file-upload/processors/mentor/types";
 import NoDataMessage from "./NoDataMessage";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MentorWeekSelector from "./mentor/components/MentorWeekSelector";
 import { useMentorWeek } from "./mentor/hooks/useMentorWeek";
-import { loadFromStorage } from "@/utils/storage";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MentorContentProps {
   mentorData?: MentorReport;
 }
 
 const MentorContent: React.FC<MentorContentProps> = ({ mentorData: propsMentorData }) => {
-  const [mentorData, setMentorData] = useState<MentorReport | null>(null);
-  
   const navigate = useNavigate();
-  const { selectedWeek, setSelectedWeek, weekData, loadMentorDataForWeek } = useMentorWeek();
+  const { 
+    selectedWeek, 
+    setSelectedWeek, 
+    weekData, 
+    mentorData, 
+    isLoading 
+  } = useMentorWeek();
 
-  // Load mentor data based on the current week selection
-  const loadMentorData = useCallback(() => {
-    try {
-      // First check if we have data from props
-      if (propsMentorData) {
-        console.log("Using mentor data from props");
-        setMentorData(propsMentorData);
-        return;
-      }
-      
-      // If there's a selected week, try to load data for that specific week
-      if (selectedWeek && selectedWeek !== "week-0-0") {
-        // Use the hook's loadMentorDataForWeek function
-        const weekSpecificData = loadMentorDataForWeek(selectedWeek);
-        
-        if (weekSpecificData) {
-          console.log(`Found week-specific mentor data for KW${weekData.weekNumber}/${weekData.year}`, weekSpecificData);
-          setMentorData(weekSpecificData);
-          return;
-        } else {
-          console.log(`No valid data found for week: ${selectedWeek}`);
-          setMentorData(null);
-          return;
-        }
-      }
-      
-      // Fallback to legacy storage
-      const storedData = localStorage.getItem("mentorData");
-      if (storedData) {
-        const data = JSON.parse(storedData) as MentorReport;
-        if (data && data.drivers && data.drivers.length > 0) {
-          setMentorData(data);
-        } else {
-          setMentorData(null);
-        }
-      } else {
-        setMentorData(null);
-      }
-    } catch (error) {
-      console.error("Error loading mentor data:", error);
-      setMentorData(null);
-      toast.error("Fehler beim Laden der Mentor-Daten");
-    }
-  }, [selectedWeek, weekData.weekNumber, weekData.year, propsMentorData, loadMentorDataForWeek]);
-
-  // Event listener for data updates/removals
+  // Use props data only on initial render if provided and no week is selected
   useEffect(() => {
-    const handleMentorDataRemoved = () => {
-      console.log("Mentor data removed event detected");
-      setMentorData(null);
-    };
-
-    const handleMentorDataUpdated = (event: CustomEvent) => {
-      console.log("Mentor data updated event detected", event.detail);
-      // Only reload data if it matches our currently selected week
-      if (event.detail && 
-          event.detail.weekNumber === weekData.weekNumber && 
-          event.detail.year === weekData.year) {
-        console.log("Reloading data for the current week due to update");
-        loadMentorData();
-      }
-    };
-
-    window.addEventListener("mentorDataRemoved", handleMentorDataRemoved);
-    window.addEventListener("mentorDataUpdated", handleMentorDataUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener("mentorDataRemoved", handleMentorDataRemoved);
-      window.removeEventListener("mentorDataUpdated", handleMentorDataUpdated as EventListener);
-    };
-  }, [weekData.weekNumber, weekData.year, loadMentorData]);
+    // If we have props data but no week selected yet, find the corresponding week
+    if (propsMentorData && propsMentorData.weekNumber && propsMentorData.year && selectedWeek === "week-0-0") {
+      const weekId = `week-${propsMentorData.weekNumber}-${propsMentorData.year}`;
+      console.log(`Setting initial week from props: ${weekId}`);
+      setSelectedWeek(weekId);
+    }
+  }, [propsMentorData, selectedWeek, setSelectedWeek]);
 
   // Handle upload button click
   const handleUploadClick = () => {
     navigate("/file-upload");
   };
 
-  // Load mentor data when selected week changes or props change
-  useEffect(() => {
-    console.log("Loading mentor data for week:", {
-      weekNumber: weekData.weekNumber,
-      year: weekData.year,
-      weekId: selectedWeek
-    });
-    loadMentorData();
-  }, [selectedWeek, loadMentorData]);
+  // Display loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <MentorWeekSelector 
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+          />
+          <Button onClick={handleUploadClick}>Mentor Daten hochladen</Button>
+        </div>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">
+              <Skeleton className="h-6 w-64" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
+  // No data view
   if (!mentorData || !mentorData.drivers || mentorData.drivers.length === 0) {
     return (
       <div className="space-y-6">
