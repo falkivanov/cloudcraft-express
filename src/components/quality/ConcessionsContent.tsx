@@ -9,7 +9,8 @@ import {
   ArrowUpDown,
   Search,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -26,13 +27,6 @@ import { ConcessionsContentProps } from "./concessions/types";
 import { formatCurrency } from "./concessions/utils";
 import { Badge } from "@/components/ui/badge";
 import { useConcessionsData } from "./hooks/quality-data/useConcessionsData";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData: propConcessionsData }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,6 +48,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
   // Filter grouped items based on search term
   const filteredGroups = groupedConcessions.filter(group => 
     group.transportId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    group.driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.items.some(item => 
       item.trackingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.reason.toLowerCase().includes(searchTerm.toLowerCase())
@@ -120,7 +115,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
           <div className="relative mt-2">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Suchen nach Transport ID, Tracking ID oder Grund..."
+              placeholder="Suchen nach Fahrer, Transport ID, Tracking ID oder Grund..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,6 +129,14 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"></TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => requestSort('driverName')}>
+                    <div className="flex items-center gap-1">
+                      Fahrer
+                      {sortConfig.key === 'driverName' && (
+                        <ArrowUpDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead className="cursor-pointer" onClick={() => requestSort('transportId')}>
                     <div className="flex items-center gap-1">
                       Transport ID
@@ -163,7 +166,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
               <TableBody>
                 {sortedGroups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? 'Keine Ergebnisse gefunden' : 'Keine Daten vorhanden'}
                     </TableCell>
                   </TableRow>
@@ -181,7 +184,13 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{group.transportId}</TableCell>
+                        <TableCell className="font-medium flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {group.driverName}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {group.transportId}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">{group.count}</Badge>
                         </TableCell>
@@ -192,7 +201,7 @@ const ConcessionsContent: React.FC<ConcessionsContentProps> = ({ concessionsData
 
                       {expandedTransportId === group.transportId && (
                         <TableRow>
-                          <TableCell colSpan={4} className="p-0 border-0">
+                          <TableCell colSpan={5} className="p-0 border-0">
                             <div className="bg-muted/30 p-2">
                               <Table>
                                 <TableHeader>

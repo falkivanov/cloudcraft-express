@@ -15,6 +15,7 @@ export interface ConcessionItem {
  */
 export interface GroupedConcession {
   transportId: string;
+  driverName: string;  // Added this field for driver names
   count: number;
   totalCost: number;
   items: ConcessionItem[];
