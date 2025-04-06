@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import NoDataMessage from "../NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,20 +18,28 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
 }) => {
   const { selectedWeek, setSelectedWeek, availableWeeks, loadWeekData } = useCustomerContactWeek();
   const [weekDriversData, setWeekDriversData] = React.useState(driversData);
+  const dataLoadedRef = useRef<Set<string>>(new Set());
   
   // When selected week changes, update driver data from localStorage
   useEffect(() => {
     if (availableWeeks.length > 0) {
       try {
+        // Skip if we've already loaded this week's data during this component lifecycle
+        if (dataLoadedRef.current.has(selectedWeek)) {
+          return;
+        }
+
         const weekData = loadWeekData(selectedWeek);
         console.log(`Loaded ${weekData.length} drivers for week ${selectedWeek}`);
         setWeekDriversData(weekData);
+        dataLoadedRef.current.add(selectedWeek);
         
         const selectedWeekObj = availableWeeks.find(w => w.id === selectedWeek);
         if (selectedWeekObj) {
           const weekLabel = selectedWeekObj.label;
           toast.info(`Daten für ${weekLabel} geladen`, {
             duration: 2000,
+            id: `week-data-loaded-${selectedWeek}`, // Use unique ID to prevent duplicates
           });
         }
       } catch (error) {
