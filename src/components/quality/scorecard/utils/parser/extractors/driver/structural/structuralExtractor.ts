@@ -1,6 +1,4 @@
 
-// If this file exists, we'd need to update imports, but we don't have its content
-// So I'm creating a placeholder that would maintain compatibility
 import { DriverKPI } from '../../../../../types';
 import { groupItemsIntoRows } from './itemGrouping';
 import { findHeaderRow } from './headerFinder';
