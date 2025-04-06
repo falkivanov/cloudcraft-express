@@ -1,206 +1,168 @@
 
-import { DriverKPI } from '../../../../../types';
-import { determineStatus } from '../../../../helpers/statusHelper';
-import { ensureAllMetrics } from '../utils/metricUtils';
-
-interface ExtractorOptions {
-  prioritizeAIds?: boolean;
-}
+import { DriverKPI } from "../../../../../types";
+import { determineMetricStatus } from "../utils/metricStatus";
+import { createAllStandardMetrics } from "../utils/metricUtils";
 
 /**
- * Extract driver KPIs using enhanced pattern matching
- * Specifically targeting 14-character IDs that start with 'A'
+ * Extract drivers using enhanced pattern matching optimized for
+ * common patterns in scorecard PDFs
  */
-export const extractDriversWithEnhancedPatterns = (text: string, options: ExtractorOptions = {}): DriverKPI[] => {
-  console.log("Extracting drivers with enhanced patterns, focusing on A-prefixed IDs");
-  
+export function extractDriversWithEnhancedPatterns(text: string): DriverKPI[] {
+  console.log("Starting enhanced pattern extraction for drivers");
   const drivers: DriverKPI[] = [];
-  const processedDriverIds = new Set<string>();
+  const seenDrivers = new Set<string>();
   
-  // Extract section after "DSP WEEKLY SUMMARY" if present
-  let textToProcess = text;
-  let dspWeeklySummaryFound = false;
-  if (text.includes("DSP WEEKLY SUMMARY")) {
-    const sections = text.split("DSP WEEKLY SUMMARY");
-    if (sections.length > 1) {
-      textToProcess = sections[1]; // Focus on the part after "DSP WEEKLY SUMMARY"
-      console.log("Processing section after DSP WEEKLY SUMMARY");
-      dspWeeklySummaryFound = true;
+  // Split into lines for processing
+  const lines = text.split(/\r?\n/);
+  
+  // Set of pattern matchers to try
+  const patterns = [
+    // Pattern 1: Standard A-prefixed ID with metrics
+    {
+      idPattern: /^(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /(\d+(?:\.\d+)?)\s*(?:%|DPMO)?/g
+    },
+    // Pattern 2: A-prefixed ID with spaces and metrics
+    {
+      idPattern: /\b(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /(\d+(?:\.\d+)?)\s*(?:%|DPMO)?/g
+    },
+    // Pattern 3: Any line with an A-prefixed ID followed by at least 3 numbers
+    {
+      idPattern: /\b(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /\b(\d+(?:\.\d+)?)\b/g
     }
-  }
+  ];
   
-  // Split text into lines to process
-  const lines = textToProcess.split(/\r?\n/);
-  
-  // Look for table header containing "Transporter ID" and other column headers
-  let headerIndex = -1;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    if ((line.includes("transporter") || line.includes("transport")) && 
-        line.includes("id") && 
-        (line.includes("delivered") || line.includes("dcr") || line.includes("dpmo"))) {
-      headerIndex = i;
-      console.log(`Found table header at line ${i}: ${lines[i]}`);
-      break;
-    }
-  }
-  
-  // If header found, process all lines after it that start with 'A'
-  if (headerIndex !== -1) {
-    console.log("Processing driver rows from table...");
+  // Iterate through each line
+  for (let line of lines) {
+    line = line.trim();
+    if (line.length < 10) continue;
     
-    // Process each line after the header
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-      const line = lines[i].trim();
+    // Skip header lines and summary lines
+    if (line.includes("Transporter") || 
+        line.includes("Driver") || 
+        line.includes("Total") ||
+        line.includes("Average") ||
+        line.includes("SUMMARY")) {
+      continue;
+    }
+    
+    // Try each pattern
+    for (const pattern of patterns) {
+      const idMatch = line.match(pattern.idPattern);
+      if (!idMatch) continue;
       
-      // Skip empty lines or lines that don't start with 'A'
-      if (!line || !line.startsWith('A')) continue;
+      const driverId = idMatch[1].trim();
       
-      // Extract the driver ID (first part of the line before whitespace)
-      const driverId = line.split(/\s+/)[0];
+      // Skip if we've already processed this driver
+      if (seenDrivers.has(driverId)) continue;
       
-      // Skip if already processed or if it's obviously not a driver ID 
-      if (processedDriverIds.has(driverId) || driverId.length < 5) continue;
-      
-      console.log(`Processing line for driver: ${driverId}`);
-      
-      // Extract all numeric values from the line
-      const numericValues = line.match(/\d+(?:\.\d+)?%?/g);
-      
-      if (numericValues && numericValues.length >= 4) {
-        // Clean and convert values to numbers
-        const values = numericValues.map(val => parseFloat(val.replace('%', '')));
-        
-        // Create driver with metrics
-        const metrics = [];
-        
-        // Map values to metrics based on expected column order
-        // Based on the image: Delivered, DCR, DNR DPMO, POD, CC, CE, DEX
-        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
-        
-        for (let j = 0; j < Math.min(values.length, metricNames.length); j++) {
-          metrics.push({
-            name: metricNames[j],
-            value: values[j],
-            target: metricTargets[j],
-            status: determineStatus(metricNames[j], values[j])
-          });
-        }
-        
-        // Add the driver with complete metrics
-        drivers.push({
-          name: driverId,
-          status: "active",
-          metrics: ensureAllMetrics(metrics)
-        });
-        
-        // Mark as processed
-        processedDriverIds.add(driverId);
-        console.log(`Added driver ${driverId} with ${metrics.length} metrics`);
+      // Skip if looks like noise
+      if (driverId.length < 7 || 
+          driverId.includes("PAGE") || 
+          driverId.includes("SUMMARY")) {
+        continue;
       }
-    }
-  } else if (dspWeeklySummaryFound) {
-    // If we found DSP WEEKLY SUMMARY but not the header, try a more flexible approach
-    console.log("Header row not found, using flexible line parsing for DSP WEEKLY SUMMARY");
-    
-    // Process each line and look for driver IDs (starting with 'A')
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
       
-      // Skip empty lines or lines that don't start with 'A'
-      if (!line || !line.startsWith('A')) continue;
+      // Match all potential values
+      const valueMatches = Array.from(line.matchAll(pattern.valuePattern));
       
-      // Extract the driver ID (first part of the line before whitespace)
-      const parts = line.split(/\s+/);
-      const driverId = parts[0];
-      
-      // Skip if already processed or if it's obviously not a driver ID
-      if (processedDriverIds.has(driverId) || driverId.length < 5) continue;
-      
-      // Extract numeric values from the remaining parts
-      const values = parts.filter(part => /^\d+(?:\.\d+)?%?$/.test(part))
-                          .map(val => parseFloat(val.replace('%', '')));
-      
-      if (values.length >= 4) {  // Need at least 4 metrics to be valid
-        const metrics = [];
+      // Need at least 3 metrics for a valid driver
+      if (valueMatches.length >= 3) {
+        const values = valueMatches.map(m => parseFloat(m[1]));
         
-        // Map values to metrics based on expected column order
+        // Define metrics
+        const metrics = [];
         const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
         const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
         
-        for (let j = 0; j < Math.min(values.length, metricNames.length); j++) {
+        // Create metrics using available values
+        for (let i = 0; i < Math.min(values.length, metricNames.length); i++) {
+          const value = values[i];
           metrics.push({
-            name: metricNames[j],
-            value: values[j],
-            target: metricTargets[j],
-            status: determineStatus(metricNames[j], values[j])
+            name: metricNames[i],
+            value: value,
+            target: metricTargets[i],
+            unit: metricUnits[i],
+            status: determineMetricStatus(metricNames[i], value)
           });
         }
         
-        // Add the driver with complete metrics
-        drivers.push({
-          name: driverId,
-          status: "active",
-          metrics: ensureAllMetrics(metrics)
-        });
-        
-        // Mark as processed
-        processedDriverIds.add(driverId);
-        console.log(`Added driver ${driverId} with ${metrics.length} metrics from flexible parsing`);
+        // Create driver if we have at least 3 metrics
+        if (metrics.length >= 3) {
+          drivers.push({
+            name: driverId,
+            status: "active",
+            metrics: createAllStandardMetrics(metrics)
+          });
+          
+          seenDrivers.add(driverId);
+          console.log(`Found driver ${driverId} with ${metrics.length} metrics`);
+        }
       }
     }
   }
   
-  // If still no drivers found, try an even more aggressive extraction 
-  if (drivers.length === 0) {
-    console.log("No drivers found with structured approaches, trying aggressive pattern matching");
-    
-    // Find any 'A' prefixed ID followed by numbers
-    const driverPattern = /\b(A[A-Z0-9]{5,})\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)\s+(\d+(?:\.\d+)?%?)/g;
-    
+  // Aggressive search for driver IDs and context
+  if (drivers.length < 20) {
+    const idPattern = /\b(A[A-Z0-9]{5,13})\b/g;
     let match;
-    while ((match = driverPattern.exec(text)) !== null) {
-      const [_, driverId, ...valueStrings] = match;
+    
+    while ((match = idPattern.exec(text)) !== null) {
+      const driverId = match[1];
       
-      // Skip if already processed
-      if (processedDriverIds.has(driverId)) continue;
-      
-      // Convert values to numbers
-      const values = valueStrings.map(val => parseFloat(val.replace('%', '')));
-      
-      if (values.length >= 4) {
-        const metrics = [];
+      if (!seenDrivers.has(driverId) && 
+          driverId.length >= 8 && 
+          !driverId.includes("PAGE") && 
+          !driverId.includes("SUMMARY")) {
         
-        // Map values to metrics
-        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        // Get context around the ID
+        const contextStart = Math.max(0, match.index - 5);
+        const contextEnd = Math.min(text.length, match.index + 200);
+        const context = text.substring(contextStart, contextEnd);
         
-        for (let j = 0; j < Math.min(values.length, metricNames.length); j++) {
-          metrics.push({
-            name: metricNames[j],
-            value: values[j],
-            target: metricTargets[j],
-            status: determineStatus(metricNames[j], values[j])
-          });
+        // Look for numbers in context
+        const numbers = Array.from(context.matchAll(/\b(\d+(?:\.\d+)?)\b/g))
+          .map(m => parseFloat(m[1]))
+          .filter(n => !isNaN(n));
+        
+        if (numbers.length >= 3) {
+          // Define metrics
+          const metrics = [];
+          const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+          const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+          const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+          
+          // Create metrics using available values
+          for (let i = 0; i < Math.min(numbers.length, metricNames.length); i++) {
+            const value = numbers[i];
+            metrics.push({
+              name: metricNames[i],
+              value: value,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: determineMetricStatus(metricNames[i], value)
+            });
+          }
+          
+          // Create driver if we have at least 3 metrics
+          if (metrics.length >= 3) {
+            drivers.push({
+              name: driverId,
+              status: "active",
+              metrics: createAllStandardMetrics(metrics)
+            });
+            
+            seenDrivers.add(driverId);
+            console.log(`Found driver ${driverId} with aggressive search (${metrics.length} metrics)`);
+          }
         }
-        
-        // Add the driver
-        drivers.push({
-          name: driverId,
-          status: "active",
-          metrics: ensureAllMetrics(metrics)
-        });
-        
-        // Mark as processed
-        processedDriverIds.add(driverId);
-        console.log(`Added driver ${driverId} with ${metrics.length} metrics from aggressive pattern matching`);
       }
     }
   }
   
-  console.log(`Extracted ${drivers.length} drivers with enhanced patterns focusing on A-prefixed IDs`);
-  
-  // Ensure all drivers have complete metrics
+  console.log(`Enhanced pattern extraction found ${drivers.length} drivers`);
   return drivers;
 }

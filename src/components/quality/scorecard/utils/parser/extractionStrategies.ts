@@ -1,3 +1,4 @@
+
 /**
  * Extraction strategies for scorecard data
  */
@@ -9,6 +10,7 @@ import { extractStructuredScorecard } from './extractors/structuredExtractor';
 import { createSimpleScorecard } from './extractors/simpleExtractor';
 import { isValidScorecardData } from './validation/scoreCardValidator';
 import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
+import { extractDriverKPIs } from './extractors/driver';
 
 /**
  * Attempt positional extraction strategy
@@ -28,6 +30,25 @@ export const attemptPositionalExtraction = async (
     }
     
     const structuredData = extractStructuredScorecard(posData, filename);
+    
+    // Also extract any text content for better driver extraction
+    const { fullText } = await extractTextFromPDF(pdf);
+    
+    // Improve driver extraction by using both positional and text data
+    if (structuredData) {
+      // Extract drivers more aggressively
+      const enhancedDrivers = extractDriverKPIs(fullText, posData);
+      
+      if (enhancedDrivers && enhancedDrivers.length > 0) {
+        console.log(`Enhanced driver extraction found ${enhancedDrivers.length} drivers`);
+        
+        // Use enhanced drivers only if we found more than in the structured data
+        if (enhancedDrivers.length > (structuredData.driverKPIs?.length || 0)) {
+          structuredData.driverKPIs = enhancedDrivers;
+          console.log(`Using enhanced drivers (${enhancedDrivers.length}) instead of original (${structuredData.driverKPIs?.length || 0})`);
+        }
+      }
+    }
     
     // Validate the extracted data to ensure it has the minimum required fields
     if (structuredData && isValidScorecardData(structuredData)) {
