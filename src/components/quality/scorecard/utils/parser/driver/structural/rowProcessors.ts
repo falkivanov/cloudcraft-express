@@ -1,6 +1,5 @@
-
-import { determineStatus } from '../../../../helpers/statusHelper';
-import { DriverKPI } from '../../../../types';
+import { determineStatus } from '@/components/quality/scorecard/utils/helpers/statusHelper';
+import { DriverKPI } from '@/components/quality/scorecard/types';
 import { extractNumeric, isNumeric } from '../../extractors/driver/structural/valueExtractor';
 import { determineMetricStatus } from '../../extractors/driver/utils/metricStatus';
 
