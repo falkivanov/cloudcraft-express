@@ -2,9 +2,9 @@
 import React from "react";
 import NoDataMessage from "../NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, CalendarIcon, UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { UploadIcon } from "lucide-react";
 import CustomerContactTable from "./CustomerContactTable";
 import ComplianceStatistics from "./ComplianceStatistics";
 import { CustomerContactContentProps } from "./types";
@@ -27,10 +27,7 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-green-500" />
-              Customer Contact Report
-            </div>
+            <div>Customer Contact Report</div>
             <Button asChild variant="outline" size="sm">
               <Link to="/file-upload" className="flex items-center gap-2">
                 <UploadIcon className="h-4 w-4" />
@@ -39,14 +36,6 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-            <CalendarIcon className="h-4 w-4" />
-            <span>
-              {driversData.length} Fahrer mit Customer Contact Daten
-            </span>
-          </div>
-        </CardContent>
       </Card>
 
       <ComplianceStatistics driversData={driversData} />
