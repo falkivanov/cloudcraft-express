@@ -1,5 +1,6 @@
 
 import { determineMetricStatus } from './metricStatus';
+import { KPIStatus } from '../../../../helpers/statusHelper';
 
 /**
  * Helper function to get the target value for a metric
@@ -35,7 +36,7 @@ export function getUnitForMetric(metricName: string): string {
 /**
  * Creates a metric object with all required properties
  */
-export function createMetric(name: string, value: number, status?: string) {
+export function createMetric(name: string, value: number, status?: KPIStatus) {
   const calculatedStatus = status || determineMetricStatus(name, value);
   
   return {

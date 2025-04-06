@@ -1,5 +1,6 @@
 
 import { DriverKPI } from '../../../../types';
+import { KPIStatus } from '../../../../helpers/statusHelper';
 import { processMetricsByColumns } from './columnProcessor';
 
 /**

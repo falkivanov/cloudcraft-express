@@ -1,4 +1,6 @@
+
 import { DriverKPI } from '../../../../types';
+import { KPIStatus } from '../../../../helpers/statusHelper';
 import { determineMetricStatus } from '../utils/metricStatus';
 import { createMetric } from '../utils/metricUtils';
 
@@ -22,7 +24,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   const name = firstItem.trim();
   
   // Initialize metrics object
-  const metrics: Record<string, { value: number, status: string }> = {};
+  const metrics: Record<string, { value: number, status: KPIStatus }> = {};
   const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'POD', 'CC', 'CE', 'DEX'];
   
   // Sort remaining items horizontally to ensure correct order
@@ -42,7 +44,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
     
     if (combinedMatch) {
       const value = parseFloat(combinedMatch[1]);
-      const status = combinedMatch[2].toLowerCase();
+      const status = combinedMatch[2].toLowerCase() as KPIStatus;
       
       metrics[metricNames[currentMetricIndex]] = { 
         value, 
@@ -70,7 +72,7 @@ export function processDriverRow(row: any[]): DriverKPI | null {
       if (currentMetricIndex > 0) {
         const prevMetric = metricNames[currentMetricIndex - 1];
         if (metrics[prevMetric]) {
-          metrics[prevMetric].status = itemText.toLowerCase();
+          metrics[prevMetric].status = itemText.toLowerCase() as KPIStatus;
         }
       }
     }

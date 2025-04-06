@@ -1,5 +1,6 @@
 
 import { DriverKPI } from '../../../../types';
+import { KPIStatus } from '../../../../helpers/statusHelper';
 import { determineMetricStatus } from '../utils/metricStatus';
 import { createMetric } from '../utils/metricUtils';
 
@@ -10,7 +11,7 @@ export function processMetricsByColumns(
   row: any[], 
   headerIndexes: Record<string, number>,
   metricMap: Record<string, string>
-): { name: string; value: number; target: number; unit: string; status: string; }[] {
+): { name: string; value: number; target: number; unit: string; status: KPIStatus; }[] {
   const metrics = [];
   
   // Process each column
@@ -35,7 +36,7 @@ export function processMetricsByColumns(
       const combinedMatch = combinedItems[0].str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
       if (combinedMatch) {
         const value = parseFloat(combinedMatch[1]);
-        const status = combinedMatch[2].toLowerCase();
+        const status = combinedMatch[2].toLowerCase() as KPIStatus;
         
         metrics.push(createMetric(metricName, value, status));
         continue;
@@ -60,15 +61,15 @@ export function processMetricsByColumns(
           /poor|fair|great|fantastic/i.test(item.str)
         );
         
-        let status;
+        let status: KPIStatus;
         if (statusItems.length > 0) {
           const statusMatch = statusItems[0].str.match(/(poor|fair|great|fantastic)/i);
           if (statusMatch) {
-            status = statusMatch[1].toLowerCase();
+            status = statusMatch[1].toLowerCase() as KPIStatus;
+          } else {
+            status = determineMetricStatus(metricName, value);
           }
-        }
-        
-        if (!status) {
+        } else {
           // Determine status based on the metric name and value
           status = determineMetricStatus(metricName, value);
         }
