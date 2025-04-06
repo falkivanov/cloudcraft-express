@@ -1,6 +1,7 @@
 
 /**
  * Extract a numeric value from a string, handling various formats
+ * but preserving the original value without transformations
  */
 export function extractNumeric(value: string): number {
   if (!value || value === "-") return 0;
