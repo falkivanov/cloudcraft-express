@@ -47,8 +47,39 @@ export const removeItemFromHistory = (item: UploadHistoryItem, index: number): b
     localStorage.setItem('fileUploadHistory', JSON.stringify(updatedHistory));
     
     if (item.category === "customerContact") {
-      localStorage.removeItem("customerContactData");
-      localStorage.removeItem("parsedCustomerContactData");
+      // Remove only the specific week data if a week is specified
+      if (item.weekNumber && item.year) {
+        const weekKey = `week-${item.weekNumber}-${item.year}`;
+        const htmlStorageKey = `customerContactData_${weekKey}`;
+        const parsedStorageKey = `parsedCustomerContactData_${weekKey}`;
+        
+        localStorage.removeItem(htmlStorageKey);
+        localStorage.removeItem(parsedStorageKey);
+        console.log(`Removed week-specific customer contact data: ${weekKey}`);
+        
+        // Check if this was the active week
+        const activeWeek = localStorage.getItem("customerContactActiveWeek");
+        if (activeWeek === weekKey) {
+          localStorage.removeItem("customerContactActiveWeek");
+          localStorage.removeItem("customerContactData");
+          localStorage.removeItem("parsedCustomerContactData");
+          console.log(`Removed active week data as it matched the deleted week: ${weekKey}`);
+        }
+      } else {
+        // Remove all customer contact data if no specific week
+        localStorage.removeItem("customerContactData");
+        localStorage.removeItem("parsedCustomerContactData");
+        localStorage.removeItem("customerContactActiveWeek");
+        
+        // Also remove all week-specific data
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith("customerContactData_week-") || 
+                       key.startsWith("parsedCustomerContactData_week-"))) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
       
       // Dispatch event to notify components that customer contact data was removed
       window.dispatchEvent(new CustomEvent('customerContactDataRemoved'));

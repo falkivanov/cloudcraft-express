@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import NoDataMessage from "../NoDataMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,40 @@ import ComplianceStatistics from "./ComplianceStatistics";
 import { CustomerContactContentProps } from "./types";
 import CustomerContactWeekSelector from "./CustomerContactWeekSelector";
 import { useCustomerContactWeek } from "./hooks/useCustomerContactWeek";
+import { toast } from "sonner";
 
 const CustomerContactContent: React.FC<CustomerContactContentProps> = ({ 
   customerContactData, 
   driversData 
 }) => {
-  const { selectedWeek, setSelectedWeek } = useCustomerContactWeek();
+  const { selectedWeek, setSelectedWeek, availableWeeks, loadWeekData } = useCustomerContactWeek();
+  const [weekDriversData, setWeekDriversData] = React.useState(driversData);
   
-  if (!customerContactData || driversData.length === 0) {
+  // When selected week changes, update driver data from localStorage
+  useEffect(() => {
+    if (availableWeeks.length > 0) {
+      try {
+        const weekData = loadWeekData();
+        console.log(`Loaded ${weekData.length} drivers for week ${selectedWeek}`);
+        setWeekDriversData(weekData);
+        
+        const selectedWeekObj = availableWeeks.find(w => w.id === selectedWeek);
+        if (selectedWeekObj) {
+          const weekLabel = selectedWeekObj.label;
+          toast.info(`Daten für ${weekLabel} geladen`, {
+            duration: 2000,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading week data:", error);
+        toast.error("Fehler beim Laden der Wochendaten", {
+          description: "Bitte versuchen Sie es erneut oder laden Sie die Datei neu hoch."
+        });
+      }
+    }
+  }, [selectedWeek, availableWeeks]);
+  
+  if (!customerContactData || (weekDriversData.length === 0 && driversData.length === 0)) {
     return (
       <NoDataMessage
         category="customer-contact"
@@ -33,7 +59,8 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
         <div className="flex items-center gap-4">
           <CustomerContactWeekSelector 
             selectedWeek={selectedWeek} 
-            setSelectedWeek={setSelectedWeek} 
+            setSelectedWeek={setSelectedWeek}
+            availableWeeks={availableWeeks}
           />
           <Button asChild variant="outline" size="sm">
             <Link to="/file-upload" className="flex items-center gap-2">
@@ -44,8 +71,8 @@ const CustomerContactContent: React.FC<CustomerContactContentProps> = ({
         </div>
       </div>
 
-      <ComplianceStatistics driversData={driversData} />
-      <CustomerContactTable driversData={driversData} />
+      <ComplianceStatistics driversData={weekDriversData.length > 0 ? weekDriversData : driversData} />
+      <CustomerContactTable driversData={weekDriversData.length > 0 ? weekDriversData : driversData} />
     </div>
   );
 };

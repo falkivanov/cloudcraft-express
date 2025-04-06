@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { parseCustomerContactData } from "@/components/quality/utils/parseCustomerContactData";
 import { toast } from "sonner";
 import { ScoreCardData } from "@/components/quality/scorecard/types";
@@ -22,6 +23,7 @@ interface QualityDataResult {
   driversData: DriverComplianceData[];
   dataLoaded: boolean;
   loadScoreCardData: () => void;
+  loadCustomerContactData: (weekKey?: string) => void;
 }
 
 export const useQualityData = (pathname: string): QualityDataResult => {
@@ -33,7 +35,7 @@ export const useQualityData = (pathname: string): QualityDataResult => {
   const [driversData, setDriversData] = useState<DriverComplianceData[]>([]);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
-  const loadScoreCardData = () => {
+  const loadScoreCardData = useCallback(() => {
     try {
       const extractedData = loadFromStorage<ScoreCardData>(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA);
       
@@ -89,9 +91,71 @@ export const useQualityData = (pathname: string): QualityDataResult => {
       
       clearScorecardData();
     }
-  };
+  }, []);
+  
+  const loadCustomerContactData = useCallback((weekKey?: string) => {
+    const activeWeek = weekKey || localStorage.getItem("customerContactActiveWeek") || "";
+    console.info(`Loading customer contact data for week: ${activeWeek}`);
+    
+    if (activeWeek) {
+      // Try to load week-specific data
+      const htmlDataKey = `customerContactData_${activeWeek}`;
+      const parsedDataKey = `parsedCustomerContactData_${activeWeek}`;
+      
+      const weekHtmlData = localStorage.getItem(htmlDataKey);
+      if (weekHtmlData) {
+        setCustomerContactData(weekHtmlData);
+        
+        // Try to load pre-parsed data
+        const parsedData = localStorage.getItem(parsedDataKey);
+        if (parsedData) {
+          try {
+            const driverData = JSON.parse(parsedData);
+            setDriversData(driverData);
+            console.info(`Loaded ${driverData.length} drivers for week ${activeWeek}`);
+            return;
+          } catch (e) {
+            console.error(`Error parsing stored data for week ${activeWeek}:`, e);
+          }
+        }
+        
+        // If no parsed data or error parsing, re-parse the HTML
+        const reparsedData = parseCustomerContactData(weekHtmlData);
+        setDriversData(reparsedData);
+        console.info(`Re-parsed ${reparsedData.length} drivers for week ${activeWeek}`);
+        return;
+      }
+    }
+    
+    // Fallback to default data
+    const defaultData = localStorage.getItem("customerContactData");
+    setCustomerContactData(defaultData);
+    
+    if (defaultData) {
+      // Try to load pre-parsed default data
+      const parsedDefaultData = localStorage.getItem("parsedCustomerContactData");
+      if (parsedDefaultData) {
+        try {
+          const driverData = JSON.parse(parsedDefaultData);
+          setDriversData(driverData);
+          console.info(`Loaded ${driverData.length} drivers from default data`);
+          return;
+        } catch (e) {
+          console.error("Error parsing default parsed data:", e);
+        }
+      }
+      
+      // If no parsed data or error parsing, re-parse the HTML
+      const reparsedData = parseCustomerContactData(defaultData);
+      setDriversData(reparsedData);
+      console.info(`Re-parsed ${reparsedData.length} drivers from default data`);
+    } else {
+      setDriversData([]);
+      console.info("No customer contact data found");
+    }
+  }, []);
 
-  const clearScorecardData = () => {
+  const clearScorecardData = useCallback(() => {
     setScoreCardData(null);
     setPrevWeekScoreCardData(null);
     
@@ -109,23 +173,15 @@ export const useQualityData = (pathname: string): QualityDataResult => {
         description: "Die Scorecard-Daten wurden erfolgreich entfernt.",
       });
     }
-  };
+  }, [pathname]);
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     console.info("QualityPage: Loading data for path:", pathname);
     setDataLoaded(false);
     
     if (pathname.includes("/quality/customer-contact")) {
       console.info("Loading customer contact data");
-      const data = localStorage.getItem("customerContactData");
-      setCustomerContactData(data);
-      
-      if (data) {
-        console.info("Found parsed customer contact data in localStorage");
-        const parsedData = parseCustomerContactData(data);
-        setDriversData(parsedData);
-        console.info("Customer contact data loaded");
-      }
+      loadCustomerContactData();
     } else if (pathname.includes("/quality/scorecard")) {
       loadScoreCardData();
     } else if (pathname.includes("/quality/concessions")) {
@@ -149,12 +205,12 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     }
     
     setDataLoaded(true);
-  };
+  }, [pathname, loadCustomerContactData, loadScoreCardData]);
 
   useEffect(() => {
     console.info("QualityPage: Path changed to", pathname);
     loadData();
-  }, [pathname]);
+  }, [pathname, loadData]);
   
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -189,7 +245,7 @@ export const useQualityData = (pathname: string): QualityDataResult => {
       window.removeEventListener('scorecardDataUpdated', handleScoreCardUpdatedEvent);
       window.removeEventListener('scorecardDataRemoved', handleScoreCardRemovedEvent);
     };
-  }, [pathname]);
+  }, [pathname, loadScoreCardData, clearScorecardData]);
 
   return {
     customerContactData,
@@ -199,6 +255,7 @@ export const useQualityData = (pathname: string): QualityDataResult => {
     mentorData,
     driversData,
     dataLoaded,
-    loadScoreCardData
+    loadScoreCardData,
+    loadCustomerContactData
   };
 };

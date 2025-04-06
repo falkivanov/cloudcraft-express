@@ -21,7 +21,8 @@ const QualityPage = () => {
     mentorData,
     driversData,
     dataLoaded,
-    loadScoreCardData
+    loadScoreCardData,
+    loadCustomerContactData
   } = useQualityData(pathname);
 
   // Add a listener for data removed events to force a refresh
@@ -43,18 +44,40 @@ const QualityPage = () => {
       }
     };
     
+    const handleCustomerContactDataUpdated = (event: Event) => {
+      console.log("QualityPage: Customer contact data updated event detected");
+      if (pathname.includes("/quality/customer-contact")) {
+        const customEvent = event as CustomEvent;
+        loadCustomerContactData(customEvent.detail?.weekKey);
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+    
+    const handleCustomerContactWeekChanged = (event: Event) => {
+      console.log("QualityPage: Customer contact week changed event detected");
+      if (pathname.includes("/quality/customer-contact")) {
+        const customEvent = event as CustomEvent;
+        loadCustomerContactData(customEvent.detail?.weekKey);
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+    
     window.addEventListener('scorecardDataRemoved', handleDataRemoved);
     window.addEventListener('customerContactDataRemoved', handleCustomerContactDataRemoved);
     window.addEventListener('concessionsDataRemoved', handleDataRemoved);
     window.addEventListener('mentorDataRemoved', handleDataRemoved);
+    window.addEventListener('customerContactDataUpdated', handleCustomerContactDataUpdated);
+    window.addEventListener('customerContactWeekChanged', handleCustomerContactWeekChanged);
     
     return () => {
       window.removeEventListener('scorecardDataRemoved', handleDataRemoved);
       window.removeEventListener('customerContactDataRemoved', handleCustomerContactDataRemoved);
       window.removeEventListener('concessionsDataRemoved', handleDataRemoved);
       window.removeEventListener('mentorDataRemoved', handleDataRemoved);
+      window.removeEventListener('customerContactDataUpdated', handleCustomerContactDataUpdated);
+      window.removeEventListener('customerContactWeekChanged', handleCustomerContactWeekChanged);
     };
-  }, [pathname, loadScoreCardData]);
+  }, [pathname, loadScoreCardData, loadCustomerContactData]);
 
   return (
     <Container className="p-4 md:p-8">
