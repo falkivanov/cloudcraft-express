@@ -1,5 +1,5 @@
 
-import { determineStatus, KPIStatus } from '../../../../../helpers/statusHelper';
+import { determineStatus, KPIStatus } from '../../../../helpers/statusHelper';
 import { determineMetricStatus } from "./metricStatus";
 
 /**
