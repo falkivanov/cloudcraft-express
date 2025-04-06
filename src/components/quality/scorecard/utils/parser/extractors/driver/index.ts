@@ -25,125 +25,145 @@ export const extractDriverKPIs = (text: string, pageData?: any): any[] => {
     // Use our refactored DSP Weekly extractor
     const dspWeeklyDrivers = extractDriversFromDSPWeekly(text);
     if (dspWeeklyDrivers.length >= 10) {
-      console.log(`Found ${dspWeeklyDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
+      console.log(`Found ${dspWeeklyDrivers.length} drivers with DSP WEEKLY extractor, using these`);
       return ensureAllMetrics(dspWeeklyDrivers);
     }
     
-    // If we found some drivers but not enough, keep them and continue with other methods
+    // Try the fixed-width table extractor
+    const fixedWidthDrivers = extractDriversFromFixedWidthTable(text);
+    if (fixedWidthDrivers.length >= 10) {
+      console.log(`Found ${fixedWidthDrivers.length} drivers with fixed-width table extractor, using these`);
+      return ensureAllMetrics(fixedWidthDrivers);
+    }
+    
+    // Try the general DSP weekly summary extractor
+    const dspSummaryDrivers = extractDriversFromDSPWeeklySummary(text);
+    if (dspSummaryDrivers.length >= 10) {
+      console.log(`Found ${dspSummaryDrivers.length} drivers with DSP WEEKLY SUMMARY extractor, using these`);
+      return ensureAllMetrics(dspSummaryDrivers);
+    }
+    
+    // If any drivers were found with these specialized methods, use them even if fewer than 10
     if (dspWeeklyDrivers.length > 0) {
-      extractedDrivers = [...dspWeeklyDrivers];
-      console.log(`Added ${dspWeeklyDrivers.length} drivers from DSP WEEKLY SUMMARY extraction`);
+      console.log(`Using ${dspWeeklyDrivers.length} drivers from DSP WEEKLY format`);
+      return ensureAllMetrics(dspWeeklyDrivers);
     }
-  }
-  
-  let hasAlphaNumericIds = text.includes("A1") || text.includes("A2") || text.includes("A3") || /\bA[A-Z0-9]{5,}\b/.test(text);
-  
-  // Priority 1: Try table grid extraction with all pages (most reliable for structured tables)
-  if (pageData && Object.keys(pageData).length > 0) {
-    console.log("Attempting table grid extraction with page data");
-    const gridDrivers = findDriverTable(pageData);
     
-    if (gridDrivers.length >= 5) {
-      console.log(`Found ${gridDrivers.length} drivers with table grid extraction`);
-      return ensureAllMetrics(gridDrivers);
-    } else {
-      console.log(`Only found ${gridDrivers.length} drivers with table grid extraction, trying other methods`);
+    if (fixedWidthDrivers.length > 0) {
+      console.log(`Using ${fixedWidthDrivers.length} drivers from fixed-width table`);
+      return ensureAllMetrics(fixedWidthDrivers);
     }
-  }
-  
-  // Priority 2: Try enhanced pattern extraction first for newer PDF formats
-  // This works better for formats where driver IDs start with 'A' followed by alphanumeric characters
-  if (hasAlphaNumericIds) {
-    console.log("PDF likely contains alphanumeric IDs, trying enhanced pattern extraction first");
-    const enhancedDrivers = extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
     
-    if (enhancedDrivers.length >= 8) {
-      console.log(`Found ${enhancedDrivers.length} drivers with enhanced pattern extraction`);
-      return ensureAllMetrics(enhancedDrivers);
-    } else if (enhancedDrivers.length > 0) {
-      extractedDrivers = [...extractedDrivers, ...enhancedDrivers];
-      console.log(`Added ${enhancedDrivers.length} drivers from enhanced pattern extraction`);
+    if (dspSummaryDrivers.length > 0) {
+      console.log(`Using ${dspSummaryDrivers.length} drivers from DSP WEEKLY SUMMARY`);
+      return ensureAllMetrics(dspSummaryDrivers);
     }
   }
   
-  // Priority 3: Try structural extraction if page data is available
-  if (pageData && Object.keys(pageData).length > 0) {
-    console.log("Attempting structural extraction with page data");
+  // Priority 1: Try structured extraction if positional data is available
+  if (pageData) {
+    console.log("Trying structured extraction with positional data");
     const structuralDrivers = extractDriverKPIsFromStructure(pageData);
-    
-    if (structuralDrivers.length > 0) {
-      console.log(`Found ${structuralDrivers.length} drivers with structural extraction`);
-      // Combine with any drivers found so far
-      const combinedDrivers = [...extractedDrivers];
+    if (structuralDrivers.length >= 8) {
+      console.log(`Found ${structuralDrivers.length} drivers with structural extraction, using these`);
+      return ensureAllMetrics(structuralDrivers);
+    }
+    extractedDrivers = structuralDrivers;
+  }
+  
+  // Priority 2: Try pattern-based extraction methods
+  console.log("Trying pattern-based extraction methods");
+  
+  // Check specifically for 14-character alphanumeric IDs starting with 'A'
+  const hasAIDs = /\bA[A-Z0-9]{13}\b/.test(text);
+  
+  if (hasAIDs) {
+    console.log("Detected 14-character A-prefixed IDs, using enhanced pattern extraction");
+    // Try the enhanced pattern extractor optimized for A-prefixed IDs
+    const enhancedPatternDrivers = extractDriversWithEnhancedPatterns(text, { prioritizeAIds: true });
+    if (enhancedPatternDrivers.length >= 8) {
+      console.log(`Found ${enhancedPatternDrivers.length} drivers with enhanced pattern extraction, using these`);
       
-      // Add only new drivers that weren't found already
-      structuralDrivers.forEach(driver => {
-        if (!combinedDrivers.some(d => d.name === driver.name)) {
-          combinedDrivers.push(driver);
+      // Combine with any existing drivers
+      if (extractedDrivers.length > 0) {
+        const combinedDrivers = [...extractedDrivers];
+        const existingNames = new Set(combinedDrivers.map(d => d.name));
+        
+        for (const driver of enhancedPatternDrivers) {
+          if (!existingNames.has(driver.name)) {
+            combinedDrivers.push(driver);
+          }
         }
-      });
-      
-      if (combinedDrivers.length >= 10) {
-        console.log(`Combined extraction found ${combinedDrivers.length} drivers, returning results`);
+        
         return ensureAllMetrics(combinedDrivers);
       }
       
-      extractedDrivers = combinedDrivers;
+      return ensureAllMetrics(enhancedPatternDrivers);
+    }
+    
+    // Add any found drivers to our collection
+    if (enhancedPatternDrivers.length > 0) {
+      const existingNames = new Set(extractedDrivers.map(d => d.name));
+      for (const driver of enhancedPatternDrivers) {
+        if (!existingNames.has(driver.name)) {
+          extractedDrivers.push(driver);
+        }
+      }
     }
   }
   
-  // Priority 4: Try line-by-line extraction
+  // Priority 3: Try line-by-line extraction
   console.log("Trying line-by-line extraction");
   const lineByLineDrivers = extractDriversLineByLine(text);
-  
-  if (lineByLineDrivers.length > 0) {
-    console.log(`Found ${lineByLineDrivers.length} drivers with line-by-line extraction`);
-    // Combine with any drivers found so far
-    const combinedDrivers = [...extractedDrivers];
+  if (lineByLineDrivers.length >= 8) {
+    console.log(`Found ${lineByLineDrivers.length} drivers with line-by-line extraction, using these`);
     
-    // Add only new drivers that weren't found already
-    lineByLineDrivers.forEach(driver => {
-      if (!combinedDrivers.some(d => d.name === driver.name)) {
-        combinedDrivers.push(driver);
-      }
-    });
-    
-    extractedDrivers = combinedDrivers;
-  }
-  
-  // Priority 5: Try flexible pattern extraction as last resort for text-based extraction
-  if (extractedDrivers.length < 5) {
-    console.log("Trying flexible pattern extraction");
-    const flexibleDrivers = extractDriversWithFlexiblePattern(text);
-    
-    if (flexibleDrivers.length > 0) {
-      console.log(`Found ${flexibleDrivers.length} drivers with flexible pattern extraction`);
-      // Combine with any drivers found so far
+    // Combine with any existing drivers
+    if (extractedDrivers.length > 0) {
       const combinedDrivers = [...extractedDrivers];
+      const existingNames = new Set(combinedDrivers.map(d => d.name));
       
-      // Add only new drivers that weren't found already
-      flexibleDrivers.forEach(driver => {
-        if (!combinedDrivers.some(d => d.name === driver.name)) {
+      for (const driver of lineByLineDrivers) {
+        if (!existingNames.has(driver.name)) {
           combinedDrivers.push(driver);
         }
-      });
+      }
       
-      extractedDrivers = combinedDrivers;
+      return ensureAllMetrics(combinedDrivers);
+    }
+    
+    return ensureAllMetrics(lineByLineDrivers);
+  }
+  
+  // Add any found drivers to our collection
+  if (lineByLineDrivers.length > 0) {
+    const existingNames = new Set(extractedDrivers.map(d => d.name));
+    for (const driver of lineByLineDrivers) {
+      if (!existingNames.has(driver.name)) {
+        extractedDrivers.push(driver);
+      }
     }
   }
   
-  // If we found any drivers, return them with ensured metrics
+  // Priority 4: Try flexible pattern extraction as last resort
+  console.log("Trying flexible pattern extraction as last resort");
+  const flexiblePatternDrivers = extractDriversWithFlexiblePattern(text);
+  if (flexiblePatternDrivers.length > 0) {
+    const existingNames = new Set(extractedDrivers.map(d => d.name));
+    for (const driver of flexiblePatternDrivers) {
+      if (!existingNames.has(driver.name)) {
+        extractedDrivers.push(driver);
+      }
+    }
+  }
+  
+  // If we found any drivers with any method, return them
   if (extractedDrivers.length > 0) {
-    console.log(`Returning ${extractedDrivers.length} total drivers from combined extraction methods`);
+    console.log(`Returning ${extractedDrivers.length} drivers from combined extraction methods`);
     return ensureAllMetrics(extractedDrivers);
   }
   
-  // If we got here, we couldn't extract any drivers
-  console.warn("No drivers could be extracted with any method, returning sample data");
-  return generateSampleDrivers();
-};
-
-export {
-  generateSampleDrivers,
-  ensureAllMetrics
+  // Fallback: return sample data if all extraction methods failed
+  console.log("All extraction methods failed, returning sample drivers");
+  return generateSampleDrivers(3);
 };

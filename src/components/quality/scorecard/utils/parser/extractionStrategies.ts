@@ -1,9 +1,9 @@
 
 import { ScoreCardData } from '../../types';
-import { extractDriverKPIs } from './extractors/driverKpiExtractor';
-import { extractCompanyKPIs } from './extractors/companyKpiExtractor';
+import { extractDriverKPIs } from './extractors/driver';
+import { extractCompanyKPIs } from '../extractors/companyKpiExtractor';
 import { extractTextFromPDF, extractPDFContentWithPositions } from './pdf/contentExtractor';
-import { extractLocation, extractOverallScore, extractOverallStatus, extractRank, extractWeek, extractYear } from './extractors/metadataExtractor';
+import { extractLocation, extractOverallScore, extractOverallStatus, extractRank, extractWeek, extractYear } from '../extractors/metadataExtractor';
 import { extractDriversFromAllPages } from './extractors/driver/text/pageExtractor';
 import { extractDriverKPIsFromStructure } from './extractors/driver/structural/structuralExtractor';
 

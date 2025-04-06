@@ -107,8 +107,14 @@ export const parseScorecardPDF = async (
       
       // Stelle sicher, dass die Woche basierend auf dem Dateinamen korrekt festgelegt ist
       if (weekNum) {
-        const weekNumInt = parseInt(weekNum.replace(/\D/g, ''));
-        if (!isNaN(weekNumInt) && weekNumInt > 0) {
+        // Convert weekNum to number if it's a string with a number
+        const weekNumInt = typeof weekNum === 'string' ? 
+          parseInt(weekNum.replace(/\D/g, '')) : 
+          typeof weekNum === 'number' ? 
+            weekNum : 
+            null;
+            
+        if (weekNumInt !== null && !isNaN(weekNumInt) && weekNumInt > 0) {
           extractedData.week = weekNumInt;
         }
       }
@@ -142,7 +148,9 @@ export const parseScorecardPDF = async (
     }
   } catch (error) {
     console.error('Fehler beim Parsen der PDF:', error);
-    const weekNum = new Date().getWeek();
+    // Make sure we're passing a string to getWeek()
+    const weekNum = typeof weekNum === 'number' ? weekNum.toString() : (new Date().getWeek().toString());
+    
     // Verwende Beispieldaten als Fallback, aber markiere sie als Beispieldaten
     const data = await getSampleDataWithWeek(weekNum);
     console.info("Verwende Beispieldaten aufgrund eines allgemeinen Parsing-Fehlers");
