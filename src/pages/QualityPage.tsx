@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
@@ -25,13 +24,11 @@ const QualityPage = () => {
     loadCustomerContactData
   } = useQualityData(pathname);
 
-  // Add a listener for data removed events to force a refresh
   useEffect(() => {
     const handleDataRemoved = () => {
       console.log("QualityPage: Data removed event detected, forcing refresh");
       setRefreshKey(prev => prev + 1);
       
-      // If on scorecard page, ensure data is cleared and reloaded
       if (pathname.includes("/quality/scorecard")) {
         loadScoreCardData();
       }
@@ -85,7 +82,7 @@ const QualityPage = () => {
       <QualityTabs />
       <div className="mt-6">
         <QualityPageContent
-          key={refreshKey} /* Force re-render when data is removed */
+          key={refreshKey}
           pathname={pathname}
           dataLoaded={dataLoaded}
           scorecardData={scorecardData}
