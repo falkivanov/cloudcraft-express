@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SortField } from "../hooks/useMentorDriversTypes";
@@ -50,7 +49,7 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
           className="text-right cursor-pointer hover:bg-slate-50"
           onClick={() => onSort('totalKm')}
         >
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-center">
             <span>KM</span>
             {sortField === 'totalKm' && <SortIcon direction={sortDirection} />}
           </div>
