@@ -24,7 +24,7 @@ export function getRatingBackground(rating: string | number | undefined): string
 }
 
 /**
- * Formats and displays a score value with color-coded bubbles based on score value
+ * Formats and displays a score value with color-coded capsules based on score value
  */
 export function getScoreDisplay(score: string | number | undefined): React.ReactNode {
   if (!score) return '-';
@@ -35,21 +35,34 @@ export function getScoreDisplay(score: string | number | undefined): React.React
   
   if (!isNaN(numScore)) {
     // Get color based on score value
-    const { bgColor, textColor } = getScoreColors(numScore);
+    const bgClass = getScoreBackgroundClass(numScore);
     
-    // Return a colored bubble with the score
+    // Return a colored capsule with the score
     return (
-      <div className={cn(
-        "inline-flex items-center justify-center rounded-full w-12 h-12 font-medium",
-        bgColor, textColor
-      )}>
+      <Badge variant="outline" className={bgClass}>
         {Math.round(numScore)}
-      </div>
+      </Badge>
     );
   }
   
   // If not a number, just display the raw value
   return score;
+}
+
+/**
+ * Returns the background class based on score thresholds:
+ * - Under 710: Red
+ * - 710-799: Orange
+ * - 800+: Blue
+ */
+function getScoreBackgroundClass(score: number): string {
+  if (score < 710) {
+    return 'bg-red-100 text-red-800 hover:bg-red-100 border-red-200';
+  } else if (score >= 710 && score < 800) {
+    return 'bg-orange-100 text-orange-800 hover:bg-orange-100 border-orange-200';
+  } else {
+    return 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200';
+  }
 }
 
 /**
