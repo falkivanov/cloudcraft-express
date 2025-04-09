@@ -1,107 +1,87 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { ScoreCardData } from "./types";
-import { Card } from "@/components/ui/card";
-import NoDataMessage from "../NoDataMessage";
-import CompanyKPIs from "./CompanyKPIs";
-import DriverKPIs from "./DriverKPIs";
-import ScorecardSummary from "./ScorecardSummary";
-import ScorecardTabsContent from "./components/ScorecardTabsContent";
-import UnavailableWeekMessage from "./components/UnavailableWeekMessage";
-import { useScorecardWeek } from "./hooks/useScorecardWeek";
-import ScorecardWeekSelector from "./ScorecardWeekSelector";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { UploadIcon } from "lucide-react";
-import { parseWeekIdentifier, isDataAvailableForWeek, getScorecardData } from "./data";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ScorecardSummary from "./components/ScorecardSummary";
+import CompanyKPIs from "./components/CompanyKPIs";
+import DriverKPIs from "./components/DriverKPIs";
+import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface ScorecardContentProps {
   scorecardData: ScoreCardData | null;
   prevWeekData: ScoreCardData | null;
 }
 
-const ScorecardContent: React.FC<ScorecardContentProps> = ({ scorecardData, prevWeekData }) => {
-  const [activeTab, setActiveTab] = useState<string>("company");
-  const { selectedWeek, setSelectedWeek, loadScorecardDataForWeek } = useScorecardWeek(scorecardData);
-  const [currentWeekData, setCurrentWeekData] = useState<ScoreCardData | null>(scorecardData);
-  const [currentPrevWeekData, setCurrentPrevWeekData] = useState<ScoreCardData | null>(prevWeekData);
-  
-  // Update data when selected week changes
+const ScorecardContent: React.FC<ScorecardContentProps> = ({
+  scorecardData,
+  prevWeekData,
+}) => {
   useEffect(() => {
-    if (selectedWeek) {
-      const weekData = loadScorecardDataForWeek(selectedWeek);
-      console.log("Loaded data for selected week:", weekData);
-      setCurrentWeekData(weekData);
-      
-      // Get previous week data for comparison
-      const parsedWeek = parseWeekIdentifier(selectedWeek);
-      if (parsedWeek) {
-        const { weekNum, year } = parsedWeek;
-        
-        // Calculate previous week
-        let prevWeekNum = weekNum - 1;
-        let prevYear = year;
-        
-        // Handle year boundary (week 1)
-        if (prevWeekNum < 1) {
-          prevWeekNum = 52; // Assuming 52 weeks in a year
-          prevYear = year - 1;
-        }
-        
-        // Construct the previous week identifier and get the data
-        const prevWeekId = `week-${prevWeekNum}-${prevYear}`;
-        const prevData = loadScorecardDataForWeek(prevWeekId);
-        setCurrentPrevWeekData(prevData);
-      }
+    if (scorecardData?.isSampleData) {
+      // Nur einmalig anzeigen
+      toast.warning("Beispieldaten werden angezeigt", {
+        description: "Die hochgeladene PDF konnte nicht vollständig ausgelesen werden. Es werden teilweise Beispieldaten angezeigt.",
+        id: "sample-data-warning",
+        duration: 8000,
+      });
     }
-  }, [selectedWeek, loadScorecardDataForWeek]);
-  
-  if (!currentWeekData && !scorecardData) {
-    return <NoDataMessage category="scorecard" />;
+  }, [scorecardData]);
+
+  if (!scorecardData) {
+    return (
+      <div className="p-4 border rounded-lg bg-background">
+        <h3 className="text-lg font-medium mb-2">Keine Scorecard-Daten gefunden</h3>
+        <p className="text-muted-foreground mb-4">
+          Bitte laden Sie eine Scorecard-Datei hoch, um die Daten anzuzeigen.
+        </p>
+        <a
+          href="/upload"
+          className="text-primary hover:text-primary/80 hover:underline"
+        >
+          Zur Upload-Seite
+        </a>
+      </div>
+    );
   }
-  
-  // Use current week data or fall back to props
-  const displayData = currentWeekData || scorecardData || null;
-  const displayPrevData = currentPrevWeekData || prevWeekData || null;
-  
-  // Check if data available for selected week
-  const parsedWeek = parseWeekIdentifier(selectedWeek);
-  const isDataAvailable = parsedWeek ? 
-    isDataAvailableForWeek(parsedWeek.weekNum, parsedWeek.year) : 
-    false;
-  
+
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Scorecard</h2>
-      </div>
+    <div className="p-4 border rounded-lg bg-background">
+      {scorecardData.isSampleData && (
+        <Alert className="mb-4 border-amber-200 bg-amber-50">
+          <Info className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-800">Beispieldaten werden angezeigt</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            Die hochgeladene PDF konnte nicht vollständig ausgelesen werden. 
+            Einige oder alle angezeigten Daten sind Beispieldaten und entsprechen nicht Ihrem tatsächlichen Scorecard.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <ScorecardSummary
+        scorecardData={scorecardData}
+        prevWeekData={prevWeekData}
+      />
 
-      <div className="flex items-center justify-between">
-        <ScorecardWeekSelector
-          selectedWeek={selectedWeek}
-          setSelectedWeek={setSelectedWeek}
-        />
-        
-        <Button asChild variant="outline" size="sm">
-          <Link to="/file-upload" className="flex items-center gap-2">
-            <UploadIcon className="h-4 w-4" />
-            <span>Neue Datei hochladen</span>
-          </Link>
-        </Button>
-      </div>
-
-      <Card className="w-full p-0">
-        {!isDataAvailable ? (
-          <UnavailableWeekMessage weekIdentifier={selectedWeek} />
-        ) : (
-          <ScorecardTabsContent
-            data={displayData}
-            previousWeekData={displayPrevData}
-            scorecardTab={activeTab}
-            setScorecardTab={setActiveTab}
+      <Tabs defaultValue="company" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="company">Firmen-KPIs</TabsTrigger>
+          <TabsTrigger value="driver">Fahrer-KPIs</TabsTrigger>
+        </TabsList>
+        <TabsContent value="company" className="p-2">
+          <CompanyKPIs
+            companyKPIs={scorecardData.companyKPIs}
+            previousWeekData={prevWeekData}
           />
-        )}
-      </Card>
+        </TabsContent>
+        <TabsContent value="driver" className="p-2">
+          <DriverKPIs
+            driverKPIs={scorecardData.driverKPIs}
+            previousWeekData={prevWeekData}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

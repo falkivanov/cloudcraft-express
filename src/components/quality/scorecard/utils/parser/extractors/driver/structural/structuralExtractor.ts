@@ -12,7 +12,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
   console.log("Extracting driver KPIs with structural analysis");
   
   // We'll focus on pages 2, 3, and 4 which typically contain driver data
-  const relevantPages = [2, 3, 4].filter(num => pageData[num]);
+  const relevantPages = [2, 3, 4, 5, 6, 7].filter(num => pageData[num]);
   const drivers: DriverKPI[] = [];
   
   // Log available pages for debugging
@@ -20,7 +20,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
   
   // Check if we have the DSP Weekly Summary heading
   let isDspWeeklySummaryFound = false;
-  for (const pageNum of relevantPages) {
+  for (const pageNum of Object.keys(pageData).map(Number)) {
     const pageText = pageData[pageNum]?.text || "";
     if (pageText.includes("DSP WEEKLY SUMMARY")) {
       console.log("Found DSP WEEKLY SUMMARY heading on page " + pageNum);
@@ -41,6 +41,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
       const tableDrivers = processIdentifiedTables(page.tables);
       if (tableDrivers.length > 0) {
         drivers.push(...tableDrivers);
+        console.log(`Added ${tableDrivers.length} drivers from predefined tables on page ${pageNum}`);
       }
     }
     
@@ -48,7 +49,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
     const { drivers: foundDrivers, foundTable } = findAndProcessTables(page);
     if (foundDrivers.length > 0) {
       drivers.push(...foundDrivers);
-      console.log(`Added ${foundDrivers.length} drivers from page ${pageNum}`);
+      console.log(`Added ${foundDrivers.length} drivers from detected tables on page ${pageNum}`);
     }
     
     // If no table was found, try alternative approaches
@@ -59,12 +60,39 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
       const alternativeDrivers = extractDriversWithAlternativeApproach(page.items);
       if (alternativeDrivers.length > 0) {
         drivers.push(...alternativeDrivers);
+        console.log(`Added ${alternativeDrivers.length} drivers with alternative approach on page ${pageNum}`);
       } else {
         // If still no luck, try aggressive extraction
         console.log(`No drivers found on page ${pageNum} with alternative approach, trying aggressive detection`);
         const aggressiveDrivers = extractDriversAggressively(page.items);
         if (aggressiveDrivers.length > 0) {
           drivers.push(...aggressiveDrivers);
+          console.log(`Added ${aggressiveDrivers.length} drivers with aggressive detection on page ${pageNum}`);
+        }
+      }
+    }
+  }
+  
+  // Try to check ALL pages for driver data if we still don't have enough
+  if (drivers.length < 5) {
+    console.log("Not enough drivers found in standard pages, checking ALL pages");
+    for (const pageNum of Object.keys(pageData).map(Number)) {
+      if (relevantPages.includes(pageNum)) continue; // Skip already processed pages
+      
+      const page = pageData[pageNum];
+      if (!page || !page.items || page.items.length === 0) continue;
+      
+      console.log(`Additional check on page ${pageNum}`);
+      
+      // Try all extraction methods on this page
+      const { drivers: foundDrivers } = findAndProcessTables(page);
+      if (foundDrivers.length > 0) {
+        drivers.push(...foundDrivers);
+        console.log(`Added ${foundDrivers.length} drivers from page ${pageNum}`);
+      } else {
+        const alternativeDrivers = extractDriversWithAlternativeApproach(page.items);
+        if (alternativeDrivers.length > 0) {
+          drivers.push(...alternativeDrivers);
         }
       }
     }
@@ -84,10 +112,12 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
   // If we didn't find any drivers with the structural approach, fall back to regex-based extraction
   console.log("No drivers found with structural analysis, trying text-based extraction");
   
-  // Try to extract based on text patterns from all pages
-  const combinedText = relevantPages.map(pageNum => 
-    pageData[pageNum]?.text || ""
+  // Combine all page texts for better context
+  const combinedText = Object.keys(pageData).map(key => 
+    pageData[Number(key)]?.text || ""
   ).join("\n\n");
   
-  return extractDriverKPIsFromText(combinedText);
+  const textDrivers = extractDriverKPIsFromText(combinedText);
+  console.log(`Text-based extraction found ${textDrivers.length} drivers`);
+  return textDrivers;
 }
