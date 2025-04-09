@@ -2,9 +2,9 @@
 import React, { useEffect } from "react";
 import { ScoreCardData } from "./types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ScorecardSummary from "./components/ScorecardSummary";
-import CompanyKPIs from "./components/CompanyKPIs";
-import DriverKPIs from "./components/DriverKPIs";
+import ScorecardSummary from "./ScorecardSummary";
+import CompanyKPIs from "./CompanyKPIs";
+import DriverKPIs from "./DriverKPIs";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
@@ -60,8 +60,8 @@ const ScorecardContent: React.FC<ScorecardContentProps> = ({
       )}
       
       <ScorecardSummary
-        scorecardData={scorecardData}
-        prevWeekData={prevWeekData}
+        data={scorecardData}
+        previousWeekData={prevWeekData}
       />
 
       <Tabs defaultValue="company" className="mt-6">
