@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -109,7 +110,24 @@ const MentorTableRow: React.FC<MentorTableRowProps> = ({ driver }) => {
           </TooltipProvider>
         </div>
       </TableCell>
-      <TableCell className="text-center">{getScoreDisplay(driver.overallRating)}</TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              {getScoreDisplay(driver.overallRating)}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>FICO Score: {driver.overallRating}</p>
+              {driver.overallRating && (
+                <p className="text-xs mt-1">
+                  {parseFloat(String(driver.overallRating)) < 710 ? 'Kritisch' : 
+                   parseFloat(String(driver.overallRating)) < 800 ? 'Verbesserungsbedürftig' : 'Gut'}
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="text-center">{driver.station}</TableCell>
       <TableCell className="text-center">{formatNumericValue(driver.totalTrips)}</TableCell>
       <TableCell className="text-center">{driver.totalKm > 0 ? Number(driver.totalKm).toFixed(2) : "-"}</TableCell>

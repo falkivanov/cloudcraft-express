@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 /**
  * Gets the CSS background class based on the rating value
@@ -22,7 +24,7 @@ export function getRatingBackground(rating: string | number | undefined): string
 }
 
 /**
- * Formats and displays a score value without color emphasis
+ * Formats and displays a score value with color-coded bubbles based on score value
  */
 export function getScoreDisplay(score: string | number | undefined): React.ReactNode {
   if (!score) return '-';
@@ -32,10 +34,45 @@ export function getScoreDisplay(score: string | number | undefined): React.React
     : score;
   
   if (!isNaN(numScore)) {
-    // Simply return the score as plain text
-    return numScore.toFixed(0);
+    // Get color based on score value
+    const { bgColor, textColor } = getScoreColors(numScore);
+    
+    // Return a colored bubble with the score
+    return (
+      <div className={cn(
+        "inline-flex items-center justify-center rounded-full w-12 h-12 font-medium",
+        bgColor, textColor
+      )}>
+        {Math.round(numScore)}
+      </div>
+    );
   }
   
   // If not a number, just display the raw value
   return score;
+}
+
+/**
+ * Returns color classes based on score thresholds:
+ * - Under 710: Red
+ * - 710-799: Orange
+ * - 800+: Blue
+ */
+export function getScoreColors(score: number): { bgColor: string, textColor: string } {
+  if (score < 710) {
+    return {
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-700'
+    };
+  } else if (score >= 710 && score < 800) {
+    return {
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-700'
+    };
+  } else {
+    return {
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700'
+    };
+  }
 }
