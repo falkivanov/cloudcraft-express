@@ -32,7 +32,7 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
           onClick={() => onSort('overallRating')} 
         >
           <div className="flex items-center justify-center">
-            <span>Score</span>
+            <span>FICO</span>
             {sortField === 'overallRating' && <SortIcon direction={sortDirection} />}
           </div>
         </TableHead>
@@ -67,7 +67,7 @@ const MentorTableHeader: React.FC<MentorTableHeaderProps> = ({
         <TableHead className="text-center whitespace-nowrap">Beschl.</TableHead>
         <TableHead className="text-center whitespace-nowrap">Bremsen</TableHead>
         <TableHead className="text-center whitespace-nowrap">Kurven</TableHead>
-        <TableHead className="text-center whitespace-nowrap">Tempo</TableHead>
+        <TableHead className="text-center whitespace-nowrap">Speeding</TableHead>
         <TableHead className="text-center whitespace-nowrap">Gurt</TableHead>
       </TableRow>
     </TableHeader>
