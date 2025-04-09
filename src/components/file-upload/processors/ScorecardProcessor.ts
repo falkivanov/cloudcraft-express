@@ -29,10 +29,6 @@ export class ScorecardProcessor extends BaseFileProcessor {
       if (scorecardData) {
         console.log("Successfully extracted scorecard data:", scorecardData);
         console.log(`Extracted ${scorecardData.driverKPIs?.length || 0} driver KPIs`);
-        console.log(`Extracted ${scorecardData.companyKPIs?.length || 0} company KPIs`);
-        
-        // Clear existing data to avoid mixing with previous uploads
-        this.clearExistingScorecardData();
         
         // Validate the extracted data has the minimum required fields
         if (!this.validateScorecardData(scorecardData)) {
@@ -40,13 +36,15 @@ export class ScorecardProcessor extends BaseFileProcessor {
             toast.warning(
               "Unvollständige Daten",
               {
-                description: "Die PDF konnte nicht vollständig ausgelesen werden. Einige Informationen werden mit Beispieldaten ergänzt.",
+                description: "Die Scorecard-Daten sind unvollständig. Einige Informationen werden mit Beispieldaten ergänzt.",
               }
             );
           }
           
-          // Mark as sample data if validation failed
-          scorecardData.isSampleData = true;
+          // If we didn't extract enough driver KPIs, mark it as sample data
+          if (!scorecardData.driverKPIs || scorecardData.driverKPIs.length <= 1) {
+            scorecardData.isSampleData = true;
+          }
         }
         
         // If categorizedKPIs is missing, create it from the companyKPIs
@@ -88,18 +86,12 @@ export class ScorecardProcessor extends BaseFileProcessor {
           localStorage.setItem("scorecard_year", String(scorecardData.year));
         }
         
-        const toastMessage = scorecardData.isSampleData
-          ? `Scorecard für KW ${scorecardData.week}/${scorecardData.year} teilweise verarbeitet`
-          : `Scorecard für KW ${scorecardData.week}/${scorecardData.year} erfolgreich verarbeitet`;
-          
-        const toastDescription = scorecardData.isSampleData
-          ? `PDF konnte nicht vollständig ausgelesen werden. ${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden extrahiert, teilweise mit Beispieldaten ergänzt.`
-          : `${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden erfolgreich extrahiert.`;
-        
         if (showToasts) {
-          toast[scorecardData.isSampleData ? "warning" : "success"](
-            toastMessage,
-            { description: toastDescription }
+          toast.success(
+            `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
+            {
+              description: `${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden extrahiert.`,
+            }
           );
         }
 
@@ -164,14 +156,14 @@ export class ScorecardProcessor extends BaseFileProcessor {
     }
     
     // Check for company KPIs
-    if (!Array.isArray(data.companyKPIs) || data.companyKPIs.length < 3) {
+    if (!Array.isArray(data.companyKPIs) || data.companyKPIs.length < 5) {
       console.warn("Missing or insufficient company KPIs in scorecard data");
       return false;
     }
     
     // Check for driver KPIs
-    if (!Array.isArray(data.driverKPIs) || data.driverKPIs.length < 5) {
-      console.warn("Missing or insufficient driver KPIs in scorecard data");
+    if (!Array.isArray(data.driverKPIs) || data.driverKPIs.length === 0) {
+      console.warn("Missing driver KPIs in scorecard data");
       return false;
     }
     

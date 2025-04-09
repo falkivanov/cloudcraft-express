@@ -1,8 +1,7 @@
 
-import { determineStatus } from '@/components/quality/scorecard/utils/helpers/statusHelper';
-import { DriverKPI } from '@/components/quality/scorecard/types';
-import { extractNumeric, isNumeric } from '../../extractors/driver/structural/valueExtractor';
-import { determineMetricStatus } from '../../extractors/driver/utils/metricStatus';
+import { determineStatus } from '../../../../helpers/statusHelper';
+import { DriverKPI } from '../../../../../types';
+import { extractNumeric, isNumeric } from './valueExtractor';
 
 /**
  * Process all data rows after the header row
@@ -25,7 +24,7 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
       const driverId = (row[driverIdIndex]?.str || "").trim();
       
       // Skip if driver ID is empty or doesn't look like a valid ID
-      // Driver IDs start with 'A' and are alphanumeric with length >= 6
+      // Driver IDs now start with 'A' and are alphanumeric with length >= 6
       if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) {
         // Try looking for the first entry in the row that matches the driver ID pattern
         const potentialDriverId = row.find(cell => 
@@ -118,17 +117,19 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
           status: "none" as const
         });
       } else {
-        // Extract numeric value WITHOUT ANY TRANSFORMATIONS
+        // Extract numeric value
         const numericValue = extractNumeric(valueStr);
         
-        // Do not apply any transformations - use raw values directly
-        metrics.push({
-          name: metricDef.name,
-          value: numericValue,
-          target: metricDef.target,
-          unit: metricDef.unit,
-          status: determineStatus(metricDef.name, numericValue)
-        });
+        // Only add valid numeric values
+        if (!isNaN(numericValue)) {
+          metrics.push({
+            name: metricDef.name,
+            value: numericValue,
+            target: metricDef.target,
+            unit: metricDef.unit,
+            status: determineStatus(metricDef.name, numericValue)
+          });
+        }
       }
     }
   }
@@ -167,7 +168,6 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
             status: "none" as const
           });
         } else {
-          // Use raw value directly without any transformations
           const value = extractNumeric(valueStr);
           metrics.push({
             name: metricName,
@@ -203,95 +203,48 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   
-  // Extract all values from the row exactly as they are
+  // Extract all numeric values from the row
+  const numericValues: number[] = [];
+  const valueStrings: string[] = [];
+  
+  for (let i = 1; i < row.length; i++) {
+    const valueStr = (row[i]?.str || "").trim();
+    valueStrings.push(valueStr);
+    
+    if (valueStr === "-") {
+      numericValues.push(0);
+    } else {
+      const numericValue = extractNumeric(valueStr);
+      if (!isNaN(numericValue)) {
+        numericValues.push(numericValue);
+      }
+    }
+  }
+  
+  if (numericValues.length < 3) return null;
+  
+  // Map the numeric values to metrics in the expected order
   const metrics = [];
   const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
   const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
   const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Process each metric column starting from index 1 (after the driver ID)
-  for (let i = 1; i < Math.min(row.length, metricNames.length + 1); i++) {
-    const valueStr = (row[i]?.str || "").trim();
-    const metricName = metricNames[i-1];
+  for (let i = 0; i < Math.min(numericValues.length, metricNames.length); i++) {
+    const value = numericValues[i];
+    const valueStr = valueStrings[i] || "";
     
-    if (valueStr === "-") {
-      // Handle dash values
-      metrics.push({
-        name: metricName,
-        value: 0,
-        target: metricTargets[i-1],
-        unit: metricUnits[i-1],
-        status: "none" as const
-      });
-    } else if (valueStr) {
-      // Use raw value directly without any transformations
-      const value = extractNumeric(valueStr);
-      
-      metrics.push({
-        name: metricName,
-        value,
-        target: metricTargets[i-1],
-        unit: metricUnits[i-1],
-        status: determineStatus(metricName, value)
-      });
-    }
+    metrics.push({
+      name: metricNames[i],
+      value: value,
+      target: metricTargets[i],
+      unit: metricUnits[i],
+      status: valueStr === "-" ? "none" as const : determineStatus(metricNames[i], value)
+    });
   }
   
-  // Only create driver if we found at least some metrics
-  if (metrics.length > 0) {
-    return {
-      name: driverId,
-      status: "active",
-      metrics
-    };
-  }
-  
-  return null;
-}
-
-/**
- * Helper function to get the target value for a metric
- */
-function getTargetForMetric(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 0;
-    case "DCR": return 98.5;
-    case "DNR DPMO": return 1500;
-    case "POD": return 98;
-    case "CC": return 95;
-    case "CE": return 0;
-    case "DEX": return 95;
-    default: return 0;
-  }
-}
-
-/**
- * Helper function to get the unit for a metric
- */
-function getUnitForMetric(metricName: string): string {
-  switch (metricName) {
-    case "DCR": return "%";
-    case "DNR DPMO": return "DPMO";
-    case "POD": return "%";
-    case "CC": return "%";
-    case "CE": return "";
-    case "DEX": return "%";
-    default: return "";
-  }
-}
-
-/**
- * Get fallback cell index for a specific metric
- */
-function getFallbackCellIndex(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 1;
-    case "DCR": return 2;
-    case "DNR DPMO": return 3;
-    case "POD": return 4;
-    case "CC": return 5;
-    case "CE": return 6;
-    case "DEX": return 7;
-    default: return 0;
-  }
+  return {
+    name: driverId,
+    status: "active",
+    metrics
+  };
 }

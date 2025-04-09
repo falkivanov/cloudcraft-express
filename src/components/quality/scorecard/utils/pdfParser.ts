@@ -28,7 +28,7 @@ interface ExtractionResult {
 export const parseScorecardPDF = async (
   pdfData: ArrayBuffer,
   filename: string,
-  detailedLogging: boolean = true  // Enable detailed logging by default for better debugging
+  detailedLogging: boolean = false
 ): Promise<ScoreCardData> => {
   try {
     console.info("Starting PDF parsing for: ", filename);
@@ -45,19 +45,17 @@ export const parseScorecardPDF = async (
       // Try multiple extraction attempts to maximize driver detection
       
       // First try: Positional extraction (most reliable when it works)
-      console.log("Starting positional extraction...");
       const positionalResult = await attemptPositionalExtraction(pdf, filename, detailedLogging);
       let extractedData;
       
       if (positionalResult.success && positionalResult.data && 
-          positionalResult.data.driverKPIs && positionalResult.data.driverKPIs.length >= 5 &&
-          positionalResult.data.companyKPIs && positionalResult.data.companyKPIs.length >= 3) {
+          positionalResult.data.driverKPIs && positionalResult.data.driverKPIs.length >= 10) {
         // Positional extraction worked well
         extractedData = positionalResult.data;
-        console.log(`Positional extraction successful with ${extractedData.driverKPIs?.length || 0} drivers and ${extractedData.companyKPIs?.length || 0} KPIs`);
+        console.log(`Positional extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
       } else {
-        // If positional extraction failed or found few drivers/KPIs, try text-based extraction
-        console.log("Positional extraction didn't find enough data, trying text-based extraction");
+        // If positional extraction failed or found few drivers, try text-based extraction
+        console.log("Positional extraction didn't find enough drivers, trying text-based extraction");
         
         // Cast to ensure we have all required properties
         const textBasedResult: ExtractionResult = {
@@ -68,11 +66,10 @@ export const parseScorecardPDF = async (
         };
         
         if (textBasedResult.success && textBasedResult.data && 
-            textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 3 &&
-            textBasedResult.data.companyKPIs && textBasedResult.data.companyKPIs.length >= 2) {
+            textBasedResult.data.driverKPIs && textBasedResult.data.driverKPIs.length >= 5) {
           // Text-based extraction worked
           extractedData = textBasedResult.data;
-          console.log(`Text-based extraction successful with ${extractedData.driverKPIs?.length || 0} drivers and ${extractedData.companyKPIs?.length || 0} KPIs`);
+          console.log(`Text-based extraction successful with ${extractedData.driverKPIs?.length || 0} drivers`);
         } else if (positionalResult.data && positionalResult.data.driverKPIs && 
                   positionalResult.data.driverKPIs.length > 0) {
           // Fall back to partial positional results if it found at least some drivers
@@ -84,10 +81,9 @@ export const parseScorecardPDF = async (
           extractedData = textBasedResult.data;
           console.log(`Using partial text-based results with ${extractedData.driverKPIs?.length || 0} drivers`);
         } else {
-          // Last resort: use simple fallback data creation - but mark it clearly as sample data
-          console.log("No extraction method found enough data, using fallback data but marking as sample");
+          // Last resort: use simple fallback data creation
+          console.log("No extraction method found drivers, using fallback data");
           extractedData = createFallbackData(weekNum);
-          extractedData.isSampleData = true;
         }
       }
       
@@ -101,14 +97,7 @@ export const parseScorecardPDF = async (
         extractedData.year = new Date().getFullYear();
       }
       
-      console.log(`Final extraction result: ${extractedData.driverKPIs?.length || 0} drivers and ${extractedData.companyKPIs?.length || 0} KPIs`);
-      
-      // If we couldn't extract enough real data, clearly mark this as sample data
-      if (!extractedData.driverKPIs || extractedData.driverKPIs.length < 5 || 
-          !extractedData.companyKPIs || extractedData.companyKPIs.length < 3) {
-        console.log("Not enough real data extracted, marking as sample data");
-        extractedData.isSampleData = true;
-      }
+      console.log(`Final extraction result: ${extractedData.driverKPIs?.length || 0} drivers`);
       
       // Store data in both locations for compatibility
       saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, extractedData);
