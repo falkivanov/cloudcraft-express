@@ -9,8 +9,8 @@ interface DriverTableRowProps {
 }
 
 const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
-  // Extract just the name part without any ID in parentheses if present
-  const displayName = driver.name.includes(" (") ? driver.name.split(" (")[0] : driver.name;
+  // For A-IDs, show only the ID (don't attempt to parse as a name)
+  const displayName = driver.name;
   
   return (
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">

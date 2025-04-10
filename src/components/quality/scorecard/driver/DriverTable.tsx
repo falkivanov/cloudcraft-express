@@ -19,13 +19,13 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
           <TableHeader className="bg-gray-50">
             <TableRow>
               <TableHead className="font-medium">Fahrer</TableHead>
-              <TableHead className="font-medium">Delivered</TableHead>
-              <TableHead className="font-medium">DCR</TableHead>
-              <TableHead className="font-medium">DNR DPMO</TableHead>
-              <TableHead className="font-medium">POD</TableHead>
-              <TableHead className="font-medium">CC</TableHead>
-              <TableHead className="font-medium">CE</TableHead>
-              <TableHead className="font-medium">DEX</TableHead>
+              <TableHead className="font-medium text-center">Delivered</TableHead>
+              <TableHead className="font-medium text-center">DCR</TableHead>
+              <TableHead className="font-medium text-center">DNR DPMO</TableHead>
+              <TableHead className="font-medium text-center">POD</TableHead>
+              <TableHead className="font-medium text-center">CC</TableHead>
+              <TableHead className="font-medium text-center">CE</TableHead>
+              <TableHead className="font-medium text-center">DEX</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

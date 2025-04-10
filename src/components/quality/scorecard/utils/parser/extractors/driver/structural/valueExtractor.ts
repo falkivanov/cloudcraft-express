@@ -4,7 +4,7 @@
  * but preserving the original value without transformations
  */
 export function extractNumeric(value: string): number {
-  if (!value || value === "-") return 0;
+  if (!value || value === "-" || value.trim() === "-") return 0;
   
   // Remove any non-numeric characters except for period, comma and dash (could be negative)
   const numericString = value.replace(/[^0-9.,\-]/g, '');
