@@ -25,7 +25,7 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
       const driverId = (row[driverIdIndex]?.str || "").trim();
       
       // Skip if driver ID is empty or doesn't look like a valid ID
-      // Driver IDs start with 'A' and are alphanumeric with length >= 6
+      // Driver IDs now start with 'A' and are alphanumeric with length >= 6
       if (!driverId || driverId.length < 6 || !driverId.startsWith('A')) {
         // Try looking for the first entry in the row that matches the driver ID pattern
         const potentialDriverId = row.find(cell => 
@@ -89,99 +89,46 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
  * Helper function to process a driver with known ID
  */
 function processDriverWithId(driverId: string, row: any[], headerIndexes: Record<string, number>, drivers: DriverKPI[]): void {
-  // Collect metrics for this driver
+  // Sammle alle numerischen Werte aus der Zeile
+  const numericValues: {value: number, x: number}[] = [];
+  
+  // Erfasse alle numerischen Werte mit ihren x-Koordinaten
+  for (const cell of row) {
+    const valueStr = (cell?.str || "").trim();
+    if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
+      const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
+      numericValues.push({
+        value,
+        x: cell.x
+      });
+    }
+  }
+  
+  // Sortiere numerische Werte von links nach rechts basierend auf x-Koordinate
+  numericValues.sort((a, b) => a.x - b.x);
+  
+  // Metriken basierend auf der Position erstellen (von links nach rechts)
   const metrics = [];
+  const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+  const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+  const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Known metric columns that we expect to find
-  const metricColumns = [
-    { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
-    { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
-    { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
-    { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
-    { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
-    { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
-    { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
-  ];
+  // Maximal so viele Metriken wie verfügbare Werte oder Metriknamen
+  const maxMetrics = Math.min(numericValues.length, metricNames.length);
   
-  // Process each metric column
-  for (const metricDef of metricColumns) {
-    if (metricDef.index !== undefined && metricDef.index < row.length) {
-      const valueStr = (row[metricDef.index]?.str || "").trim();
-      
-      if (valueStr === "-") {
-        // Handle dash values
-        metrics.push({
-          name: metricDef.name,
-          value: 0,
-          target: metricDef.target,
-          unit: metricDef.unit,
-          status: "none" as const
-        });
-      } else {
-        // Extract numeric value WITHOUT ANY TRANSFORMATIONS
-        const numericValue = extractNumeric(valueStr);
-        
-        // Do not apply any transformations - use raw values directly
-        metrics.push({
-          name: metricDef.name,
-          value: numericValue,
-          target: metricDef.target,
-          unit: metricDef.unit,
-          status: determineStatus(metricDef.name, numericValue)
-        });
-      }
-    }
+  for (let i = 0; i < maxMetrics; i++) {
+    const value = numericValues[i].value;
+    
+    metrics.push({
+      name: metricNames[i],
+      value: value,
+      target: metricTargets[i],
+      unit: metricUnits[i],
+      status: determineStatus(metricNames[i], value)
+    });
   }
   
-  // If we don't have metrics for all columns, try to find them by position
-  if (metrics.length < metricColumns.length) {
-    console.log(`Looking for missing metrics for ${driverId} by position`);
-    
-    // Get numeric cells by position
-    const sortedRow = [...row].sort((a, b) => a.x - b.x);
-    const numericCells = sortedRow.filter((item, index) => 
-      index > 0 && (isNumeric(item.str) || item.str.trim() === "-")
-    );
-    
-    // Create a map of already found metrics
-    const foundMetrics = new Set(metrics.map(m => m.name));
-    
-    // Add missing metrics based on position
-    for (let i = 0; i < metricColumns.length; i++) {
-      const metricName = metricColumns[i].name;
-      
-      // Skip if we already have this metric
-      if (foundMetrics.has(metricName)) continue;
-      
-      // Find the corresponding numeric cell based on position
-      const cellIndex = i + 1; // +1 because first cell is driver ID
-      if (cellIndex < numericCells.length) {
-        const valueStr = numericCells[cellIndex].str.trim();
-        
-        if (valueStr === "-") {
-          metrics.push({
-            name: metricName,
-            value: 0,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
-            status: "none" as const
-          });
-        } else {
-          // Use raw value directly without any transformations
-          const value = extractNumeric(valueStr);
-          metrics.push({
-            name: metricName,
-            value,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
-            status: determineStatus(metricName, value)
-          });
-        }
-      }
-    }
-  }
-  
-  // Only add driver if we found at least some metrics
+  // Nur Fahrer hinzufügen, wenn wenigstens einige Metriken gefunden wurden
   if (metrics.length > 0) {
     drivers.push({
       name: driverId,
@@ -203,55 +150,56 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   
-  // Extract all values from the row exactly as they are
+  // Sammle alle numerischen Werte aus der Zeile mit x-Koordinaten
+  const numericValues: {value: number, x: number}[] = [];
+  
+  for (const cell of row) {
+    if (cell?.str && cell.str !== driverId) {
+      const valueStr = cell.str.trim();
+      if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
+        const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
+        numericValues.push({
+          value,
+          x: cell.x
+        });
+      }
+    }
+  }
+  
+  // Sortiere nach x-Koordinate
+  numericValues.sort((a, b) => a.x - b.x);
+  
+  if (numericValues.length < 3) return null;
+  
+  // Map the numeric values to metrics in the expected order
   const metrics = [];
   const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
   const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
   const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Process each metric column starting from index 1 (after the driver ID)
-  for (let i = 1; i < Math.min(row.length, metricNames.length + 1); i++) {
-    const valueStr = (row[i]?.str || "").trim();
-    const metricName = metricNames[i-1];
+  // Nur so viele Metriken wie wir Werte oder Namen haben
+  const maxMetrics = Math.min(numericValues.length, metricNames.length);
+  
+  for (let i = 0; i < maxMetrics; i++) {
+    const value = numericValues[i].value;
     
-    if (valueStr === "-") {
-      // Handle dash values
-      metrics.push({
-        name: metricName,
-        value: 0,
-        target: metricTargets[i-1],
-        unit: metricUnits[i-1],
-        status: "none" as const
-      });
-    } else if (valueStr) {
-      // Use raw value directly without any transformations
-      const value = extractNumeric(valueStr);
-      
-      metrics.push({
-        name: metricName,
-        value,
-        target: metricTargets[i-1],
-        unit: metricUnits[i-1],
-        status: determineStatus(metricName, value)
-      });
-    }
+    metrics.push({
+      name: metricNames[i],
+      value: value,
+      target: metricTargets[i],
+      unit: metricUnits[i],
+      status: determineStatus(metricNames[i], value)
+    });
   }
   
-  // Only create driver if we found at least some metrics
-  if (metrics.length > 0) {
-    return {
-      name: driverId,
-      status: "active",
-      metrics
-    };
-  }
-  
-  return null;
+  return {
+    name: driverId,
+    status: "active",
+    metrics
+  };
 }
 
-/**
- * Helper function to get the target value for a metric
- */
+// Hilfsfunktionen, die unverändert bleiben
 function getTargetForMetric(metricName: string): number {
   switch (metricName) {
     case "Delivered": return 0;
@@ -265,9 +213,6 @@ function getTargetForMetric(metricName: string): number {
   }
 }
 
-/**
- * Helper function to get the unit for a metric
- */
 function getUnitForMetric(metricName: string): string {
   switch (metricName) {
     case "DCR": return "%";
@@ -280,9 +225,6 @@ function getUnitForMetric(metricName: string): string {
   }
 }
 
-/**
- * Get fallback cell index for a specific metric
- */
 function getFallbackCellIndex(metricName: string): number {
   switch (metricName) {
     case "Delivered": return 1;
