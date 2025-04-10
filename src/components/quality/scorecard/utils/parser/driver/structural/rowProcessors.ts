@@ -87,25 +87,34 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
 
 /**
  * Helper function to process a driver with known ID
+ * Verbesserte Version: Sammelt alle numerischen Werte nach der ID von links nach rechts
  */
 function processDriverWithId(driverId: string, row: any[], headerIndexes: Record<string, number>, drivers: DriverKPI[]): void {
-  // Sammle alle numerischen Werte aus der Zeile
+  // Finde die X-Koordinate der Fahrer-ID
+  const driverIdCell = row.find(cell => cell.str?.trim() === driverId);
+  const driverIdX = driverIdCell ? driverIdCell.x : 0;
+  
+  // Sammle alle numerischen Werte, die rechts von der ID liegen
   const numericValues: {value: number, x: number}[] = [];
   
-  // Erfasse alle numerischen Werte mit ihren x-Koordinaten
   for (const cell of row) {
-    const valueStr = (cell?.str || "").trim();
-    if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
-      const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
-      numericValues.push({
-        value,
-        x: cell.x
-      });
+    // Nur Zellen berücksichtigen, die rechts von der ID sind
+    if (cell.x > driverIdX) {
+      const valueStr = (cell?.str || "").trim();
+      if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
+        const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
+        numericValues.push({
+          value,
+          x: cell.x
+        });
+      }
     }
   }
   
   // Sortiere numerische Werte von links nach rechts basierend auf x-Koordinate
   numericValues.sort((a, b) => a.x - b.x);
+  
+  console.log(`Driver ${driverId} has ${numericValues.length} numeric values`);
   
   // Metriken basierend auf der Position erstellen (von links nach rechts)
   const metrics = [];
@@ -140,6 +149,7 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
 
 /**
  * Process a single driver row (for page 4)
+ * Verbesserte Version: Verwendung der X-Koordinate für zuverlässigere Reihenfolge
  */
 export function processDriverRow(row: any[]): DriverKPI | null {
   // First item should be driver ID
@@ -150,23 +160,31 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   
-  // Sammle alle numerischen Werte aus der Zeile mit x-Koordinaten
+  // Finde die X-Koordinate der Fahrer-ID
+  const driverIdCell = row.find(cell => cell.str?.trim() === driverId);
+  const driverIdX = driverIdCell ? driverIdCell.x : 0;
+  
+  // Sammle alle numerischen Werte, die rechts von der ID liegen
   const numericValues: {value: number, x: number}[] = [];
   
   for (const cell of row) {
-    if (cell?.str && cell.str !== driverId) {
-      const valueStr = cell.str.trim();
-      if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
-        const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
+    if (cell.x > driverIdX) {
+      const valueStr = (cell?.str || "").trim();
+      if (valueStr === "-") {
         numericValues.push({
-          value,
+          value: 0,
+          x: cell.x
+        });
+      } else if (isNumeric(valueStr)) {
+        numericValues.push({
+          value: extractNumeric(valueStr),
           x: cell.x
         });
       }
     }
   }
   
-  // Sortiere nach x-Koordinate
+  // Sortiere nach x-Koordinate (von links nach rechts)
   numericValues.sort((a, b) => a.x - b.x);
   
   if (numericValues.length < 3) return null;
