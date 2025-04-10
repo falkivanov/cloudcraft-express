@@ -75,7 +75,7 @@ function getMetricColorClass(metricName: string, value: number): string {
       return "text-red-500";
       
     case "CC":
-      if (value === 0 && displayValue === "-") return "text-gray-400"; // Handle dash case
+      if (value === 0) return "text-gray-400"; // Handle dash case
       if (value >= 99) return "text-blue-600";
       if (value >= 94) return "text-orange-500";
       return "text-red-500";
