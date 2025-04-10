@@ -9,6 +9,11 @@
 import { DriverKPI } from '../../../../types';
 import { extractDriverKPIsFromText } from './textExtractor';
 import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
+import { generateSampleDrivers } from './sampleData';
+import { ensureAllMetrics } from './utils/metricUtils';
+
+// Export the utility functions so they can be imported elsewhere
+export { generateSampleDrivers, ensureAllMetrics };
 
 /**
  * Extract driver KPIs using multiple strategies and select the best result
