@@ -57,7 +57,7 @@ export function extractDriverKPIs(text: string, pageData?: Record<number, any>):
   // Check for common formatting patterns that indicate a structured table
   // This helps identify PDF spreadsheet exports or machine-readable tables
   const hasStructuredTablePattern = 
-    /A\w{13,14}\s+\d+(\.\d+)?\s+\d+(\.\d+)?%?\s+\d+\s+\d+(\.\d+)?%?\s+\d+(\.\d+)?%?/.test(text);
+    /A\w{13,14}\s+\d+(\.\d+)?\s+\d+(\.\d+)?%?\s+\d+\s+(\d+(\.\d+)?%?|-)\s+(\d+(\.\d+)?%?|-)\s+\d+(\.\d+)?%?/.test(text);
   
   if (hasStructuredTablePattern && bestResults.length < 10) {
     console.log("Detected structured table pattern, attempting specialized extraction");
@@ -86,23 +86,23 @@ function extractDriversFromStructuredTable(text: string): DriverKPI[] {
   console.log("Attempting to extract drivers from structured table format");
   const drivers: DriverKPI[] = [];
   
-  // Regular expression to match driver rows with numeric values
-  // Pattern: A-prefixed ID followed by several numeric values
-  const rowPattern = /\b(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%?\s+(\d+)\s+(\d+(?:\.\d+)?)%?\s+(\d+(?:\.\d+)?)%?\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%?/g;
+  // Regular expression to match driver rows with numeric values and dash placeholders
+  // Pattern: A-prefixed ID followed by several numeric values, with possible dash placeholders
+  const rowPattern = /\b(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%?\s+(\d+|-)\s+(\d+(?:\.\d+)?%?|-)\s+(\d+(?:\.\d+)?%?|-)\s+(\d+(?:\.\d+)?|-)\s+(\d+(?:\.\d+)?%?|-)/g;
   
   let match;
   while ((match = rowPattern.exec(text)) !== null) {
     const driverId = match[1];
     
-    // Extract all numeric values
+    // Extract values, handling dashes as special cases
     const values = [
-      parseFloat(match[2]), // Delivered
-      parseFloat(match[3]), // DCR
-      parseFloat(match[4]), // DNR DPMO
-      parseFloat(match[5]), // POD
-      parseFloat(match[6]), // CC
-      parseFloat(match[7]), // CE
-      parseFloat(match[8])  // DEX
+      parseFloat(match[2]) || 0,                                // Delivered
+      parseFloat(match[3].replace('%', '')) || 0,               // DCR
+      match[4] === '-' ? 0 : parseFloat(match[4]) || 0,         // DNR DPMO
+      match[5] === '-' ? 0 : parseFloat(match[5].replace('%', '')) || 0,  // POD
+      match[6] === '-' ? 0 : parseFloat(match[6].replace('%', '')) || 0,  // CC
+      match[7] === '-' ? 0 : parseFloat(match[7]) || 0,         // CE
+      match[8] === '-' ? 0 : parseFloat(match[8].replace('%', '')) || 0   // DEX
     ];
     
     // Create metrics
@@ -110,13 +110,20 @@ function extractDriversFromStructuredTable(text: string): DriverKPI[] {
     const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
     const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
     
-    const metrics = metricNames.map((name, i) => ({
-      name,
-      value: values[i],
-      target: metricTargets[i],
-      unit: metricUnits[i],
-      status: determineMetricStatus(name, values[i])
-    }));
+    const metrics = metricNames.map((name, i) => {
+      const isDash = (i === 3 && match[5] === '-') ||   // POD is dash
+                     (i === 4 && match[6] === '-') ||   // CC is dash
+                     (i === 5 && match[7] === '-') ||   // CE is dash
+                     (i === 6 && match[8] === '-');     // DEX is dash
+      
+      return {
+        name,
+        value: values[i],
+        target: metricTargets[i],
+        unit: metricUnits[i],
+        status: isDash ? "none" : determineMetricStatus(name, values[i])
+      };
+    });
     
     drivers.push({
       name: driverId,
@@ -128,7 +135,8 @@ function extractDriversFromStructuredTable(text: string): DriverKPI[] {
   // If standard pattern didn't find enough drivers, try a more flexible pattern
   if (drivers.length < 5) {
     // More flexible pattern that's less strict about spacing and formatting
-    const flexiblePattern = /(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/g;
+    // Updated to also handle dash values
+    const flexiblePattern = /(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?%?)\s+(\d+|-)\s+(\d+(?:\.\d+)?%?|-)\s+(\d+(?:\.\d+)?%?|-)\s+(\d+(?:\.\d+)?|-)\s+(\d+(?:\.\d+)?%?|-)/g;
     
     let flexMatch;
     while ((flexMatch = flexiblePattern.exec(text)) !== null) {
@@ -136,15 +144,15 @@ function extractDriversFromStructuredTable(text: string): DriverKPI[] {
       const driverId = flexMatch[1];
       if (drivers.some(d => d.name === driverId)) continue;
       
-      // Extract all numeric values
+      // Extract values, handling dashes as special cases
       const values = [
-        parseFloat(flexMatch[2]), // Delivered
-        parseFloat(flexMatch[3]), // DCR
-        parseFloat(flexMatch[4]), // DNR DPMO
-        parseFloat(flexMatch[5]), // POD
-        parseFloat(flexMatch[6]), // CC
-        parseFloat(flexMatch[7]), // CE
-        parseFloat(flexMatch[8])  // DEX
+        parseFloat(flexMatch[2]) || 0,                                // Delivered
+        parseFloat(flexMatch[3].replace('%', '')) || 0,               // DCR
+        flexMatch[4] === '-' ? 0 : parseFloat(flexMatch[4]) || 0,     // DNR DPMO
+        flexMatch[5] === '-' ? 0 : parseFloat(flexMatch[5].replace('%', '')) || 0,  // POD
+        flexMatch[6] === '-' ? 0 : parseFloat(flexMatch[6].replace('%', '')) || 0,  // CC
+        flexMatch[7] === '-' ? 0 : parseFloat(flexMatch[7]) || 0,     // CE
+        flexMatch[8] === '-' ? 0 : parseFloat(flexMatch[8].replace('%', '')) || 0   // DEX
       ];
       
       // Create metrics
@@ -152,13 +160,20 @@ function extractDriversFromStructuredTable(text: string): DriverKPI[] {
       const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
       const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
       
-      const metrics = metricNames.map((name, i) => ({
-        name,
-        value: values[i],
-        target: metricTargets[i],
-        unit: metricUnits[i],
-        status: determineMetricStatus(name, values[i])
-      }));
+      const metrics = metricNames.map((name, i) => {
+        const isDash = (i === 3 && flexMatch[5] === '-') ||   // POD is dash
+                       (i === 4 && flexMatch[6] === '-') ||   // CC is dash
+                       (i === 5 && flexMatch[7] === '-') ||   // CE is dash
+                       (i === 6 && flexMatch[8] === '-');     // DEX is dash
+        
+        return {
+          name,
+          value: values[i],
+          target: metricTargets[i],
+          unit: metricUnits[i],
+          status: isDash ? "none" : determineMetricStatus(name, values[i])
+        };
+      });
       
       drivers.push({
         name: driverId,

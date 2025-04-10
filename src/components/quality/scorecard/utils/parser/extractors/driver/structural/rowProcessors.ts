@@ -43,7 +43,7 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
       processDriverWithId(driverId, row, headerIndexes, drivers);
     } else {
       // Try to find a driver ID in the row anyway
-      const firstColumn = row[0]?.str.trim();
+      const firstColumn = row[0]?.str?.trim();
       if (firstColumn && firstColumn.startsWith('A') && firstColumn.length >= 6) {
         console.log(`Found driver ID in first column: ${firstColumn} despite missing header index`);
         
@@ -58,13 +58,14 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
           const cellText = (row[j]?.str || "").trim();
           
           if (isNumeric(cellText) || cellText === "-") {
-            const value = cellText === "-" ? 0 : extractNumeric(cellText);
+            const isDash = cellText === "-";
+            const value = isDash ? 0 : extractNumeric(cellText);
             metrics.push({
               name: metricNames[metricIndex],
               value: value,
               target: metricTargets[metricIndex],
               unit: metricUnits[metricIndex],
-              status: determineStatus(metricNames[metricIndex], value)
+              status: isDash ? "none" : determineStatus(metricNames[metricIndex], value)
             });
             metricIndex++;
           }

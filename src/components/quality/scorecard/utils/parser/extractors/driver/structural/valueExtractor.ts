@@ -39,25 +39,36 @@ export function extractNumeric(value: string): number {
 }
 
 /**
- * Determines if a string contains a numeric value
+ * Determines if a string contains a numeric value or a dash
  */
 export function isNumeric(value: string): boolean {
   if (!value) return false;
+  
+  // Accept dash as valid non-numeric placeholder
+  if (value.trim() === "-") return true;
+  
+  // Check for numeric values (with possible percent sign)
   return /^-?\d*\.?\d+%?$/.test(value.trim().replace(/,/g, '.'));
 }
 
 /**
  * Extracts a value from a table cell, handling various formats
- * including numeric values, percentages, and text
+ * including numeric values, percentages, dashes, and text
  */
-export function extractCellValue(cell: string): { value: number; isPercentage: boolean; } {
-  if (!cell || cell === "-") return { value: 0, isPercentage: false };
+export function extractCellValue(cell: string): { value: number; isPercentage: boolean; isDash: boolean; } {
+  if (!cell) return { value: 0, isPercentage: false, isDash: false };
   
   const trimmed = cell.trim();
+  
+  // Handle dash case
+  if (trimmed === "-") {
+    return { value: 0, isPercentage: false, isDash: true };
+  }
+  
   const isPercentage = trimmed.includes('%');
   
   // Extract the numeric value
   const value = extractNumeric(trimmed);
   
-  return { value, isPercentage };
+  return { value, isPercentage, isDash: false };
 }
