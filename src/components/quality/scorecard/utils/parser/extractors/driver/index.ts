@@ -1,169 +1,216 @@
 
-import { DriverKPI } from "../../../../types";
-import { extractDriverKPIsFromText } from "./textExtractor";
-import { extractDriversFromDSPWeekly } from "./dsp-weekly";
-import { extractDriversWithEnhancedPatterns } from "./text/enhancedPatternExtractor";
-import { extractDriversWithFlexiblePattern } from "./text/flexiblePatternExtractor";
-import { tryAllExtractionStrategies } from "./strategies/multiStrategy";
-import { createAllStandardMetrics } from "./utils/metricUtils";
+/**
+ * Entry point for driver KPI extraction
+ * 
+ * This file provides a unified API for extracting driver KPIs
+ * using multiple strategies and selecting the best results.
+ */
+
+import { DriverKPI } from '../../../../types';
+import { extractDriverKPIsFromText } from './textExtractor';
+import { extractDriverKPIsFromStructure } from './structural/structuralExtractor';
 
 /**
- * Enhanced extraction for driver KPIs that tries multiple strategies
- * to maximize the chances of finding all drivers in different PDF formats
+ * Extract driver KPIs using multiple strategies and select the best result
+ * Enhanced to support structured table formats
  */
-export const extractDriverKPIs = (text: string, pageData?: any): DriverKPI[] => {
-  console.log("Starting enhanced driver extraction");
-  let allDrivers: DriverKPI[] = [];
-  let bestDriverCount = 0;
+export function extractDriverKPIs(text: string, pageData?: Record<number, any>): DriverKPI[] {
+  console.log("Extracting driver KPIs using multiple strategies");
   
-  // Try DSP Weekly Summary format first (most structured)
-  if (text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("Detected DSP WEEKLY SUMMARY format");
-    const dspDrivers = extractDriversFromDSPWeekly(text);
-    
-    if (dspDrivers.length > bestDriverCount) {
-      console.log(`Found ${dspDrivers.length} drivers with DSP WEEKLY SUMMARY extraction`);
-      allDrivers = dspDrivers;
-      bestDriverCount = dspDrivers.length;
-    }
-  }
+  let bestResults: DriverKPI[] = [];
   
-  // Try enhanced pattern extraction (tailored to specific formats)
-  if (bestDriverCount < 40) {
-    console.log("Trying enhanced pattern extraction");
-    const enhancedDrivers = extractDriversWithEnhancedPatterns(text);
-    
-    if (enhancedDrivers.length > bestDriverCount) {
-      console.log(`Found ${enhancedDrivers.length} drivers with enhanced pattern extraction`);
-      allDrivers = enhancedDrivers;
-      bestDriverCount = enhancedDrivers.length;
-    }
-  }
-  
-  // Try flexible pattern extraction (more generic but less accurate)
-  if (bestDriverCount < 40) {
-    console.log("Trying flexible pattern extraction");
-    const flexibleDrivers = extractDriversWithFlexiblePattern(text);
-    
-    if (flexibleDrivers.length > bestDriverCount) {
-      console.log(`Found ${flexibleDrivers.length} drivers with flexible pattern extraction`);
-      allDrivers = flexibleDrivers;
-      bestDriverCount = flexibleDrivers.length;
-    }
-  }
-  
-  // Try basic text extraction
-  if (bestDriverCount < 40) {
-    console.log("Trying basic text extraction");
-    const textDrivers = extractDriverKPIsFromText(text);
-    
-    if (textDrivers.length > bestDriverCount) {
-      console.log(`Found ${textDrivers.length} drivers with basic text extraction`);
-      allDrivers = textDrivers;
-      bestDriverCount = textDrivers.length;
-    }
-  }
-  
-  // Try all strategies as last resort
-  if (bestDriverCount < 40) {
-    console.log("Trying combined multi-strategy approach");
-    const multiStrategyDrivers = tryAllExtractionStrategies(text);
-    
-    if (multiStrategyDrivers.length > bestDriverCount) {
-      console.log(`Found ${multiStrategyDrivers.length} drivers with multi-strategy approach`);
-      allDrivers = multiStrategyDrivers;
-      bestDriverCount = multiStrategyDrivers.length;
-    }
-  }
-  
-  // Extract all A-prefixed IDs as a fallback
-  if (bestDriverCount < 20) {
-    console.log("Attempting extraction of all A-prefixed IDs as fallback");
-    const aPrefixPattern = /\b(A[A-Z0-9]{5,13})\b/g;
-    const matches = Array.from(text.matchAll(aPrefixPattern));
-    
-    if (matches.length > bestDriverCount) {
-      console.log(`Found ${matches.length} A-prefixed IDs`);
+  // First try structural extraction if page data is available
+  if (pageData && Object.keys(pageData).length > 0) {
+    try {
+      const structuralResults = extractDriverKPIsFromStructure(pageData);
+      console.log(`Structural extraction found ${structuralResults.length} drivers`);
       
-      const seenIds = new Set();
-      const fallbackDrivers: DriverKPI[] = [];
-      
-      matches.forEach(match => {
-        const driverId = match[1];
-        
-        // Skip duplicates and IDs that might be codes but not drivers
-        if (!seenIds.has(driverId) && 
-            !driverId.includes('PAGE') && 
-            !driverId.includes('SUMMARY') &&
-            driverId.length >= 7) {
-          
-          seenIds.add(driverId);
-          
-          // Create a basic driver object with default metrics
-          fallbackDrivers.push({
-            name: driverId,
-            status: "active",
-            metrics: [
-              { name: "Delivered", value: 0, target: 0, unit: "", status: "none" },
-              { name: "DCR", value: 0, target: 98.5, unit: "%", status: "none" },
-              { name: "DNR DPMO", value: 0, target: 1500, unit: "DPMO", status: "none" },
-              { name: "POD", value: 0, target: 98, unit: "%", status: "none" },
-              { name: "CC", value: 0, target: 95, unit: "%", status: "none" },
-              { name: "CE", value: 0, target: 0, unit: "", status: "none" },
-              { name: "DEX", value: 0, target: 95, unit: "%", status: "none" }
-            ]
-          });
-        }
-      });
-      
-      if (fallbackDrivers.length > bestDriverCount) {
-        allDrivers = fallbackDrivers;
-        bestDriverCount = fallbackDrivers.length;
+      // If we found a good number of drivers, use this result
+      if (structuralResults.length >= 5) {
+        bestResults = structuralResults;
       }
+    } catch (e) {
+      console.error("Error during structural driver extraction:", e);
     }
   }
   
-  console.log(`Final extraction result: ${allDrivers.length} drivers`);
+  // If structural extraction didn't work well, try text-based extraction
+  if (bestResults.length < 5) {
+    try {
+      const textResults = extractDriverKPIsFromText(text);
+      console.log(`Text-based extraction found ${textResults.length} drivers`);
+      
+      // Use text results if they're better than what we have so far
+      if (textResults.length > bestResults.length) {
+        bestResults = textResults;
+      }
+    } catch (e) {
+      console.error("Error during text-based driver extraction:", e);
+    }
+  }
   
-  // Ensure all drivers have complete metrics
-  const completeDrivers = allDrivers.map(driver => ({
-    ...driver,
-    metrics: createAllStandardMetrics(driver.metrics)
-  }));
+  // Check for common formatting patterns that indicate a structured table
+  // This helps identify PDF spreadsheet exports or machine-readable tables
+  const hasStructuredTablePattern = 
+    /A\w{13,14}\s+\d+(\.\d+)?\s+\d+(\.\d+)?%?\s+\d+\s+\d+(\.\d+)?%?\s+\d+(\.\d+)?%?/.test(text);
   
-  return completeDrivers;
-};
+  if (hasStructuredTablePattern && bestResults.length < 10) {
+    console.log("Detected structured table pattern, attempting specialized extraction");
+    
+    try {
+      // Apply specialized extraction for structured table data
+      const structuredTableResults = extractDriversFromStructuredTable(text);
+      
+      if (structuredTableResults.length > bestResults.length) {
+        console.log(`Structured table extraction successful with ${structuredTableResults.length} drivers`);
+        bestResults = structuredTableResults;
+      }
+    } catch (e) {
+      console.error("Error during structured table extraction:", e);
+    }
+  }
+  
+  return bestResults;
+}
 
 /**
- * Generate sample drivers for testing
- * @returns Array of sample driver KPIs
+ * Extract driver data from a structured table format
+ * This is specialized for machine-readable tabular PDFs
  */
-export const generateSampleDrivers = (): DriverKPI[] => {
-  // Generate a few sample driver records for testing
-  return Array(5).fill(0).map((_, index) => ({
-    name: `A${String(index + 1).padStart(3, '0')}SAMPLE`,
-    status: "active",
-    metrics: [
-      { name: "Delivered", value: 850 + index * 20, target: 0, unit: "", status: "none" },
-      { name: "DCR", value: 97 + index * 0.5, target: 98.5, unit: "%", status: index > 1 ? "great" : "fair" },
-      { name: "DNR DPMO", value: 2000 - index * 250, target: 1500, unit: "DPMO", status: index > 2 ? "great" : "poor" },
-      { name: "POD", value: 96 + index * 0.7, target: 98, unit: "%", status: index > 1 ? "great" : "fair" },
-      { name: "CC", value: 93 + index, target: 95, unit: "%", status: index > 1 ? "great" : "fair" },
-      { name: "CE", value: index > 3 ? 1 : 0, target: 0, unit: "", status: index > 3 ? "poor" : "great" },
-      { name: "DEX", value: 91 + index, target: 95, unit: "%", status: index > 3 ? "great" : "fair" }
-    ]
-  }));
-};
+function extractDriversFromStructuredTable(text: string): DriverKPI[] {
+  console.log("Attempting to extract drivers from structured table format");
+  const drivers: DriverKPI[] = [];
+  
+  // Regular expression to match driver rows with numeric values
+  // Pattern: A-prefixed ID followed by several numeric values
+  const rowPattern = /\b(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%?\s+(\d+)\s+(\d+(?:\.\d+)?)%?\s+(\d+(?:\.\d+)?)%?\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%?/g;
+  
+  let match;
+  while ((match = rowPattern.exec(text)) !== null) {
+    const driverId = match[1];
+    
+    // Extract all numeric values
+    const values = [
+      parseFloat(match[2]), // Delivered
+      parseFloat(match[3]), // DCR
+      parseFloat(match[4]), // DNR DPMO
+      parseFloat(match[5]), // POD
+      parseFloat(match[6]), // CC
+      parseFloat(match[7]), // CE
+      parseFloat(match[8])  // DEX
+    ];
+    
+    // Create metrics
+    const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+    const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+    const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+    
+    const metrics = metricNames.map((name, i) => ({
+      name,
+      value: values[i],
+      target: metricTargets[i],
+      unit: metricUnits[i],
+      status: determineMetricStatus(name, values[i])
+    }));
+    
+    drivers.push({
+      name: driverId,
+      status: "active",
+      metrics
+    });
+  }
+  
+  // If standard pattern didn't find enough drivers, try a more flexible pattern
+  if (drivers.length < 5) {
+    // More flexible pattern that's less strict about spacing and formatting
+    const flexiblePattern = /(A\w{6,14})\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/g;
+    
+    let flexMatch;
+    while ((flexMatch = flexiblePattern.exec(text)) !== null) {
+      // Skip if we already have this driver
+      const driverId = flexMatch[1];
+      if (drivers.some(d => d.name === driverId)) continue;
+      
+      // Extract all numeric values
+      const values = [
+        parseFloat(flexMatch[2]), // Delivered
+        parseFloat(flexMatch[3]), // DCR
+        parseFloat(flexMatch[4]), // DNR DPMO
+        parseFloat(flexMatch[5]), // POD
+        parseFloat(flexMatch[6]), // CC
+        parseFloat(flexMatch[7]), // CE
+        parseFloat(flexMatch[8])  // DEX
+      ];
+      
+      // Create metrics
+      const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+      const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+      const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+      
+      const metrics = metricNames.map((name, i) => ({
+        name,
+        value: values[i],
+        target: metricTargets[i],
+        unit: metricUnits[i],
+        status: determineMetricStatus(name, values[i])
+      }));
+      
+      drivers.push({
+        name: driverId,
+        status: "active",
+        metrics
+      });
+    }
+  }
+  
+  return drivers;
+}
 
 /**
- * Ensure all drivers have a complete set of metrics
- * @param drivers Array of driver KPIs
- * @returns Array with complete metrics
+ * Determine status for a metric
  */
-export const ensureAllMetrics = (drivers: DriverKPI[]): DriverKPI[] => {
-  return drivers.map(driver => ({
-    ...driver,
-    metrics: createAllStandardMetrics(driver.metrics)
-  }));
-};
-
+function determineMetricStatus(metricName: string, value: number): "fantastic" | "great" | "fair" | "poor" | "none" {
+  // Values that couldn't be parsed might be NaN
+  if (isNaN(value)) return "none";
+  
+  switch (metricName) {
+    case "Delivered":
+      return value > 1000 ? "fantastic" : value > 800 ? "great" : value > 500 ? "fair" : "poor";
+    
+    case "DCR":
+      if (value >= 99) return "fantastic";
+      if (value >= 98.5) return "great";
+      if (value >= 95) return "fair";
+      return "poor";
+    
+    case "DNR DPMO":
+      if (value <= 1000) return "fantastic";
+      if (value <= 1500) return "great";
+      if (value <= 2500) return "fair";
+      return "poor";
+    
+    case "POD":
+      if (value >= 99) return "fantastic";
+      if (value >= 98) return "great";
+      if (value >= 95) return "fair";
+      return "poor";
+    
+    case "CC":
+      if (value >= 97) return "fantastic";
+      if (value >= 95) return "great";
+      if (value >= 90) return "fair";
+      return "poor";
+    
+    case "CE":
+      return value === 0 ? "fantastic" : value <= 1 ? "great" : value <= 3 ? "fair" : "poor";
+    
+    case "DEX":
+      if (value >= 97) return "fantastic";
+      if (value >= 95) return "great";
+      if (value >= 90) return "fair";
+      return "poor";
+    
+    default:
+      return "fair";
+  }
+}

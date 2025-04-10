@@ -3,7 +3,7 @@ import React from "react";
 import { DriverKPI, ScoreCardData } from "./types";
 import DriverTable from "./driver/DriverTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, AlertTriangle, Upload } from "lucide-react";
+import { InfoIcon, AlertTriangle, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -36,6 +36,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Determine if we have too few drivers (likely extraction issue)
   const hasTooFewDrivers = driverKPIs.length > 0 && driverKPIs.length < 8;
   
+  // Check for obvious data misalignment
+  const hasMisalignedData = driverKPIs.length > 0 && checkForDataMisalignment(driverKPIs);
+  
   // Check if we might need to update extraction methods
   const needsExtractionUpdate = driverKPIs.length > 0 && 
                                (!hasExpectedFormat && !hasAnyAPrefix);
@@ -64,7 +67,7 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || hasTooFewDrivers || needsExtractionUpdate || !isRealData) && (
+      {(isSuspectedSampleData || hasTooFewDrivers || needsExtractionUpdate || !isRealData || hasMisalignedData) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -76,7 +79,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                   ? `Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.`
                   : !isRealData
                     ? "Die angezeigten Daten sind Beispieldaten, nicht aus der PDF extrahiert."
-                    : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
+                    : hasMisalignedData
+                      ? "Die extrahierten Daten scheinen nicht korrekt den Spalten zugeordnet zu sein."
+                      : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
             </p>
             
             {needsExtractionUpdate && (
@@ -96,6 +101,14 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
               <li>Die Tabellendaten sind nicht standardmäßig strukturiert</li>
               <li>Die PDF hat ein ungewöhnliches oder geändertes Layout</li>
             </ul>
+            
+            {isRealData && (
+              <p className="italic text-sm mt-2">
+                Hinweis: Die PDF enthält möglicherweise maschinenlesbaren Text, der direkt kopiert werden kann. 
+                Versuchen Sie alternativ, die Daten direkt aus der PDF zu kopieren und in eine Tabelle einzufügen.
+              </p>
+            )}
+            
             <p>
               Sie können:
             </p>
@@ -123,5 +136,75 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
     </div>
   );
 };
+
+// Helper function to check for obvious misalignment in the driver data
+function checkForDataMisalignment(drivers: DriverKPI[]): boolean {
+  if (drivers.length < 2) return false;
+  
+  // Look for patterns that suggest incorrect column mapping
+  // For example: All drivers have exactly the same metrics, or metrics are out of expected ranges
+  
+  const suspiciousCounts = {
+    // Count how many drivers have the exact same DCR value
+    sameDcr: new Map<number, number>(),
+    // Count how many drivers have the exact same DNR DPMO value
+    sameDnr: new Map<number, number>(),
+    // Count unusually high values (potential misalignment)
+    highDcr: 0, // DCR > 100%
+    highPod: 0, // POD > 100%
+    highCc: 0   // CC > 100%
+  };
+  
+  // Analyze the data for suspicious patterns
+  for (const driver of drivers) {
+    for (const metric of driver.metrics) {
+      if (metric.name === "DCR") {
+        // Count occurrences of each DCR value
+        const key = Math.round(metric.value * 10) / 10; // Round to 1 decimal
+        suspiciousCounts.sameDcr.set(key, (suspiciousCounts.sameDcr.get(key) || 0) + 1);
+        
+        // Check for invalid range
+        if (metric.value > 100) suspiciousCounts.highDcr++;
+      }
+      else if (metric.name === "DNR DPMO") {
+        // Count occurrences of each DNR value
+        const key = Math.round(metric.value);
+        suspiciousCounts.sameDnr.set(key, (suspiciousCounts.sameDnr.get(key) || 0) + 1);
+      }
+      else if (metric.name === "POD" && metric.value > 100) {
+        suspiciousCounts.highPod++;
+      }
+      else if (metric.name === "CC" && metric.value > 100) {
+        suspiciousCounts.highCc++;
+      }
+    }
+  }
+  
+  // Determine if there are suspicious patterns
+  
+  // Check if more than 80% of drivers have the exact same DCR value (suspicious)
+  let mostCommonDcrCount = 0;
+  for (const count of suspiciousCounts.sameDcr.values()) {
+    if (count > mostCommonDcrCount) mostCommonDcrCount = count;
+  }
+  
+  // Check if more than 80% of drivers have the exact same DNR value (suspicious)
+  let mostCommonDnrCount = 0;
+  for (const count of suspiciousCounts.sameDnr.values()) {
+    if (count > mostCommonDnrCount) mostCommonDnrCount = count;
+  }
+  
+  const dcrRatio = mostCommonDcrCount / drivers.length;
+  const dnrRatio = mostCommonDnrCount / drivers.length;
+  
+  // If there are suspicious patterns, it suggests misaligned data
+  return (
+    dcrRatio > 0.8 || // More than 80% have same DCR
+    dnrRatio > 0.8 || // More than 80% have same DNR
+    suspiciousCounts.highDcr > drivers.length * 0.1 || // More than 10% have DCR > 100%
+    suspiciousCounts.highPod > drivers.length * 0.1 || // More than 10% have POD > 100%
+    suspiciousCounts.highCc > drivers.length * 0.1    // More than 10% have CC > 100%
+  );
+}
 
 export default DriverKPIs;

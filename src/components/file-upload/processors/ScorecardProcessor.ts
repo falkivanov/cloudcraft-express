@@ -33,13 +33,18 @@ export class ScorecardProcessor extends BaseFileProcessor {
         console.log("Successfully extracted scorecard data:", scorecardData);
         console.log(`Extracted ${scorecardData.driverKPIs?.length || 0} driver KPIs`);
         
+        // Check if the data might be from a machine-readable PDF (table format)
+        const isMachineReadablePDF = this.detectMachineReadablePDF(scorecardData);
+        
         // Validate the extracted data has the minimum required fields
         if (!this.validateScorecardData(scorecardData)) {
           if (showToasts) {
             toast.warning(
               "Unvollständige Daten",
               {
-                description: "Die Scorecard-Daten sind unvollständig. Einige Informationen werden mit Beispieldaten ergänzt.",
+                description: isMachineReadablePDF
+                  ? "Die PDF enthält maschinenlesbaren Text. Versuchen Sie, die Daten direkt aus der PDF zu kopieren."
+                  : "Die Scorecard-Daten sind unvollständig. Einige Informationen werden mit Beispieldaten ergänzt.",
               }
             );
           }
@@ -59,13 +64,28 @@ export class ScorecardProcessor extends BaseFileProcessor {
             toast.warning(
               "Mögliche Beispieldaten",
               {
-                description: "Die extrahierten Daten könnten Beispieldaten sein. Die PDF-Struktur wurde möglicherweise nicht korrekt erkannt.",
+                description: isMachineReadablePDF
+                  ? "Die PDF enthält maschinenlesbaren Text. Versuchen Sie, die Daten direkt aus der PDF zu kopieren."
+                  : "Die extrahierten Daten könnten Beispieldaten sein. Die PDF-Struktur wurde möglicherweise nicht korrekt erkannt.",
               }
             );
           }
         } else {
           // Mark as real data
           scorecardData.isSampleData = false;
+          
+          // If we detected machine-readable PDF but still had issues
+          if (isMachineReadablePDF && (scorecardData.driverKPIs?.length < 10 || this.checkForDataMisalignment(scorecardData))) {
+            if (showToasts) {
+              toast.info(
+                "Tipp: Maschinenlesbare PDF erkannt",
+                {
+                  description: "Die PDF enthält maschinenlesbaren Text. Bei Problemen könnten Sie versuchen, die Daten direkt aus der PDF zu kopieren und als Tabelle zu verwenden."
+                }
+              );
+            }
+          }
+          
           console.log("Data appears to be genuinely extracted from PDF");
         }
         
@@ -124,7 +144,8 @@ export class ScorecardProcessor extends BaseFileProcessor {
           location: scorecardData.location,
           kpiCount: scorecardData.companyKPIs.length,
           driverCount: scorecardData.driverKPIs.length,
-          isReal: !scorecardData.isSampleData // Flag to indicate if data was actually extracted
+          isReal: !scorecardData.isSampleData, // Flag to indicate if data was actually extracted
+          isMachineReadable: isMachineReadablePDF // Flag to indicate if PDF contains machine-readable text
         });
         
         // Dispatch a custom event to notify that scorecard data has been updated
@@ -149,6 +170,66 @@ export class ScorecardProcessor extends BaseFileProcessor {
     } finally {
       this.setProcessing(false);
     }
+  }
+  
+  /**
+   * Check if PDF appears to be machine-readable (contains selectable text in tabular format)
+   */
+  private detectMachineReadablePDF(data: any): boolean {
+    // Check if driver IDs are uniform in length (suggests structured data)
+    const driverIds = data.driverKPIs?.map(d => d.name) || [];
+    if (driverIds.length < 5) return false;
+    
+    const idLengths = new Set(driverIds.map(id => id.length));
+    
+    // Check if most driver IDs have consistent length (suggests tabular format)
+    const mostCommonLength = Array.from(idLengths).sort((a, b) => 
+      driverIds.filter(id => id.length === a).length - 
+      driverIds.filter(id => id.length === b).length
+    ).pop();
+    
+    const idsWithCommonLength = driverIds.filter(id => id.length === mostCommonLength).length;
+    const ratioWithCommonLength = idsWithCommonLength / driverIds.length;
+    
+    // If most IDs have same length and start with 'A', it's likely machine-readable
+    const mostStartWithA = driverIds.filter(id => id.startsWith('A')).length > driverIds.length * 0.9;
+    const hasConsistentIdFormat = ratioWithCommonLength > 0.8 && mostStartWithA;
+    
+    // Check if driver metrics have similar distribution (suggests tabular data)
+    const hasConsistentMetrics = this.checkConsistentMetricsDistribution(data);
+    
+    return hasConsistentIdFormat && hasConsistentMetrics;
+  }
+  
+  /**
+   * Check if the metrics across drivers have consistent distribution
+   * (indicates structured tabular data)
+   */
+  private checkConsistentMetricsDistribution(data: any): boolean {
+    if (!data.driverKPIs || data.driverKPIs.length < 5) return false;
+    
+    // Count how many drivers have each metric name
+    const metricCounts: Record<string, number> = {};
+    
+    data.driverKPIs.forEach(driver => {
+      driver.metrics.forEach(metric => {
+        const name = metric.name;
+        metricCounts[name] = (metricCounts[name] || 0) + 1;
+      });
+    });
+    
+    // Calculate the average number of metrics per driver
+    const avgMetricsPerDriver = Object.values(metricCounts).reduce((a, b) => a + b, 0) / 
+                              Object.keys(metricCounts).length;
+                              
+    // Check if most drivers have most metrics (indicates consistent columns)
+    const expectedMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+    
+    const consistencyRatio = expectedMetrics.filter(name => 
+      (metricCounts[name] || 0) > data.driverKPIs.length * 0.7
+    ).length / expectedMetrics.length;
+    
+    return consistencyRatio > 0.7;
   }
   
   /**
@@ -179,6 +260,47 @@ export class ScorecardProcessor extends BaseFileProcessor {
     ).length > data.driverKPIs.length * 0.7; // If >70% have perfect metrics
     
     return hasTooManyPerfectMetrics;
+  }
+  
+  /**
+   * Check for misaligned data in driver metrics
+   */
+  private checkForDataMisalignment(data: any): boolean {
+    if (!data.driverKPIs || data.driverKPIs.length < 5) return false;
+    
+    // Look for patterns that suggest incorrect column mapping
+    let suspiciousPatterns = 0;
+    
+    // Check for improbable values
+    const suspiciousDrivers = data.driverKPIs.filter((driver: any) => {
+      if (!driver.metrics) return false;
+      
+      // Check for common misalignment indicators
+      return driver.metrics.some((metric: any) => {
+        if (!metric) return false;
+        
+        // DCR, POD, CC should be percentage values (typically < 100)
+        if ((metric.name === "DCR" || metric.name === "POD" || metric.name === "CC") && 
+            metric.value > 100) {
+          return true;
+        }
+        
+        // DNR DPMO is typically < 10000
+        if (metric.name === "DNR DPMO" && metric.value > 10000) {
+          return true;
+        }
+        
+        // Delivered parcels typically < 2000
+        if (metric.name === "Delivered" && metric.value > 2000) {
+          return true;
+        }
+        
+        return false;
+      });
+    });
+    
+    // If more than 20% of drivers have suspicious values, likely misaligned
+    return suspiciousDrivers.length > data.driverKPIs.length * 0.2;
   }
   
   /**
