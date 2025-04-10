@@ -39,6 +39,11 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
   // Check if we might need to update extraction methods
   const needsExtractionUpdate = driverKPIs.length > 0 && 
                                (!hasExpectedFormat && !hasAnyAPrefix);
+
+  // Check if data is from real extraction
+  const isRealData = localStorage.getItem("extractedScorecardData") 
+    ? !JSON.parse(localStorage.getItem("extractedScorecardData") || "{}").isSampleData
+    : true;
   
   // Handle navigation to upload page
   const handleUploadClick = () => {
@@ -54,11 +59,12 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
           {activeDrivers.length} Fahrer gefunden
           {hasAnyAPrefix && " (A-IDs)" }
           {hasExpectedFormat && " (14-stellige A-IDs)"}
+          {!isRealData && " (Beispieldaten)"}
         </div>
       </div>
       
       {/* Show warning if few drivers or sample data detected */}
-      {(isSuspectedSampleData || hasTooFewDrivers || needsExtractionUpdate) && (
+      {(isSuspectedSampleData || hasTooFewDrivers || needsExtractionUpdate || !isRealData) && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Problem mit Fahrerdaten</AlertTitle>
@@ -68,7 +74,9 @@ const DriverKPIs: React.FC<DriverKPIsProps> = ({
                 ? "Es wurden keine Fahrer in der PDF gefunden." 
                 : hasTooFewDrivers 
                   ? `Es wurden nur ${driverKPIs.length} Fahrer gefunden, obwohl die PDF wahrscheinlich mehr enthält.`
-                  : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
+                  : !isRealData
+                    ? "Die angezeigten Daten sind Beispieldaten, nicht aus der PDF extrahiert."
+                    : "Die extrahierten Fahrerdaten könnten unvollständig sein."}
             </p>
             
             {needsExtractionUpdate && (

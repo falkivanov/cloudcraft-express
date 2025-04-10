@@ -19,6 +19,9 @@ export class ScorecardProcessor extends BaseFileProcessor {
     console.info(`Processing scorecard file: ${this.file.name}`);
     
     try {
+      // Clear existing data before processing new file
+      this.clearExistingScorecardData();
+      
       // Read file as ArrayBuffer for PDF.js processing
       const arrayBuffer = await this.file.arrayBuffer();
       
@@ -45,6 +48,25 @@ export class ScorecardProcessor extends BaseFileProcessor {
           if (!scorecardData.driverKPIs || scorecardData.driverKPIs.length <= 1) {
             scorecardData.isSampleData = true;
           }
+        }
+        
+        // Check if the data looks like real extraction or is potentially sample data
+        if (this.isSuspectedSampleData(scorecardData)) {
+          console.warn("Data appears to be sample data based on driver IDs or patterns");
+          scorecardData.isSampleData = true;
+          
+          if (showToasts) {
+            toast.warning(
+              "Mögliche Beispieldaten",
+              {
+                description: "Die extrahierten Daten könnten Beispieldaten sein. Die PDF-Struktur wurde möglicherweise nicht korrekt erkannt.",
+              }
+            );
+          }
+        } else {
+          // Mark as real data
+          scorecardData.isSampleData = false;
+          console.log("Data appears to be genuinely extracted from PDF");
         }
         
         // If categorizedKPIs is missing, create it from the companyKPIs
@@ -90,7 +112,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
           toast.success(
             `Scorecard für KW ${scorecardData.week}/${scorecardData.year} verarbeitet`,
             {
-              description: `${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden extrahiert.`,
+              description: `${scorecardData.companyKPIs.length} KPIs und ${scorecardData.driverKPIs.length} Fahrer wurden extrahiert.${scorecardData.isSampleData ? " (Beispieldaten)" : ""}`,
             }
           );
         }
@@ -127,6 +149,36 @@ export class ScorecardProcessor extends BaseFileProcessor {
     } finally {
       this.setProcessing(false);
     }
+  }
+  
+  /**
+   * Check if data appears to be sample data based on patterns
+   */
+  private isSuspectedSampleData(data: any): boolean {
+    // No drivers or very few drivers
+    if (!data.driverKPIs || data.driverKPIs.length < 3) {
+      return true;
+    }
+    
+    // Check for known sample driver IDs
+    const hasSampleIds = data.driverKPIs.some((driver: any) => 
+      ["TR-001", "TR-002", "TR-003", "SAMPLE"].some(id => 
+        driver.name.includes(id)
+      )
+    );
+    
+    if (hasSampleIds) {
+      return true;
+    }
+    
+    // Check for unusually perfect metrics (often a sign of sample data)
+    const hasTooManyPerfectMetrics = data.driverKPIs.filter((driver: any) => 
+      driver.metrics && driver.metrics.some((metric: any) => 
+        metric.value === 100 && ["DCR", "POD", "CC", "DEX"].includes(metric.name)
+      )
+    ).length > data.driverKPIs.length * 0.7; // If >70% have perfect metrics
+    
+    return hasTooManyPerfectMetrics;
   }
   
   /**

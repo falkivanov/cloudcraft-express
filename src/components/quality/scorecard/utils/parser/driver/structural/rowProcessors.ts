@@ -87,69 +87,76 @@ export function processDataRows(rows: any[][], headerRowIndex: number, headerInd
 
 /**
  * Helper function to process a driver with known ID
- * Verbesserte Version: Sammelt alle numerischen Werte nach der ID von links nach rechts
  */
 function processDriverWithId(driverId: string, row: any[], headerIndexes: Record<string, number>, drivers: DriverKPI[]): void {
-  // Finde die X-Koordinate der Fahrer-ID
+  // First find the cell that contains the driver ID to get its position
   const driverIdCell = row.find(cell => cell.str?.trim() === driverId);
   const driverIdX = driverIdCell ? driverIdCell.x : 0;
   
-  // Sammle alle numerischen Werte, die rechts von der ID liegen
-  const numericValues: {value: number, x: number}[] = [];
+  console.log(`Driver ${driverId} ID found at x-position: ${driverIdX}`);
+  
+  // Collect all numeric values that are to the right of the driver ID
+  // and store them with their x-coordinates
+  const valueItems: {str: string, value: number, x: number}[] = [];
   
   for (const cell of row) {
-    // Nur Zellen berücksichtigen, die rechts von der ID sind
-    if (cell.x > driverIdX) {
-      const valueStr = (cell?.str || "").trim();
-      if (valueStr && (isNumeric(valueStr) || valueStr === "-")) {
-        const value = valueStr === "-" ? 0 : extractNumeric(valueStr);
-        numericValues.push({
-          value,
+    if (cell.x > driverIdX && cell.str) {
+      const valueStr = cell.str.trim();
+      
+      // Consider both numeric values and dash symbols
+      if (valueStr === "-") {
+        valueItems.push({
+          str: valueStr,
+          value: 0,
+          x: cell.x
+        });
+      } else if (isNumeric(valueStr)) {
+        valueItems.push({
+          str: valueStr,
+          value: extractNumeric(valueStr),
           x: cell.x
         });
       }
     }
   }
   
-  // Sortiere numerische Werte von links nach rechts basierend auf x-Koordinate
-  numericValues.sort((a, b) => a.x - b.x);
+  // Sort the values from left to right based on their x-coordinate
+  valueItems.sort((a, b) => a.x - b.x);
   
-  console.log(`Driver ${driverId} has ${numericValues.length} numeric values`);
+  console.log(`Driver ${driverId} has ${valueItems.length} values: ${valueItems.map(v => v.str).join(', ')}`);
   
-  // Metriken basierend auf der Position erstellen (von links nach rechts)
+  // Create metrics based on the position of values (left to right)
   const metrics = [];
   const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
   const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
   const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Maximal so viele Metriken wie verfügbare Werte oder Metriknamen
-  const maxMetrics = Math.min(numericValues.length, metricNames.length);
-  
-  for (let i = 0; i < maxMetrics; i++) {
-    const value = numericValues[i].value;
+  // Use the values we found, up to the number of metric names we have
+  for (let i = 0; i < Math.min(valueItems.length, metricNames.length); i++) {
+    const item = valueItems[i];
     
     metrics.push({
       name: metricNames[i],
-      value: value,
+      value: item.value,
       target: metricTargets[i],
       unit: metricUnits[i],
-      status: determineStatus(metricNames[i], value)
+      status: item.str === "-" ? "none" : determineStatus(metricNames[i], item.value)
     });
   }
   
-  // Nur Fahrer hinzufügen, wenn wenigstens einige Metriken gefunden wurden
+  // Only add the driver if we found some metrics
   if (metrics.length > 0) {
     drivers.push({
       name: driverId,
       status: "active",
       metrics
     });
+    console.log(`Added driver ${driverId} with ${metrics.length} metrics`);
   }
 }
 
 /**
  * Process a single driver row (for page 4)
- * Verbesserte Version: Verwendung der X-Koordinate für zuverlässigere Reihenfolge
  */
 export function processDriverRow(row: any[]): DriverKPI | null {
   // First item should be driver ID
@@ -160,23 +167,27 @@ export function processDriverRow(row: any[]): DriverKPI | null {
   
   console.log(`Processing standalone driver row: ${driverId} with ${row.length} columns`);
   
-  // Finde die X-Koordinate der Fahrer-ID
+  // Find the cell with the driver ID
   const driverIdCell = row.find(cell => cell.str?.trim() === driverId);
   const driverIdX = driverIdCell ? driverIdCell.x : 0;
   
-  // Sammle alle numerischen Werte, die rechts von der ID liegen
-  const numericValues: {value: number, x: number}[] = [];
+  // Collect all values to the right of the driver ID
+  const valueItems: {str: string, value: number, x: number}[] = [];
   
   for (const cell of row) {
-    if (cell.x > driverIdX) {
-      const valueStr = (cell?.str || "").trim();
+    if (cell.x > driverIdX && cell.str) {
+      const valueStr = cell.str.trim();
+      
+      // Consider both numeric values and dash symbols
       if (valueStr === "-") {
-        numericValues.push({
+        valueItems.push({
+          str: valueStr,
           value: 0,
           x: cell.x
         });
       } else if (isNumeric(valueStr)) {
-        numericValues.push({
+        valueItems.push({
+          str: valueStr,
           value: extractNumeric(valueStr),
           x: cell.x
         });
@@ -184,29 +195,29 @@ export function processDriverRow(row: any[]): DriverKPI | null {
     }
   }
   
-  // Sortiere nach x-Koordinate (von links nach rechts)
-  numericValues.sort((a, b) => a.x - b.x);
+  // Sort values by x-coordinate (left to right)
+  valueItems.sort((a, b) => a.x - b.x);
   
-  if (numericValues.length < 3) return null;
+  console.log(`Driver row ${driverId} has ${valueItems.length} values: ${valueItems.map(v => v.str).join(', ')}`);
   
-  // Map the numeric values to metrics in the expected order
+  if (valueItems.length < 3) return null;
+  
+  // Map the values to metrics in the expected order (left to right)
   const metrics = [];
   const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
   const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
   const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
   
-  // Nur so viele Metriken wie wir Werte oder Namen haben
-  const maxMetrics = Math.min(numericValues.length, metricNames.length);
-  
-  for (let i = 0; i < maxMetrics; i++) {
-    const value = numericValues[i].value;
+  // Use the values we found, up to the number of metric names we have
+  for (let i = 0; i < Math.min(valueItems.length, metricNames.length); i++) {
+    const item = valueItems[i];
     
     metrics.push({
       name: metricNames[i],
-      value: value,
+      value: item.value,
       target: metricTargets[i],
       unit: metricUnits[i],
-      status: determineStatus(metricNames[i], value)
+      status: item.str === "-" ? "none" : determineStatus(metricNames[i], item.value)
     });
   }
   
