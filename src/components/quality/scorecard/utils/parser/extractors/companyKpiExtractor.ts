@@ -1,3 +1,4 @@
+
 import { determineStatus, getDefaultTargetForKPI, KPIStatus } from '../../helpers/statusHelper';
 import { extractNumericValues } from './valueExtractor';
 
@@ -40,12 +41,24 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     { name: "Next Day Capacity Reliability", pattern: /Next\s+Day\s+Capacity/i, unit: "%", category: "capacity" },
   ];
   
+  // Debug flag for detailed logging
+  const DEBUG_EXTRACTION = true;
+  
   // Extracted KPIs will be stored here
   const extractedKPIs = [];
   
   // Check each page for KPIs
   for (const pageNum in pageData) {
     const page = pageData[pageNum];
+    if (!page || !page.items || page.items.length === 0) {
+      if (DEBUG_EXTRACTION) console.log(`Page ${pageNum} has no items to process`);
+      continue;
+    }
+    
+    if (DEBUG_EXTRACTION) console.log(`Processing page ${pageNum} with ${page.items.length} items for company KPIs`);
+    
+    // Main content typically appears on pages 2 and 3
+    if (parseInt(pageNum) > 5) continue; // Skip non-relevant pages
     
     // Check each KPI pattern
     for (const { name, pattern, unit, category, specialStatusOnly } of kpiPatterns) {
@@ -54,10 +67,16 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         pattern.test(item.str)
       );
       
+      if (DEBUG_EXTRACTION && matchingItems.length > 0) {
+        console.log(`Found ${matchingItems.length} matches for KPI pattern: ${name}`);
+      }
+      
       for (const item of matchingItems) {
+        if (DEBUG_EXTRACTION) console.log(`Processing KPI match: ${name} (${item.str})`);
+        
         // Special case for BOC which only has status and no value
         if (specialStatusOnly && name === "Breach of Contract (BOC)") {
-          console.log("Processing special BOC case that only uses status...");
+          if (DEBUG_EXTRACTION) console.log("Processing special BOC case that only uses status...");
           
           // Look for items near this item
           const nearbyItems = page.items.filter((otherItem: any) => {
@@ -119,43 +138,74 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               status: bocStatus,
               category: category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added BOC KPI with status: ${bocStatus}`);
           }
           
           // Skip the regular value extraction for BOC
           continue;
         }
         
-        // Look for numeric values near this item
+        // Enhanced KPI extraction with wider search area
+        const MAX_X_DISTANCE = 300; // Maximum horizontal distance to look for values
+        const MAX_Y_DISTANCE = 40;  // Maximum vertical distance to look for related values
+        
+        // Look for numeric values near this item with wider range
         const nearbyItems = page.items.filter((otherItem: any) => {
-          // Check if item is on the same row or the next row
-          const sameRow = Math.abs(item.y - otherItem.y) < 5;
-          const nextRow = Math.abs(item.y - otherItem.y) < 20 && item.y > otherItem.y;
-          // Check if the item is to the right of our KPI text
-          const isRightSide = otherItem.x > item.x;
-          return (sameRow || nextRow) && isRightSide;
+          // Check if item is within reasonable distance
+          const closeHorizontally = otherItem.x > item.x && (otherItem.x - item.x) < MAX_X_DISTANCE;
+          const closeVertically = Math.abs(otherItem.y - item.y) < MAX_Y_DISTANCE;
+          return closeHorizontally && closeVertically;
         });
         
-        // Look for percentage or numeric values
-        const valueMatches = nearbyItems
-          .map((item: any) => item.str.match(/(\d+(?:\.\d+)?)/))
-          .filter(Boolean)
-          .map(match => parseFloat(match[1]));
+        if (DEBUG_EXTRACTION) console.log(`Found ${nearbyItems.length} nearby items for ${name}`);
         
-        if (valueMatches.length > 0) {
-          // Use the first value found
-          const value = valueMatches[0];
-          const targetIndex = unit === "DPMO" ? 1 : 0; // For DPMO, target might be the second value
-          const target = valueMatches.length > 1 ? valueMatches[targetIndex] : 
-                         unit === "DPMO" ? 3000 : 95; // Default targets
+        // Look for percentage or numeric values with enhanced pattern matching
+        // Sort nearby items left to right, top to bottom for cleaner extraction
+        const sortedNearbyItems = nearbyItems.sort((a, b) => {
+          if (Math.abs(a.y - b.y) < 5) return a.x - b.x; // Same row, sort by x
+          return a.y - b.y; // Different rows, sort by y
+        });
         
-          // NEW: Look for status indicators (Poor, Fair, Great, Fantastic)
-          let extractedStatus: KPIStatus = "fair"; // Default
+        // Enhanced value extraction by looking for patterns
+        let foundValue = false;
+        let value = 0;
+        let extractedStatus: KPIStatus = "fair"; // Default
         
-          for (const nearbyItem of nearbyItems) {
-            // Look for status indicators after a pipe character or standalone
+        for (const nearbyItem of sortedNearbyItems) {
+          // Look for values with status indicators
+          const combinedMatch = nearbyItem.str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance)/i);
+          if (combinedMatch) {
+            value = parseFloat(combinedMatch[1]);
+            const statusText = combinedMatch[2].toLowerCase();
+            
+            if (statusText === "poor") extractedStatus = "poor";
+            else if (statusText === "fair") extractedStatus = "fair";
+            else if (statusText === "great") extractedStatus = "great";
+            else if (statusText === "fantastic") extractedStatus = "fantastic";
+            else if (statusText === "in compliance") extractedStatus = "in compliance";
+            else if (statusText === "not in compliance") extractedStatus = "not in compliance";
+            
+            foundValue = true;
+            if (DEBUG_EXTRACTION) console.log(`Found combined value+status for ${name}: ${value}, status: ${extractedStatus}`);
+            break;
+          }
+          
+          // Look for just numeric values with percentage signs
+          const valueMatch = nearbyItem.str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?/i);
+          if (valueMatch && !foundValue) {
+            value = parseFloat(valueMatch[1]);
+            foundValue = true;
+            if (DEBUG_EXTRACTION) console.log(`Found numeric value for ${name}: ${value}`);
+            // Continue looking for status
+          }
+          
+          // Look for status indicators separately
+          if (foundValue) {
             const statusMatch = nearbyItem.str.match(/(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance)/i);
             if (statusMatch) {
               const statusText = statusMatch[1].toLowerCase();
+              
               if (statusText === "poor") extractedStatus = "poor";
               else if (statusText === "fair") extractedStatus = "fair";
               else if (statusText === "great") extractedStatus = "great";
@@ -163,42 +213,40 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               else if (statusText === "in compliance") extractedStatus = "in compliance";
               else if (statusText === "not in compliance") extractedStatus = "not in compliance";
               
-              console.log(`Found status "${extractedStatus}" for KPI "${name}"`);
+              if (DEBUG_EXTRACTION) console.log(`Found status for ${name}: ${extractedStatus}`);
               break;
             }
           }
+        }
+        
+        if (foundValue) {
+          let calculatedStatus: KPIStatus;
           
-          // Also check for combined value and status in one item (e.g., "95% | Fantastic")
-          for (const nearbyItem of nearbyItems) {
-            const combinedMatch = nearbyItem.str.match(/(\d+(?:\.\d+)?)\s*(?:%|DPMO)?\s*(?:\||\s+)\s*(poor|fair|great|fantastic|in compliance|not in compliance)/i);
-            if (combinedMatch) {
-              const statusText = combinedMatch[2].toLowerCase();
-              if (statusText === "poor") extractedStatus = "poor";
-              else if (statusText === "fair") extractedStatus = "fair";
-              else if (statusText === "great") extractedStatus = "great";
-              else if (statusText === "fantastic") extractedStatus = "fantastic";
-              else if (statusText === "in compliance") extractedStatus = "in compliance";
-              else if (statusText === "not in compliance") extractedStatus = "not in compliance";
-              
-              console.log(`Found combined value and status "${extractedStatus}" for KPI "${name}"`);
-              break;
-            }
+          // If no explicit status was found, calculate it based on value
+          if (extractedStatus === "fair") {
+            calculatedStatus = determineStatus(name, value);
+          } else {
+            calculatedStatus = extractedStatus;
           }
           
           // Check if we already have this KPI to avoid duplicates
           if (!extractedKPIs.some(kpi => kpi.name === name)) {
+            const targetValue = getDefaultTargetForKPI(name);
+            
             extractedKPIs.push({
               name,
               value,
-              target,
+              target: targetValue,
               unit,
               trend: "neutral" as const,
-              status: extractedStatus, // Use extracted status instead of determining by value
+              status: calculatedStatus,
               category: category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added KPI ${name} with value ${value}, status: ${calculatedStatus}`);
           }
           
-          // Break after finding the first valid value
+          // Break after finding a valid value
           break;
         }
       }
@@ -238,6 +286,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               status: extractedStatus,
               category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added KPI from row text with status: ${knownKpi.name} = ${value}%, status: ${extractedStatus}`);
           }
           continue; // Skip regular percentage matching if we found one with status
         }
@@ -264,6 +314,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               status: determineStatus(knownKpi.name, value),
               category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added KPI from row text: ${knownKpi.name} = ${value}%`);
           }
         }
         
@@ -296,6 +348,8 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               status: extractedStatus,
               category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added DPMO KPI from row text with status: ${knownKpi.name} = ${value}, status: ${extractedStatus}`);
           }
           continue; // Skip regular DPMO matching if we found one with status
         }
@@ -322,10 +376,21 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
               status: determineStatus(knownKpi.name, value),
               category: knownKpi.category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
             });
+            
+            if (DEBUG_EXTRACTION) console.log(`Added DPMO KPI from row text: ${knownKpi.name} = ${value}`);
           }
         }
       }
     }
+  }
+  
+  // Log summarized extraction results
+  console.log(`Extracted ${extractedKPIs.length} company KPIs from PDF structure`);
+  if (DEBUG_EXTRACTION && extractedKPIs.length > 0) {
+    console.log("Extracted KPIs summary:");
+    extractedKPIs.forEach(kpi => {
+      console.log(`  - ${kpi.name}: ${kpi.value}${kpi.unit} (${kpi.status})`);
+    });
   }
   
   // Extract overall status and score
@@ -357,6 +422,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
   
   // If we didn't find any KPIs, return a default set
   if (extractedKPIs.length === 0) {
+    console.warn("No company KPIs extracted, returning default set");
     return [
       {
         name: "Delivery Completion Rate (DCR)",

@@ -69,6 +69,8 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
         .map(v => v === "-" ? "0" : v)
         .map(v => parseFloat(v.replace('%', '')));
       
+      console.log(`Found ${values.length} values for driver ${driverId}: ${values.join(', ')}`);
+      
       // We need at least 4 metrics for a valid driver
       if (values.length >= 4) {
         // Handle values based on table format
@@ -101,11 +103,12 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
         
         // Handle LoR DPMO if present
         if (hasLoRColumn) {
+          console.log(`Skipping LoR DPMO column for driver ${driverId}`);
           // LoR DPMO is present but we don't store it as a metric
           currentIndex++; // Skip the LoR DPMO value
         }
         
-        // Add remaining standard metrics
+        // Add remaining standard metrics if available in data
         if (currentIndex < values.length) {
           metrics.push({
             name: "POD",
@@ -218,10 +221,26 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
   const lorPosition = hasLoRColumn ? headerLine.indexOf("lor dpmo") : -1;
   
   // Find positions of other metrics
-  const podPosition = headerLine.indexOf("pod");
-  const ccPosition = headerLine.indexOf("cc");
-  const cePosition = headerLine.indexOf("ce");
-  const dexPosition = headerLine.indexOf("dex");
+  // If we have LoR column, we use lorPosition as the start position for POD
+  const podPosition = hasLoRColumn ? 
+    headerLine.indexOf("pod", lorPosition) : 
+    headerLine.indexOf("pod", dnrPosition);
+    
+  const ccPosition = headerLine.indexOf("cc", podPosition);
+  const cePosition = headerLine.indexOf("ce", ccPosition);
+  const dexPosition = headerLine.indexOf("dex", cePosition);
+  
+  console.log(`Fixed width table: Column positions found:
+    ID: ${idPosition}
+    Delivered: ${deliveredPosition}
+    DCR: ${dcrPosition}
+    DNR DPMO: ${dnrPosition}
+    LOR DPMO: ${lorPosition}
+    POD: ${podPosition}
+    CC: ${ccPosition}
+    CE: ${cePosition}
+    DEX: ${dexPosition}
+  `);
   
   // Process each line after the header
   for (let i = headerLineIndex + 1; i < lines.length; i++) {
@@ -261,8 +280,11 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
       const dcr = extractMetric(dcrPosition, dnrPosition);
       const dnrDpmo = extractMetric(dnrPosition, hasLoRColumn ? lorPosition : podPosition);
       
-      // POD position depends on whether we have LoR column
-      const effectivePodPosition = hasLoRColumn ? extractMetric(podPosition, ccPosition) : extractMetric(podPosition > 0 ? podPosition : lorPosition, ccPosition);
+      // Skip LoR DPMO if present
+      const effectivePodStart = hasLoRColumn ? lorPosition : dnrPosition;
+      
+      // Get POD position
+      const pod = extractMetric(podPosition, ccPosition);
       
       // Get remaining metrics (positions remain the same)
       const cc = ccPosition > 0 ? extractMetric(ccPosition, cePosition > 0 ? cePosition : undefined) : null;
@@ -302,12 +324,12 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
       
       // Skip LoR DPMO column if present (we don't store it as a metric)
       
-      if (effectivePodPosition !== null) {
+      if (pod !== null) {
         metrics.push({
           name: "POD",
-          value: effectivePodPosition,
+          value: pod,
           target: 98,
-          status: determineMetricStatus("POD", effectivePodPosition)
+          status: determineMetricStatus("POD", pod)
         });
       }
       
