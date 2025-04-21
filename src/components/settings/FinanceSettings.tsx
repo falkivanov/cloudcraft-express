@@ -120,10 +120,15 @@ const FinanceSettings: React.FC = () => {
     toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
   };
 
-  const handleDeleteHistoryItem = (createdAt: string) => {
+  const handleDeleteHistoryItem = (e: React.MouseEvent, createdAt: string) => {
+    // Stop the event from propagating to the accordion trigger
+    e.stopPropagation();
+    e.preventDefault();
+    
     const updatedHistory = historyItems.filter((item) => item.createdAt !== createdAt);
     setHistoryItems(updatedHistory);
     localStorage.setItem(FINANCE_HISTORY_KEY, JSON.stringify(updatedHistory));
+    setOpenedItem(null); // Close the accordion after deletion
     toast({ title: "Eintrag gelöscht", description: "Finanzeinstellungs-Eintrag wurde entfernt." });
   };
 
@@ -272,7 +277,7 @@ const FinanceSettings: React.FC = () => {
               />
             </div>
 
-            {/* Neu: "Erstellt am" nur anzeigen, wenn das Accordion-Item geöffnet ist */}
+            {/* Erstellt am nur anzeigen, wenn das Accordion-Item geöffnet ist */}
             {openedItem && openedItem === `item-${historyItems.findIndex(h => h.createdAt === currentSettings?.createdAt)}` && currentSettings && (
               <div className="text-sm pt-2 pl-[calc(180px+1rem)] text-gray-500 space-x-1">
                 <span>Erstellt am</span>
@@ -326,7 +331,7 @@ const FinanceSettings: React.FC = () => {
                           aria-label="Eintrag löschen"
                           className="ml-3 p-2 rounded hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
                           title="Eintrag löschen"
-                          onClick={() => handleDeleteHistoryItem(item.createdAt)}
+                          onClick={(e) => handleDeleteHistoryItem(e, item.createdAt)}
                         >
                           <Trash className="h-5 w-5" />
                         </button>
