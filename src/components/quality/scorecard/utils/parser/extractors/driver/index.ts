@@ -385,52 +385,5 @@ function tryFlexiblePreKW14Pattern(text: string, drivers: DriverKPI[]): void {
   }
 }
 
-/**
- * Determine status for a metric
- */
-function determineMetricStatus(metricName: string, value: number): "fantastic" | "great" | "fair" | "poor" | "none" {
-  // Values that couldn't be parsed might be NaN
-  if (isNaN(value)) return "none";
-  
-  switch (metricName) {
-    case "Delivered":
-      return value > 1000 ? "fantastic" : value > 800 ? "great" : value > 500 ? "fair" : "poor";
-    
-    case "DCR":
-      if (value >= 99) return "fantastic";
-      if (value >= 98.5) return "great";
-      if (value >= 95) return "fair";
-      return "poor";
-    
-    case "DNR DPMO":
-    case "LoR DPMO":
-      if (value <= 1000) return "fantastic";
-      if (value <= 1500) return "great";
-      if (value <= 2500) return "fair";
-      return "poor";
-    
-    case "POD":
-      if (value >= 99) return "fantastic";
-      if (value >= 98) return "great";
-      if (value >= 95) return "fair";
-      return "poor";
-    
-    case "CC":
-      if (value >= 97) return "fantastic";
-      if (value >= 95) return "great";
-      if (value >= 90) return "fair";
-      return "poor";
-    
-    case "CE":
-      return value === 0 ? "fantastic" : value <= 1 ? "great" : value <= 3 ? "fair" : "poor";
-    
-    case "DEX":
-      if (value >= 97) return "fantastic";
-      if (value >= 95) return "great";
-      if (value >= 90) return "fair";
-      return "poor";
-    
-    default:
-      return "fair";
-  }
-}
+// Use the imported determineMetricStatus function from utils/metricStatus.ts
+// Removed the local function definition that was causing the conflict
