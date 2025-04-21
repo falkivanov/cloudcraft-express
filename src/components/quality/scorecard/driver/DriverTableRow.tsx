@@ -31,9 +31,9 @@ const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver, metricColumns }
     if (!metric) return "";
     
     switch (metric.status) {
-      case "fantastic": return "text-green-600 font-bold";
-      case "great": return "text-green-500";
-      case "fair": return "text-amber-500";
+      case "fantastic": return "text-blue-600 font-bold";
+      case "great": return "text-orange-500";
+      case "fair": return "text-orange-500";
       case "poor": return "text-red-500";
       default: return "";
     }
