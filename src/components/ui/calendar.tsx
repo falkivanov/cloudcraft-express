@@ -9,22 +9,61 @@ import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
+// Hilfswerte für Jahr/Monat-Auswahl
+const YEARS = Array.from({ length: 31 }, (_, i) => 2015 + i)
+const MONTHS = [
+  "Januar", "Februar", "März", "April", "Mai", "Juni",
+  "Juli", "August", "September", "Oktober", "November", "Dezember"
+]
+
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  // Aktuellen Monat/Jahr fürs Dropdown merken
+  const [viewMonth, setViewMonth] = React.useState(() => {
+    // Startmonat initial von props übernehmen falls gegeben
+    if (props.month) return props.month
+    if (props.selected && props.selected instanceof Date) return props.selected
+    return new Date()
+  })
+
+  React.useEffect(() => {
+    if (props.month) setViewMonth(props.month)
+  }, [props.month])
+
+  // Handler fürs Wechseln per Dropdown
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMonth = parseInt(e.target.value, 10)
+    setViewMonth((prev) => {
+      const d = new Date(prev)
+      d.setMonth(newMonth)
+      return d
+    })
+  }
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = parseInt(e.target.value, 10)
+    setViewMonth((prev) => {
+      const d = new Date(prev)
+      d.setFullYear(newYear)
+      return d
+    })
+  }
+
   return (
     <DayPicker
       locale={de}
       showOutsideDays={showOutsideDays}
+      month={viewMonth}
+      onMonthChange={setViewMonth}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "text-sm font-medium flex gap-2 items-center",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -57,6 +96,33 @@ function Calendar({
       components={{
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
         IconRight: () => <ChevronRight className="h-4 w-4" />,
+        CaptionLabel: ({ displayMonth }) => (
+          <span className="flex gap-2 items-center">
+            {/* Monat Dropdown */}
+            <select
+              value={displayMonth.getMonth()}
+              onChange={handleMonthChange}
+              className="font-medium px-1 py-0 rounded bg-transparent outline-none border-none hover:bg-accent/60 cursor-pointer"
+              aria-label="Monat wählen"
+              style={{ minWidth: 80 }}
+            >
+              {MONTHS.map((m, idx) => (
+                <option key={m} value={idx}>{m}</option>
+              ))}
+            </select>
+            {/* Jahr Dropdown */}
+            <select
+              value={displayMonth.getFullYear()}
+              onChange={handleYearChange}
+              className="font-medium px-1 py-0 rounded bg-transparent outline-none border-none hover:bg-accent/60 cursor-pointer"
+              aria-label="Jahr wählen"
+            >
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </span>
+        ),
       }}
       {...props}
     />
