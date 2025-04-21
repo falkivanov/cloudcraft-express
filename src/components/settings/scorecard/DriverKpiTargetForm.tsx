@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,6 +35,7 @@ const STORAGE_KEY = "scorecard_driver_targets";
 
 const DriverKpiTargetForm: React.FC = () => {
   const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<DriverFormValues>({
     resolver: zodResolver(driverFormSchema),
@@ -70,6 +71,7 @@ const DriverKpiTargetForm: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(values.targets));
       toast({ title: "Fahrer KPI Zielwerte gespeichert", description: "Zielwerte erfolgreich aktualisiert." });
       window.dispatchEvent(new Event('scorecard_driver_targets_updated'));
+      setIsEditing(false);
     } catch (err) {
       toast({ title: "Fehler", description: "Zielwerte konnten nicht gespeichert werden.", variant: "destructive" });
     }
@@ -103,7 +105,14 @@ const DriverKpiTargetForm: React.FC = () => {
                   <FormItem>
                     <FormLabel className="sr-only">Gut Ziel</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} className="w-20" min={0} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        className="w-20" 
+                        min={0} 
+                        disabled={!isEditing}
+                        readOnly={!isEditing}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,23 +125,42 @@ const DriverKpiTargetForm: React.FC = () => {
                   <FormItem>
                     <FormLabel className="sr-only">Mindestens Ziel</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} className="w-20" min={0} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        className="w-20" 
+                        min={0} 
+                        disabled={!isEditing}
+                        readOnly={!isEditing}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex flex-col text-[10px] text-muted-foreground gap-0.5">
-                {/* Infozellen leer */}
-              </div>
+              <div className="flex flex-col text-[10px] text-muted-foreground gap-0.5" />
             </div>
           ))}
         </div>
 
-        <Button type="submit" className="w-full">Fahrer-Zielwerte speichern</Button>
+        {isEditing ? (
+          <Button type="submit" className="w-full">Fahrer-Zielwerte speichern</Button>
+        ) : (
+          <Button
+            type="button"
+            className="w-full"
+            onClick={e => {
+              e.preventDefault();
+              setIsEditing(true);
+            }}
+          >
+            Fahrer-Zielwerte anpassen
+          </Button>
+        )}
       </form>
     </Form>
   );
 };
 
 export default DriverKpiTargetForm;
+
