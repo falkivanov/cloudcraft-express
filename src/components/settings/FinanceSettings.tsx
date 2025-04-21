@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatDate } from "@/utils/dateUtils";
-import { Trash } from "lucide-react"; // Trash-Icon importieren
+import { Trash } from "lucide-react";
 
 const STORAGE_KEY = "finance_settings";
 const FINANCE_HISTORY_KEY = "finance_settings_history";
@@ -45,14 +44,13 @@ const FinanceSettings: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<FinanceSettings[]>([]);
   const [currentSettings, setCurrentSettings] = useState<FinanceSettings | null>(null);
-  
+  const [openedItem, setOpenedItem] = useState<string | null>(null);
+
   const form = useForm<Omit<FinanceSettings, "createdAt">>({
     defaultValues,
   });
 
-  // Load current settings and history from localStorage on mount
   useEffect(() => {
-    // Load current settings
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
       try {
@@ -72,7 +70,6 @@ const FinanceSettings: React.FC = () => {
       }
     }
 
-    // Load history
     loadHistory();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,7 +81,6 @@ const FinanceSettings: React.FC = () => {
       try {
         const parsedHistory = JSON.parse(historyData);
         if (Array.isArray(parsedHistory)) {
-          // Sort by validFrom date, newest first
           const sortedHistory = parsedHistory.sort((a, b) => {
             return new Date(b.validFrom || 0).getTime() - new Date(a.validFrom || 0).getTime();
           });
@@ -97,17 +93,14 @@ const FinanceSettings: React.FC = () => {
   };
 
   const onSubmit = (values: Omit<FinanceSettings, "createdAt">) => {
-    // Create new settings with timestamp
     const newSettings: FinanceSettings = {
       ...values,
       createdAt: new Date().toISOString(),
     };
 
-    // Save current settings
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
     setCurrentSettings(newSettings);
 
-    // Update history
     let history: FinanceSettings[] = [];
     try {
       const historyData = localStorage.getItem(FINANCE_HISTORY_KEY);
@@ -118,17 +111,14 @@ const FinanceSettings: React.FC = () => {
       console.error("Failed to parse history:", e);
     }
 
-    // Add new settings to history
     history.push(newSettings);
     localStorage.setItem(FINANCE_HISTORY_KEY, JSON.stringify(history));
-    
-    // Reload history
+
     loadHistory();
 
     toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
   };
 
-  // NEU: Eintrag aus Verlauf löschen
   const handleDeleteHistoryItem = (createdAt: string) => {
     const updatedHistory = historyItems.filter((item) => item.createdAt !== createdAt);
     setHistoryItems(updatedHistory);
@@ -136,8 +126,15 @@ const FinanceSettings: React.FC = () => {
     toast({ title: "Eintrag gelöscht", description: "Finanzeinstellungs-Eintrag wurde entfernt." });
   };
 
-  // Watch hasExpenses to control disabled state
   const hasExpenses = form.watch("hasExpenses");
+
+  const handleAccordionChange = (value: string) => {
+    if (openedItem === value) {
+      setOpenedItem(null);
+    } else {
+      setOpenedItem(value);
+    }
+  };
 
   return (
     <Card className="shadow">
@@ -290,7 +287,13 @@ const FinanceSettings: React.FC = () => {
         {showHistory && historyItems.length > 0 && (
           <div className="mt-8">
             <h3 className="text-lg font-semibold mb-3">Verlauf der Finanzeinstellungen</h3>
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion 
+              type="single" 
+              collapsible 
+              className="w-full"
+              value={openedItem || undefined}
+              onValueChange={handleAccordionChange}
+            >
               {historyItems.map((item, index) => (
                 <AccordionItem value={`item-${index}`} key={index}>
                   <div className="flex items-center justify-between w-full pr-2">
@@ -304,15 +307,17 @@ const FinanceSettings: React.FC = () => {
                         </span>
                       </div>
                     </AccordionTrigger>
-                    <button
-                      type="button"
-                      aria-label="Eintrag löschen"
-                      className="ml-2 p-2 rounded hover:bg-red-50 group"
-                      title="Eintrag löschen"
-                      onClick={() => handleDeleteHistoryItem(item.createdAt)}
-                    >
-                      <Trash className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform" />
-                    </button>
+                    {openedItem === `item-${index}` && (
+                      <button
+                        type="button"
+                        aria-label="Eintrag löschen"
+                        className="ml-2 p-2 rounded hover:bg-red-50 group"
+                        title="Eintrag löschen"
+                        onClick={() => handleDeleteHistoryItem(item.createdAt)}
+                      >
+                        <Trash className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform" />
+                      </button>
+                    )}
                   </div>
                   <AccordionContent className="px-3">
                     <div className="grid gap-2 text-sm">
@@ -343,4 +348,3 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
-
