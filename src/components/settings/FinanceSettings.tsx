@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -270,7 +271,15 @@ const FinanceSettings: React.FC = () => {
                 )}
               />
             </div>
-            
+
+            {/* Neu: "Erstellt am" nur anzeigen, wenn das Accordion-Item geöffnet ist */}
+            {openedItem && openedItem === `item-${historyItems.findIndex(h => h.createdAt === currentSettings?.createdAt)}` && currentSettings && (
+              <div className="text-sm pt-2 pl-[calc(180px+1rem)] text-gray-500 space-x-1">
+                <span>Erstellt am</span>
+                <span>{formatDate(currentSettings.createdAt)}</span>
+              </div>
+            )}
+
             <div className="pt-4 flex space-x-4">
               <Button type="submit" className="px-8">Speichern</Button>
               <Button 
@@ -310,12 +319,7 @@ const FinanceSettings: React.FC = () => {
                             Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-3 text-gray-500 text-sm whitespace-nowrap flex-shrink-0">
-                          <span className="text-gray-400">Erstellt am</span>
-                          <span>{formatDate(item.createdAt)}</span>
-                        </div>
                       </AccordionTrigger>
-
                       {isOpen && (
                         <button
                           type="button"
@@ -344,6 +348,13 @@ const FinanceSettings: React.FC = () => {
                             {item.hasExpenses === "yes" ? `${item.expenses} €` : "Keine"}
                           </span>
                         </div>
+                        {/* Erstelltdatum nur anzeigen, wenn Accordion-Item geöffnet */}
+                        {isOpen && (
+                          <div className="mt-1 text-sm text-gray-500 flex space-x-1 justify-end">
+                            <span>Erstellt am</span>
+                            <span>{formatDate(item.createdAt)}</span>
+                          </div>
+                        )}
                       </div>
                     </AccordionContent>
                   </AccordionItem>
