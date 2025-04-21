@@ -1,56 +1,59 @@
-import React from "react";
-import { TableCell, TableRow } from '@/components/ui/table';
-import { DriverKPI } from '../types';
+
+import React, { useEffect, useState } from "react";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { DriverKPI } from "../types";
+import MetricCell from "./MetricCell";
+import { loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
+import { Employee } from "@/types/employee";
 
 interface DriverTableRowProps {
   driver: DriverKPI;
-  metricColumns: string[];
 }
 
-const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver, metricColumns }) => {
-  // Hilfsfunktion, um einen Metrikwert formatiert zurückzugeben
-  const getFormattedMetricValue = (metricName: string) => {
-    const metric = driver.metrics.find(m => m.name === metricName);
-    
-    if (!metric) return "-";
-    if (metric.status === "none") return "-";
-    
-    // Formatiere den Wert basierend auf der Einheit
-    if (metric.unit === "%") {
-      return `${metric.value.toFixed(1)}%`;
-    } else if (metric.unit === "DPMO") {
-      return metric.value.toFixed(0);
-    } else {
-      return metric.value.toString();
-    }
-  };
+const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
+  const [displayName, setDisplayName] = useState<string>(driver.name);
   
-  // Hilfsfunktion, um die CSS-Klasse basierend auf dem Status zu bestimmen
-  const getStatusClass = (metricName: string) => {
-    const metric = driver.metrics.find(m => m.name === metricName);
-    if (!metric) return "";
-    
-    switch (metric.status) {
-      case "fantastic": return "text-blue-600 font-bold";
-      case "great": return "text-orange-500";
-      case "fair": return "text-orange-500";
-      case "poor": return "text-red-500";
-      default: return "";
-    }
-  };
-
-  return (
-    <TableRow>
-      <TableCell className="font-medium">{driver.name}</TableCell>
+  // Load employee data on component mount
+  useEffect(() => {
+    const loadEmployeeData = () => {
+      const employees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
+      if (!employees) return;
       
-      {/* Dynamisch generierte Zellen basierend auf den vorhandenen Metriken */}
-      {metricColumns.map(metricName => (
-        <TableCell 
-          key={metricName} 
-          className={`text-center ${getStatusClass(metricName)}`}
-        >
-          {getFormattedMetricValue(metricName)}
-        </TableCell>
+      // Try to find a matching employee by transporterId
+      const matchingEmployee = employees.find(
+        emp => emp.transporterId === driver.name
+      );
+      
+      if (matchingEmployee) {
+        setDisplayName(matchingEmployee.name);
+      }
+    };
+    
+    loadEmployeeData();
+    
+    // Listen for employee data changes
+    const handleEmployeesUpdated = () => {
+      loadEmployeeData();
+    };
+    
+    window.addEventListener('employees-updated', handleEmployeesUpdated);
+    
+    return () => {
+      window.removeEventListener('employees-updated', handleEmployeesUpdated);
+    };
+  }, [driver.name]);
+  
+  return (
+    <TableRow className="border-b border-gray-100 hover:bg-gray-50">
+      <TableCell className="py-2 px-3 text-sm font-medium">{displayName}</TableCell>
+      
+      {driver.metrics.map((metric) => (
+        <MetricCell 
+          key={metric.name} 
+          metricName={metric.name}
+          value={metric.value}
+          unit={metric.unit || ""}
+        />
       ))}
     </TableRow>
   );
