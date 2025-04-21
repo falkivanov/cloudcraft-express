@@ -15,11 +15,20 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Bundesland, bundeslandLabels } from "@/components/shifts/utils/planning/holidays/types";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarCheck } from "lucide-react";
 
 const STORAGE_KEY = "station_codes";
 
 type StationFormValues = {
-  stations: { code: string; bundesland: Bundesland }[];
+  stations: {
+    code: string;
+    bundesland: Bundesland;
+    startDate?: Date | null;
+    endDate?: Date | null;
+  }[];
 };
 
 const DEFAULT_BUNDESLAND: Bundesland = "saarland";
@@ -28,7 +37,7 @@ const StationSettings: React.FC = () => {
   const { toast } = useToast();
   const form = useForm<StationFormValues>({
     defaultValues: {
-      stations: [{ code: "", bundesland: DEFAULT_BUNDESLAND }],
+      stations: [{ code: "", bundesland: DEFAULT_BUNDESLAND, startDate: null, endDate: null }],
     },
   });
   const { fields, append, remove } = useFieldArray({
@@ -42,15 +51,41 @@ const StationSettings: React.FC = () => {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        if (Array.isArray(data) && data.every(item => typeof item.code === "string" && typeof item.bundesland === "string")) {
-          form.reset({ stations: data.length ? data : [{ code: "", bundesland: DEFAULT_BUNDESLAND }] });
-        } else if (Array.isArray(data) && data.every(item => typeof item.code === "string")) {
+        if (
+          Array.isArray(data) &&
+          data.every(
+            (item) =>
+              typeof item.code === "string" &&
+              typeof item.bundesland === "string"
+          )
+        ) {
+          // Kompatibel mit ggf. bereits bestehenden startDate/endDate
+          form.reset({
+            stations: data.length
+              ? data.map((s: any) => ({
+                  code: s.code,
+                  bundesland: s.bundesland,
+                  startDate: s.startDate ? new Date(s.startDate) : null,
+                  endDate: s.endDate ? new Date(s.endDate) : null,
+                }))
+              : [
+                  {
+                    code: "",
+                    bundesland: DEFAULT_BUNDESLAND,
+                    startDate: null,
+                    endDate: null,
+                  },
+                ],
+          });
+        } else if (Array.isArray(data) && data.every((item) => typeof item.code === "string")) {
           // Für altes Format: migrieren auf neues Format!
           form.reset({
             stations: data.map((s: any) => ({
               code: s.code,
-              bundesland: s.bundesland || DEFAULT_BUNDESLAND
-            }))
+              bundesland: s.bundesland || DEFAULT_BUNDESLAND,
+              startDate: null,
+              endDate: null,
+            })),
           });
         }
       } catch {}
@@ -60,12 +95,23 @@ const StationSettings: React.FC = () => {
 
   // Beim Speichern persistieren
   const onSubmit = (values: StationFormValues) => {
-    const filtered = values.stations.filter(s => s.code.trim());
+    const filtered = values.stations.filter((s) => s.code.trim());
     if (filtered.length === 0) {
       toast({ title: "Mindestens eine Station muss eingetragen werden.", variant: "destructive" });
       return;
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+
+    // Dates serialisieren (localStorage kann kein Date speichern)
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(
+        filtered.map((station) => ({
+          ...station,
+          startDate: station.startDate ? station.startDate.toISOString() : null,
+          endDate: station.endDate ? station.endDate.toISOString() : null,
+        }))
+      )
+    );
     toast({ title: "Stationscodes gespeichert", description: "Die Stationen wurden erfolgreich gespeichert." });
   };
 
@@ -74,7 +120,8 @@ const StationSettings: React.FC = () => {
       <CardHeader>
         <CardTitle>Stationsverwaltung</CardTitle>
         <CardDescription>
-          Fügen Sie hier die Codes Ihrer Station(en) hinzu und wählen Sie das zugehörige Bundesland. Sie können beliebig viele Stationen verwalten.
+          Fügen Sie hier die Codes Ihrer Station(en) hinzu und wählen Sie das zugehörige Bundesland. Sie können beliebig viele Stationen verwalten.<br />
+          Zusätzlich können Sie für jede Station das Start- und Enddatum festlegen.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -82,35 +129,30 @@ const StationSettings: React.FC = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               {fields.map((field, idx) => (
-                <div key={field.id} className="flex items-center gap-2">
+                <div key={field.id} className="flex items-center gap-2 flex-wrap">
+                  {/* Stationscode */}
                   <FormField
                     control={form.control}
                     name={`stations.${idx}.code`}
                     render={({ field }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="flex-1 min-w-[120px]">
                         <FormLabel className="sr-only">Stationscode</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Stationscode"
-                            autoComplete="off"
-                          />
+                          <Input {...field} placeholder="Stationscode" autoComplete="off" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  {/* Bundesland */}
                   <FormField
                     control={form.control}
                     name={`stations.${idx}.bundesland`}
                     render={({ field }) => (
-                      <FormItem className="min-w-[180px]">
+                      <FormItem className="min-w-[160px]">
                         <FormLabel className="sr-only">Bundesland</FormLabel>
                         <FormControl>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                          <Select value={field.value} onValueChange={field.onChange}>
                             <SelectTrigger>
                               <SelectValue placeholder="Bundesland wählen" />
                             </SelectTrigger>
@@ -127,6 +169,83 @@ const StationSettings: React.FC = () => {
                       </FormItem>
                     )}
                   />
+                  {/* Startdatum */}
+                  <FormField
+                    control={form.control}
+                    name={`stations.${idx}.startDate`}
+                    render={({ field }) => (
+                      <FormItem className="min-w-[150px]">
+                        <FormLabel className="sr-only">Startdatum</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={
+                                  "w-[130px] pl-3 text-left font-normal " +
+                                  (!field.value ? "text-muted-foreground" : "")
+                                }
+                              >
+                                {field.value
+                                  ? format(field.value, "dd.MM.yyyy")
+                                  : <span>Startdatum</span>}
+                                <CalendarCheck className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ?? undefined}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Enddatum */}
+                  <FormField
+                    control={form.control}
+                    name={`stations.${idx}.endDate`}
+                    render={({ field }) => (
+                      <FormItem className="min-w-[150px]">
+                        <FormLabel className="sr-only">Enddatum</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={
+                                  "w-[130px] pl-3 text-left font-normal " +
+                                  (!field.value ? "text-muted-foreground" : "")
+                                }
+                              >
+                                {field.value
+                                  ? format(field.value, "dd.MM.yyyy")
+                                  : <span>Enddatum</span>}
+                                <CalendarCheck className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ?? undefined}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Entfernen Button */}
                   <Button
                     type="button"
                     variant="destructive"
@@ -145,14 +264,23 @@ const StationSettings: React.FC = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => append({ code: "", bundesland: DEFAULT_BUNDESLAND })}
+                onClick={() =>
+                  append({
+                    code: "",
+                    bundesland: DEFAULT_BUNDESLAND,
+                    startDate: null,
+                    endDate: null,
+                  })
+                }
                 className="flex items-center gap-1"
                 aria-label="Station hinzufügen"
               >
                 <Plus className="w-4 h-4" />
                 Station hinzufügen
               </Button>
-              <Button type="submit" className="ml-auto">Speichern</Button>
+              <Button type="submit" className="ml-auto">
+                Speichern
+              </Button>
             </div>
           </form>
         </Form>
