@@ -304,17 +304,15 @@ const FinanceSettings: React.FC = () => {
                     className="border-b border-gray-200 last:border-b-0"
                   >
                     <div className="flex items-center justify-between w-full pr-2">
-                      <AccordionTrigger className="flex-1 hover:bg-gray-50 px-4 py-3 rounded flex items-center justify-between">
-                        <div className="flex space-x-2 items-baseline">
-                          <span className="font-semibold text-gray-900 whitespace-nowrap">
+                      <AccordionTrigger className="flex-1 px-4 py-3 rounded flex justify-between items-center hover:bg-gray-50">
+                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                          <span className="font-semibold text-gray-900">
                             Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
                           </span>
-                          <span className="text-gray-500 text-sm whitespace-nowrap leading-none">
-                            Erstellt am {formatDate(item.createdAt)}
-                          </span>
                         </div>
-                        <div>
-                          {/* Arrow icon from AccordionTrigger is already shown */}
+                        <div className="flex items-center space-x-3 text-gray-500 text-sm whitespace-nowrap flex-shrink-0">
+                          <span className="text-gray-400">Erstellt am</span>
+                          <span>{formatDate(item.createdAt)}</span>
                         </div>
                       </AccordionTrigger>
 
