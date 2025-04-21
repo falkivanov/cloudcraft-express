@@ -54,32 +54,39 @@ export const extractDriverKPIsFromText = (text: string) => {
       // Split the line by whitespace or tab characters to get the individual values
       const values = line.split(/\s+/).filter(val => val !== '');
       
+      console.log(`Analyzing line with ${values.length} values:`, values);
+      
       if (values.length >= 8) {  // We need at least 8 columns of data
-        const [id, deliveredStr, dcrStr, dnrDpmoStr, lorDpmoStr, podStr, ccStr, ceStr, cdfStr] = values;
+        const driverId = values[0];
         
-        // Parse the numeric values
-        const delivered = parseFloat(deliveredStr) || 0;
+        // Parse the numeric values based on the index
+        const delivered = parseFloat(values[1]) || 0;
         
-        let dcr = parseFloat(dcrStr.replace('%', '')) || 0;
+        let dcr = values[2] ? parseFloat(values[2].replace('%', '')) || 0 : 0;
         if (dcr > 100) dcr = dcr / 100;
         
-        const dnrDpmo = parseFloat(dnrDpmoStr) || 0;
-        const lorDpmo = parseFloat(lorDpmoStr) || 0;
+        const dnrDpmo = values[3] ? parseFloat(values[3]) || 0 : 0;
+        const lorDpmo = values[4] ? parseFloat(values[4]) || 0 : 0;
         
-        let pod = podStr === "-" ? 0 : parseFloat(podStr.replace('%', '')) || 0;
+        let pod = values[5] === "-" ? 0 : (values[5] ? parseFloat(values[5].replace('%', '')) || 0 : 0);
         if (pod > 100) pod = pod / 100;
         
-        let cc = ccStr === "-" ? 0 : parseFloat(ccStr.replace('%', '')) || 0;
+        let cc = values[6] === "-" ? 0 : (values[6] ? parseFloat(values[6].replace('%', '')) || 0 : 0);
         if (cc > 100) cc = cc / 100;
         
-        const ce = parseFloat(ceStr) || 0;
+        const ce = values[7] ? parseFloat(values[7]) || 0 : 0;
         
-        let cdf = cdfStr === "-" ? 0 : parseFloat(cdfStr.replace('%', '')) || 0;
+        let cdf = values.length > 8 ? 
+          (values[8] === "-" ? 0 : parseFloat(values[8].replace('%', '')) || 0) : 0;
         if (cdf > 100) cdf = cdf / 100;
         
+        console.log(`Processing driver ${driverId} with values:`, {
+          delivered, dcr, dnrDpmo, lorDpmo, pod, cc, ce, cdf
+        });
+        
         const driver = {
-          id,
-          name: id,
+          id: driverId,
+          name: driverId,
           metrics: [
             {
               name: "Delivered",
@@ -114,14 +121,14 @@ export const extractDriverKPIsFromText = (text: string) => {
               value: pod,
               target: 98,
               unit: "%",
-              status: podStr === "-" ? "none" : determineMetricStatus("POD", pod)
+              status: values[5] === "-" ? "none" : determineMetricStatus("POD", pod)
             },
             {
               name: "CC",
               value: cc,
               target: 95,
               unit: "%",
-              status: ccStr === "-" ? "none" : determineMetricStatus("CC", cc)
+              status: values[6] === "-" ? "none" : determineMetricStatus("CC", cc)
             },
             {
               name: "CE",
@@ -135,14 +142,14 @@ export const extractDriverKPIsFromText = (text: string) => {
               value: cdf,
               target: 95,
               unit: "%",
-              status: cdfStr === "-" ? "none" : determineMetricStatus("CDF", cdf)
+              status: values.length > 8 && values[8] === "-" ? "none" : determineMetricStatus("CDF", cdf)
             }
           ],
           status: "active"
         };
         
         drivers.push(driver);
-        console.log(`Processed driver: ${id}`);
+        console.log(`Processed driver: ${driverId}`);
       } else {
         console.log(`Line has insufficient data: ${values.length} values`, line);
       }
