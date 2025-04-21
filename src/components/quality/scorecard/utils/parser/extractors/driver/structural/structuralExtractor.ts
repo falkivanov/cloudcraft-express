@@ -143,7 +143,7 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
           if (row.length < 3) continue;
           
           for (const item of row) {
-            const text = item.str.trim();
+            const text = item.str ? item.str.trim() : "";
             // Look for driver IDs starting with 'A'
             if (/^A[A-Z0-9]{5,}/.test(text)) {
               console.log(`Found potential driver ID: ${text} on page ${pageNum}`);
@@ -154,19 +154,19 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
               const sortedItems = [...rowItems].sort((a, b) => a.x - b.x);
               
               // Extract all numeric values from this row
-              const numericalItems = sortedItems.filter(r => /\d+(?:\.\d+)?|\-/.test(r.str));
+              const numericalItems = sortedItems.filter(r => /\d+(?:\.\d+)?|\-/.test(r.str || ""));
               
               if (numericalItems.length >= 3) {
                 // This looks like a driver row with metrics
                 const metrics = [];
                 // Support both old and new column names
-                const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'LoR DPMO', 'POD', 'CC', 'CE', 'DEX', 'CDF'];
+                const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'LoR DPMO', 'POD', 'CC', 'CE', 'CDF', 'DEX'];
                 const metricTargets = [0, 98.5, 1500, 1500, 98, 95, 0, 95, 95];
                 const metricUnits = ["", "%", "DPMO", "DPMO", "%", "%", "", "%", "%"];
                 
                 // Extract up to 9 metrics (or as many as we have values for)
                 for (let i = 0; i < Math.min(numericalItems.length, metricNames.length); i++) {
-                  const valueStr = numericalItems[i].str.trim();
+                  const valueStr = numericalItems[i].str?.trim() || "";
                   
                   if (valueStr === "-") {
                     metrics.push({
@@ -261,7 +261,8 @@ function processTableData(table: any): DriverKPI[] {
       
       // Map header cells to their indices
       headerRow.forEach((cell: any, index: number) => {
-        const text = cell.str.trim();
+        const text = cell?.str?.trim() || "";
+        const textLower = text.toLowerCase();
         
         if (text.includes("Transporter") || text.includes("ID")) {
           headerIndexes["Transporter ID"] = index;
@@ -269,7 +270,7 @@ function processTableData(table: any): DriverKPI[] {
           headerIndexes["Delivered"] = index;
         } else if (text === "DCR") {
           headerIndexes["DCR"] = index;
-        } else if (text.includes("DNR") || (text.includes("DPMO") && text.includes("DNR"))) {
+        } else if (text.includes("DNR") || (text.includes("DPMO") && !text.includes("LoR"))) {
           headerIndexes["DNR DPMO"] = index;
         } else if (text.includes("LoR") || (text.includes("DPMO") && text.includes("LoR"))) {
           headerIndexes["LoR DPMO"] = index;
@@ -305,7 +306,7 @@ function processTableData(table: any): DriverKPI[] {
         headerIndexes["Transporter ID"] : 0;
       
       if (driverIdIndex < row.length) {
-        const driverId = row[driverIdIndex].str.trim();
+        const driverId = row[driverIdIndex]?.str ? row[driverIdIndex].str.trim() : "";
         
         // Skip if not a valid driver ID
         if (!driverId || !driverId.startsWith('A') || driverId.length < 6) continue;
@@ -327,7 +328,7 @@ function processTableData(table: any): DriverKPI[] {
         // Process each metric
         for (const metricDef of metricColumns) {
           if (metricDef.index !== undefined && metricDef.index < row.length) {
-            const valueStr = row[metricDef.index].str.trim();
+            const valueStr = row[metricDef.index]?.str ? row[metricDef.index].str.trim() : "";
             
             if (valueStr === "-") {
               metrics.push({
@@ -364,36 +365,6 @@ function processTableData(table: any): DriverKPI[] {
   }
   
   return drivers;
-}
-
-// Helper functions to get target and unit for metrics
-function getTargetForMetric(metricName: string): number {
-  switch (metricName) {
-    case "Delivered": return 0;
-    case "DCR": return 98.5;
-    case "DNR DPMO": return 1500;
-    case "LoR DPMO": return 1500;
-    case "POD": return 98;
-    case "CC": return 95;
-    case "CE": return 0;
-    case "DEX": return 95;
-    case "CDF": return 95;
-    default: return 0;
-  }
-}
-
-function getUnitForMetric(metricName: string): string {
-  switch (metricName) {
-    case "DCR": return "%";
-    case "DNR DPMO": return "DPMO";
-    case "LoR DPMO": return "DPMO";
-    case "POD": return "%";
-    case "CC": return "%";
-    case "CE": return "";
-    case "DEX": return "%";
-    case "CDF": return "%";
-    default: return "";
-  }
 }
 
 function determineMetricStatus(metricName: string, value: number): string {
