@@ -6,6 +6,10 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
 
 const STORAGE_KEY = "finance_settings";
 
@@ -13,12 +17,14 @@ type FinanceFormValues = {
   amzRate: string;
   driverWage: string;
   expenses: string;
+  hasExpenses: "yes" | "no";
 };
 
 const defaultValues: FinanceFormValues = {
   amzRate: "",
   driverWage: "",
   expenses: "",
+  hasExpenses: "no",
 };
 
 const FinanceSettings: React.FC = () => {
@@ -38,6 +44,7 @@ const FinanceSettings: React.FC = () => {
             amzRate: parsed.amzRate || "",
             driverWage: parsed.driverWage || "",
             expenses: parsed.expenses || "",
+            hasExpenses: parsed.hasExpenses === "yes" || parsed.hasExpenses === "no" ? parsed.hasExpenses : "no",
           });
         }
       } catch {}
@@ -49,6 +56,9 @@ const FinanceSettings: React.FC = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
   };
+
+  // Watch hasExpenses to control disabled state
+  const hasExpenses = form.watch("hasExpenses");
 
   return (
     <Card>
@@ -87,19 +97,51 @@ const FinanceSettings: React.FC = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="expenses"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-4">
-                  <FormLabel className="flex-1 min-w-[140px]">Spesen</FormLabel>
-                  <FormControl className="flex-1">
-                    <Input type="number" step="0.01" min="0" placeholder="z.B. 5.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Spesen-Feld mit Ja/Nein */}
+            <div>
+              <FormField
+                control={form.control}
+                name="expenses"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-4">
+                    <FormLabel className="flex-1 min-w-[140px]">Spesen</FormLabel>
+                    <FormControl className="flex-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="z.B. 5.00"
+                        {...field}
+                        disabled={hasExpenses !== "yes"}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hasExpenses"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-6 mt-2 ml-[148px]">
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-row gap-4"
+                    >
+                      <FormControl>
+                        <RadioGroupItem value="yes" id="expenses-yes" />
+                      </FormControl>
+                      <FormLabel htmlFor="expenses-yes" className="mr-4 cursor-pointer select-none">Ja</FormLabel>
+                      <FormControl>
+                        <RadioGroupItem value="no" id="expenses-no" />
+                      </FormControl>
+                      <FormLabel htmlFor="expenses-no" className="cursor-pointer select-none">Nein</FormLabel>
+                    </RadioGroup>
+                  </FormItem>
+                )}
+              />
+            </div>
             <Button type="submit" className="mt-2">Speichern</Button>
           </form>
         </Form>
@@ -109,4 +151,3 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
-
