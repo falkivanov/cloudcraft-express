@@ -14,7 +14,7 @@ const expectedMetricColumns = [
   { key: "Delivered", label: "Delivered" },
   { key: "DCR", label: "DCR" },
   { key: "DNR DPMO", label: "DNR DPMO" },
-  { key: "LoR DPMO", label: "LoR DPMO" },
+  // LoR DPMO entfernt, da es in KW12 nicht existiert
   { key: "POD", label: "POD" },
   { key: "CC", label: "CC" },
   { key: "CE", label: "CE" },
