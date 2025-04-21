@@ -9,7 +9,8 @@ interface DriverTableProps {
   drivers: DriverKPI[];
 }
 
-const metricColumns = [
+// Standard-Metriknamen, die wir erwarten könnten
+const expectedMetricColumns = [
   { key: "Delivered", label: "Delivered" },
   { key: "DCR", label: "DCR" },
   { key: "DNR DPMO", label: "DNR DPMO" },
@@ -20,7 +21,7 @@ const metricColumns = [
   { key: "CDF", label: "CDF" },
 ];
 
-type SortColumn = "name" | typeof metricColumns[number]["key"];
+type SortColumn = "name" | string;
 type SortDirection = "asc" | "desc";
 
 // Hilfsfunktion um den KPI Wert anhand Spaltennamen zu holen
@@ -33,6 +34,24 @@ function getMetricValue(driver: DriverKPI, metricName: string) {
 const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  
+  // Ermittle dynamisch die tatsächlich vorhandenen Metriken aus dem ersten Fahrer
+  const availableMetricColumns = useMemo(() => {
+    if (drivers.length === 0) return expectedMetricColumns;
+    
+    // Sammle alle eindeutigen Metriknamen aus allen Fahrern
+    const metricNames = new Set<string>();
+    drivers.forEach(driver => {
+      driver.metrics.forEach(metric => {
+        metricNames.add(metric.name);
+      });
+    });
+    
+    // Sortiere die Spalten gemäß der erwarteten Reihenfolge, falls vorhanden
+    return expectedMetricColumns
+      .filter(col => metricNames.has(col.key))
+      .map(col => ({ key: col.key, label: col.label }));
+  }, [drivers]);
 
   // Sortierfunktion für Fahrer
   const sortedDrivers = useMemo(() => {
@@ -89,21 +108,21 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
                 Fahrer
                 {renderSortIcon("name")}
               </TableHead>
-              {metricColumns.map(metric => (
+              {availableMetricColumns.map(metric => (
                 <TableHead
                   key={metric.key}
                   className="font-medium text-center cursor-pointer select-none"
-                  onClick={() => handleSort(metric.key as SortColumn)}
+                  onClick={() => handleSort(metric.key)}
                 >
                   {metric.label}
-                  {renderSortIcon(metric.key as SortColumn)}
+                  {renderSortIcon(metric.key)}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedDrivers.map((driver) => (
-              <DriverTableRow key={driver.name} driver={driver} />
+              <DriverTableRow key={driver.name} driver={driver} availableMetrics={availableMetricColumns.map(m => m.key)} />
             ))}
           </TableBody>
         </Table>

@@ -8,9 +8,10 @@ import { Employee } from "@/types/employee";
 
 interface DriverTableRowProps {
   driver: DriverKPI;
+  availableMetrics: string[]; // Liste der verfügbaren Metriken
 }
 
-const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
+const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver, availableMetrics }) => {
   const [displayName, setDisplayName] = useState<string>(driver.name);
   
   // Load employee data on component mount
@@ -47,14 +48,19 @@ const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver }) => {
     <TableRow className="border-b border-gray-100 hover:bg-gray-50">
       <TableCell className="py-2 px-3 text-sm font-medium">{displayName}</TableCell>
       
-      {driver.metrics.map((metric) => (
-        <MetricCell 
-          key={metric.name} 
-          metricName={metric.name}
-          value={metric.value}
-          unit={metric.unit || ""}
-        />
-      ))}
+      {availableMetrics.map((metricName) => {
+        // Finde die entsprechende Metrik für diese Spalte
+        const metric = driver.metrics.find(m => m.name === metricName);
+        
+        return (
+          <MetricCell 
+            key={metricName} 
+            metricName={metricName}
+            value={metric?.value ?? 0}
+            unit={metric?.unit || ""}
+          />
+        );
+      })}
     </TableRow>
   );
 };
