@@ -123,7 +123,7 @@ const FinanceSettings: React.FC = () => {
                 control={form.control}
                 name="hasExpenses"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-6 mt-2 ml-[148px]">
+                  <FormItem className="flex items-center gap-6 mt-2 ml-[140px] flex-1 min-w-[180px]">
                     <RadioGroup
                       value={field.value}
                       onValueChange={field.onChange}
@@ -151,3 +151,4 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
+
