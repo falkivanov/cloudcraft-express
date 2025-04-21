@@ -171,7 +171,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <Accordion type="multiple" className="w-full" defaultValue={KPI_CATEGORIES.map(c => c.label)}>
+        <Accordion type="multiple" className="w-full">
           {KPI_CATEGORIES.map(category => (
             <AccordionItem key={category.label} value={category.label} className="border rounded-lg mb-2">
               <AccordionTrigger className="px-4 py-2 font-semibold text-base bg-gray-50 hover:bg-gray-100 rounded-t-lg">
@@ -205,3 +205,4 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 };
 
 export default ScorecardTargetForm;
+
