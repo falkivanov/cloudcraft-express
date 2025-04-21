@@ -286,59 +286,71 @@ const FinanceSettings: React.FC = () => {
 
         {showHistory && historyItems.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-3">Verlauf der Finanzeinstellungen</h3>
+            <h3 className="text-lg font-semibold mb-6">Verlauf der Finanzeinstellungen</h3>
             <Accordion 
               type="single" 
               collapsible 
-              className="w-full"
+              className="w-full border border-gray-200 rounded-md"
               value={openedItem || undefined}
               onValueChange={handleAccordionChange}
             >
-              {historyItems.map((item, index) => (
-                <AccordionItem value={`item-${index}`} key={index}>
-                  <div className="flex items-center justify-between w-full pr-2">
-                    <AccordionTrigger className="hover:bg-gray-50 px-3 rounded flex-1">
-                      <div className="flex items-center justify-between w-full pr-4">
-                        <span className="font-medium">
-                          Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
-                        </span>
-                        <span className="text-muted-foreground text-sm">
-                          Erstellt am {formatDate(item.createdAt)}
-                        </span>
-                      </div>
-                    </AccordionTrigger>
-                    {openedItem === `item-${index}` && (
-                      <button
-                        type="button"
-                        aria-label="Eintrag löschen"
-                        className="ml-2 p-2 rounded hover:bg-red-50 group"
-                        title="Eintrag löschen"
-                        onClick={() => handleDeleteHistoryItem(item.createdAt)}
-                      >
-                        <Trash className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform" />
-                      </button>
-                    )}
-                  </div>
-                  <AccordionContent className="px-3">
-                    <div className="grid gap-2 text-sm">
-                      <div className="flex justify-between py-1 border-b">
-                        <span className="font-medium">AMZ Stundensatz</span>
-                        <span>{item.amzRate} €</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b">
-                        <span className="font-medium">Stundenlohn Fahrer</span>
-                        <span>{item.driverWage} €</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b">
-                        <span className="font-medium">Spesen</span>
-                        <span>
-                          {item.hasExpenses === "yes" ? `${item.expenses} €` : "Keine"}
-                        </span>
-                      </div>
+              {historyItems.map((item, index) => {
+                const isOpen = openedItem === `item-${index}`;
+
+                return (
+                  <AccordionItem 
+                    value={`item-${index}`} 
+                    key={index} 
+                    className="border-b border-gray-200 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between w-full pr-2">
+                      <AccordionTrigger className="flex-1 hover:bg-gray-50 px-4 py-3 rounded flex items-center justify-between">
+                        <div className="flex space-x-2 items-baseline">
+                          <span className="font-semibold text-gray-900 whitespace-nowrap">
+                            Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
+                          </span>
+                          <span className="text-gray-500 text-sm whitespace-nowrap leading-none">
+                            Erstellt am {formatDate(item.createdAt)}
+                          </span>
+                        </div>
+                        <div>
+                          {/* Arrow icon from AccordionTrigger is already shown */}
+                        </div>
+                      </AccordionTrigger>
+
+                      {isOpen && (
+                        <button
+                          type="button"
+                          aria-label="Eintrag löschen"
+                          className="ml-3 p-2 rounded hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
+                          title="Eintrag löschen"
+                          onClick={() => handleDeleteHistoryItem(item.createdAt)}
+                        >
+                          <Trash className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+                    <AccordionContent className="px-6 pb-4">
+                      <div className="grid gap-3 text-sm">
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="font-medium text-gray-800">AMZ Stundensatz</span>
+                          <span className="text-gray-700">{item.amzRate} €</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-gray-100">
+                          <span className="font-medium text-gray-800">Stundenlohn Fahrer</span>
+                          <span className="text-gray-700">{item.driverWage} €</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span className="font-medium text-gray-800">Spesen</span>
+                          <span className="text-gray-700">
+                            {item.hasExpenses === "yes" ? `${item.expenses} €` : "Keine"}
+                          </span>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
             </Accordion>
           </div>
         )}
