@@ -22,7 +22,7 @@ const defaultValues: FinanceFormValues = {
 const FinanceSettings: React.FC = () => {
   const { toast } = useToast();
   const form = useForm<FinanceFormValues>({
-    defaultValues
+    defaultValues,
   });
 
   // Load values from localStorage on mount
@@ -62,9 +62,9 @@ const FinanceSettings: React.FC = () => {
               control={form.control}
               name="amzRate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>AMZ Stundensatz</FormLabel>
-                  <FormControl>
+                <FormItem className="flex items-center space-x-4">
+                  <FormLabel className="flex-1 min-w-[140px]">AMZ Stundensatz</FormLabel>
+                  <FormControl className="flex-1">
                     <Input type="number" step="0.01" min="0" placeholder="z.B. 25.50" {...field} />
                   </FormControl>
                   <FormMessage />
@@ -75,9 +75,9 @@ const FinanceSettings: React.FC = () => {
               control={form.control}
               name="driverWage"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stundenlohn Fahrer</FormLabel>
-                  <FormControl>
+                <FormItem className="flex items-center space-x-4">
+                  <FormLabel className="flex-1 min-w-[140px]">Stundenlohn Fahrer</FormLabel>
+                  <FormControl className="flex-1">
                     <Input type="number" step="0.01" min="0" placeholder="z.B. 15.00" {...field} />
                   </FormControl>
                   <FormMessage />
@@ -93,3 +93,4 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
+
