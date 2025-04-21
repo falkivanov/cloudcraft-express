@@ -28,7 +28,9 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       const headerIndexes: Record<string, number> = {};
       headerIndexes["Transporter ID"] = transporterIdIndex;
       
-      // Look for any header column names dynamically
+      // Look for any header column names dynamically and preserve their order
+      const orderedHeaderNames: string[] = [];
+      
       for (let j = 0; j < row.length; j++) {
         const headerText = (row[j].str || "").trim().toLowerCase();
         
@@ -39,6 +41,7 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
           // Spezialfall: ID ist bereits als Transporter ID erfasst
           if (headerText !== "id" && headerText !== "transporter id" && headerText !== "transporter") {
             headerIndexes[originalText] = j;
+            orderedHeaderNames.push(originalText);
             console.log(`Found header column '${originalText}' at index ${j}`);
           }
         }
@@ -46,7 +49,7 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       
       // Make sure we found at least Transporter ID
       if (headerIndexes["Transporter ID"] !== undefined) {
-        console.log("Found header row with these columns:", headerIndexes);
+        console.log("Found header row with these columns in order:", orderedHeaderNames);
         return { headerRow: row, headerRowIndex: i, headerIndexes };
       }
     }
@@ -67,22 +70,24 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       
       // Estimate column positions based on common headers
       const headerIndexes: Record<string, number> = {};
+      const orderedHeaderNames: string[] = [];
       
       // First column is typically Transporter ID
       headerIndexes["Transporter ID"] = 0;
       
-      // Look for any column names dynamically
+      // Look for any column names dynamically and preserve their order
       for (let j = 0; j < row.length; j++) {
         const cell = (row[j].str || "").trim();
         if (cell && cell.toLowerCase() !== "transporter id" && 
             cell.toLowerCase() !== "id" && cell.toLowerCase() !== "transporter") {
           headerIndexes[cell] = j;
+          orderedHeaderNames.push(cell);
         }
       }
       
       // If we identified at least 3 columns total, consider this a valid header row
       if (Object.keys(headerIndexes).length >= 3) {
-        console.log("Found flexible header with these columns:", headerIndexes);
+        console.log("Found flexible header with these columns in order:", orderedHeaderNames);
         return { headerRow: row, headerRowIndex: i, headerIndexes };
       }
     }
@@ -111,12 +116,14 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
         const headerIndexes: Record<string, number> = {
           "Transporter ID": 0
         };
+        const orderedHeaderNames: string[] = [];
         
         // Extract column headers from the row itself, if any
         for (let j = 1; j < row.length; j++) {
           const headerText = row[j].str?.trim();
           if (headerText) {
             headerIndexes[headerText] = j;
+            orderedHeaderNames.push(headerText);
           }
         }
         
@@ -126,11 +133,13 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
           for (let j = 1; j < nextRow.length; j++) {
             const value = nextRow[j].str?.trim();
             // Use default column names if needed
-            headerIndexes[`Column ${j}`] = j;
+            const columnName = `Column ${j}`;
+            headerIndexes[columnName] = j;
+            orderedHeaderNames.push(columnName);
           }
         }
         
-        console.log("Inferred header indexes:", headerIndexes);
+        console.log("Inferred header indexes in order:", orderedHeaderNames);
         return { headerRow: row, headerRowIndex: i, headerIndexes };
       }
     }

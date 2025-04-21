@@ -24,19 +24,48 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
   // Dynamisch alle verfügbaren Metriken aus den Fahrerdaten sammeln
+  // Behalten die Reihenfolge aus der PDF bei
   const availableMetricColumns = useMemo(() => {
     if (drivers.length === 0) return [];
     
-    // Alle eindeutigen Metriknamen aus allen Fahrern sammeln
+    // Sammle alle eindeutigen Metriknamen aus allen Fahrern
     const metricNames = new Set<string>();
-    drivers.forEach(driver => {
+    const metricOrder: string[] = [];
+    
+    // Für jeden Fahrer
+    for (const driver of drivers) {
+      // Sammle zuerst die Metriknamen vom ersten Fahrer, 
+      // um die ursprüngliche Reihenfolge zu behalten
+      if (metricOrder.length === 0 && driver.metrics.length > 0) {
+        driver.metrics.forEach(metric => {
+          if (!metricOrder.includes(metric.name)) {
+            metricOrder.push(metric.name);
+          }
+        });
+      }
+      
+      // Füge alle Metriknamen zur Set hinzu
       driver.metrics.forEach(metric => {
         metricNames.add(metric.name);
       });
+    }
+    
+    // Wenn wir Fahrer mit Metriken haben, aber keine Reihenfolge (unwahrscheinlich), 
+    // dann verwende alle gefundenen Metriknamen
+    if (metricOrder.length === 0) {
+      return Array.from(metricNames);
+    }
+    
+    // Stelle sicher, dass alle möglichen Metriken in der Liste sind,
+    // aber behalte die originale Reihenfolge bei
+    Array.from(metricNames).forEach(name => {
+      if (!metricOrder.includes(name)) {
+        metricOrder.push(name);
+      }
     });
     
-    // In Array umwandeln und alphabetisch sortieren (könnte später angepasst werden)
-    return Array.from(metricNames).sort();
+    console.log("Metric columns in original PDF order:", metricOrder);
+    return metricOrder;
   }, [drivers]);
 
   // Sortierfunktion für Fahrer

@@ -8,7 +8,7 @@ import { Employee } from "@/types/employee";
 
 interface DriverTableRowProps {
   driver: DriverKPI;
-  availableMetrics: string[]; // Liste der verfügbaren Metriken
+  availableMetrics: string[]; // Liste der verfügbaren Metriken in korrekter Reihenfolge
 }
 
 const DriverTableRow: React.FC<DriverTableRowProps> = ({ driver, availableMetrics }) => {

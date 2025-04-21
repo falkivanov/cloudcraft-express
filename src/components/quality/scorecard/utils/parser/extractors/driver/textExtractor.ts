@@ -28,7 +28,7 @@ export const extractDriverKPIsFromText = (text: string) => {
     .map(h => h.trim())
     .filter(h => h && h !== "Transporter ID");
   
-  console.log("Extrahierte Header-Namen:", headerNames);
+  console.log("Extrahierte Header-Namen in originaler Reihenfolge:", headerNames);
   
   const lines = relevantText.split('\n');
   
@@ -65,17 +65,19 @@ export const extractDriverKPIsFromText = (text: string) => {
         const driverId = values[0];
         
         // Dynamisch Metriken basierend auf extrahierten Header-Namen erstellen
-        const metricValues = [];
-        const metricStatuses = [];
+        const metrics = [];
         
         // Process each value in the line (skip the first one which is the driver ID)
+        // Behalte die originale Reihenfolge der Header bei
         for (let j = 1; j < values.length && j <= headerNames.length; j++) {
+          const headerName = headerNames[j-1];
           const value = values[j];
           
+          let parsedValue;
+          let status = "none";
+          
           if (value === "-") {
-            // Handle dash values
-            metricValues.push(0);
-            metricStatuses.push("none");
+            parsedValue = 0;
           } else {
             // Handle numeric values, possibly with percentage sign
             let numericValue = value;
@@ -83,58 +85,62 @@ export const extractDriverKPIsFromText = (text: string) => {
               numericValue = numericValue.replace('%', '');
             }
             
-            const parsedValue = parseFloat(numericValue);
+            parsedValue = parseFloat(numericValue);
             
             // Handle percentages over 1 (convert from 100-scale to 0-1 scale if needed)
-            let finalValue = parsedValue;
-            if ((headerNames[j-1] === "DCR" || 
-                 headerNames[j-1] === "POD" || 
-                 headerNames[j-1] === "CC" || 
-                 headerNames[j-1] === "CDF") && 
+            if ((headerName === "DCR" || 
+                 headerName === "POD" || 
+                 headerName === "CC" || 
+                 headerName === "CDF") && 
                 parsedValue > 100) {
-              finalValue = parsedValue / 100;
+              parsedValue = parsedValue / 100;
             }
             
-            metricValues.push(isNaN(finalValue) ? 0 : finalValue);
-            metricStatuses.push(determineMetricStatus(headerNames[j-1], finalValue));
+            if (isNaN(parsedValue)) {
+              parsedValue = 0;
+            }
+            
+            status = determineMetricStatus(headerName, parsedValue);
           }
+          
+          // Bestimme die passenden Targets für die Metriken
+          let target = 0;
+          switch (headerName) {
+            case "DCR": target = 98.5; break;
+            case "DNR DPMO": target = 1500; break;
+            case "LoR DPMO": target = 1500; break;
+            case "POD": target = 98; break;
+            case "CC": target = 95; break;
+            case "CDF": target = 95; break;
+            case "DEX": target = 95; break;
+            default: target = 0;
+          }
+          
+          // Bestimme die Einheit
+          let unit = "";
+          switch (headerName) {
+            case "DCR": unit = "%"; break;
+            case "DNR DPMO": unit = "DPMO"; break;
+            case "LoR DPMO": unit = "DPMO"; break;
+            case "POD": unit = "%"; break;
+            case "CC": unit = "%"; break;
+            case "CDF": unit = "%"; break;
+            case "CE": unit = ""; break;
+            case "DEX": unit = "%"; break;
+            case "Delivered": unit = ""; break;
+            default: unit = "";
+          }
+          
+          metrics.push({
+            name: headerName,
+            value: parsedValue,
+            target: target,
+            unit: unit,
+            status: status
+          });
         }
         
-        // Bestimme die passenden Targets und Units für die Metriken
-        const metricTargets = headerNames.map(name => {
-          switch (name) {
-            case "DCR": return 98.5;
-            case "DNR DPMO": return 1500;
-            case "LoR DPMO": return 1500;
-            case "POD": return 98;
-            case "CC": return 95;
-            case "CDF": return 95;
-            default: return 0;
-          }
-        });
-        
-        const metricUnits = headerNames.map(name => {
-          switch (name) {
-            case "DCR": return "%";
-            case "DNR DPMO": return "DPMO";
-            case "LoR DPMO": return "DPMO";
-            case "POD": return "%";
-            case "CC": return "%";
-            case "CDF": return "%";
-            default: return "";
-          }
-        });
-        
-        console.log(`Processing driver ${driverId} with ${metricValues.length} values`);
-        
-        // Create driver metrics objects
-        const metrics = headerNames.map((name, index) => ({
-          name,
-          value: metricValues[index] || 0,
-          target: metricTargets[index],
-          unit: metricUnits[index],
-          status: metricStatuses[index] || "none"
-        }));
+        console.log(`Processing driver ${driverId} with ${metrics.length} metrics`);
         
         const driver = {
           id: driverId,
