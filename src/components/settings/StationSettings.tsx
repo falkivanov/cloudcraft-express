@@ -7,18 +7,28 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Form, FormItem, FormControl, FormLabel, FormMessage, FormField } from "@/components/ui/form";
 import { Plus, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue
+} from "@/components/ui/select";
+import { Bundesland, bundeslandLabels } from "@/components/shifts/utils/planning/holidays/types";
 
 const STORAGE_KEY = "station_codes";
 
 type StationFormValues = {
-  stations: { code: string }[];
+  stations: { code: string; bundesland: Bundesland }[];
 };
+
+const DEFAULT_BUNDESLAND: Bundesland = "saarland";
 
 const StationSettings: React.FC = () => {
   const { toast } = useToast();
   const form = useForm<StationFormValues>({
     defaultValues: {
-      stations: [{ code: "" }],
+      stations: [{ code: "", bundesland: DEFAULT_BUNDESLAND }],
     },
   });
   const { fields, append, remove } = useFieldArray({
@@ -32,8 +42,16 @@ const StationSettings: React.FC = () => {
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        if (Array.isArray(data) && data.every(item => typeof item.code === "string")) {
-          form.reset({ stations: data.length ? data : [{ code: "" }] });
+        if (Array.isArray(data) && data.every(item => typeof item.code === "string" && typeof item.bundesland === "string")) {
+          form.reset({ stations: data.length ? data : [{ code: "", bundesland: DEFAULT_BUNDESLAND }] });
+        } else if (Array.isArray(data) && data.every(item => typeof item.code === "string")) {
+          // Für altes Format: migrieren auf neues Format!
+          form.reset({
+            stations: data.map((s: any) => ({
+              code: s.code,
+              bundesland: s.bundesland || DEFAULT_BUNDESLAND
+            }))
+          });
         }
       } catch {}
     }
@@ -56,7 +74,7 @@ const StationSettings: React.FC = () => {
       <CardHeader>
         <CardTitle>Stationsverwaltung</CardTitle>
         <CardDescription>
-          Fügen Sie hier die Codes Ihrer Station(en) hinzu. Sie können beliebig viele Stationen verwalten.
+          Fügen Sie hier die Codes Ihrer Station(en) hinzu und wählen Sie das zugehörige Bundesland. Sie können beliebig viele Stationen verwalten.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -82,6 +100,33 @@ const StationSettings: React.FC = () => {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name={`stations.${idx}.bundesland`}
+                    render={({ field }) => (
+                      <FormItem className="min-w-[180px]">
+                        <FormLabel className="sr-only">Bundesland</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Bundesland wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(bundeslandLabels).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <Button
                     type="button"
                     variant="destructive"
@@ -100,7 +145,7 @@ const StationSettings: React.FC = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => append({ code: "" })}
+                onClick={() => append({ code: "", bundesland: DEFAULT_BUNDESLAND })}
                 className="flex items-center gap-1"
                 aria-label="Station hinzufügen"
               >
