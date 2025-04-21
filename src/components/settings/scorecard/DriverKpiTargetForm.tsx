@@ -8,15 +8,14 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-// Neue Zielwerte laut aktueller Definition
+// Neue Zielwerte laut Vorgabe (kein Ziel für Delivered)
 const DRIVER_KPIS = [
-  { name: "Delivered", unit: "", scoreTarget: 1000, colorTarget: 800 },
-  { name: "DCR", unit: "%", scoreTarget: 99, colorTarget: 98.5 },
-  { name: "DNR DPMO", unit: "DPMO", scoreTarget: 1000, colorTarget: 1500 },
-  { name: "POD", unit: "%", scoreTarget: 99, colorTarget: 98 },
-  { name: "CC", unit: "%", scoreTarget: 97, colorTarget: 95 },
+  { name: "DCR", unit: "%", scoreTarget: 99.5, colorTarget: 98 },
+  { name: "DNR DPMO", unit: "DPMO", scoreTarget: 1000, colorTarget: 1600 },
+  { name: "POD", unit: "%", scoreTarget: 99, colorTarget: 97 },
+  { name: "CC", unit: "%", scoreTarget: 99, colorTarget: 94 },
   { name: "CE", unit: "", scoreTarget: 0, colorTarget: 0 },
-  { name: "DEX", unit: "%", scoreTarget: 96, colorTarget: 95 },
+  { name: "DEX", unit: "%", scoreTarget: 95, colorTarget: 90 }
 ];
 
 const driverTargetSchema = z.object({
@@ -83,12 +82,12 @@ const DriverKpiTargetForm: React.FC = () => {
         <div className="grid grid-cols-5 gap-2 font-semibold text-sm text-muted-foreground px-2 mb-2">
           <div className="col-span-2"></div>
           <div>
-            F+ Ziel<br />
-            <span className="text-xs font-normal text-muted-foreground">(obere Grenze)</span>
+            Gut Ziel<br />
+            <span className="text-xs font-normal text-muted-foreground">(oberes Ziel)</span>
           </div>
           <div>
-            min. Ziel<br />
-            <span className="text-xs font-normal text-muted-foreground">(untere Grenze)</span>
+            Mindestens Ziel<br />
+            <span className="text-xs font-normal text-muted-foreground">(unteres Ziel)</span>
           </div>
           <div></div>
         </div>
@@ -102,7 +101,7 @@ const DriverKpiTargetForm: React.FC = () => {
                 name={`targets.${idx}.scoreTarget`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="sr-only">F+ Ziel (Score Obergrenze)</FormLabel>
+                    <FormLabel className="sr-only">Gut Ziel</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} className="w-20" min={0} />
                     </FormControl>
@@ -115,7 +114,7 @@ const DriverKpiTargetForm: React.FC = () => {
                 name={`targets.${idx}.colorTarget`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="sr-only">min. Ziel (Farbuntergrenze)</FormLabel>
+                    <FormLabel className="sr-only">Mindestens Ziel</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} className="w-20" min={0} />
                     </FormControl>
@@ -124,7 +123,7 @@ const DriverKpiTargetForm: React.FC = () => {
                 )}
               />
               <div className="flex flex-col text-[10px] text-muted-foreground gap-0.5">
-                {/* Die Hilfstexte "Score Ziel" und "Color Ziel" wurden entfernt hier */}
+                {/* Infozellen leer */}
               </div>
             </div>
           ))}
