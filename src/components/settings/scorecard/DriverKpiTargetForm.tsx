@@ -83,6 +83,12 @@ const DriverKpiTargetForm: React.FC = () => {
         <h2 className="text-lg font-bold mb-1">Fahrer KPI Zielwerte</h2>
         <p className="text-sm text-muted-foreground mb-3">Definieren Sie „Score“ und „Färbungs“-Zielwerte für Fahrer KPIs</p>
         <div className="space-y-2">
+          <div className="grid grid-cols-5 gap-2 font-semibold text-sm text-muted-foreground px-2">
+            <div className="col-span-2"></div>
+            <div>F+ Ziel (obere Grenze)</div>
+            <div>min. Ziel (untere Grenze)</div>
+            <div></div>
+          </div>
           {fields.map((field, idx) => (
             <div key={field.id} className="grid grid-cols-5 items-center gap-2 bg-gray-50 rounded px-2 py-1">
               <span className="col-span-2 font-medium">{field.name}{field.unit && ` (${field.unit})`}:</span>
@@ -91,7 +97,7 @@ const DriverKpiTargetForm: React.FC = () => {
                 name={`targets.${idx}.scoreTarget`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="sr-only">Score Ziel</FormLabel>
+                    <FormLabel className="sr-only">F+ Ziel (Score Obergrenze)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} className="w-20" min={0} />
                     </FormControl>
@@ -104,7 +110,7 @@ const DriverKpiTargetForm: React.FC = () => {
                 name={`targets.${idx}.colorTarget`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="sr-only">Color Ziel</FormLabel>
+                    <FormLabel className="sr-only">min. Ziel (Farbuntergrenze)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} className="w-20" min={0} />
                     </FormControl>
