@@ -1,4 +1,3 @@
-
 import { DriverKPI } from "../../../../../types";
 import { determineMetricStatus } from "../utils/metricStatus";
 import { createAllStandardMetrics } from "../utils/metricUtils";
@@ -260,14 +259,12 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
       // Extract each metric
       const delivered = extractMetric(deliveredPosition, dcrPosition);
       const dcr = extractMetric(dcrPosition, dnrPosition);
-      const dnrDpmo = extractMetric(dnrPosition, lorPosition > 0 ? lorPosition : podPosition);
+      const dnrDpmo = extractMetric(dnrPosition, hasLoRColumn ? lorPosition : podPosition);
       
-      // Skip LoR if present and adjust next position
-      const nextPos = hasLoRColumn ? lorPosition : dnrPosition;
-      const podStartPos = hasLoRColumn ? lorPosition : dnrPosition;
+      // POD position depends on whether we have LoR column
+      const effectivePodPosition = hasLoRColumn ? extractMetric(podPosition, ccPosition) : extractMetric(podPosition > 0 ? podPosition : lorPosition, ccPosition);
       
-      // Get remaining metrics
-      const pod = podPosition > 0 ? extractMetric(podPosition, ccPosition > 0 ? ccPosition : undefined) : null;
+      // Get remaining metrics (positions remain the same)
       const cc = ccPosition > 0 ? extractMetric(ccPosition, cePosition > 0 ? cePosition : undefined) : null;
       const ce = cePosition > 0 ? extractMetric(cePosition, dexPosition > 0 ? dexPosition : undefined) : null;
       const dex = dexPosition > 0 ? extractMetric(dexPosition, undefined) : null;
@@ -303,12 +300,14 @@ export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
         });
       }
       
-      if (pod !== null) {
+      // Skip LoR DPMO column if present (we don't store it as a metric)
+      
+      if (effectivePodPosition !== null) {
         metrics.push({
           name: "POD",
-          value: pod,
+          value: effectivePodPosition,
           target: 98,
-          status: determineMetricStatus("POD", pod)
+          status: determineMetricStatus("POD", effectivePodPosition)
         });
       }
       
