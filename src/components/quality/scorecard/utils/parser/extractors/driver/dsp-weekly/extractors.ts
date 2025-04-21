@@ -20,18 +20,16 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
   // 1. Split into lines
   const lines = text.split('\n');
   
-  // 2. Find the header line and detect format (with or without LoR DPMO)
+  // 2. Find the header line (looking for "Transporter ID" and typical columns)
   let headerLineIndex = -1;
-  let hasLoRColumn = false;
-  
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    if ((line.includes("transporter") || line.includes("transport")) && 
-        line.includes("id") && line.includes("delivered")) {
+    const line = lines[i];
+    if ((line.includes("Transporter") || line.includes("Transport")) && 
+        line.includes("ID") && 
+        (line.includes("Delivered") || line.includes("DCR") || 
+         line.includes("DNR") || line.includes("DPMO"))) {
       headerLineIndex = i;
-      // Check if this format includes the LoR DPMO column
-      hasLoRColumn = line.includes("lor dpmo");
-      console.log(`Table header found at line ${i}, hasLoRColumn: ${hasLoRColumn}`);
+      console.log(`Table header found at line ${i}: ${lines[i]}`);
       break;
     }
   }
@@ -65,99 +63,75 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
       console.log(`Processing driver line: ${driverId}`);
       
       // Extract all numeric values from the line
-      const matches = line.match(/[-]|\d+(?:\.\d+)?%?/g) || [];
-      const values = matches
-        .map(v => v === "-" ? "0" : v)
-        .map(v => parseFloat(v.replace('%', '')));
-      
-      console.log(`Found ${values.length} values for driver ${driverId}: ${values.join(', ')}`);
+      const matches = line.match(/\d+(?:\.\d+)?%?/g) || [];
       
       // We need at least 4 metrics for a valid driver
-      if (values.length >= 4) {
-        // Handle values based on table format
-        let currentIndex = 1; // Skip driver ID
-        const metrics = [];
+      if (matches.length >= 4) {
+        // Clean and convert values to numbers
+        const values = matches.map(v => parseFloat(v.replace('%', '')));
         
-        // Always present: Delivered
-        metrics.push({
-          name: "Delivered",
-          value: values[currentIndex++],
-          target: 0,
-          status: "fair"
-        });
-        
-        // Always present: DCR
-        metrics.push({
-          name: "DCR",
-          value: values[currentIndex++],
-          target: 98.5,
-          status: determineMetricStatus("DCR", values[currentIndex-1])
-        });
-        
-        // Always present: DNR DPMO
-        metrics.push({
-          name: "DNR DPMO",
-          value: values[currentIndex++],
-          target: 1500,
-          status: determineMetricStatus("DNR DPMO", values[currentIndex-1])
-        });
-        
-        // Handle LoR DPMO if present
-        if (hasLoRColumn) {
-          console.log(`Processing LoR DPMO column for driver ${driverId}`);
-          // Add LoR DPMO as a metric
-          metrics.push({
-            name: "LoR DPMO",
-            value: values[currentIndex++],
-            target: 350,
-            status: determineMetricStatus("LoR DPMO", values[currentIndex-1])
-          });
-        }
-        
-        // Add remaining standard metrics if available in data
-        if (currentIndex < values.length) {
-          metrics.push({
-            name: "POD",
-            value: values[currentIndex++],
-            target: 98,
-            status: determineMetricStatus("POD", values[currentIndex-1])
-          });
-        }
-        
-        if (currentIndex < values.length) {
-          metrics.push({
-            name: "CC",
-            value: values[currentIndex++],
-            target: 95,
-            status: determineMetricStatus("CC", values[currentIndex-1])
-          });
-        }
-        
-        if (currentIndex < values.length) {
-          metrics.push({
-            name: "CE",
-            value: values[currentIndex++],
-            target: 0,
-            status: determineMetricStatus("CE", values[currentIndex-1])
-          });
-        }
-        
-        if (currentIndex < values.length) {
-          metrics.push({
-            name: "DEX",
-            value: values[currentIndex++],
-            target: 95,
-            status: determineMetricStatus("DEX", values[currentIndex-1])
-          });
-        }
-        
-        // Create driver with complete metrics
+        // Create driver with metrics
         const driver: DriverKPI = {
           name: driverId,
           status: "active",
-          metrics: createAllStandardMetrics(metrics)
+          metrics: [
+            {
+              name: "Delivered",
+              value: values[0],
+              target: 0,
+              status: "fair" // Changed from "neutral" to "fair"
+            },
+            {
+              name: "DCR",
+              value: values[1],
+              target: 98.5,
+              status: determineMetricStatus("DCR", values[1])
+            },
+            {
+              name: "DNR DPMO",
+              value: values[2],
+              target: 1500,
+              status: determineMetricStatus("DNR DPMO", values[2])
+            },
+            {
+              name: "POD",
+              value: values[3],
+              target: 98,
+              status: determineMetricStatus("POD", values[3])
+            }
+          ]
         };
         
+        // Add additional metrics if available
+        if (values.length > 4) {
+          driver.metrics.push({
+            name: "CC",
+            value: values[4],
+            target: 95,
+            status: determineMetricStatus("CC", values[4])
+          });
+        }
+        
+        if (values.length > 5) {
+          driver.metrics.push({
+            name: "CE",
+            value: values[5] || 0,
+            target: 0,
+            status: determineMetricStatus("CE", values[5] || 0)
+          });
+        }
+        
+        if (values.length > 6) {
+          driver.metrics.push({
+            name: "DEX",
+            value: values[6],
+            target: 95,
+            status: determineMetricStatus("DEX", values[6])
+          });
+        }
+        
+        // Ensure complete metrics
+        driver.metrics = createAllStandardMetrics(driver.metrics);
         drivers.push(driver);
         processedIds.add(driverId);
         
@@ -165,7 +139,7 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
       }
     } catch (error) {
       console.error(`Error processing driver at line ${i}:`, error);
-      // Continue with next line
+      // Continue with the next line
     }
   }
   
@@ -174,224 +148,179 @@ export function extractDriversFromDSPWeeklySummary(text: string): DriverKPI[] {
 }
 
 /**
- * Extract drivers from DSP Weekly Summary using fixed-width parsing
- * This extractor is optimized for perfectly aligned tabular data
+ * Optimized extraction for fixed-width table format specifically for DSP WEEKLY SUMMARY
  */
 export function extractDriversFromFixedWidthTable(text: string): DriverKPI[] {
-  console.log("Extracting drivers from fixed width table format");
+  console.log("Extracting drivers from DSP WEEKLY SUMMARY with fixed column width");
   
-  // Check if the text contains the DSP WEEKLY SUMMARY header
+  // Check for DSP WEEKLY SUMMARY header
   if (!text.includes("DSP WEEKLY SUMMARY")) {
-    console.log("Fixed width table: DSP WEEKLY SUMMARY not found");
+    console.log("DSP WEEKLY SUMMARY not found");
     return [];
   }
   
-  // 1. Split into lines
-  const lines = text.split('\n');
+  // Define regex pattern for driver rows - improved to match the image format
+  // Format: A-Code + numbers with spaces between them, handling varying number of digits and decimals
+  const rowPattern = /\b(A[A-Z0-9]+)\s+(\d+(?:\.\d+)?)\s+([\d.]+)(?:%?)\s+([\d.]+)(?:%?)\s+([\d.]+)(?:%?)\s+([\d.]+)(?:%?)\s+(\d+(?:\.\d+)?)\s+([\d.]+)(?:%?)/gm;
   
-  // 2. Find the header line and detect format (with or without LoR DPMO)
-  let headerLineIndex = -1;
-  let hasLoRColumn = false;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    if ((line.includes("transporter") || line.includes("transport")) && 
-        line.includes("id") && line.includes("delivered")) {
-      headerLineIndex = i;
-      // Check if this format includes the LoR DPMO column
-      hasLoRColumn = line.includes("lor dpmo");
-      console.log(`Fixed width table: Header found at line ${i}, hasLoRColumn: ${hasLoRColumn}`);
-      break;
-    }
-  }
-  
-  if (headerLineIndex === -1) {
-    console.log("Fixed width table: Headers not found");
-    return [];
-  }
-  
-  // 3. Extract data rows using column positions
   const drivers: DriverKPI[] = [];
   const processedIds = new Set<string>();
+  let match;
   
-  // Get the header line to analyze column positions
-  const headerLine = lines[headerLineIndex].toLowerCase();
-  
-  // Find positions of key columns in the header
-  const idPosition = headerLine.indexOf("transport");
-  const deliveredPosition = headerLine.indexOf("delivered");
-  const dcrPosition = headerLine.indexOf("dcr");
-  const dnrPosition = headerLine.indexOf("dnr dpmo");
-  
-  // Find LoR position if it exists
-  const lorPosition = hasLoRColumn ? headerLine.indexOf("lor dpmo") : -1;
-  
-  // Find positions of other metrics
-  // If we have LoR column, we use lorPosition as the start position for POD
-  const podStartPosition = hasLoRColumn ? lorPosition : dnrPosition;
-  const podPosition = headerLine.indexOf("pod", podStartPosition);
-    
-  const ccPosition = headerLine.indexOf("cc", podPosition);
-  const cePosition = headerLine.indexOf("ce", ccPosition > 0 ? ccPosition : 0);
-  const dexPosition = headerLine.indexOf("dex", cePosition > 0 ? cePosition : 0);
-  
-  console.log(`Fixed width table: Column positions found:
-    ID: ${idPosition}
-    Delivered: ${deliveredPosition}
-    DCR: ${dcrPosition}
-    DNR DPMO: ${dnrPosition}
-    LOR DPMO: ${lorPosition}
-    POD: ${podPosition}
-    CC: ${ccPosition}
-    CE: ${cePosition}
-    DEX: ${dexPosition}
-  `);
-  
-  // Process each line after the header
-  for (let i = headerLineIndex + 1; i < lines.length; i++) {
-    const line = lines[i];
-    
-    // Skip empty lines
-    if (!line.trim()) continue;
-    
-    // Stop if we reach the end of the table or a new section
-    if (line.startsWith("Total") || line.startsWith("Page")) break;
-    
+  // Find all matching rows
+  while ((match = rowPattern.exec(text)) !== null) {
     try {
-      // Extract driver ID from its position
-      // We look for a pattern starting with 'A' in the ID column area
-      const idMatch = line.substring(0, deliveredPosition).match(/A[A-Z0-9]{5,14}/);
-      if (!idMatch) continue;
-      
-      const driverId = idMatch[0].trim();
+      const [
+        _, // Full match
+        driverId,
+        delivered,
+        dcr,
+        dnrDpmo,
+        pod,
+        cc,
+        ce,
+        dex
+      ] = match;
       
       // Skip if we've already processed this driver
       if (processedIds.has(driverId)) continue;
       
-      console.log(`Fixed width table: Processing driver: ${driverId}`);
+      console.log(`Found driver with regex: ${driverId}`);
       
-      // Extract metrics based on their positions
-      const extractMetric = (startPos: number, endPos: number) => {
-        if (startPos < 0) return null;
-        
-        const valueText = line.substring(startPos, endPos > 0 ? endPos : undefined).trim();
-        // Handle dash as zero and remove % signs
-        const cleanValue = valueText.replace(/%/g, '').replace(/-/g, '0');
-        return isNaN(parseFloat(cleanValue)) ? 0 : parseFloat(cleanValue);
+      // Create driver with extracted values
+      const driver: DriverKPI = {
+        name: driverId,
+        status: "active",
+        metrics: [
+          {
+            name: "Delivered",
+            value: parseFloat(delivered),
+            target: 0,
+            status: "fair" // Changed from "neutral" to "fair"
+          },
+          {
+            name: "DCR",
+            value: parseFloat(dcr),
+            target: 98.5,
+            status: determineMetricStatus("DCR", parseFloat(dcr))
+          },
+          {
+            name: "DNR DPMO",
+            value: parseFloat(dnrDpmo),
+            target: 1500,
+            status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo))
+          },
+          {
+            name: "POD",
+            value: parseFloat(pod),
+            target: 98,
+            status: determineMetricStatus("POD", parseFloat(pod))
+          },
+          {
+            name: "CC",
+            value: parseFloat(cc),
+            target: 95,
+            status: determineMetricStatus("CC", parseFloat(cc))
+          },
+          {
+            name: "CE",
+            value: parseFloat(ce),
+            target: 0,
+            status: determineMetricStatus("CE", parseFloat(ce))
+          },
+          {
+            name: "DEX",
+            value: parseFloat(dex),
+            target: 95,
+            status: determineMetricStatus("DEX", parseFloat(dex))
+          }
+        ]
       };
       
-      // Extract each metric
-      const delivered = extractMetric(deliveredPosition, dcrPosition);
-      const dcr = extractMetric(dcrPosition, dnrPosition);
-      const dnrDpmo = extractMetric(dnrPosition, hasLoRColumn ? lorPosition : podPosition);
+      drivers.push(driver);
+      processedIds.add(driverId);
       
-      // Get LoR DPMO if present
-      const lorDpmo = hasLoRColumn ? extractMetric(lorPosition, podPosition) : null;
-      
-      // Get POD position
-      const pod = extractMetric(podPosition, ccPosition);
-      
-      // Get remaining metrics (positions remain the same)
-      const cc = ccPosition > 0 ? extractMetric(ccPosition, cePosition > 0 ? cePosition : undefined) : null;
-      const ce = cePosition > 0 ? extractMetric(cePosition, dexPosition > 0 ? dexPosition : undefined) : null;
-      const dex = dexPosition > 0 ? extractMetric(dexPosition, undefined) : null;
-      
-      // Create metrics array
-      const metrics = [];
-      
-      // Add metrics if they were successfully extracted
-      if (delivered !== null) {
-        metrics.push({
-          name: "Delivered",
-          value: delivered,
-          target: 0,
-          status: "fair"
-        });
-      }
-      
-      if (dcr !== null) {
-        metrics.push({
-          name: "DCR",
-          value: dcr,
-          target: 98.5,
-          status: determineMetricStatus("DCR", dcr)
-        });
-      }
-      
-      if (dnrDpmo !== null) {
-        metrics.push({
-          name: "DNR DPMO",
-          value: dnrDpmo,
-          target: 1500,
-          status: determineMetricStatus("DNR DPMO", dnrDpmo)
-        });
-      }
-      
-      // Add LoR DPMO if present
-      if (hasLoRColumn && lorDpmo !== null) {
-        metrics.push({
-          name: "LoR DPMO",
-          value: lorDpmo,
-          target: 350,
-          status: determineMetricStatus("LoR DPMO", lorDpmo)
-        });
-      }
-      
-      if (pod !== null) {
-        metrics.push({
-          name: "POD",
-          value: pod,
-          target: 98,
-          status: determineMetricStatus("POD", pod)
-        });
-      }
-      
-      if (cc !== null) {
-        metrics.push({
-          name: "CC",
-          value: cc,
-          target: 95,
-          status: determineMetricStatus("CC", cc)
-        });
-      }
-      
-      if (ce !== null) {
-        metrics.push({
-          name: "CE",
-          value: ce,
-          target: 0,
-          status: determineMetricStatus("CE", ce)
-        });
-      }
-      
-      if (dex !== null) {
-        metrics.push({
-          name: "DEX",
-          value: dex,
-          target: 95,
-          status: determineMetricStatus("DEX", dex)
-        });
-      }
-      
-      // Only create driver if we got enough metrics
-      if (metrics.length >= 3) {
-        const driver: DriverKPI = {
-          name: driverId,
-          status: "active",
-          metrics: createAllStandardMetrics(metrics)
-        };
-        
-        drivers.push(driver);
-        processedIds.add(driverId);
-        
-        console.log(`Fixed width table: Added driver ${driverId} with ${driver.metrics.length} metrics`);
-      }
+      console.log(`Added driver ${driverId} with ${driver.metrics.length} metrics from regex`);
     } catch (error) {
-      console.error(`Fixed width table: Error processing driver at line ${i}:`, error);
-      // Continue with next line
+      console.error("Error processing table entry:", error);
+      // Continue with next match
     }
   }
   
-  console.log(`Fixed width table: Extracted ${drivers.length} drivers`);
+  // Try a simpler pattern if the detailed one didn't work
+  if (drivers.length < 5) {
+    console.log("Few drivers found with detailed pattern, trying simpler pattern");
+    
+    // Simpler pattern: A-code followed by at least 4 numbers
+    const simpleRowPattern = /\b(A[A-Z0-9]+)\s+(\d+(?:\.\d+)?)\s+([\d.]+)(?:%?)\s+([\d.]+)(?:%?)\s+([\d.]+)(?:%?)/gm;
+    
+    while ((match = simpleRowPattern.exec(text)) !== null) {
+      try {
+        const [
+          _, // Full match
+          driverId,
+          delivered,
+          dcr,
+          dnrDpmo,
+          pod
+        ] = match;
+        
+        // Skip if we've already processed this driver
+        if (processedIds.has(driverId)) continue;
+        
+        console.log(`Found driver with simple pattern: ${driverId}`);
+        
+        // Create driver with extracted values
+        const driver: DriverKPI = {
+          name: driverId,
+          status: "active",
+          metrics: [
+            {
+              name: "Delivered",
+              value: parseFloat(delivered),
+              target: 0,
+              status: "fair" 
+            },
+            {
+              name: "DCR",
+              value: parseFloat(dcr),
+              target: 98.5,
+              status: determineMetricStatus("DCR", parseFloat(dcr))
+            },
+            {
+              name: "DNR DPMO",
+              value: parseFloat(dnrDpmo),
+              target: 1500, 
+              status: determineMetricStatus("DNR DPMO", parseFloat(dnrDpmo))
+            },
+            {
+              name: "POD",
+              value: parseFloat(pod),
+              target: 98,
+              status: determineMetricStatus("POD", parseFloat(pod))
+            }
+          ]
+        };
+        
+        // Add the driver with complete metrics
+        driver.metrics = createAllStandardMetrics(driver.metrics);
+        drivers.push(driver);
+        processedIds.add(driverId);
+        
+        console.log(`Added driver ${driverId} with ${driver.metrics.length} metrics from simple pattern`);
+      } catch (error) {
+        console.error("Error processing table entry:", error);
+        // Continue with next match
+      }
+    }
+  }
+  
+  // If regex method found no drivers, try line-based method
+  if (drivers.length === 0) {
+    console.log("Regex methods found no drivers, trying line-based extraction");
+    return extractDriversFromDSPWeeklySummary(text);
+  }
+  
+  console.log(`Extracted: ${drivers.length} drivers with fixed column width method`);
   return drivers;
 }

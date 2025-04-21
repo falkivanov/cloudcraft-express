@@ -1,333 +1,168 @@
 
-import { DriverKPI } from '../../../../../types';
-import { determineStatus } from '../../../../helpers/statusHelper';
-import { determineMetricStatus } from '../utils/metricStatus';
-import { createAllStandardMetrics } from '../utils/metricUtils';
+import { DriverKPI } from "../../../../../types";
+import { determineMetricStatus } from "../utils/metricStatus";
+import { createAllStandardMetrics } from "../utils/metricUtils";
 
 /**
- * Extract drivers using enhanced regex patterns designed for different scorecard formats
- * @param text Text content from which to extract driver data
- * @param options Configuration options for the extraction
- * @returns Array of extracted DriverKPI objects
+ * Extract drivers using enhanced pattern matching optimized for
+ * common patterns in scorecard PDFs
  */
-export const extractDriversWithEnhancedPatterns = (
-  text: string, 
-  options: { prioritizeAIds?: boolean } = {}
-): DriverKPI[] => {
-  console.log("Extracting drivers with enhanced pattern matching");
+export function extractDriversWithEnhancedPatterns(text: string): DriverKPI[] {
+  console.log("Starting enhanced pattern extraction for drivers");
   const drivers: DriverKPI[] = [];
-  const processedIds = new Set<string>();
+  const seenDrivers = new Set<string>();
   
-  // Detect table format - check if it has LoR DPMO column
-  const hasLoRColumn = text.toLowerCase().includes("lor dpmo");
-  console.log(`Enhanced pattern extractor detected ${hasLoRColumn ? "new format with" : "standard format without"} LoR DPMO column`);
+  // Split into lines for processing
+  const lines = text.split(/\r?\n/);
   
-  // Find all driver rows with metrics using regex
-  // This pattern looks for IDs followed by multiple numbers or percentages
-  const pattern = options.prioritizeAIds 
-    ? /\b(A[A-Z0-9]{5,13})\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+(?:([\d.]+)\s+)?([\d.]+(?:%)?)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+(?:%)?)/ 
-    : /\b(A[A-Z0-9]{1,13}|TR-\d{3})\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+(?:([\d.]+)\s+)?([\d.]+(?:%)?)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+(?:%)?)/;
+  // Set of pattern matchers to try
+  const patterns = [
+    // Pattern 1: Standard A-prefixed ID with metrics
+    {
+      idPattern: /^(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /(\d+(?:\.\d+)?)\s*(?:%|DPMO)?/g
+    },
+    // Pattern 2: A-prefixed ID with spaces and metrics
+    {
+      idPattern: /\b(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /(\d+(?:\.\d+)?)\s*(?:%|DPMO)?/g
+    },
+    // Pattern 3: Any line with an A-prefixed ID followed by at least 3 numbers
+    {
+      idPattern: /\b(A[A-Z0-9]{5,13})\b/,
+      valuePattern: /\b(\d+(?:\.\d+)?)\b/g
+    }
+  ];
   
-  const rows = text.match(new RegExp(pattern, 'g')) || [];
-  
-  // If we don't find any rows with the first pattern, try some alternatives
-  if (rows.length === 0) {
-    // Alternative pattern to match LOR column format
-    if (hasLoRColumn) {
-      console.log("Trying alternative pattern for tables with LoR DPMO column");
-      const lorPattern = /\b(A[A-Z0-9]{5,13})\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+(?:%)?)/g;
-      const lorMatches = text.match(lorPattern) || [];
+  // Iterate through each line
+  for (let line of lines) {
+    line = line.trim();
+    if (line.length < 10) continue;
+    
+    // Skip header lines and summary lines
+    if (line.includes("Transporter") || 
+        line.includes("Driver") || 
+        line.includes("Total") ||
+        line.includes("Average") ||
+        line.includes("SUMMARY")) {
+      continue;
+    }
+    
+    // Try each pattern
+    for (const pattern of patterns) {
+      const idMatch = line.match(pattern.idPattern);
+      if (!idMatch) continue;
       
-      for (const match of lorMatches) {
-        const parts = match.trim().split(/\s+/);
-        if (parts.length >= 9) {
-          const driverId = parts[0];
-          
-          // Skip if we've already processed this driver
-          if (processedIds.has(driverId)) continue;
-          
-          try {
-            const metrics = [
-              {
-                name: "Delivered",
-                value: parseFloat(parts[1]),
-                target: 0,
-                status: "fair"
-              },
-              {
-                name: "DCR",
-                value: parseFloat(parts[2].replace('%', '')),
-                target: 98.5,
-                status: determineMetricStatus("DCR", parseFloat(parts[2]))
-              },
-              {
-                name: "DNR DPMO",
-                value: parseFloat(parts[3]),
-                target: 1500,
-                status: determineMetricStatus("DNR DPMO", parseFloat(parts[3]))
-              },
-              // Skip LoR DPMO (parts[4])
-              {
-                name: "POD",
-                value: parseFloat(parts[5].replace('%', '')),
-                target: 98,
-                status: determineMetricStatus("POD", parseFloat(parts[5]))
-              },
-              {
-                name: "CC",
-                value: parseFloat(parts[6].replace('%', '')),
-                target: 95,
-                status: determineMetricStatus("CC", parseFloat(parts[6]))
-              },
-              {
-                name: "CE",
-                value: parseFloat(parts[7]),
-                target: 0,
-                status: determineMetricStatus("CE", parseFloat(parts[7]))
-              },
-              {
-                name: "DEX",
-                value: parseFloat(parts[8].replace('%', '')),
-                target: 95,
-                status: determineMetricStatus("DEX", parseFloat(parts[8]))
-              }
-            ];
-            
-            const driver: DriverKPI = {
-              name: driverId,
-              status: "active",
-              metrics: createAllStandardMetrics(metrics)
-            };
-            
-            drivers.push(driver);
-            processedIds.add(driverId);
-            console.log(`Added driver ${driverId} with LoR format pattern`);
-          } catch (error) {
-            console.error(`Error processing driver ${driverId} with LoR pattern:`, error);
-          }
-        }
+      const driverId = idMatch[1].trim();
+      
+      // Skip if we've already processed this driver
+      if (seenDrivers.has(driverId)) continue;
+      
+      // Skip if looks like noise
+      if (driverId.length < 7 || 
+          driverId.includes("PAGE") || 
+          driverId.includes("SUMMARY")) {
+        continue;
       }
-    } else {
-      // Try alternative pattern for standard format
-      console.log("Trying alternative pattern for standard table format");
-      const standardPattern = /\b(A[A-Z0-9]{5,13}|TR-\d{3})\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+(?:%)?)\s+([\d.]+(?:%)?)\s+([\d.]+)\s+([\d.]+(?:%)?)/g;
-      const standardMatches = text.match(standardPattern) || [];
       
-      for (const match of standardMatches) {
-        const parts = match.trim().split(/\s+/);
-        if (parts.length >= 8) {
-          const driverId = parts[0];
+      // Match all potential values
+      const valueMatches = Array.from(line.matchAll(pattern.valuePattern));
+      
+      // Need at least 3 metrics for a valid driver
+      if (valueMatches.length >= 3) {
+        const values = valueMatches.map(m => parseFloat(m[1]));
+        
+        // Define metrics
+        const metrics = [];
+        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+        const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
+        
+        // Create metrics using available values
+        for (let i = 0; i < Math.min(values.length, metricNames.length); i++) {
+          const value = values[i];
+          metrics.push({
+            name: metricNames[i],
+            value: value,
+            target: metricTargets[i],
+            unit: metricUnits[i],
+            status: determineMetricStatus(metricNames[i], value)
+          });
+        }
+        
+        // Create driver if we have at least 3 metrics
+        if (metrics.length >= 3) {
+          drivers.push({
+            name: driverId,
+            status: "active",
+            metrics: createAllStandardMetrics(metrics)
+          });
           
-          // Skip if we've already processed this driver
-          if (processedIds.has(driverId)) continue;
-          
-          try {
-            const metrics = [
-              {
-                name: "Delivered",
-                value: parseFloat(parts[1]),
-                target: 0,
-                status: "fair"
-              },
-              {
-                name: "DCR",
-                value: parseFloat(parts[2].replace('%', '')),
-                target: 98.5,
-                status: determineMetricStatus("DCR", parseFloat(parts[2]))
-              },
-              {
-                name: "DNR DPMO",
-                value: parseFloat(parts[3]),
-                target: 1500,
-                status: determineMetricStatus("DNR DPMO", parseFloat(parts[3]))
-              },
-              {
-                name: "POD",
-                value: parseFloat(parts[4].replace('%', '')),
-                target: 98,
-                status: determineMetricStatus("POD", parseFloat(parts[4]))
-              },
-              {
-                name: "CC",
-                value: parseFloat(parts[5].replace('%', '')),
-                target: 95,
-                status: determineMetricStatus("CC", parseFloat(parts[5]))
-              },
-              {
-                name: "CE",
-                value: parseFloat(parts[6]),
-                target: 0,
-                status: determineMetricStatus("CE", parseFloat(parts[6]))
-              },
-              {
-                name: "DEX",
-                value: parseFloat(parts[7].replace('%', '')),
-                target: 95,
-                status: determineMetricStatus("DEX", parseFloat(parts[7]))
-              }
-            ];
-            
-            const driver: DriverKPI = {
-              name: driverId,
-              status: "active",
-              metrics: createAllStandardMetrics(metrics)
-            };
-            
-            drivers.push(driver);
-            processedIds.add(driverId);
-            console.log(`Added driver ${driverId} with standard format pattern`);
-          } catch (error) {
-            console.error(`Error processing driver ${driverId} with standard pattern:`, error);
-          }
+          seenDrivers.add(driverId);
+          console.log(`Found driver ${driverId} with ${metrics.length} metrics`);
         }
       }
     }
-  } else {
-    // Process matches from the first pattern attempt
-    console.log(`Found ${rows.length} driver rows with primary pattern`);
+  }
+  
+  // Aggressive search for driver IDs and context
+  if (drivers.length < 20) {
+    const idPattern = /\b(A[A-Z0-9]{5,13})\b/g;
+    let match;
     
-    for (const row of rows) {
-      const match = row.match(pattern);
-      if (!match) continue;
-      
+    while ((match = idPattern.exec(text)) !== null) {
       const driverId = match[1];
       
-      // Skip if we've already processed this driver
-      if (processedIds.has(driverId)) continue;
-      
-      try {
-        // Determine if the row has LoR DPMO column based on capture groups
-        // Typically match[5] will be undefined if LoR column doesn't exist
-        const hasLorInRow = match.length > 5 && match[5] !== undefined;
+      if (!seenDrivers.has(driverId) && 
+          driverId.length >= 8 && 
+          !driverId.includes("PAGE") && 
+          !driverId.includes("SUMMARY")) {
         
-        const metrics = [];
+        // Get context around the ID
+        const contextStart = Math.max(0, match.index - 5);
+        const contextEnd = Math.min(text.length, match.index + 200);
+        const context = text.substring(contextStart, contextEnd);
         
-        // Always add these first three metrics
-        metrics.push({
-          name: "Delivered",
-          value: parseFloat(match[2]),
-          target: 0,
-          status: "fair"
-        });
+        // Look for numbers in context
+        const numbers = Array.from(context.matchAll(/\b(\d+(?:\.\d+)?)\b/g))
+          .map(m => parseFloat(m[1]))
+          .filter(n => !isNaN(n));
         
-        metrics.push({
-          name: "DCR",
-          value: parseFloat(match[3].replace('%', '')),
-          target: 98.5,
-          status: determineMetricStatus("DCR", parseFloat(match[3]))
-        });
-        
-        metrics.push({
-          name: "DNR DPMO",
-          value: parseFloat(match[4]),
-          target: 1500,
-          status: determineMetricStatus("DNR DPMO", parseFloat(match[4]))
-        });
-        
-        // Skip LoR DPMO if present
-        
-        // Add remaining metrics, adjusting indexes based on whether LoR column exists
-        if (hasLorInRow) {
-          // Skip the LoR column (match[5]) and continue with POD
-          const podIndex = 6;
-          const ccIndex = 7;
-          const ceIndex = 8;
-          const dexIndex = 9;
+        if (numbers.length >= 3) {
+          // Define metrics
+          const metrics = [];
+          const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
+          const metricTargets = [0, 98.5, 1500, 98, 95, 0, 95];
+          const metricUnits = ["", "%", "DPMO", "%", "%", "", "%"];
           
-          if (match[podIndex]) {
+          // Create metrics using available values
+          for (let i = 0; i < Math.min(numbers.length, metricNames.length); i++) {
+            const value = numbers[i];
             metrics.push({
-              name: "POD",
-              value: parseFloat(match[podIndex].replace('%', '')),
-              target: 98,
-              status: determineMetricStatus("POD", parseFloat(match[podIndex]))
+              name: metricNames[i],
+              value: value,
+              target: metricTargets[i],
+              unit: metricUnits[i],
+              status: determineMetricStatus(metricNames[i], value)
             });
           }
           
-          if (match[ccIndex]) {
-            metrics.push({
-              name: "CC",
-              value: parseFloat(match[ccIndex].replace('%', '')),
-              target: 95,
-              status: determineMetricStatus("CC", parseFloat(match[ccIndex]))
+          // Create driver if we have at least 3 metrics
+          if (metrics.length >= 3) {
+            drivers.push({
+              name: driverId,
+              status: "active",
+              metrics: createAllStandardMetrics(metrics)
             });
-          }
-          
-          if (match[ceIndex]) {
-            metrics.push({
-              name: "CE",
-              value: parseFloat(match[ceIndex]),
-              target: 0,
-              status: determineMetricStatus("CE", parseFloat(match[ceIndex]))
-            });
-          }
-          
-          if (match[dexIndex]) {
-            metrics.push({
-              name: "DEX",
-              value: parseFloat(match[dexIndex].replace('%', '')),
-              target: 95,
-              status: determineMetricStatus("DEX", parseFloat(match[dexIndex]))
-            });
-          }
-        } else {
-          // Standard format without LoR column
-          const podIndex = 5;
-          const ccIndex = 6;
-          const ceIndex = 7;
-          const dexIndex = 8;
-          
-          if (match[podIndex]) {
-            metrics.push({
-              name: "POD",
-              value: parseFloat(match[podIndex].replace('%', '')),
-              target: 98,
-              status: determineMetricStatus("POD", parseFloat(match[podIndex]))
-            });
-          }
-          
-          if (match[ccIndex]) {
-            metrics.push({
-              name: "CC",
-              value: parseFloat(match[ccIndex].replace('%', '')),
-              target: 95,
-              status: determineMetricStatus("CC", parseFloat(match[ccIndex]))
-            });
-          }
-          
-          if (match[ceIndex]) {
-            metrics.push({
-              name: "CE",
-              value: parseFloat(match[ceIndex]),
-              target: 0,
-              status: determineMetricStatus("CE", parseFloat(match[ceIndex]))
-            });
-          }
-          
-          if (match[dexIndex]) {
-            metrics.push({
-              name: "DEX",
-              value: parseFloat(match[dexIndex].replace('%', '')),
-              target: 95,
-              status: determineMetricStatus("DEX", parseFloat(match[dexIndex]))
-            });
+            
+            seenDrivers.add(driverId);
+            console.log(`Found driver ${driverId} with aggressive search (${metrics.length} metrics)`);
           }
         }
-        
-        const driver: DriverKPI = {
-          name: driverId,
-          status: "active",
-          metrics: createAllStandardMetrics(metrics)
-        };
-        
-        drivers.push(driver);
-        processedIds.add(driverId);
-        console.log(`Added driver ${driverId} with ${metrics.length} metrics`);
-      } catch (error) {
-        console.error(`Error processing driver ${driverId}:`, error);
       }
     }
   }
   
   console.log(`Enhanced pattern extraction found ${drivers.length} drivers`);
   return drivers;
-};
+}

@@ -1,3 +1,4 @@
+
 /**
  * Functions for finding and processing the header row in tabular data
  */
@@ -11,7 +12,7 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const rowItems = row.map(item => item.str?.trim() || "");
-    const rowText = rowItems.join(' ').toLowerCase();
+    const rowText = rowItems.join(' ');
     
     // Look specifically for "Transporter ID" as the first column header
     const transporterIdIndex = rowItems.findIndex(item => 
@@ -27,7 +28,7 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       const headerIndexes: Record<string, number> = {};
       headerIndexes["Transporter ID"] = transporterIdIndex;
       
-      // Look for other header columns, including optional LoR DPMO
+      // Look for other header columns
       for (let j = 0; j < row.length; j++) {
         const headerText = (row[j].str || "").trim().toLowerCase();
         
@@ -35,10 +36,8 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
           headerIndexes["Delivered"] = j;
         } else if (headerText === "dcr" || headerText.includes("dcr")) {
           headerIndexes["DCR"] = j;
-        } else if (headerText === "dnr dpmo" || headerText.includes("dnr dpmo")) {
+        } else if (headerText.includes("dpmo") || headerText === "dnr" || headerText.includes("dnr")) {
           headerIndexes["DNR DPMO"] = j;
-        } else if (headerText === "lor dpmo" || headerText.includes("lor dpmo")) {
-          headerIndexes["LoR DPMO"] = j; // Mark LoR DPMO column but don't process it
         } else if (headerText === "pod" || headerText.includes("pod")) {
           headerIndexes["POD"] = j;
         } else if (headerText === "cc" || headerText.includes("contact comp")) {
