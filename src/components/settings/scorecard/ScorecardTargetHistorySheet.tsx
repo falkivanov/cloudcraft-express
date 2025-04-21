@@ -52,7 +52,7 @@ const ScorecardTargetHistorySheet: React.FC = () => {
           <SheetTitle>Scorecard Zielwerte Historie</SheetTitle>
           <span className="text-xs text-muted-foreground block">Alle gespeicherten Zielwerte im Überblick</span>
         </SheetHeader>
-        <div className="mt-5">
+        <div className="mt-5 max-h-[80vh] overflow-y-auto pr-2">
           {history.length === 0 && <div className="text-sm text-muted-foreground">Keine Historie gefunden.</div>}
           {history.map((entry, idx) => (
             <div key={idx} className="mb-8">
@@ -90,3 +90,4 @@ const ScorecardTargetHistorySheet: React.FC = () => {
 };
 
 export default ScorecardTargetHistorySheet;
+
