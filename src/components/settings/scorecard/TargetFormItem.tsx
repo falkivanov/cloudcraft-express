@@ -15,6 +15,7 @@ interface TargetFormItemProps {
   currentWeek: number;
   currentYear: number;
   onToggleEffectiveDate: (name: string) => void;
+  disabled?: boolean; // Added this property
 }
 
 const TargetFormItem: React.FC<TargetFormItemProps> = ({
@@ -24,7 +25,8 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
   showEffectiveDate,
   currentWeek,
   currentYear,
-  onToggleEffectiveDate
+  onToggleEffectiveDate,
+  disabled = false // Added default value
 }) => {
   return (
     <div className="border p-4 rounded-md">
@@ -44,6 +46,7 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       required
+                      disabled={disabled} // Use the disabled prop here
                     />
                   </FormControl>
                   <span className="text-sm text-muted-foreground w-10">
@@ -62,6 +65,7 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
             size="sm"
             className="mt-8"
             onClick={() => onToggleEffectiveDate(metric.name)}
+            disabled={disabled} // Use the disabled prop here too
           >
             {showEffectiveDate ? "Gültig ab entfernen" : "Gültig ab hinzufügen"}
           </Button>
@@ -73,6 +77,7 @@ const TargetFormItem: React.FC<TargetFormItemProps> = ({
             index={index}
             currentWeek={currentWeek}
             currentYear={currentYear}
+            disabled={disabled} // Pass the disabled prop to EffectiveDateFields
           />
         )}
       </div>

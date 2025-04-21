@@ -10,13 +10,15 @@ interface EffectiveDateFieldsProps {
   index: number;
   currentWeek: number;
   currentYear: number;
+  disabled?: boolean; // Added this property
 }
 
 const EffectiveDateFields: React.FC<EffectiveDateFieldsProps> = ({ 
   form, 
   index, 
   currentWeek, 
-  currentYear 
+  currentYear,
+  disabled = false // Added default value
 }) => {
   return (
     <div className="flex space-x-4 items-end">
@@ -35,6 +37,7 @@ const EffectiveDateFields: React.FC<EffectiveDateFieldsProps> = ({
                 {...field}
                 value={field.value || ""}
                 onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                disabled={disabled} // Use the disabled prop
               />
             </FormControl>
           </FormItem>
@@ -55,6 +58,7 @@ const EffectiveDateFields: React.FC<EffectiveDateFieldsProps> = ({
                 {...field}
                 value={field.value || ""}
                 onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                disabled={disabled} // Use the disabled prop
               />
             </FormControl>
           </FormItem>
