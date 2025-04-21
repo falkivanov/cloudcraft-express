@@ -2,7 +2,7 @@
 import { determineStatus } from '@/components/quality/scorecard/utils/helpers/statusHelper';
 import { DriverKPI } from '@/components/quality/scorecard/types';
 import { extractNumeric, isNumeric } from './valueExtractor';
-import { determineMetricStatus } from './utils/metricStatus';
+import { determineMetricStatus } from '../utils/metricStatus';
 
 /**
  * Process all data rows after the header row
