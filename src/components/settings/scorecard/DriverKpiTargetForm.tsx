@@ -18,12 +18,14 @@ const DRIVER_KPIS = [
   { name: "DEX", unit: "%", scoreTarget: 95, colorTarget: 90 }
 ];
 
+// Update schema to use coerce for proper number handling with decimals
 const driverTargetSchema = z.object({
   name: z.string(),
-  scoreTarget: z.number().min(0),
-  colorTarget: z.number().min(0),
+  scoreTarget: z.coerce.number().min(0),
+  colorTarget: z.coerce.number().min(0),
   unit: z.string().optional()
 });
+
 const driverFormSchema = z.object({
   targets: z.array(driverTargetSchema)
 });
@@ -107,11 +109,17 @@ const DriverKpiTargetForm: React.FC = () => {
                     <FormControl>
                       <Input 
                         type="number" 
+                        step="0.01"
                         {...field} 
                         className="w-20" 
                         min={0} 
                         disabled={!isEditing}
                         readOnly={!isEditing}
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? "0" : e.target.value;
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -127,11 +135,17 @@ const DriverKpiTargetForm: React.FC = () => {
                     <FormControl>
                       <Input 
                         type="number" 
+                        step="0.01"
                         {...field} 
                         className="w-20" 
                         min={0} 
                         disabled={!isEditing}
                         readOnly={!isEditing}
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? "0" : e.target.value;
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -163,4 +177,3 @@ const DriverKpiTargetForm: React.FC = () => {
 };
 
 export default DriverKpiTargetForm;
-
