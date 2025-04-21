@@ -9,22 +9,6 @@ interface DriverTableProps {
   drivers: DriverKPI[];
 }
 
-// Standard-Metriknamen, die wir erwarten könnten
-const expectedMetricColumns = [
-  { key: "Delivered", label: "Delivered" },
-  { key: "DCR", label: "DCR" },
-  { key: "DNR DPMO", label: "DNR DPMO" },
-  // LoR DPMO entfernt, da es in KW12 nicht existiert
-  { key: "POD", label: "POD" },
-  { key: "CC", label: "CC" },
-  { key: "CE", label: "CE" },
-  { key: "DEX", label: "DEX" },
-  { key: "CDF", label: "CDF" },
-];
-
-// Metriken, die immer angezeigt werden sollen, auch wenn sie in den Daten fehlen
-const alwaysShowMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-
 type SortColumn = "name" | string;
 type SortDirection = "asc" | "desc";
 
@@ -39,13 +23,11 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
-  // Ermittle dynamisch die tatsächlich vorhandenen Metriken aus allen Fahrern
+  // Dynamisch alle verfügbaren Metriken aus den Fahrerdaten sammeln
   const availableMetricColumns = useMemo(() => {
-    if (drivers.length === 0) return expectedMetricColumns.filter(col => 
-      alwaysShowMetrics.includes(col.key)
-    );
+    if (drivers.length === 0) return [];
     
-    // Sammle alle eindeutigen Metriknamen aus allen Fahrern
+    // Alle eindeutigen Metriknamen aus allen Fahrern sammeln
     const metricNames = new Set<string>();
     drivers.forEach(driver => {
       driver.metrics.forEach(metric => {
@@ -53,15 +35,8 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
       });
     });
     
-    // Füge immer anzuzeigende Metriken hinzu, auch wenn sie in den Daten fehlen
-    alwaysShowMetrics.forEach(metric => {
-      metricNames.add(metric);
-    });
-    
-    // Sortiere die Spalten gemäß der erwarteten Reihenfolge, falls vorhanden
-    return expectedMetricColumns
-      .filter(col => metricNames.has(col.key))
-      .map(col => ({ key: col.key, label: col.label }));
+    // In Array umwandeln und alphabetisch sortieren (könnte später angepasst werden)
+    return Array.from(metricNames).sort();
   }, [drivers]);
 
   // Sortierfunktion für Fahrer
@@ -121,19 +96,23 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
               </TableHead>
               {availableMetricColumns.map(metric => (
                 <TableHead
-                  key={metric.key}
+                  key={metric}
                   className="font-medium text-center cursor-pointer select-none"
-                  onClick={() => handleSort(metric.key)}
+                  onClick={() => handleSort(metric)}
                 >
-                  {metric.label}
-                  {renderSortIcon(metric.key)}
+                  {metric}
+                  {renderSortIcon(metric)}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedDrivers.map((driver) => (
-              <DriverTableRow key={driver.name} driver={driver} availableMetrics={availableMetricColumns.map(m => m.key)} />
+              <DriverTableRow 
+                key={driver.name} 
+                driver={driver} 
+                availableMetrics={availableMetricColumns} 
+              />
             ))}
           </TableBody>
         </Table>

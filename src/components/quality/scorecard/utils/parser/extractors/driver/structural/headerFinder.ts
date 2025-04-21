@@ -28,24 +28,19 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       const headerIndexes: Record<string, number> = {};
       headerIndexes["Transporter ID"] = transporterIdIndex;
       
-      // Look for other header columns
+      // Look for any header column names dynamically
       for (let j = 0; j < row.length; j++) {
         const headerText = (row[j].str || "").trim().toLowerCase();
         
-        if (headerText === "delivered" || headerText.includes("delivered")) {
-          headerIndexes["Delivered"] = j;
-        } else if (headerText === "dcr" || headerText.includes("dcr")) {
-          headerIndexes["DCR"] = j;
-        } else if (headerText.includes("dpmo") || headerText === "dnr" || headerText.includes("dnr")) {
-          headerIndexes["DNR DPMO"] = j;
-        } else if (headerText === "pod" || headerText.includes("pod")) {
-          headerIndexes["POD"] = j;
-        } else if (headerText === "cc" || headerText.includes("contact comp")) {
-          headerIndexes["CC"] = j;
-        } else if (headerText === "ce" || headerText.includes("customer esc")) {
-          headerIndexes["CE"] = j;
-        } else if (headerText === "dex" || headerText.includes("dex")) {
-          headerIndexes["DEX"] = j;
+        // Generischer Ansatz: Für jede Zelle prüfen, ob sie einem Header entspricht
+        if (headerText) {
+          // Wenn exakte Übereinstimmung, verwenden wir den originalen String
+          const originalText = row[j].str.trim();
+          // Spezialfall: ID ist bereits als Transporter ID erfasst
+          if (headerText !== "id" && headerText !== "transporter id" && headerText !== "transporter") {
+            headerIndexes[originalText] = j;
+            console.log(`Found header column '${originalText}' at index ${j}`);
+          }
         }
       }
       
@@ -66,10 +61,7 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
     if (row.length >= 4 && rowItems.some(item => 
        item.toLowerCase().includes("transporter") || 
        item.toLowerCase() === "id" || 
-       item.toLowerCase() === "driver" ||
-       item.toLowerCase() === "dcr" ||
-       item.toLowerCase() === "delivered") &&
-       row.every(item => (item.str || "").length < 15)) {
+       item.toLowerCase() === "driver")) {
       
       console.log("Found potential header row:", rowItems.join(", "));
       
@@ -79,28 +71,16 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
       // First column is typically Transporter ID
       headerIndexes["Transporter ID"] = 0;
       
-      // Look for common metric names in the row
+      // Look for any column names dynamically
       for (let j = 0; j < row.length; j++) {
-        const cell = (row[j].str || "").trim().toLowerCase();
-        
-        if (cell === "delivered" || cell.includes("delivered")) {
-          headerIndexes["Delivered"] = j;
-        } else if (cell === "dcr" || cell.includes("dcr")) {
-          headerIndexes["DCR"] = j;
-        } else if (cell.includes("dpmo") || cell === "dnr" || cell.includes("dnr")) {
-          headerIndexes["DNR DPMO"] = j;
-        } else if (cell === "pod" || cell.includes("pod")) {
-          headerIndexes["POD"] = j;
-        } else if (cell === "cc" || cell.includes("contact")) {
-          headerIndexes["CC"] = j;
-        } else if (cell === "ce" || cell.includes("esc")) {
-          headerIndexes["CE"] = j;
-        } else if (cell === "dex" || cell.includes("dex")) {
-          headerIndexes["DEX"] = j;
+        const cell = (row[j].str || "").trim();
+        if (cell && cell.toLowerCase() !== "transporter id" && 
+            cell.toLowerCase() !== "id" && cell.toLowerCase() !== "transporter") {
+          headerIndexes[cell] = j;
         }
       }
       
-      // If we identified at least 3 metric columns, consider this a valid header row
+      // If we identified at least 3 columns total, consider this a valid header row
       if (Object.keys(headerIndexes).length >= 3) {
         console.log("Found flexible header with these columns:", headerIndexes);
         return { headerRow: row, headerRowIndex: i, headerIndexes };
@@ -132,10 +112,22 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
           "Transporter ID": 0
         };
         
-        // Assign standard metric columns based on position
-        const metricNames = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
-        for (let j = 1; j < Math.min(row.length, metricNames.length + 1); j++) {
-          headerIndexes[metricNames[j-1]] = j;
+        // Extract column headers from the row itself, if any
+        for (let j = 1; j < row.length; j++) {
+          const headerText = row[j].str?.trim();
+          if (headerText) {
+            headerIndexes[headerText] = j;
+          }
+        }
+        
+        // If no explicit headers found, generate numeric placeholders
+        if (Object.keys(headerIndexes).length <= 1) {
+          // Try to infer column names from the next row values
+          for (let j = 1; j < nextRow.length; j++) {
+            const value = nextRow[j].str?.trim();
+            // Use default column names if needed
+            headerIndexes[`Column ${j}`] = j;
+          }
         }
         
         console.log("Inferred header indexes:", headerIndexes);

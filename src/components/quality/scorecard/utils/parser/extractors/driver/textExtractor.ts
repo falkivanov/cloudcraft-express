@@ -12,27 +12,31 @@ export const extractDriverKPIsFromText = (text: string) => {
   
   const relevantText = text.substring(dspSummaryIndex);
   
-  // Updated header pattern to match what's in the image - looking for the header row with all columns
-  const headerPattern = /Transporter\s*ID\s*[\s|]*Delivered\s*[\s|]*DCR\s*[\s|]*DNR\s*DPMO\s*[\s|]*LoR\s*DPMO\s*[\s|]*POD\s*[\s|]*CC\s*[\s|]*CE\s*[\s|]*CDF/i;
+  // Dynamisches Header-Pattern, das jegliche Header-Kombination erkennen kann
+  const headerPattern = /Transporter\s*ID[\s|]*(.+)/i;
   const headerMatch = relevantText.match(headerPattern);
   
   if (!headerMatch) {
     console.log("Tabellenüberschrift nicht gefunden");
-    // Try a more flexible pattern in case the header format varies
-    const flexibleHeaderPattern = /Transporter\s*ID.*Delivered.*DCR.*DNR.*DPMO/i;
-    const flexibleMatch = relevantText.match(flexibleHeaderPattern);
-    if (!flexibleMatch) {
-      return [];
-    }
+    return [];
   }
+  
+  // Extrahieren der Header-Namen für dynamische Spaltenbehandlung
+  const headerLine = headerMatch[0];
+  // Header-Namen extrahieren durch Aufteilen und Säubern
+  const headerNames = headerLine.split(/\s{2,}|\t/)
+    .map(h => h.trim())
+    .filter(h => h && h !== "Transporter ID");
+  
+  console.log("Extrahierte Header-Namen:", headerNames);
   
   const lines = relevantText.split('\n');
   
   // Find the line that contains the table header
   let tableStartIndex = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes("Transporter ID") && 
-        (lines[i].includes("Delivered") || lines[i].includes("DCR"))) {
+    if (lines[i].includes("Transporter ID") || 
+        (lines[i].includes("Transporter") && lines[i].includes("ID"))) {
       tableStartIndex = i;
       console.log("Found table header at line:", i, lines[i]);
       break;
@@ -60,17 +64,13 @@ export const extractDriverKPIsFromText = (text: string) => {
       if (values.length >= 2) {
         const driverId = values[0];
         
-        // Create arrays to store metrics
-        const metricNames = ["Delivered", "DCR", "DNR DPMO", "LoR DPMO", "POD", "CC", "CE", "CDF"];
-        const metricTargets = [0, 98.5, 1500, 1500, 98, 95, 0, 95];
-        const metricUnits = ["", "%", "DPMO", "DPMO", "%", "%", "", "%"];
+        // Dynamisch Metriken basierend auf extrahierten Header-Namen erstellen
         const metricValues = [];
         const metricStatuses = [];
         
-        // Process each value in the line
-        for (let j = 1; j < values.length && j <= 8; j++) {
+        // Process each value in the line (skip the first one which is the driver ID)
+        for (let j = 1; j < values.length && j <= headerNames.length; j++) {
           const value = values[j];
-          const metricIndex = j - 1;
           
           if (value === "-") {
             // Handle dash values
@@ -87,34 +87,53 @@ export const extractDriverKPIsFromText = (text: string) => {
             
             // Handle percentages over 1 (convert from 100-scale to 0-1 scale if needed)
             let finalValue = parsedValue;
-            if ((metricNames[metricIndex] === "DCR" || 
-                 metricNames[metricIndex] === "POD" || 
-                 metricNames[metricIndex] === "CC" || 
-                 metricNames[metricIndex] === "CDF") && 
+            if ((headerNames[j-1] === "DCR" || 
+                 headerNames[j-1] === "POD" || 
+                 headerNames[j-1] === "CC" || 
+                 headerNames[j-1] === "CDF") && 
                 parsedValue > 100) {
               finalValue = parsedValue / 100;
             }
             
             metricValues.push(isNaN(finalValue) ? 0 : finalValue);
-            metricStatuses.push(determineMetricStatus(metricNames[metricIndex], finalValue));
+            metricStatuses.push(determineMetricStatus(headerNames[j-1], finalValue));
           }
         }
         
-        // Fill in any missing metrics with defaults (for shorter rows)
-        while (metricValues.length < 8) {
-          metricValues.push(0);
-          metricStatuses.push("none");
-        }
+        // Bestimme die passenden Targets und Units für die Metriken
+        const metricTargets = headerNames.map(name => {
+          switch (name) {
+            case "DCR": return 98.5;
+            case "DNR DPMO": return 1500;
+            case "LoR DPMO": return 1500;
+            case "POD": return 98;
+            case "CC": return 95;
+            case "CDF": return 95;
+            default: return 0;
+          }
+        });
+        
+        const metricUnits = headerNames.map(name => {
+          switch (name) {
+            case "DCR": return "%";
+            case "DNR DPMO": return "DPMO";
+            case "LoR DPMO": return "DPMO";
+            case "POD": return "%";
+            case "CC": return "%";
+            case "CDF": return "%";
+            default: return "";
+          }
+        });
         
         console.log(`Processing driver ${driverId} with ${metricValues.length} values`);
         
         // Create driver metrics objects
-        const metrics = metricNames.map((name, index) => ({
+        const metrics = headerNames.map((name, index) => ({
           name,
-          value: metricValues[index],
+          value: metricValues[index] || 0,
           target: metricTargets[index],
           unit: metricUnits[index],
-          status: metricStatuses[index]
+          status: metricStatuses[index] || "none"
         }));
         
         const driver = {
@@ -134,10 +153,5 @@ export const extractDriverKPIsFromText = (text: string) => {
   
   console.log(`Extrahiert: ${drivers.length} Fahrer aus DSP WEEKLY SUMMARY Tabelle`);
   
-  const enhancedDrivers = drivers.map(driver => ({
-    ...driver,
-    metrics: createAllStandardMetrics(driver.metrics)
-  }));
-  
-  return enhancedDrivers;
+  return drivers;
 };
