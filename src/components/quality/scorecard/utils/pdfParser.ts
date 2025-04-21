@@ -10,6 +10,7 @@ import {
   createFallbackData
 } from './parser/extractionStrategies';
 import { STORAGE_KEYS, saveToStorage } from '@/utils/storage';
+import { api } from '@/services/api';
 
 // Definiere ein konkretes Interface für das Extraktionsergebnis
 interface ExtractionResult {
@@ -20,6 +21,8 @@ interface ExtractionResult {
 
 /**
  * Parse a scorecard PDF and extract data with improved driver extraction
+ * Vorbereitet für zukünftige API-Integration
+ * 
  * @param pdfData ArrayBuffer containing the PDF data
  * @param filename Original filename (used for KW extraction)
  * @param detailedLogging Enable detailed logging for debugging
@@ -32,6 +35,38 @@ export const parseScorecardPDF = async (
 ): Promise<ScoreCardData> => {
   try {
     console.info("Starting PDF parsing for: ", filename);
+    
+    // Prüfen, ob die API verfügbar ist
+    const isApiAvailable = await api.checkHealth().catch(() => false);
+    
+    if (isApiAvailable) {
+      try {
+        console.log("API ist verfügbar, versuche API-basierte Extraktion");
+        
+        // Hier würde der API-Aufruf stattfinden, wenn die API implementiert wäre
+        // Ein Beispiel für die zukünftige Implementierung:
+        /*
+        const file = new File([pdfData], filename);
+        const apiResult = await api.scorecard.extract(file);
+        
+        if (apiResult.success && apiResult.data) {
+          console.log("API-Extraktion erfolgreich");
+          
+          // Daten speichern und zurückgeben
+          saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, apiResult.data);
+          localStorage.setItem("extractedScorecardData", JSON.stringify(apiResult.data));
+          
+          return apiResult.data;
+        }
+        */
+        
+        // Da die API noch nicht implementiert ist, fahren wir mit der lokalen Verarbeitung fort
+        throw new Error("API-Extraktion nicht implementiert");
+      } catch (apiError) {
+        console.log("Fehler bei der API-Extraktion, fallback zur lokalen Verarbeitung", apiError);
+        // Fallback zur lokalen Verarbeitung
+      }
+    }
     
     // Extract week number from filename using the enhanced extractor
     const weekNum = extractWeekFromFilename(filename);

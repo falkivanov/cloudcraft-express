@@ -1,9 +1,9 @@
-
 /**
  * Entry point for driver KPI extraction
  * 
  * This file provides a unified API for extracting driver KPIs
  * using multiple strategies and selecting the best results.
+ * Vorbereitet für zukünftige API-Integration.
  */
 
 import { DriverKPI } from '../../../../types';
@@ -15,9 +15,18 @@ import { ensureAllMetrics } from './utils/metricUtils';
 // Export the utility functions so they can be imported elsewhere
 export { generateSampleDrivers, ensureAllMetrics };
 
+// API-Konfiguration für zukünftige Integration
+const API_CONFIG = {
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  endpoints: {
+    extractDrivers: '/api/v1/scorecard/extract-drivers'
+  }
+};
+
 /**
  * Extract driver KPIs using multiple strategies and select the best result
  * Enhanced to support structured table formats
+ * Vorbereitet für zukünftige API-Integration
  */
 export function extractDriverKPIs(text: string, pageData?: Record<number, any>): DriverKPI[] {
   console.log("Extracting driver KPIs using multiple strategies");
@@ -53,6 +62,9 @@ export function extractDriverKPIs(text: string, pageData?: Record<number, any>):
       console.error("Error during text-based driver extraction:", e);
     }
   }
+  
+  // In Zukunft: API-Aufruf für die Extraktion
+  // Hier wäre der Platz für den API-Call, wenn die Backend-Infrastruktur steht
   
   // Check for common formatting patterns that indicate a structured table
   // This helps identify PDF spreadsheet exports or machine-readable tables

@@ -1,14 +1,28 @@
-
 import * as pdfjs from 'pdfjs-dist';
 import { transformCoordinates } from './coordinateTransformer';
 
+// API-Konfiguration für zukünftige Integration
+const API_CONFIG = {
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  endpoints: {
+    extractText: '/api/v1/pdf/extract-text',
+    extractPositions: '/api/v1/pdf/extract-positions'
+  }
+};
+
 /**
  * Extract text content from PDF pages with enhanced extraction
+ * Vorbereitet für zukünftige API-Integration
+ * 
  * @param pdf The loaded PDF document
  * @returns Object with text content from pages
  */
 export const extractTextFromPDF = async (pdf: any) => {
   try {
+    // In Zukunft: API-Aufruf für die Textextraktion
+    // Aktuell: Lokale PDF.js-Implementierung weiter verwenden
+    
+    // ... keep existing code (text extraction from PDF pages)
     const allText: string[] = [];
     const pageTexts: Record<number, string> = {};
     
@@ -57,11 +71,17 @@ export const extractTextFromPDF = async (pdf: any) => {
 
 /**
  * Extract text content and render items from PDF for advanced analysis
+ * Vorbereitet für zukünftige API-Integration
+ * 
  * @param pdf The loaded PDF document
  * @returns Promise with extracted text and positional data
  */
 export const extractPDFContentWithPositions = async (pdf: any) => {
   try {
+    // In Zukunft: API-Aufruf für die positionsbasierte Extraktion
+    // Aktuell: Lokale PDF.js-Implementierung weiter verwenden
+    
+    // ... keep existing code (text extraction with positions)
     const result: Record<number, any> = {};
     
     // Process ALL pages to ensure we don't miss any tables or data
