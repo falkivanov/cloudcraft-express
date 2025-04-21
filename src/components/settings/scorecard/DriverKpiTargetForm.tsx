@@ -53,7 +53,6 @@ const DriverKpiTargetForm: React.FC = () => {
     name: "targets"
   });
 
-  // Load saved driver KPI targets on mount
   useEffect(() => {
     const savedTargets = localStorage.getItem(STORAGE_KEY);
     if (savedTargets) {
@@ -66,7 +65,6 @@ const DriverKpiTargetForm: React.FC = () => {
     }
   }, [form]);
 
-  // Save handler
   const handleSubmit = (values: DriverFormValues) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(values.targets));
@@ -80,14 +78,21 @@ const DriverKpiTargetForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <h2 className="text-lg font-bold mb-1">Fahrer KPI Zielwerte</h2>
-        <div className="space-y-2">
-          <div className="grid grid-cols-5 gap-2 font-semibold text-sm text-muted-foreground px-2">
-            <div className="col-span-2"></div>
-            <div>F+ Ziel (obere Grenze)</div>
-            <div>min. Ziel (untere Grenze)</div>
-            <div></div>
+        <h2 className="text-lg font-bold mb-0.5">Fahrer KPI Zielwerte</h2>
+        <div className="grid grid-cols-5 gap-2 font-semibold text-sm text-muted-foreground px-2 mb-2">
+          <div className="col-span-2"></div>
+          <div>
+            F+ Ziel<br />
+            <span className="text-xs font-normal text-muted-foreground">(obere Grenze)</span>
           </div>
+          <div>
+            min. Ziel<br />
+            <span className="text-xs font-normal text-muted-foreground">(untere Grenze)</span>
+          </div>
+          <div></div>
+        </div>
+
+        <div className="space-y-2">
           {fields.map((field, idx) => (
             <div key={field.id} className="grid grid-cols-5 items-center gap-2 bg-gray-50 rounded px-2 py-1">
               <span className="col-span-2 font-medium">{field.name}{field.unit && ` (${field.unit})`}:</span>
@@ -123,6 +128,7 @@ const DriverKpiTargetForm: React.FC = () => {
             </div>
           ))}
         </div>
+
         <Button type="submit" className="w-full">Fahrer-Zielwerte speichern</Button>
       </form>
     </Form>
@@ -130,3 +136,4 @@ const DriverKpiTargetForm: React.FC = () => {
 };
 
 export default DriverKpiTargetForm;
+
