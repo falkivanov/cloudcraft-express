@@ -1,8 +1,10 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverChange } from "../hooks/useDriverPerformanceData";
 import { DriverKPI } from "../types";
+import { loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
+import { Employee } from "@/types/employee";
 
 interface DriverPerformanceCardProps {
   title: string;
@@ -21,6 +23,52 @@ const DriverPerformanceCard: React.FC<DriverPerformanceCardProps> = ({
 }) => {
   const isChangeData = (item: any): item is DriverChange => 
     'change' in item && 'previousScore' in item && 'currentScore' in item;
+  
+  const [displayNames, setDisplayNames] = useState<Record<string, string>>({});
+
+  // Load employee data on component mount
+  useEffect(() => {
+    const loadEmployeeData = () => {
+      const employees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
+      if (!employees) return;
+      
+      // Create a mapping of transporter IDs to employee names
+      const idToNameMap: Record<string, string> = {};
+      
+      // For each driver in our data, try to find a matching employee
+      driverData.forEach(item => {
+        const transporterId = isChangeData(item) ? item.driver.name : item.name;
+        
+        const matchingEmployee = employees.find(
+          emp => emp.transporterId === transporterId
+        );
+        
+        if (matchingEmployee) {
+          idToNameMap[transporterId] = matchingEmployee.name;
+        }
+      });
+      
+      setDisplayNames(idToNameMap);
+    };
+    
+    loadEmployeeData();
+    
+    // Listen for employee data changes
+    const handleEmployeesUpdated = () => {
+      loadEmployeeData();
+    };
+    
+    window.addEventListener('employees-updated', handleEmployeesUpdated);
+    
+    return () => {
+      window.removeEventListener('employees-updated', handleEmployeesUpdated);
+    };
+  }, [driverData]);
+  
+  // Helper function to get display name
+  const getDisplayName = (transporterId: string): string => {
+    return displayNames[transporterId] || transporterId;
+  };
 
   return (
     <Card className={fullWidth ? "w-full" : ""}>
@@ -40,7 +88,7 @@ const DriverPerformanceCard: React.FC<DriverPerformanceCardProps> = ({
               >
                 <div className="flex-1">
                   <p className={fullWidth ? "font-medium" : "text-sm font-medium"}>
-                    {isChangeData(item) ? item.driver.name : item.name}
+                    {getDisplayName(isChangeData(item) ? item.driver.name : item.name)}
                   </p>
                   <div className={`flex items-center gap-1 ${fullWidth ? "text-sm" : "text-xs"} text-muted-foreground`}>
                     {isChangeData(item) ? (
