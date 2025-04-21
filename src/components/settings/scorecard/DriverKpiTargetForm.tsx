@@ -8,14 +8,15 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
+// Neue Zielwerte laut aktueller Definition
 const DRIVER_KPIS = [
-  { name: "Delivered", unit: "" },
-  { name: "DCR", unit: "%" },
-  { name: "DNR DPMO", unit: "DPMO" },
-  { name: "POD", unit: "%" },
-  { name: "CC", unit: "%" },
-  { name: "CE", unit: "" },
-  { name: "DEX", unit: "%" },
+  { name: "Delivered", unit: "", scoreTarget: 1000, colorTarget: 800 },
+  { name: "DCR", unit: "%", scoreTarget: 99, colorTarget: 98.5 },
+  { name: "DNR DPMO", unit: "DPMO", scoreTarget: 1000, colorTarget: 1500 },
+  { name: "POD", unit: "%", scoreTarget: 99, colorTarget: 98 },
+  { name: "CC", unit: "%", scoreTarget: 97, colorTarget: 95 },
+  { name: "CE", unit: "", scoreTarget: 0, colorTarget: 0 },
+  { name: "DEX", unit: "%", scoreTarget: 96, colorTarget: 95 },
 ];
 
 const driverTargetSchema = z.object({
@@ -41,8 +42,8 @@ const DriverKpiTargetForm: React.FC = () => {
     defaultValues: {
       targets: DRIVER_KPIS.map(kpi => ({
         name: kpi.name,
-        scoreTarget: kpi.name === "Delivered" ? 0 : 100,
-        colorTarget: kpi.name === "Delivered" ? 0 : 100,
+        scoreTarget: kpi.scoreTarget,
+        colorTarget: kpi.colorTarget,
         unit: kpi.unit
       }))
     }
@@ -136,4 +137,3 @@ const DriverKpiTargetForm: React.FC = () => {
 };
 
 export default DriverKpiTargetForm;
-
