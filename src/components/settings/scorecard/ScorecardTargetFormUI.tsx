@@ -1,9 +1,10 @@
+
 import React from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import TargetFormItem from "./TargetFormItem";
-import { FormValues, ProcessedTarget } from "./ScorecardTargetForm";
+import { FormValues } from "./ScorecardTargetForm";
 import { KPI_CATEGORIES } from "./useScorecardTargetForm";
 
 interface ScorecardTargetFormUIProps {
