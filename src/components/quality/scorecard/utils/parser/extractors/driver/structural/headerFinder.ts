@@ -55,16 +55,23 @@ export function findHeaderRow(rows: any[][], expectedHeaders: string[]): { heade
     }
   }
   
-  // If no clear header row found, try a more flexible approach
+  // If no clear header row found, try a more flexible approach with common column names
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const rowItems = row.map(item => item.str?.trim() || "");
     
-    // Look for a row with several short column headers that might be a table header
+    // Look for a row with several column headers that might be a table header
+    // Add "LoR", "CDF" and other possible column names to improve detection
     if (row.length >= 4 && rowItems.some(item => 
        item.toLowerCase().includes("transporter") || 
        item.toLowerCase() === "id" || 
-       item.toLowerCase() === "driver")) {
+       item.toLowerCase() === "driver" || 
+       item.toLowerCase() === "dcr" || 
+       item.toLowerCase() === "dpmo" ||
+       item.toLowerCase() === "lor" ||
+       item.toLowerCase() === "cdf" ||
+       item.toLowerCase() === "dex"
+    )) {
       
       console.log("Found potential header row:", rowItems.join(", "));
       

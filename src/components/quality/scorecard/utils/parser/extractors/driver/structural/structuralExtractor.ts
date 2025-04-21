@@ -65,16 +65,18 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
     const rows: any[][] = groupItemsIntoRows(page.items);
     console.log(`Grouped ${page.items.length} items into ${rows.length} rows on page ${pageNum}`);
     
-    // Expected headers for driver metrics
+    // Expected headers for driver metrics - add both new and old names
     const expectedHeaders = [
       "Transporter ID", 
       "Delivered", 
       "DCR",
       "DNR DPMO", 
+      "LoR DPMO",  // Added new column
       "POD", 
       "CC", 
       "CE", 
-      "DEX"
+      "DEX",
+      "CDF"         // Added new column that might replace DEX
     ];
     
     // Find the header row
@@ -157,9 +159,12 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
               if (numericalItems.length >= 3) {
                 // This looks like a driver row with metrics
                 const metrics = [];
-                const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'POD', 'CC', 'CE', 'DEX'];
+                // Support both old and new column names
+                const metricNames = ['Delivered', 'DCR', 'DNR DPMO', 'LoR DPMO', 'POD', 'CC', 'CE', 'DEX', 'CDF'];
+                const metricTargets = [0, 98.5, 1500, 1500, 98, 95, 0, 95, 95];
+                const metricUnits = ["", "%", "DPMO", "DPMO", "%", "%", "", "%", "%"];
                 
-                // Extract up to 7 metrics (or as many as we have values for)
+                // Extract up to 9 metrics (or as many as we have values for)
                 for (let i = 0; i < Math.min(numericalItems.length, metricNames.length); i++) {
                   const valueStr = numericalItems[i].str.trim();
                   
@@ -167,8 +172,8 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
                     metrics.push({
                       name: metricNames[i],
                       value: 0,
-                      target: getTargetForMetric(metricNames[i]),
-                      unit: getUnitForMetric(metricNames[i]),
+                      target: metricTargets[i],
+                      unit: metricUnits[i],
                       status: "none" as const
                     });
                   } else {
@@ -176,8 +181,8 @@ export function extractDriverKPIsFromStructure(pageData: Record<number, any>): D
                     metrics.push({
                       name: metricNames[i],
                       value,
-                      target: getTargetForMetric(metricNames[i]),
-                      unit: getUnitForMetric(metricNames[i]),
+                      target: metricTargets[i],
+                      unit: metricUnits[i],
                       status: determineMetricStatus(metricNames[i], value) as any
                     });
                   }
@@ -264,8 +269,10 @@ function processTableData(table: any): DriverKPI[] {
           headerIndexes["Delivered"] = index;
         } else if (text === "DCR") {
           headerIndexes["DCR"] = index;
-        } else if (text.includes("DNR") || text.includes("DPMO")) {
+        } else if (text.includes("DNR") || (text.includes("DPMO") && text.includes("DNR"))) {
           headerIndexes["DNR DPMO"] = index;
+        } else if (text.includes("LoR") || (text.includes("DPMO") && text.includes("LoR"))) {
+          headerIndexes["LoR DPMO"] = index;
         } else if (text === "POD") {
           headerIndexes["POD"] = index;
         } else if (text === "CC") {
@@ -274,6 +281,8 @@ function processTableData(table: any): DriverKPI[] {
           headerIndexes["CE"] = index;
         } else if (text === "DEX") {
           headerIndexes["DEX"] = index;
+        } else if (text === "CDF") {
+          headerIndexes["CDF"] = index;
         }
       });
       
@@ -307,10 +316,12 @@ function processTableData(table: any): DriverKPI[] {
           { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
           { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
           { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
+          { name: "LoR DPMO", index: headerIndexes["LoR DPMO"], target: 1500, unit: "DPMO" },
           { name: "POD", index: headerIndexes["POD"], target: 98, unit: "%" },
           { name: "CC", index: headerIndexes["CC"], target: 95, unit: "%" },
           { name: "CE", index: headerIndexes["CE"], target: 0, unit: "" },
-          { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" }
+          { name: "DEX", index: headerIndexes["DEX"], target: 95, unit: "%" },
+          { name: "CDF", index: headerIndexes["CDF"], target: 95, unit: "%" }
         ];
         
         // Process each metric
@@ -361,10 +372,12 @@ function getTargetForMetric(metricName: string): number {
     case "Delivered": return 0;
     case "DCR": return 98.5;
     case "DNR DPMO": return 1500;
+    case "LoR DPMO": return 1500;
     case "POD": return 98;
     case "CC": return 95;
     case "CE": return 0;
     case "DEX": return 95;
+    case "CDF": return 95;
     default: return 0;
   }
 }
@@ -373,10 +386,12 @@ function getUnitForMetric(metricName: string): string {
   switch (metricName) {
     case "DCR": return "%";
     case "DNR DPMO": return "DPMO";
+    case "LoR DPMO": return "DPMO";
     case "POD": return "%";
     case "CC": return "%";
     case "CE": return "";
     case "DEX": return "%";
+    case "CDF": return "%";
     default: return "";
   }
 }
@@ -390,6 +405,7 @@ function determineMetricStatus(metricName: string, value: number): string {
       if (value >= 95) return "fair";
       return "poor";
     case "DNR DPMO":
+    case "LoR DPMO":
       if (value <= 1000) return "fantastic";
       if (value <= 1500) return "great";
       if (value <= 2500) return "fair";
@@ -400,6 +416,7 @@ function determineMetricStatus(metricName: string, value: number): string {
       if (value >= 95) return "fair";
       return "poor";
     case "CC":
+    case "CDF":
       if (value >= 99) return "fantastic";
       if (value >= 95) return "great";
       if (value >= 90) return "fair";
