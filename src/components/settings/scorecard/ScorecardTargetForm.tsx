@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,40 +10,63 @@ import { useToast } from "@/hooks/use-toast";
 import { TargetDefinition } from "@/components/quality/scorecard/utils/helpers/statusHelper";
 import TargetFormItem from "./TargetFormItem";
 
-// Define company KPI names in the same order as they appear on the Scorecard page
-// Organized by category to match the CompanyKPIs.tsx display order
-const COMPANY_KPI_TARGETS: TargetDefinition[] = [
-  // Safety category
-  { name: "Vehicle Audit (VSA) Compliance", value: 95, unit: "%" },
-  { name: "Safe Driving Metric (FICO)", value: 800, unit: "" },
-  { name: "DVIC Compliance", value: 95, unit: "%" },
-  { name: "Speeding Event Rate (Per 100 Trips)", value: 10, unit: "" },
-  { name: "Mentor Adoption Rate", value: 80, unit: "%" },
-  
-  // Compliance category
-  { name: "Breach of Contract (BOC)", value: 0, unit: "" },
-  { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
-  { name: "Comprehensive Audit Score (CAS)", value: 100, unit: "%" },
-  
-  // Customer category
-  { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
-  { name: "Customer Delivery Feedback", value: 85, unit: "%" },
-  
-  // Quality category
-  { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
-  { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
-  { name: "Lost on Road (LoR) DPMO", value: 350, unit: "DPMO" },
-  
-  // Standard Work category
-  { name: "Photo-On-Delivery", value: 95, unit: "%" },
-  { name: "Contact Compliance", value: 95, unit: "%" },
-  
-  // Capacity category
-  { name: "Next Day Capacity Reliability", value: 98, unit: "%" },
-  { name: "Capacity Reliability", value: 98, unit: "%" }
+// KPI-Definitionen gruppiert nach Kategorie
+const KPI_CATEGORIES: { 
+  label: string, 
+  kpis: TargetDefinition[] 
+}[] = [
+  {
+    label: "Safety",
+    kpis: [
+      { name: "Vehicle Audit (VSA) Compliance", value: 95, unit: "%" },
+      { name: "Safe Driving Metric (FICO)", value: 800, unit: "" },
+      { name: "DVIC Compliance", value: 95, unit: "%" },
+      { name: "Speeding Event Rate (Per 100 Trips)", value: 10, unit: "" },
+      { name: "Mentor Adoption Rate", value: 80, unit: "%" },
+    ]
+  },
+  {
+    label: "Compliance",
+    kpis: [
+      { name: "Breach of Contract (BOC)", value: 0, unit: "" },
+      { name: "Working Hours Compliance (WHC)", value: 100, unit: "%" },
+      { name: "Comprehensive Audit Score (CAS)", value: 100, unit: "%" }
+    ]
+  },
+  {
+    label: "Customer",
+    kpis: [
+      { name: "Customer escalation DPMO", value: 3500, unit: "DPMO" },
+      { name: "Customer Delivery Feedback", value: 85, unit: "%" }
+    ]
+  },
+  {
+    label: "Quality",
+    kpis: [
+      { name: "Delivery Completion Rate (DCR)", value: 98.0, unit: "%" },
+      { name: "Delivered Not Received (DNR DPMO)", value: 3000, unit: "DPMO" },
+      { name: "Lost on Road (LoR) DPMO", value: 350, unit: "DPMO" },
+    ]
+  },
+  {
+    label: "Standard Work",
+    kpis: [
+      { name: "Photo-On-Delivery", value: 95, unit: "%" },
+      { name: "Contact Compliance", value: 95, unit: "%" },
+    ]
+  },
+  {
+    label: "Capacity",
+    kpis: [
+      { name: "Next Day Capacity Reliability", value: 98, unit: "%" },
+      { name: "Capacity Reliability", value: 98, unit: "%" }
+    ]
+  }
 ];
 
-// Define a target item schema for the form
+// Flache Liste aller KPIs für Mapping & Form-Initialisierung
+const COMPANY_KPI_TARGETS: TargetDefinition[] = KPI_CATEGORIES.flatMap(cat => cat.kpis);
+
 const targetItemSchema = z.object({
   name: z.string(),
   value: z.number().min(0),
@@ -51,16 +75,12 @@ const targetItemSchema = z.object({
   effectiveFromYear: z.number().min(2020).max(2030).optional(),
 });
 
-// Form schema matching TargetDefinition type structure but with optional fields for effective dates
 const formSchema = z.object({
   targets: z.array(targetItemSchema)
 });
 
-// Types derived from the schema
 export type TargetItem = z.infer<typeof targetItemSchema>;
 export type FormValues = z.infer<typeof formSchema>;
-
-// Type for the processed target (without effective dates)
 export type ProcessedTarget = {
   name: string;
   value: number;
@@ -77,7 +97,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
   const STORAGE_KEY = "scorecard_custom_targets";
   const [showEffectiveDate, setShowEffectiveDate] = useState<{[key: string]: boolean}>({});
   
-  // Initialize the form with default values
+  // Initialisiere das Formular mit Defaultwerten
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -89,7 +109,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     }
   });
 
-  // Load saved targets on mount
+  // Geladene Targets in Formular übernehmen & EffectiveDate-Status setzen
   useEffect(() => {
     const savedTargets = localStorage.getItem(STORAGE_KEY);
     if (savedTargets) {
@@ -97,7 +117,6 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
         const parsedTargets = JSON.parse(savedTargets);
         form.reset({ targets: parsedTargets });
         
-        // Initialize showEffectiveDate state based on existing targets
         const effectiveDates: {[key: string]: boolean} = {};
         parsedTargets.forEach((target: TargetDefinition) => {
           effectiveDates[target.name] = !!target.effectiveFromWeek && !!target.effectiveFromYear;
@@ -109,7 +128,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     }
   }, [form]);
 
-  // Toggle effective date fields
+  // Toggle für Gültig-ab Felder
   const toggleEffectiveDate = (kpiName: string) => {
     setShowEffectiveDate(prev => ({
       ...prev,
@@ -117,7 +136,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     }));
   };
 
-  // Get current calendar week and year
+  // Aktuelle Kalenderwoche/Jahr
   const getCurrentWeek = () => {
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 1);
@@ -125,52 +144,61 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
     const weekNumber = Math.ceil(days / 7);
     return { week: weekNumber, year: now.getFullYear() };
   };
-
   const { week: currentWeek, year: currentYear } = getCurrentWeek();
 
-  // Handle form submission with type inference
+  // Formular-Submit
   const handleSubmit = (formData: FormValues) => {
-    // Process form data - ensure all required fields are present
     const processedTargets = formData.targets.map(target => {
       const processedTarget: ProcessedTarget = {
         name: target.name,
         value: target.value,
         unit: target.unit || ""
       };
-      
-      // Only add effective dates if they should be shown for this target
       if (showEffectiveDate[target.name]) {
         if (target.effectiveFromWeek && target.effectiveFromYear) {
           processedTarget.effectiveFromWeek = target.effectiveFromWeek;
           processedTarget.effectiveFromYear = target.effectiveFromYear;
         }
       }
-      
       return processedTarget;
     });
-    
-    // Pass the processed data to the parent component
     onSubmit({ targets: processedTargets });
   };
 
+  // Hilfsfunktion: Index eines KPI-Namens in der Targets-Form-Liste
+  const findTargetIndex = (kpiName: string) => form.getValues().targets.findIndex(t => t.name === kpiName);
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4">
-          {form.getValues().targets.map((metric, index) => (
-            <TargetFormItem
-              key={metric.name}
-              form={form}
-              index={index}
-              metric={metric}
-              showEffectiveDate={showEffectiveDate[metric.name] || false}
-              currentWeek={currentWeek}
-              currentYear={currentYear}
-              onToggleEffectiveDate={toggleEffectiveDate}
-            />
+        <Accordion type="multiple" className="w-full" defaultValue={KPI_CATEGORIES.map(c => c.label)}>
+          {KPI_CATEGORIES.map(category => (
+            <AccordionItem key={category.label} value={category.label} className="border rounded-lg mb-2">
+              <AccordionTrigger className="px-4 py-2 font-semibold text-base bg-gray-50 hover:bg-gray-100 rounded-t-lg">
+                {category.label}
+              </AccordionTrigger>
+              <AccordionContent className="space-y-3 p-4 bg-white">
+                {category.kpis.map(kpi => {
+                  const idx = findTargetIndex(kpi.name);
+                  if (idx === -1) return null;
+                  return (
+                    <TargetFormItem
+                      key={kpi.name}
+                      form={form}
+                      index={idx}
+                      metric={form.getValues().targets[idx]}
+                      showEffectiveDate={showEffectiveDate[kpi.name] || false}
+                      currentWeek={currentWeek}
+                      currentYear={currentYear}
+                      onToggleEffectiveDate={toggleEffectiveDate}
+                    />
+                  );
+                })}
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
-        <Button type="submit" className="mt-4">Zielwerte speichern</Button>
+        </Accordion>
+        <Button type="submit" className="mt-4 w-full">Zielwerte speichern</Button>
       </form>
     </Form>
   );
