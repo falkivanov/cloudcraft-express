@@ -6,14 +6,17 @@ import { extractNumericValues } from './valueExtractor';
  * Extract company KPIs based on structural analysis of the PDF
  */
 export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) => {
-  // Define the KPIs to look for
+  // Define the KPIs to look for - updated for KW14+ format while maintaining backward compatibility
   const kpiPatterns = [
-    // Safety KPIs
+    // Safety KPIs - updated for KW14+
     { name: "Vehicle Audit (VSA) Compliance", pattern: /VSA|Vehicle\s+Audit/i, unit: "%", category: "safety" },
-    { name: "DVIC Compliance", pattern: /DVIC|Daily\s+Vehicle/i, unit: "%", category: "safety" },
     { name: "Safe Driving Metric (FICO)", pattern: /FICO|Safe\s+Driving/i, unit: "", category: "safety" },
     { name: "Speeding Event Rate (Per 100 Trips)", pattern: /Speeding|Speeding\s+Event/i, unit: "", category: "safety" },
     { name: "Mentor Adoption Rate", pattern: /Mentor\s+Adoption/i, unit: "%", category: "safety" },
+    { name: "Driver Administration", pattern: /Driver\s+Admin|Driver\s+Administration/i, unit: "%", category: "safety" },
+    
+    // DVIC was removed in KW14+ but kept for backward compatibility
+    { name: "DVIC Compliance", pattern: /DVIC|Daily\s+Vehicle/i, unit: "%", category: "safety" },
     
     // Compliance KPIs
     { name: "Breach of Contract (BOC)", pattern: /BOC|Breach\s+of\s+Contract/i, unit: "", category: "compliance", specialStatusOnly: true },
@@ -415,6 +418,21 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         else if (statusText === "fantastic") overallStatus = "fantastic";
         
         console.log(`Found overall score ${overallScore}% with status "${overallStatus}"`);
+        break;
+      }
+      
+      // New pattern for KW14+: "Overall Score: XX.XX | Great" pattern
+      const newOverallMatch = item.str.match(/overall\s+score:(?:\s*)(\d+(?:\.\d+)?)\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
+      if (newOverallMatch) {
+        overallScore = parseFloat(newOverallMatch[1]);
+        const statusText = newOverallMatch[2].toLowerCase();
+        
+        if (statusText === "poor") overallStatus = "poor";
+        else if (statusText === "fair") overallStatus = "fair";
+        else if (statusText === "great") overallStatus = "great";
+        else if (statusText === "fantastic") overallStatus = "fantastic";
+        
+        console.log(`Found new format overall score ${overallScore}% with status "${overallStatus}"`);
         break;
       }
     }

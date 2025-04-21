@@ -1,3 +1,4 @@
+
 import { ScorecardKPI } from "../../types";
 import { determineStatus, getDefaultTargetForKPI, KPIStatus } from '../helpers/statusHelper';
 
@@ -111,15 +112,15 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     }
   }
 
-  // Extrahiere KPIs mit den definierten Mustern
+  // Extract KPIs with the defined patterns
   for (const { name, pattern, unit, category } of kpiPatterns) {
-    // Nur suchen, wenn dieser KPI noch nicht gefunden wurde
+    // Only search if this KPI hasn't been found yet
     if (!extractedKpiNames.has(name)) {
       const match = text.match(pattern);
       if (match) {
         const value = parseFloat(match[1]);
         
-        // Bestimme Status, entweder aus expliziter Angabe oder berechnet
+        // Determine status, either from explicit indication or calculated
         let status: KPIStatus;
         if (match.length >= 3 && match[2]) {
           const statusText = match[2].toLowerCase();
@@ -152,7 +153,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     }
   }
 
-  // Suche nach Schlüssel-Wert-Paaren mit Prozentzeichen
+  // Search for key-value pairs with percentage signs
   const percentagePatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)\s*%/g);
   if (percentagePatterns) {
     percentagePatterns.forEach(match => {
@@ -161,13 +162,13 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         const kpiName = parts[1].trim();
         const value = parseFloat(parts[2]);
         
-        // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt
+        // Check that this is not already an existing KPI
         if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
             !extractedKpiNames.has(kpiName)) {
           
           console.log(`Found percentage KPI: ${kpiName} = ${value}%`);
           
-          // Bestimme Kategorie basierend auf dem KPI-Namen
+          // Determine category based on KPI name
           let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" = "safety";
           
           if (kpiName.toLowerCase().includes('safe') || 
@@ -209,24 +210,24 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     });
   }
 
-  // Suche nach DPMO Mustern
+  // Search for DPMO patterns
   const dpmoPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?:\s*DPMO)?/g);
   if (dpmoPatterns) {
     dpmoPatterns.forEach(match => {
-      // Nur verarbeiten, wenn es DPMO, DNR oder LoR enthält
+      // Only process if it contains DPMO, DNR or LoR
       if (match.includes('DPMO') || match.includes('DNR') || match.includes('LoR')) {
         const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?:\s*DPMO)?/);
         if (parts && parts.length >= 3) {
           const kpiName = parts[1].trim();
           const value = parseFloat(parts[2]);
           
-          // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt
+          // Check that this is not already an existing KPI
           if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
               !extractedKpiNames.has(kpiName)) {
             
             console.log(`Found DPMO KPI: ${kpiName} = ${value}`);
             
-            // Bestimme Kategorie basierend auf dem KPI-Namen
+            // Determine category based on KPI name
             let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" = "quality";
             
             if (kpiName.toLowerCase().includes('customer') || 
@@ -254,7 +255,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     });
   }
 
-  // Suche nach numerischen Werten (wie FICO) ohne Einheiten
+  // Search for numeric values (like FICO) without units
   const numericPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?!\s*%|\s*DPMO)/g);
   if (numericPatterns) {
     numericPatterns.forEach(match => {
@@ -263,8 +264,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         const kpiName = parts[1].trim();
         const value = parseFloat(parts[2]);
         
-        // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt und es sich
-        // wahrscheinlich um einen KPI handelt (nicht nur eine beliebige Zahl)
+        // Check that this is not already an existing KPI and it's likely a KPI (not just any number)
         if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
             !extractedKpiNames.has(kpiName) &&
             kpiName.length > 3 && 
@@ -273,7 +273,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
             
           console.log(`Found numeric KPI: ${kpiName} = ${value}`);
           
-          // Bestimme Kategorie basierend auf dem KPI-Namen
+          // Determine category based on KPI name
           let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
           
           if (kpiName.toLowerCase().includes('fico') || 
@@ -300,18 +300,18 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     });
   }
 
-  // Suche nach Tabellen im Text (für das neue KW14+ Format)
-  // Diese werden oft durch mehrere Zeilen mit regelmäßigen Abständen dargestellt
+  // Search for tables in text (for the new KW14+ format)
+  // These are often represented by multiple lines with regular spacing
   const lines = text.split('\n');
   
-  // Suche nach Zeilen mit KPI-Namen und Werten
+  // Look for lines with KPI names and values
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Überspringe kurze oder leere Zeilen
+    // Skip short or empty lines
     if (line.length < 5) continue;
     
-    // Suche nach Zeilen mit KPI-Namen auf der linken Seite und Werten auf der rechten
+    // Look for lines with KPI name on the left side and values on the right
     const kpiValueMatch = line.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s{2,})(?:\s*)(\d+(?:\.\d+)?)\s*(%|DPMO)?(?:\s*(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance))?/i);
     
     if (kpiValueMatch) {
@@ -319,7 +319,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
       const value = parseFloat(kpiValueMatch[2]);
       const unit = kpiValueMatch[3] || "";
       
-      // Bestimme den Status
+      // Determine status
       let status: KPIStatus | undefined;
       if (kpiValueMatch[4]) {
         const statusText = kpiValueMatch[4].toLowerCase();
@@ -331,7 +331,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
         else if (statusText === "not in compliance") status = "not in compliance";
       }
       
-      // Überprüfe, dass dieser KPI noch nicht erfasst wurde
+      // Check that this is not already an existing KPI
       if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
           !extractedKpiNames.has(kpiName) &&
           kpiName.length > 3 && 
@@ -340,7 +340,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
           
         console.log(`Found KPI from table row: ${kpiName} = ${value}${unit} ${status ? `(${status})` : ''}`);
         
-        // Bestimme Kategorie basierend auf dem KPI-Namen
+        // Determine category based on KPI name
         let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity";
         
         if (kpiName.toLowerCase().includes('safe') || 
@@ -385,7 +385,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
           }
         }
         
-        // Standardwerte für die Einheit setzen
+        // Set standard values for the unit
         let finalUnit = unit;
         if (unit === "%") {
           finalUnit = "%";
@@ -395,7 +395,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
           finalUnit = "";
         }
         
-        // Zielwert basierend auf Einheit und Kategorie festlegen
+        // Set target based on unit and category
         let target: number;
         if (finalUnit === "%") {
           target = 95;
