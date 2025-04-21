@@ -80,7 +80,10 @@ const ScorecardTargetFormUI: React.FC<ScorecardTargetFormUIProps> = ({
           <Button 
             type="button" 
             className="mt-4 w-full"
-            onClick={() => setIsEditing(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsEditing(true);
+            }}
           >
             Zielwerte anpassen
           </Button>
@@ -91,4 +94,3 @@ const ScorecardTargetFormUI: React.FC<ScorecardTargetFormUIProps> = ({
 };
 
 export default ScorecardTargetFormUI;
-
