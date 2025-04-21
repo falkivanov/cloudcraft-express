@@ -81,7 +81,6 @@ const DriverKpiTargetForm: React.FC = () => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <h2 className="text-lg font-bold mb-1">Fahrer KPI Zielwerte</h2>
-        <p className="text-sm text-muted-foreground mb-3">Definieren Sie „Score“ und „Färbungs“-Zielwerte für Fahrer KPIs</p>
         <div className="space-y-2">
           <div className="grid grid-cols-5 gap-2 font-semibold text-sm text-muted-foreground px-2">
             <div className="col-span-2"></div>
@@ -132,3 +131,4 @@ const DriverKpiTargetForm: React.FC = () => {
 };
 
 export default DriverKpiTargetForm;
+
