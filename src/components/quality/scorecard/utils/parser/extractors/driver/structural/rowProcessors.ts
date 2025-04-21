@@ -1,4 +1,3 @@
-
 import { determineStatus } from '../../../../helpers/statusHelper';
 import { DriverKPI } from '../../../../../types';
 import { extractNumeric, isNumeric } from './valueExtractor';
@@ -93,7 +92,7 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
   const metrics = [];
   
   // Known metric columns that we expect to find
-  const metricColumns = [
+  const metricDefs = [
     { name: "Delivered", index: headerIndexes["Delivered"], target: 0, unit: "" },
     { name: "DCR", index: headerIndexes["DCR"], target: 98.5, unit: "%" },
     { name: "DNR DPMO", index: headerIndexes["DNR DPMO"], target: 1500, unit: "DPMO" },
@@ -104,39 +103,40 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
   ];
   
   // Process each metric column
-  for (const metricDef of metricColumns) {
+  for (const metricDef of metricDefs) {
     if (metricDef.index !== undefined && metricDef.index < row.length) {
+      // Skip LoR DPMO column if present
+      if (headerIndexes["LoR DPMO"] !== undefined && 
+          metricDef.index > headerIndexes["DNR DPMO"] && 
+          metricDef.index <= headerIndexes["LoR DPMO"]) {
+        continue;
+      }
+      
       const valueStr = (row[metricDef.index]?.str || "").trim();
       
       if (valueStr === "-") {
-        // Handle dash values
         metrics.push({
           name: metricDef.name,
           value: 0,
           target: metricDef.target,
           unit: metricDef.unit,
-          status: "none" as const
+          status: "none"
         });
-      } else {
-        // Extract numeric value
-        const numericValue = extractNumeric(valueStr);
-        
-        // Only add valid numeric values
-        if (!isNaN(numericValue)) {
-          metrics.push({
-            name: metricDef.name,
-            value: numericValue,
-            target: metricDef.target,
-            unit: metricDef.unit,
-            status: determineStatus(metricDef.name, numericValue)
-          });
-        }
+      } else if (isNumeric(valueStr)) {
+        const value = extractNumeric(valueStr);
+        metrics.push({
+          name: metricDef.name,
+          value,
+          target: metricDef.target,
+          unit: metricDef.unit,
+          status: determineStatus(metricDef.name, value)
+        });
       }
     }
   }
   
   // If we don't have metrics for all columns, try to find them by position
-  if (metrics.length < metricColumns.length) {
+  if (metrics.length < metricDefs.length) {
     console.log(`Looking for missing metrics for ${driverId} by position`);
     
     // Get numeric cells by position
@@ -149,8 +149,8 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
     const foundMetrics = new Set(metrics.map(m => m.name));
     
     // Add missing metrics based on position
-    for (let i = 0; i < metricColumns.length; i++) {
-      const metricName = metricColumns[i].name;
+    for (let i = 0; i < metricDefs.length; i++) {
+      const metricName = metricDefs[i].name;
       
       // Skip if we already have this metric
       if (foundMetrics.has(metricName)) continue;
@@ -164,8 +164,8 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
           metrics.push({
             name: metricName,
             value: 0,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
+            target: metricDefs[i].target,
+            unit: metricDefs[i].unit,
             status: "none" as const
           });
         } else {
@@ -173,8 +173,8 @@ function processDriverWithId(driverId: string, row: any[], headerIndexes: Record
           metrics.push({
             name: metricName,
             value,
-            target: metricColumns[i].target,
-            unit: metricColumns[i].unit,
+            target: metricDefs[i].target,
+            unit: metricDefs[i].unit,
             status: determineStatus(metricName, value)
           });
         }
