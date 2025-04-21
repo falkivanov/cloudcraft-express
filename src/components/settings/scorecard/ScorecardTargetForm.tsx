@@ -96,7 +96,8 @@ interface ScorecardTargetFormProps {
 const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) => {
   const STORAGE_KEY = "scorecard_custom_targets";
   const [showEffectiveDate, setShowEffectiveDate] = useState<{[key: string]: boolean}>({});
-  
+  const [isEditing, setIsEditing] = useState(false);
+
   // Initialisiere das Formular mit Defaultwerten
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -163,15 +164,33 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
       return processedTarget;
     });
     onSubmit({ targets: processedTargets });
+    setIsEditing(false);
   };
 
   // Hilfsfunktion: Index eines KPI-Namens in der Targets-Form-Liste
   const findTargetIndex = (kpiName: string) => form.getValues().targets.findIndex(t => t.name === kpiName);
+
+  // Accordion: standardmäßig zugeklappt
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
+
+  useEffect(() => {
+    // By default: alle zugeklappt (leer), es sei denn, ein User hat bereits ausgeklappt
+    setAccordionValue([]);
+  }, []);
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <Accordion type="multiple" className="w-full">
+      <form 
+        onSubmit={form.handleSubmit(handleSubmit)} 
+        className="space-y-4"
+        autoComplete="off"
+      >
+        <Accordion 
+          type="multiple" 
+          className="w-full" 
+          value={accordionValue}
+          onValueChange={setAccordionValue}
+        >
           {KPI_CATEGORIES.map(category => (
             <AccordionItem key={category.label} value={category.label} className="border rounded-lg mb-2">
               <AccordionTrigger className="px-4 py-2 font-semibold text-base bg-gray-50 hover:bg-gray-100 rounded-t-lg">
@@ -191,6 +210,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
                       currentWeek={currentWeek}
                       currentYear={currentYear}
                       onToggleEffectiveDate={toggleEffectiveDate}
+                      disabled={!isEditing}
                     />
                   );
                 })}
@@ -198,11 +218,20 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
             </AccordionItem>
           ))}
         </Accordion>
-        <Button type="submit" className="mt-4 w-full">Zielwerte speichern</Button>
+        {isEditing ? (
+          <Button type="submit" className="mt-4 w-full">Zielwerte speichern</Button>
+        ) : (
+          <Button 
+            type="button" 
+            className="mt-4 w-full"
+            onClick={() => setIsEditing(true)}
+          >
+            Zielwerte anpassen
+          </Button>
+        )}
       </form>
     </Form>
   );
 };
 
 export default ScorecardTargetForm;
-
