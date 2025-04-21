@@ -44,7 +44,10 @@ export const extractDriverKPIsFromText = (text: string) => {
       const values = line.split(/[,|\t]+/).map(item => item.trim());
       
       if (values.length >= 8) {
-        const [id, deliveredStr, dcrStr, dnrDpmoStr, lorDpmoStr, podStr, ccStr, ceStr, cdfStr] = values;
+        const [id, deliveredStr, dcrStr, dnrDpmoStr, lorDpmoOrPodStr, podOrCcStr, ccOrCeStr, ceOrCdfStr, cdfOrExtraStr] = values;
+        
+        // Determine if we have the LoR DPMO column (newer format) or not
+        const hasLorDpmo = headerMatch[1] !== undefined;
         
         const delivered = parseFloat(deliveredStr) || 0;
         
@@ -52,18 +55,41 @@ export const extractDriverKPIsFromText = (text: string) => {
         if (dcr > 100) dcr = dcr / 100;
         
         const dnrDpmo = parseFloat(dnrDpmoStr) || 0;
-        const lorDpmo = parseFloat(lorDpmoStr) || 0;
         
-        let pod = podStr === "-" ? 0 : parseFloat(podStr.replace('%', '')) || 0;
-        if (pod > 100) pod = pod / 100;
+        // Handle dynamic positioning based on whether LoR DPMO exists
+        let lorDpmo = 0;
+        let pod = 0;
+        let cc = 0;
+        let ce = 0;
+        let cdf = 0;
         
-        let cc = ccStr === "-" ? 0 : parseFloat(ccStr.replace('%', '')) || 0;
-        if (cc > 100) cc = cc / 100;
-        
-        const ce = parseFloat(ceStr) || 0;
-        
-        let cdf = cdfStr === "-" ? 0 : parseFloat(cdfStr.replace('%', '')) || 0;
-        if (cdf > 100) cdf = cdf / 100;
+        if (hasLorDpmo) {
+          // New format with LoR DPMO
+          lorDpmo = parseFloat(lorDpmoOrPodStr) || 0;
+          
+          pod = podOrCcStr === "-" ? 0 : parseFloat(podOrCcStr.replace('%', '')) || 0;
+          if (pod > 100) pod = pod / 100;
+          
+          cc = ccOrCeStr === "-" ? 0 : parseFloat(ccOrCeStr.replace('%', '')) || 0;
+          if (cc > 100) cc = cc / 100;
+          
+          ce = parseFloat(ceOrCdfStr) || 0;
+          
+          cdf = cdfOrExtraStr === "-" ? 0 : parseFloat(cdfOrExtraStr.replace('%', '')) || 0;
+          if (cdf > 100) cdf = cdf / 100;
+        } else {
+          // Old format without LoR DPMO
+          pod = lorDpmoOrPodStr === "-" ? 0 : parseFloat(lorDpmoOrPodStr.replace('%', '')) || 0;
+          if (pod > 100) pod = pod / 100;
+          
+          cc = podOrCcStr === "-" ? 0 : parseFloat(podOrCcStr.replace('%', '')) || 0;
+          if (cc > 100) cc = cc / 100;
+          
+          ce = parseFloat(ccOrCeStr) || 0;
+          
+          cdf = ceOrCdfStr === "-" ? 0 : parseFloat(ceOrCdfStr.replace('%', '')) || 0;
+          if (cdf > 100) cdf = cdf / 100;
+        }
         
         const driver = {
           id,
@@ -102,14 +128,14 @@ export const extractDriverKPIsFromText = (text: string) => {
               value: pod,
               target: 98,
               unit: "%",
-              status: podStr === "-" ? "none" : determineMetricStatus("POD", pod)
+              status: podOrCcStr === "-" ? "none" : determineMetricStatus("POD", pod)
             },
             {
               name: "CC",
               value: cc,
               target: 95,
               unit: "%",
-              status: ccStr === "-" ? "none" : determineMetricStatus("CC", cc)
+              status: ccOrCeStr === "-" ? "none" : determineMetricStatus("CC", cc)
             },
             {
               name: "CE",
@@ -123,7 +149,7 @@ export const extractDriverKPIsFromText = (text: string) => {
               value: cdf,
               target: 95,
               unit: "%",
-              status: cdfStr === "-" ? "none" : determineMetricStatus("CDF", cdf)
+              status: cdfOrExtraStr === "-" ? "none" : determineMetricStatus("CDF", cdf)
             }
           ],
           status: "active"

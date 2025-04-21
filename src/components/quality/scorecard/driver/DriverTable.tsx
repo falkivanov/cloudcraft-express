@@ -13,10 +13,11 @@ const metricColumns = [
   { key: "Delivered", label: "Delivered" },
   { key: "DCR", label: "DCR" },
   { key: "DNR DPMO", label: "DNR DPMO" },
+  { key: "LoR DPMO", label: "LoR DPMO" },
   { key: "POD", label: "POD" },
   { key: "CC", label: "CC" },
   { key: "CE", label: "CE" },
-  { key: "DEX", label: "DEX" },
+  { key: "CDF", label: "CDF" },
 ];
 
 type SortColumn = "name" | typeof metricColumns[number]["key"];
