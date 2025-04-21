@@ -12,11 +12,13 @@ const STORAGE_KEY = "finance_settings";
 type FinanceFormValues = {
   amzRate: string;
   driverWage: string;
+  expenses: string;
 };
 
 const defaultValues: FinanceFormValues = {
   amzRate: "",
   driverWage: "",
+  expenses: "",
 };
 
 const FinanceSettings: React.FC = () => {
@@ -35,6 +37,7 @@ const FinanceSettings: React.FC = () => {
           form.reset({
             amzRate: parsed.amzRate || "",
             driverWage: parsed.driverWage || "",
+            expenses: parsed.expenses || "",
           });
         }
       } catch {}
@@ -52,7 +55,7 @@ const FinanceSettings: React.FC = () => {
       <CardHeader>
         <CardTitle>Finanzeinstellungen</CardTitle>
         <CardDescription>
-          Tragen Sie hier den AMZ-Stundensatz und den Stundenlohn für Fahrer ein.
+          Tragen Sie hier den AMZ-Stundensatz, den Stundenlohn für Fahrer und Spesen ein.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -79,6 +82,19 @@ const FinanceSettings: React.FC = () => {
                   <FormLabel className="flex-1 min-w-[140px]">Stundenlohn Fahrer</FormLabel>
                   <FormControl className="flex-1">
                     <Input type="number" step="0.01" min="0" placeholder="z.B. 15.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="expenses"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-4">
+                  <FormLabel className="flex-1 min-w-[140px]">Spesen</FormLabel>
+                  <FormControl className="flex-1">
+                    <Input type="number" step="0.01" min="0" placeholder="z.B. 5.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
