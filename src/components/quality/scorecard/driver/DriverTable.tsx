@@ -18,8 +18,12 @@ const expectedMetricColumns = [
   { key: "POD", label: "POD" },
   { key: "CC", label: "CC" },
   { key: "CE", label: "CE" },
+  { key: "DEX", label: "DEX" },
   { key: "CDF", label: "CDF" },
 ];
+
+// Metriken, die immer angezeigt werden sollen, auch wenn sie in den Daten fehlen
+const alwaysShowMetrics = ["Delivered", "DCR", "DNR DPMO", "POD", "CC", "CE", "DEX"];
 
 type SortColumn = "name" | string;
 type SortDirection = "asc" | "desc";
@@ -35,9 +39,11 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
-  // Ermittle dynamisch die tatsächlich vorhandenen Metriken aus dem ersten Fahrer
+  // Ermittle dynamisch die tatsächlich vorhandenen Metriken aus allen Fahrern
   const availableMetricColumns = useMemo(() => {
-    if (drivers.length === 0) return expectedMetricColumns;
+    if (drivers.length === 0) return expectedMetricColumns.filter(col => 
+      alwaysShowMetrics.includes(col.key)
+    );
     
     // Sammle alle eindeutigen Metriknamen aus allen Fahrern
     const metricNames = new Set<string>();
@@ -45,6 +51,11 @@ const DriverTable: React.FC<DriverTableProps> = ({ drivers }) => {
       driver.metrics.forEach(metric => {
         metricNames.add(metric.name);
       });
+    });
+    
+    // Füge immer anzuzeigende Metriken hinzu, auch wenn sie in den Daten fehlen
+    alwaysShowMetrics.forEach(metric => {
+      metricNames.add(metric);
     });
     
     // Sortiere die Spalten gemäß der erwarteten Reihenfolge, falls vorhanden
