@@ -50,101 +50,77 @@ export const extractDriverKPIsFromText = (text: string) => {
     const line = lines[i].trim();
     
     // Look for lines that start with A-prefixed driver IDs (like A10PTFSF16G64)
-    if (line.match(/^A[A-Z0-9]{6,}/)) {
+    if (line.match(/^A[A-Z0-9]+/)) {
       // Split the line by whitespace or tab characters to get the individual values
       const values = line.split(/\s+/).filter(val => val !== '');
       
       console.log(`Analyzing line with ${values.length} values:`, values);
       
-      if (values.length >= 8) {  // We need at least 8 columns of data
+      // Check if we have enough values to work with
+      if (values.length >= 2) {
         const driverId = values[0];
         
-        // Parse the numeric values based on the index
-        const delivered = parseFloat(values[1]) || 0;
+        // Create arrays to store metrics
+        const metricNames = ["Delivered", "DCR", "DNR DPMO", "LoR DPMO", "POD", "CC", "CE", "CDF"];
+        const metricTargets = [0, 98.5, 1500, 1500, 98, 95, 0, 95];
+        const metricUnits = ["", "%", "DPMO", "DPMO", "%", "%", "", "%"];
+        const metricValues = [];
+        const metricStatuses = [];
         
-        let dcr = values[2] ? parseFloat(values[2].replace('%', '')) || 0 : 0;
-        if (dcr > 100) dcr = dcr / 100;
+        // Process each value in the line
+        for (let j = 1; j < values.length && j <= 8; j++) {
+          const value = values[j];
+          const metricIndex = j - 1;
+          
+          if (value === "-") {
+            // Handle dash values
+            metricValues.push(0);
+            metricStatuses.push("none");
+          } else {
+            // Handle numeric values, possibly with percentage sign
+            let numericValue = value;
+            if (typeof numericValue === 'string' && numericValue.endsWith('%')) {
+              numericValue = numericValue.replace('%', '');
+            }
+            
+            const parsedValue = parseFloat(numericValue);
+            
+            // Handle percentages over 1 (convert from 100-scale to 0-1 scale if needed)
+            let finalValue = parsedValue;
+            if ((metricNames[metricIndex] === "DCR" || 
+                 metricNames[metricIndex] === "POD" || 
+                 metricNames[metricIndex] === "CC" || 
+                 metricNames[metricIndex] === "CDF") && 
+                parsedValue > 100) {
+              finalValue = parsedValue / 100;
+            }
+            
+            metricValues.push(isNaN(finalValue) ? 0 : finalValue);
+            metricStatuses.push(determineMetricStatus(metricNames[metricIndex], finalValue));
+          }
+        }
         
-        const dnrDpmo = values[3] ? parseFloat(values[3]) || 0 : 0;
-        const lorDpmo = values[4] ? parseFloat(values[4]) || 0 : 0;
+        // Fill in any missing metrics with defaults (for shorter rows)
+        while (metricValues.length < 8) {
+          metricValues.push(0);
+          metricStatuses.push("none");
+        }
         
-        let pod = values[5] === "-" ? 0 : (values[5] ? parseFloat(values[5].replace('%', '')) || 0 : 0);
-        if (pod > 100) pod = pod / 100;
+        console.log(`Processing driver ${driverId} with ${metricValues.length} values`);
         
-        let cc = values[6] === "-" ? 0 : (values[6] ? parseFloat(values[6].replace('%', '')) || 0 : 0);
-        if (cc > 100) cc = cc / 100;
-        
-        const ce = values[7] ? parseFloat(values[7]) || 0 : 0;
-        
-        let cdf = values.length > 8 ? 
-          (values[8] === "-" ? 0 : parseFloat(values[8].replace('%', '')) || 0) : 0;
-        if (cdf > 100) cdf = cdf / 100;
-        
-        console.log(`Processing driver ${driverId} with values:`, {
-          delivered, dcr, dnrDpmo, lorDpmo, pod, cc, ce, cdf
-        });
+        // Create driver metrics objects
+        const metrics = metricNames.map((name, index) => ({
+          name,
+          value: metricValues[index],
+          target: metricTargets[index],
+          unit: metricUnits[index],
+          status: metricStatuses[index]
+        }));
         
         const driver = {
           id: driverId,
           name: driverId,
-          metrics: [
-            {
-              name: "Delivered",
-              value: delivered,
-              target: 0,
-              unit: "",
-              status: "none"
-            },
-            {
-              name: "DCR",
-              value: dcr,
-              target: 98.5,
-              unit: "%",
-              status: determineMetricStatus("DCR", dcr)
-            },
-            {
-              name: "DNR DPMO",
-              value: dnrDpmo,
-              target: 1500,
-              unit: "DPMO",
-              status: determineMetricStatus("DNR DPMO", dnrDpmo)
-            },
-            {
-              name: "LoR DPMO",
-              value: lorDpmo,
-              target: 1500,
-              unit: "DPMO",
-              status: determineMetricStatus("LoR DPMO", lorDpmo)
-            },
-            {
-              name: "POD",
-              value: pod,
-              target: 98,
-              unit: "%",
-              status: values[5] === "-" ? "none" : determineMetricStatus("POD", pod)
-            },
-            {
-              name: "CC",
-              value: cc,
-              target: 95,
-              unit: "%",
-              status: values[6] === "-" ? "none" : determineMetricStatus("CC", cc)
-            },
-            {
-              name: "CE",
-              value: ce,
-              target: 0,
-              unit: "",
-              status: determineMetricStatus("CE", ce)
-            },
-            {
-              name: "CDF",
-              value: cdf,
-              target: 95,
-              unit: "%",
-              status: values.length > 8 && values[8] === "-" ? "none" : determineMetricStatus("CDF", cdf)
-            }
-          ],
+          metrics,
           status: "active"
         };
         
