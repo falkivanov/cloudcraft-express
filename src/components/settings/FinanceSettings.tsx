@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -10,50 +10,120 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/ui/radio-group";
+import { Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { formatDate } from "@/utils/dateUtils";
 
 const STORAGE_KEY = "finance_settings";
+const FINANCE_HISTORY_KEY = "finance_settings_history";
 
-type FinanceFormValues = {
+export type FinanceSettings = {
   amzRate: string;
   driverWage: string;
   expenses: string;
   hasExpenses: "yes" | "no";
+  validFrom?: string; // ISO date string
+  createdAt: string; // ISO date string
 };
 
-const defaultValues: FinanceFormValues = {
+const defaultValues: Omit<FinanceSettings, "createdAt"> = {
   amzRate: "",
   driverWage: "",
   expenses: "",
   hasExpenses: "no",
+  validFrom: format(new Date(), "yyyy-MM-dd"),
 };
 
 const FinanceSettings: React.FC = () => {
   const { toast } = useToast();
-  const form = useForm<FinanceFormValues>({
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyItems, setHistoryItems] = useState<FinanceSettings[]>([]);
+  const [currentSettings, setCurrentSettings] = useState<FinanceSettings | null>(null);
+  
+  const form = useForm<Omit<FinanceSettings, "createdAt">>({
     defaultValues,
   });
 
-  // Load values from localStorage on mount
+  // Load current settings and history from localStorage on mount
   useEffect(() => {
+    // Load current settings
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
       try {
         const parsed = JSON.parse(data);
         if (parsed && typeof parsed === "object") {
+          setCurrentSettings(parsed);
           form.reset({
             amzRate: parsed.amzRate || "",
             driverWage: parsed.driverWage || "",
             expenses: parsed.expenses || "",
             hasExpenses: parsed.hasExpenses === "yes" || parsed.hasExpenses === "no" ? parsed.hasExpenses : "no",
+            validFrom: parsed.validFrom || format(new Date(), "yyyy-MM-dd"),
           });
         }
-      } catch {}
+      } catch (e) {
+        console.error("Failed to parse finance settings:", e);
+      }
     }
-    // eslint-disable-next-line
+
+    // Load history
+    loadHistory();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmit = (values: FinanceFormValues) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+  const loadHistory = () => {
+    const historyData = localStorage.getItem(FINANCE_HISTORY_KEY);
+    if (historyData) {
+      try {
+        const parsedHistory = JSON.parse(historyData);
+        if (Array.isArray(parsedHistory)) {
+          // Sort by validFrom date, newest first
+          const sortedHistory = parsedHistory.sort((a, b) => {
+            return new Date(b.validFrom || 0).getTime() - new Date(a.validFrom || 0).getTime();
+          });
+          setHistoryItems(sortedHistory);
+        }
+      } catch (e) {
+        console.error("Failed to parse finance history:", e);
+      }
+    }
+  };
+
+  const onSubmit = (values: Omit<FinanceSettings, "createdAt">) => {
+    // Create new settings with timestamp
+    const newSettings: FinanceSettings = {
+      ...values,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save current settings
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+    setCurrentSettings(newSettings);
+
+    // Update history
+    let history: FinanceSettings[] = [];
+    try {
+      const historyData = localStorage.getItem(FINANCE_HISTORY_KEY);
+      if (historyData) {
+        history = JSON.parse(historyData);
+      }
+    } catch (e) {
+      console.error("Failed to parse history:", e);
+    }
+
+    // Add new settings to history
+    history.push(newSettings);
+    localStorage.setItem(FINANCE_HISTORY_KEY, JSON.stringify(history));
+    
+    // Reload history
+    loadHistory();
+
     toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
   };
 
@@ -61,29 +131,68 @@ const FinanceSettings: React.FC = () => {
   const hasExpenses = form.watch("hasExpenses");
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Finanzeinstellungen</CardTitle>
-        <CardDescription>
+    <Card className="shadow">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-2xl font-bold">Finanzeinstellungen</CardTitle>
+        <CardDescription className="text-base">
           Tragen Sie hier den AMZ-Stundensatz, den Stundenlohn für Fahrer und Spesen ein.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="validFrom"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-4">
+                  <FormLabel className="flex-1 min-w-[180px] font-medium">Gültig ab</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[200px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(new Date(field.value), "dd.MM.yyyy", { locale: de })
+                          ) : (
+                            "Datum auswählen"
+                          )}
+                          <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={field.value ? new Date(field.value) : undefined}
+                        onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="amzRate"
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-4">
-                  <FormLabel className="min-w-[180px] font-medium">AMZ Stundensatz</FormLabel>
+                  <FormLabel className="flex-1 min-w-[180px] font-medium">AMZ Stundensatz</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
                       step="0.01" 
                       min="0" 
                       placeholder="z.B. 25.50" 
-                      className="max-w-[200px]"
+                      className="w-[200px]"
                       {...field} 
                     />
                   </FormControl>
@@ -91,19 +200,20 @@ const FinanceSettings: React.FC = () => {
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name="driverWage"
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-4">
-                  <FormLabel className="min-w-[180px] font-medium">Stundenlohn Fahrer</FormLabel>
+                  <FormLabel className="flex-1 min-w-[180px] font-medium">Stundenlohn Fahrer</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
                       step="0.01" 
                       min="0" 
                       placeholder="z.B. 15.00" 
-                      className="max-w-[200px]"
+                      className="w-[200px]"
                       {...field} 
                     />
                   </FormControl>
@@ -111,52 +221,102 @@ const FinanceSettings: React.FC = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="expenses"
-              render={({ field: expenseField }) => (
-                <FormField
-                  control={form.control}
-                  name="hasExpenses"
-                  render={({ field: hasExpensesField }) => (
-                    <FormItem className="flex items-center space-x-4">
-                      <FormLabel className="min-w-[180px] font-medium">Spesen</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="z.B. 5.00"
-                          className="max-w-[200px]"
-                          {...expenseField}
-                          disabled={hasExpenses !== "yes"}
-                        />
-                      </FormControl>
-                      <RadioGroup
-                        value={hasExpensesField.value}
-                        onValueChange={hasExpensesField.onChange}
-                        className="flex items-center space-x-6"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="yes" id="expenses-yes" />
-                          <FormLabel htmlFor="expenses-yes" className="cursor-pointer">Ja</FormLabel>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="no" id="expenses-no" />
-                          <FormLabel htmlFor="expenses-no" className="cursor-pointer">Nein</FormLabel>
-                        </div>
-                      </RadioGroup>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            />
-            <div className="pt-4">
-              <Button type="submit" className="w-[200px]">Speichern</Button>
+            
+            <div className="flex items-center space-x-4">
+              <FormLabel className="flex-1 min-w-[180px] font-medium">Spesen</FormLabel>
+              
+              <FormField
+                control={form.control}
+                name="expenses"
+                render={({ field }) => (
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="z.B. 5.00"
+                      className="w-[200px]"
+                      {...field}
+                      disabled={hasExpenses !== "yes"}
+                    />
+                  </FormControl>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="hasExpenses"
+                render={({ field }) => (
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="flex items-center space-x-4"
+                  >
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="yes" id="expenses-yes" />
+                      <FormLabel htmlFor="expenses-yes" className="cursor-pointer">Ja</FormLabel>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="no" id="expenses-no" />
+                      <FormLabel htmlFor="expenses-no" className="cursor-pointer">Nein</FormLabel>
+                    </div>
+                  </RadioGroup>
+                )}
+              />
+            </div>
+            
+            <div className="pt-4 flex space-x-4">
+              <Button type="submit" className="px-8">Speichern</Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                {showHistory ? "Verlauf ausblenden" : "Verlauf anzeigen"}
+              </Button>
             </div>
           </form>
         </Form>
+
+        {showHistory && historyItems.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-3">Verlauf der Finanzeinstellungen</h3>
+            <Accordion type="single" collapsible className="w-full">
+              {historyItems.map((item, index) => (
+                <AccordionItem value={`item-${index}`} key={index}>
+                  <AccordionTrigger className="hover:bg-gray-50 px-3 rounded">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <span className="font-medium">
+                        Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        Erstellt am {formatDate(item.createdAt)}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3">
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex justify-between py-1 border-b">
+                        <span className="font-medium">AMZ Stundensatz</span>
+                        <span>{item.amzRate} €</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b">
+                        <span className="font-medium">Stundenlohn Fahrer</span>
+                        <span>{item.driverWage} €</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b">
+                        <span className="font-medium">Spesen</span>
+                        <span>
+                          {item.hasExpenses === "yes" ? `${item.expenses} €` : "Keine"}
+                        </span>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
