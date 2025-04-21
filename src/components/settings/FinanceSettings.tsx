@@ -97,51 +97,47 @@ const FinanceSettings: React.FC = () => {
                 </FormItem>
               )}
             />
-            {/* Spesen-Feld mit Ja/Nein */}
-            <div>
-              <FormField
-                control={form.control}
-                name="expenses"
-                render={({ field }) => (
-                  <FormItem className="flex items-center space-x-4">
-                    <FormLabel className="flex-1 min-w-[140px]">Spesen</FormLabel>
-                    <FormControl className="flex-1">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="z.B. 5.00"
-                        {...field}
-                        disabled={hasExpenses !== "yes"}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="hasExpenses"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-6 mt-2 ml-[140px] flex-1 min-w-[180px]">
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      className="flex flex-row gap-4"
-                    >
-                      <FormControl>
-                        <RadioGroupItem value="yes" id="expenses-yes" />
+            {/* Spesen Feld mit Ja/Nein horizontale Ausrichtung */}
+            <FormField
+              control={form.control}
+              name="expenses"
+              render={({ field: expenseField }) => (
+                <FormField
+                  control={form.control}
+                  name="hasExpenses"
+                  render={({ field: hasExpensesField }) => (
+                    <FormItem className="flex items-center space-x-4">
+                      <FormLabel className="min-w-[140px] flex-shrink-0">Spesen</FormLabel>
+                      <FormControl className="flex-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="z.B. 5.00"
+                          {...expenseField}
+                          disabled={hasExpenses !== "yes"}
+                        />
                       </FormControl>
-                      <FormLabel htmlFor="expenses-yes" className="mr-4 cursor-pointer select-none">Ja</FormLabel>
-                      <FormControl>
-                        <RadioGroupItem value="no" id="expenses-no" />
-                      </FormControl>
-                      <FormLabel htmlFor="expenses-no" className="cursor-pointer select-none">Nein</FormLabel>
-                    </RadioGroup>
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <RadioGroup
+                        value={hasExpensesField.value}
+                        onValueChange={hasExpensesField.onChange}
+                        className="flex flex-row gap-6 ml-4 min-w-[130px]"
+                      >
+                        <FormControl>
+                          <RadioGroupItem value="yes" id="expenses-yes" />
+                        </FormControl>
+                        <FormLabel htmlFor="expenses-yes" className="cursor-pointer select-none">Ja</FormLabel>
+                        <FormControl>
+                          <RadioGroupItem value="no" id="expenses-no" />
+                        </FormControl>
+                        <FormLabel htmlFor="expenses-no" className="cursor-pointer select-none">Nein</FormLabel>
+                      </RadioGroup>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            />
             <Button type="submit" className="mt-2">Speichern</Button>
           </form>
         </Form>
@@ -151,4 +147,3 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
-
