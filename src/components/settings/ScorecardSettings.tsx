@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import ScorecardTargetForm from "./scorecard/ScorecardTargetForm";
 import DriverKpiTargetForm from "./scorecard/DriverKpiTargetForm";
 import { FormValues } from "./scorecard/ScorecardTargetForm";
+import ScorecardTargetHistorySheet from "./scorecard/ScorecardTargetHistorySheet";
 
 const ScorecardSettings: React.FC = () => {
   const { toast } = useToast();
@@ -41,6 +41,7 @@ const ScorecardSettings: React.FC = () => {
         </CardHeader>
         <CardContent>
           <ScorecardTargetForm onSubmit={onSubmit} />
+          <ScorecardTargetHistorySheet />
         </CardContent>
       </Card>
       <Card>
