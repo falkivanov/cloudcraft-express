@@ -61,24 +61,31 @@ const FinanceSettings: React.FC = () => {
   const hasExpenses = form.watch("hasExpenses");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Finanzeinstellungen</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl">Finanzeinstellungen</CardTitle>
         <CardDescription>
           Tragen Sie hier den AMZ-Stundensatz, den Stundenlohn für Fahrer und Spesen ein.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="amzRate"
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-4">
-                  <FormLabel className="flex-1 min-w-[140px]">AMZ Stundensatz</FormLabel>
-                  <FormControl className="flex-1">
-                    <Input type="number" step="0.01" min="0" placeholder="z.B. 25.50" {...field} />
+                  <FormLabel className="min-w-[180px] font-medium">AMZ Stundensatz</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      placeholder="z.B. 25.50" 
+                      className="max-w-[200px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,15 +96,21 @@ const FinanceSettings: React.FC = () => {
               name="driverWage"
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-4">
-                  <FormLabel className="flex-1 min-w-[140px]">Stundenlohn Fahrer</FormLabel>
-                  <FormControl className="flex-1">
-                    <Input type="number" step="0.01" min="0" placeholder="z.B. 15.00" {...field} />
+                  <FormLabel className="min-w-[180px] font-medium">Stundenlohn Fahrer</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      placeholder="z.B. 15.00" 
+                      className="max-w-[200px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Spesen Feld mit Ja/Nein horizontale Ausrichtung */}
             <FormField
               control={form.control}
               name="expenses"
@@ -107,13 +120,14 @@ const FinanceSettings: React.FC = () => {
                   name="hasExpenses"
                   render={({ field: hasExpensesField }) => (
                     <FormItem className="flex items-center space-x-4">
-                      <FormLabel className="min-w-[140px] flex-shrink-0">Spesen</FormLabel>
-                      <FormControl className="flex-1">
+                      <FormLabel className="min-w-[180px] font-medium">Spesen</FormLabel>
+                      <FormControl>
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
                           placeholder="z.B. 5.00"
+                          className="max-w-[200px]"
                           {...expenseField}
                           disabled={hasExpenses !== "yes"}
                         />
@@ -121,16 +135,16 @@ const FinanceSettings: React.FC = () => {
                       <RadioGroup
                         value={hasExpensesField.value}
                         onValueChange={hasExpensesField.onChange}
-                        className="flex flex-row gap-6 ml-4 min-w-[130px]"
+                        className="flex items-center space-x-6"
                       >
-                        <FormControl>
+                        <div className="flex items-center space-x-2">
                           <RadioGroupItem value="yes" id="expenses-yes" />
-                        </FormControl>
-                        <FormLabel htmlFor="expenses-yes" className="cursor-pointer select-none">Ja</FormLabel>
-                        <FormControl>
+                          <FormLabel htmlFor="expenses-yes" className="cursor-pointer">Ja</FormLabel>
+                        </div>
+                        <div className="flex items-center space-x-2">
                           <RadioGroupItem value="no" id="expenses-no" />
-                        </FormControl>
-                        <FormLabel htmlFor="expenses-no" className="cursor-pointer select-none">Nein</FormLabel>
+                          <FormLabel htmlFor="expenses-no" className="cursor-pointer">Nein</FormLabel>
+                        </div>
                       </RadioGroup>
                       <FormMessage />
                     </FormItem>
@@ -138,7 +152,9 @@ const FinanceSettings: React.FC = () => {
                 />
               )}
             />
-            <Button type="submit" className="mt-2">Speichern</Button>
+            <div className="pt-4">
+              <Button type="submit" className="w-[200px]">Speichern</Button>
+            </div>
           </form>
         </Form>
       </CardContent>
