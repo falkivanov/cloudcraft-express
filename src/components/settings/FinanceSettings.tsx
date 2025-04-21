@@ -1,0 +1,95 @@
+
+import React, { useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+
+const STORAGE_KEY = "finance_settings";
+
+type FinanceFormValues = {
+  amzRate: string;
+  driverWage: string;
+};
+
+const defaultValues: FinanceFormValues = {
+  amzRate: "",
+  driverWage: "",
+};
+
+const FinanceSettings: React.FC = () => {
+  const { toast } = useToast();
+  const form = useForm<FinanceFormValues>({
+    defaultValues
+  });
+
+  // Load values from localStorage on mount
+  useEffect(() => {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed && typeof parsed === "object") {
+          form.reset({
+            amzRate: parsed.amzRate || "",
+            driverWage: parsed.driverWage || "",
+          });
+        }
+      } catch {}
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  const onSubmit = (values: FinanceFormValues) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Finanzeinstellungen</CardTitle>
+        <CardDescription>
+          Tragen Sie hier den AMZ-Stundensatz und den Stundenlohn für Fahrer ein.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="amzRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>AMZ Stundensatz</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" min="0" placeholder="z.B. 25.50" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="driverWage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stundenlohn Fahrer</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" min="0" placeholder="z.B. 15.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="mt-2">Speichern</Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default FinanceSettings;

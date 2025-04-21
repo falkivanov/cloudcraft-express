@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Container } from "@/components/ui/container";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RegionSettings from "@/components/settings/RegionSettings";
 import ScorecardSettings from "@/components/settings/ScorecardSettings";
+import FinanceSettings from "@/components/settings/FinanceSettings";
 
 const SettingsPage = () => {
   return (
@@ -22,6 +22,8 @@ const SettingsPage = () => {
         <TabsContent value="general">
           <div className="grid gap-6">
             <RegionSettings />
+            
+            <FinanceSettings />
             
             {/* Weitere allgemeine Einstellungskarten können hier hinzugefügt werden */}
             <Card>
