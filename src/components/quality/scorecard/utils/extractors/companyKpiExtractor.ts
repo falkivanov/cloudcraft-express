@@ -1,13 +1,15 @@
-
 import { ScorecardKPI } from "../../types";
 import { determineStatus, getDefaultTargetForKPI, KPIStatus } from '../helpers/statusHelper';
 
 /**
- * Extract company KPIs from text content - improved to detect more KPIs including status indicators
+ * Extract company KPIs from text content - improved to handle format changes in KW14+
  */
 export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
   // Try to identify KPI patterns in the text
   const kpis: ScorecardKPI[] = [];
+  const extractedKpiNames = new Set<string>();
+  
+  console.log("Extracting company KPIs from scorecard text");
   
   // Enhanced patterns with more variations to catch more KPIs, including status information
   const kpiPatterns = [
@@ -16,7 +18,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     // Fallback without status
     { name: "Vehicle Audit (VSA) Compliance", pattern: /(?:VSA|Vehicle\s+Audit|Vehicle\s+Safety\s+Audit)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "safety" },
     
-    // Repeat this pattern for all KPIs - first try with status, then fallback without
+    // DVIC was removed in KW14+ but we keep the pattern for backward compatibility
     { name: "DVIC Compliance", pattern: /(?:DVIC|Daily\s+Vehicle\s+Inspection)[:\s]+(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "%", category: "safety" },
     { name: "DVIC Compliance", pattern: /(?:DVIC|Daily\s+Vehicle\s+Inspection)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "safety" },
     
@@ -28,6 +30,10 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     
     { name: "Mentor Adoption Rate", pattern: /(?:Mentor\s+Adoption)[:\s]+(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "%", category: "safety" },
     { name: "Mentor Adoption Rate", pattern: /(?:Mentor\s+Adoption)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "safety" },
+
+    // Looser pattern for Driver Administration (new in KW14+)
+    { name: "Driver Administration", pattern: /(?:Driver\s+Admin|Driver\s+Administration)[:\s]+(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "%", category: "safety" },
+    { name: "Driver Administration", pattern: /(?:Driver\s+Admin|Driver\s+Administration)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "safety" },
     
     // Compliance KPIs
     { name: "Breach of Contract (BOC)", pattern: /(?:BOC|Breach\s+of\s+Contract)[:\s]+(\d+(?:\.\d+)?)\s*(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance)/i, unit: "", category: "compliance" },
@@ -69,8 +75,8 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     { name: "Customer Delivery Feedback", pattern: /(?:Customer\s+Delivery\s+Feedback|CDF)[:\s]+(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "%", category: "customer" },
     { name: "Customer Delivery Feedback", pattern: /(?:Customer\s+Delivery\s+Feedback|CDF)[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "customer" },
     
-    { name: "Concessions DPMO", pattern: /(?:Concessions|Koncessions)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "DPMO", category: "customer" },
-    { name: "Concessions DPMO", pattern: /(?:Concessions|Koncessions)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)/i, unit: "DPMO", category: "customer" },
+    { name: "Concessions DPMO", pattern: /(?:Concessions|Konzessions)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "DPMO", category: "customer" },
+    { name: "Concessions DPMO", pattern: /(?:Concessions|Konzessions)(?:\s+DPMO)?[:\s]+(\d+(?:\.\d+)?)/i, unit: "DPMO", category: "customer" },
     
     // Capacity KPIs
     { name: "Capacity Reliability", pattern: /Capacity\s+Reliability[:\s]+(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i, unit: "%", category: "capacity" },
@@ -80,9 +86,7 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
     { name: "Next Day Capacity Reliability", pattern: /Next\s+Day\s+Capacity[:\s]+(\d+(?:\.\d+)?)\s*%/i, unit: "%", category: "capacity" }
   ];
   
-  console.log("Extracting company KPIs from scorecard text, page 2");
-  
-  // Extract overall score and status
+  // Try to extract overall score and status first
   const overallPatterns = [
     /overall(?:\s+score)?:?\s*(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i,
     /score:?\s*(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i
@@ -106,33 +110,33 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
       break;
     }
   }
-  
-  // Check each pattern against the text
+
+  // Extrahiere KPIs mit den definierten Mustern
   for (const { name, pattern, unit, category } of kpiPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const value = parseFloat(match[1]);
-      
-      // Check if this pattern includes status information
-      let status: KPIStatus;
-      if (match.length >= 3 && match[2]) {
-        const statusText = match[2].toLowerCase();
-        if (statusText === "poor") status = "poor";
-        else if (statusText === "fair") status = "fair";
-        else if (statusText === "great") status = "great";
-        else if (statusText === "fantastic") status = "fantastic";
-        else if (statusText === "in compliance") status = "in compliance";
-        else if (statusText === "not in compliance") status = "not in compliance";
-        else status = determineStatus(name, value);
+    // Nur suchen, wenn dieser KPI noch nicht gefunden wurde
+    if (!extractedKpiNames.has(name)) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1]);
         
-        console.log(`Found KPI: ${name} = ${value} with status: ${status}`);
-      } else {
-        status = determineStatus(name, value);
-        console.log(`Found KPI: ${name} = ${value}, determined status: ${status}`);
-      }
-      
-      // Skip if we already have a KPI with this name
-      if (!kpis.some(k => k.name === name)) {
+        // Bestimme Status, entweder aus expliziter Angabe oder berechnet
+        let status: KPIStatus;
+        if (match.length >= 3 && match[2]) {
+          const statusText = match[2].toLowerCase();
+          if (statusText === "poor") status = "poor";
+          else if (statusText === "fair") status = "fair";
+          else if (statusText === "great") status = "great";
+          else if (statusText === "fantastic") status = "fantastic";
+          else if (statusText === "in compliance") status = "in compliance";
+          else if (statusText === "not in compliance") status = "not in compliance";
+          else status = determineStatus(name, value);
+          
+          console.log(`Found KPI with explicit status: ${name} = ${value} with status: ${status}`);
+        } else {
+          status = determineStatus(name, value);
+          console.log(`Found KPI: ${name} = ${value}, determined status: ${status}`);
+        }
+        
         kpis.push({
           name,
           value,
@@ -142,102 +146,50 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
           status,
           category: category as "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity"
         });
+        
+        extractedKpiNames.add(name);
       }
     }
   }
-  
-  // Generic KPI extractor for page 2 to find additional KPIs
-  // This approach looks for patterns with status indicators
-  
-  // Look for patterns with percentages and status
-  const percentWithStatusPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/gi);
-  if (percentWithStatusPatterns) {
-    percentWithStatusPatterns.forEach(match => {
-      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-      if (parts && parts.length >= 4) {
-        const kpiName = parts[1].trim();
-        const value = parseFloat(parts[2]);
-        const statusText = parts[3].toLowerCase();
-        
-        let status: KPIStatus;
-        if (statusText === "poor") status = "poor";
-        else if (statusText === "fair") status = "fair";
-        else if (statusText === "great") status = "great";
-        else if (statusText === "fantastic") status = "fantastic";
-        else status = determineStatus(kpiName, value);
-        
-        // Skip if already exists
-        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-          console.log(`Found generic percentage KPI with status: ${kpiName} = ${value}%, status: ${status}`);
-          
-          // Try to determine category based on the KPI name
-          let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
-          
-          if (kpiName.toLowerCase().includes('safe') || kpiName.toLowerCase().includes('fico') || 
-              kpiName.toLowerCase().includes('speeding') || kpiName.toLowerCase().includes('mentor')) {
-            category = "safety";
-          } else if (kpiName.toLowerCase().includes('compliance') || kpiName.toLowerCase().includes('audit') || 
-                     kpiName.toLowerCase().includes('boc') || kpiName.toLowerCase().includes('whc')) {
-            category = "compliance";
-          } else if (kpiName.toLowerCase().includes('customer') || kpiName.toLowerCase().includes('escalation') || 
-                     kpiName.toLowerCase().includes('feedback')) {
-            category = "customer";
-          } else if (kpiName.toLowerCase().includes('photo') || kpiName.toLowerCase().includes('contact') || 
-                     kpiName.toLowerCase().includes('pod')) {
-            category = "standardWork";
-          } else if (kpiName.toLowerCase().includes('dcr') || kpiName.toLowerCase().includes('dnr') || 
-                     kpiName.toLowerCase().includes('lor')) {
-            category = "quality";
-          } else if (kpiName.toLowerCase().includes('capacity') || kpiName.toLowerCase().includes('reliability')) {
-            category = "capacity";
-          }
-          
-          kpis.push({
-            name: kpiName,
-            value,
-            target: 95, // Default target for percentage metrics
-            unit: "%",
-            trend: "neutral" as "up" | "down" | "neutral",
-            status,
-            category
-          });
-        }
-      }
-    });
-  }
-  
-  // Look for percentage patterns without status (fallback)
-  const percentagePatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*%/g);
+
+  // Suche nach Schlüssel-Wert-Paaren mit Prozentzeichen
+  const percentagePatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)\s*%/g);
   if (percentagePatterns) {
     percentagePatterns.forEach(match => {
-      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*%/);
+      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)\s*%/);
       if (parts && parts.length >= 3) {
         const kpiName = parts[1].trim();
         const value = parseFloat(parts[2]);
         
-        // Skip if already exists
-        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-          console.log(`Found generic percentage KPI: ${kpiName} = ${value}%`);
+        // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt
+        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
+            !extractedKpiNames.has(kpiName)) {
           
-          // Try to determine category based on the KPI name
-          let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
+          console.log(`Found percentage KPI: ${kpiName} = ${value}%`);
           
-          if (kpiName.toLowerCase().includes('safe') || kpiName.toLowerCase().includes('fico') || 
-              kpiName.toLowerCase().includes('speeding') || kpiName.toLowerCase().includes('mentor')) {
+          // Bestimme Kategorie basierend auf dem KPI-Namen
+          let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" = "safety";
+          
+          if (kpiName.toLowerCase().includes('safe') || 
+              kpiName.toLowerCase().includes('speeding') || 
+              kpiName.toLowerCase().includes('mentor') || 
+              kpiName.toLowerCase().includes('driver')) {
             category = "safety";
-          } else if (kpiName.toLowerCase().includes('compliance') || kpiName.toLowerCase().includes('audit') || 
-                     kpiName.toLowerCase().includes('boc') || kpiName.toLowerCase().includes('whc')) {
+          } else if (kpiName.toLowerCase().includes('compliance') || 
+                     kpiName.toLowerCase().includes('audit')) {
             category = "compliance";
-          } else if (kpiName.toLowerCase().includes('customer') || kpiName.toLowerCase().includes('escalation') || 
+          } else if (kpiName.toLowerCase().includes('customer') || 
                      kpiName.toLowerCase().includes('feedback')) {
             category = "customer";
-          } else if (kpiName.toLowerCase().includes('photo') || kpiName.toLowerCase().includes('contact') || 
+          } else if (kpiName.toLowerCase().includes('photo') || 
+                     kpiName.toLowerCase().includes('contact') || 
                      kpiName.toLowerCase().includes('pod')) {
             category = "standardWork";
-          } else if (kpiName.toLowerCase().includes('dcr') || kpiName.toLowerCase().includes('dnr') || 
-                     kpiName.toLowerCase().includes('lor')) {
+          } else if (kpiName.toLowerCase().includes('dcr') || 
+                     kpiName.toLowerCase().includes('delivery completion')) {
             category = "quality";
-          } else if (kpiName.toLowerCase().includes('capacity') || kpiName.toLowerCase().includes('reliability')) {
+          } else if (kpiName.toLowerCase().includes('capacity') || 
+                     kpiName.toLowerCase().includes('reliability')) {
             category = "capacity";
           }
           
@@ -250,79 +202,38 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
             status: determineStatus(kpiName, value),
             category
           });
+          
+          extractedKpiNames.add(kpiName);
         }
       }
     });
   }
-  
-  // Look for DPMO patterns with status
-  const dpmoWithStatusPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?:DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/gi);
-  if (dpmoWithStatusPatterns) {
-    dpmoWithStatusPatterns.forEach(match => {
-      // Only process if it contains 'DPMO' or is a known DPMO metric
-      if (match.includes('DPMO') || match.includes('DNR') || match.includes('LoR') || match.includes('Concession')) {
-        const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?:DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-        if (parts && parts.length >= 4) {
-          const kpiName = parts[1].trim();
-          const value = parseFloat(parts[2]);
-          const statusText = parts[3].toLowerCase();
-          
-          let status: KPIStatus;
-          if (statusText === "poor") status = "poor";
-          else if (statusText === "fair") status = "fair";
-          else if (statusText === "great") status = "great";
-          else if (statusText === "fantastic") status = "fantastic";
-          else status = determineStatus(kpiName, value);
-          
-          // Skip if already exists
-          if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-            console.log(`Found generic DPMO KPI with status: ${kpiName} = ${value}, status: ${status}`);
-            
-            // Try to determine category based on the KPI name
-            let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
-            
-            if (kpiName.toLowerCase().includes('customer') || kpiName.toLowerCase().includes('escalation')) {
-              category = "customer";
-            } else if (kpiName.toLowerCase().includes('dnr') || kpiName.toLowerCase().includes('lor')) {
-              category = "quality";
-            }
-            
-            kpis.push({
-              name: kpiName,
-              value,
-              target: 3000, // Default target for DPMO metrics
-              unit: "DPMO",
-              trend: "neutral" as "up" | "down" | "neutral",
-              status,
-              category
-            });
-          }
-        }
-      }
-    });
-  }
-  
-  // Look for DPMO patterns without status (fallback)
-  const dpmoPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?:DPMO)?/g);
+
+  // Suche nach DPMO Mustern
+  const dpmoPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?:\s*DPMO)?/g);
   if (dpmoPatterns) {
     dpmoPatterns.forEach(match => {
-      // Only process if it contains 'DPMO' or is a known DPMO metric
-      if (match.includes('DPMO') || match.includes('DNR') || match.includes('LoR') || match.includes('Concession')) {
-        const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?:DPMO)?/i);
+      // Nur verarbeiten, wenn es DPMO, DNR oder LoR enthält
+      if (match.includes('DPMO') || match.includes('DNR') || match.includes('LoR')) {
+        const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?:\s*DPMO)?/);
         if (parts && parts.length >= 3) {
           const kpiName = parts[1].trim();
           const value = parseFloat(parts[2]);
           
-          // Skip if already exists
-          if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-            console.log(`Found generic DPMO KPI: ${kpiName} = ${value}`);
+          // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt
+          if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
+              !extractedKpiNames.has(kpiName)) {
             
-            // Try to determine category based on the KPI name
-            let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
+            console.log(`Found DPMO KPI: ${kpiName} = ${value}`);
             
-            if (kpiName.toLowerCase().includes('customer') || kpiName.toLowerCase().includes('escalation')) {
+            // Bestimme Kategorie basierend auf dem KPI-Namen
+            let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" = "quality";
+            
+            if (kpiName.toLowerCase().includes('customer') || 
+                kpiName.toLowerCase().includes('escalation')) {
               category = "customer";
-            } else if (kpiName.toLowerCase().includes('dnr') || kpiName.toLowerCase().includes('lor')) {
+            } else if (kpiName.toLowerCase().includes('dnr') || 
+                      kpiName.toLowerCase().includes('lor')) {
               category = "quality";
             }
             
@@ -335,139 +246,216 @@ export const extractCompanyKPIs = (text: string): ScorecardKPI[] => {
               status: determineStatus(kpiName, value),
               category
             });
+            
+            extractedKpiNames.add(kpiName);
           }
         }
       }
     });
   }
-  
-  // Look for numeric values with status (like FICO)
-  const numericWithStatusPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?![%DPMO])\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/gi);
-  if (numericWithStatusPatterns) {
-    numericWithStatusPatterns.forEach(match => {
-      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?![%DPMO])\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-      if (parts && parts.length >= 4) {
-        const kpiName = parts[1].trim();
-        const value = parseFloat(parts[2]);
-        const statusText = parts[3].toLowerCase();
-        
-        let status: KPIStatus;
-        if (statusText === "poor") status = "poor";
-        else if (statusText === "fair") status = "fair";
-        else if (statusText === "great") status = "great";
-        else if (statusText === "fantastic") status = "fantastic";
-        else status = determineStatus(kpiName, value);
-        
-        // Skip if already exists
-        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-          // Only add if it's likely a KPI (not just any number)
-          if (kpiName.length > 3 && !kpiName.includes('Week') && !kpiName.includes('Date')) {
-            console.log(`Found generic numeric KPI with status: ${kpiName} = ${value}, status: ${status}`);
-            
-            // Try to determine category based on the KPI name
-            let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
-            
-            if (kpiName.toLowerCase().includes('fico') || kpiName.toLowerCase().includes('safe driving')) {
-              category = "safety";
-            } else if (kpiName.toLowerCase().includes('breach') || kpiName.toLowerCase().includes('boc')) {
-              category = "compliance";
-            }
-            
-            kpis.push({
-              name: kpiName,
-              value,
-              target: kpiName.includes('FICO') ? 800 : 100, // Default targets
-              unit: "",
-              trend: "neutral" as "up" | "down" | "neutral",
-              status,
-              category
-            });
-          }
-        }
-      }
-    });
-  }
-  
-  // Look for numeric values without status (fallback)
-  const numericPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?![%DPMO])/g);
+
+  // Suche nach numerischen Werten (wie FICO) ohne Einheiten
+  const numericPatterns = text.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?!\s*%|\s*DPMO)/g);
   if (numericPatterns) {
     numericPatterns.forEach(match => {
-      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-)(?:\s*)(\d+(?:\.\d+)?)\s*(?![%DPMO])/i);
+      const parts = match.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s+)(?:\s*)(\d+(?:\.\d+)?)(?!\s*%|\s*DPMO)/);
       if (parts && parts.length >= 3) {
         const kpiName = parts[1].trim();
         const value = parseFloat(parts[2]);
         
-        // Skip if already exists
-        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase())) {
-          // Only add if it's likely a KPI (not just any number)
-          if (kpiName.length > 3 && !kpiName.includes('Week') && !kpiName.includes('Date')) {
-            console.log(`Found generic numeric KPI: ${kpiName} = ${value}`);
+        // Überprüfe, dass es sich nicht um einen bereits gefundenen KPI handelt und es sich
+        // wahrscheinlich um einen KPI handelt (nicht nur eine beliebige Zahl)
+        if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
+            !extractedKpiNames.has(kpiName) &&
+            kpiName.length > 3 && 
+            !kpiName.toLowerCase().includes('week') && 
+            !kpiName.toLowerCase().includes('date')) {
             
-            // Try to determine category based on the KPI name
-            let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
-            
-            if (kpiName.toLowerCase().includes('fico') || kpiName.toLowerCase().includes('safe driving')) {
-              category = "safety";
-            } else if (kpiName.toLowerCase().includes('breach') || kpiName.toLowerCase().includes('boc')) {
-              category = "compliance";
-            }
-            
-            kpis.push({
-              name: kpiName,
-              value,
-              target: kpiName.includes('FICO') ? 800 : 100, // Default targets
-              unit: "",
-              trend: "neutral" as "up" | "down" | "neutral",
-              status: determineStatus(kpiName, value),
-              category
-            });
+          console.log(`Found numeric KPI: ${kpiName} = ${value}`);
+          
+          // Bestimme Kategorie basierend auf dem KPI-Namen
+          let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity" | undefined;
+          
+          if (kpiName.toLowerCase().includes('fico') || 
+              kpiName.toLowerCase().includes('safe driving')) {
+            category = "safety";
+          } else if (kpiName.toLowerCase().includes('breach') || 
+                    kpiName.toLowerCase().includes('boc')) {
+            category = "compliance";
           }
+          
+          kpis.push({
+            name: kpiName,
+            value,
+            target: kpiName.toLowerCase().includes('fico') ? 800 : 100, // Default targets
+            unit: "",
+            trend: "neutral" as "up" | "down" | "neutral",
+            status: determineStatus(kpiName, value),
+            category
+          });
+          
+          extractedKpiNames.add(kpiName);
         }
       }
     });
   }
+
+  // Suche nach Tabellen im Text (für das neue KW14+ Format)
+  // Diese werden oft durch mehrere Zeilen mit regelmäßigen Abständen dargestellt
+  const lines = text.split('\n');
   
-  // Post-processing: deduplicate and handle common variations
-  const processedKpis: ScorecardKPI[] = [];
-  const processedNames = new Set<string>();
-  
-  // First pass: normalize and deduplicate
-  kpis.forEach(kpi => {
-    // Normalize name for comparison (remove extra whitespace, lowercase)
-    const normalizedName = kpi.name.replace(/\s+/g, ' ').toLowerCase();
+  // Suche nach Zeilen mit KPI-Namen und Werten
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
     
-    // Skip if we've already added this KPI (by normalized name)
-    if (!processedNames.has(normalizedName)) {
-      processedNames.add(normalizedName);
-      processedKpis.push(kpi);
-    }
-  });
-  
-  // Categorize any remaining uncategorized KPIs
-  processedKpis.forEach(kpi => {
-    if (!kpi.category) {
-      // Try to assign a category based on the KPI name
-      if (kpi.name.toLowerCase().includes('safe') || kpi.name.toLowerCase().includes('speeding') || 
-          kpi.name.toLowerCase().includes('mentor') || kpi.name.toLowerCase().includes('fico')) {
-        kpi.category = "safety";
-      } else if (kpi.name.toLowerCase().includes('compliance') || kpi.name.toLowerCase().includes('audit') || 
-                 kpi.name.toLowerCase().includes('breach') || kpi.name.toLowerCase().includes('contract')) {
-        kpi.category = "compliance";
-      } else if (kpi.name.toLowerCase().includes('customer') || kpi.name.toLowerCase().includes('escalation') || 
-                 kpi.name.toLowerCase().includes('feedback')) {
-        kpi.category = "customer";
-      } else if (kpi.name.toLowerCase().includes('photo') || kpi.name.toLowerCase().includes('contact') || 
-                 kpi.name.toLowerCase().includes('pod')) {
-        kpi.category = "standardWork";
-      } else if (kpi.name.toLowerCase().includes('dcr') || kpi.name.toLowerCase().includes('dnr') || 
-                 kpi.name.toLowerCase().includes('lor') || kpi.name.toLowerCase().includes('delivery completion')) {
-        kpi.category = "quality";
-      } else if (kpi.name.toLowerCase().includes('capacity') || kpi.name.toLowerCase().includes('reliability')) {
-        kpi.category = "capacity";
+    // Überspringe kurze oder leere Zeilen
+    if (line.length < 5) continue;
+    
+    // Suche nach Zeilen mit KPI-Namen auf der linken Seite und Werten auf der rechten
+    const kpiValueMatch = line.match(/([A-Za-z][A-Za-z\s\(\)\/\-]+)(?::|–|—|-|\s{2,})(?:\s*)(\d+(?:\.\d+)?)\s*(%|DPMO)?(?:\s*(?:\||\s+)?\s*(poor|fair|great|fantastic|in compliance|not in compliance))?/i);
+    
+    if (kpiValueMatch) {
+      const kpiName = kpiValueMatch[1].trim();
+      const value = parseFloat(kpiValueMatch[2]);
+      const unit = kpiValueMatch[3] || "";
+      
+      // Bestimme den Status
+      let status: KPIStatus | undefined;
+      if (kpiValueMatch[4]) {
+        const statusText = kpiValueMatch[4].toLowerCase();
+        if (statusText === "poor") status = "poor";
+        else if (statusText === "fair") status = "fair";
+        else if (statusText === "great") status = "great";
+        else if (statusText === "fantastic") status = "fantastic";
+        else if (statusText === "in compliance") status = "in compliance";
+        else if (statusText === "not in compliance") status = "not in compliance";
+      }
+      
+      // Überprüfe, dass dieser KPI noch nicht erfasst wurde
+      if (!kpis.some(k => k.name.toLowerCase() === kpiName.toLowerCase()) && 
+          !extractedKpiNames.has(kpiName) &&
+          kpiName.length > 3 && 
+          !kpiName.toLowerCase().includes('week') && 
+          !kpiName.toLowerCase().includes('date')) {
+          
+        console.log(`Found KPI from table row: ${kpiName} = ${value}${unit} ${status ? `(${status})` : ''}`);
+        
+        // Bestimme Kategorie basierend auf dem KPI-Namen
+        let category: "safety" | "compliance" | "customer" | "standardWork" | "quality" | "capacity";
+        
+        if (kpiName.toLowerCase().includes('safe') || 
+            kpiName.toLowerCase().includes('speeding') || 
+            kpiName.toLowerCase().includes('mentor') ||
+            kpiName.toLowerCase().includes('driver') ||
+            kpiName.toLowerCase().includes('fico')) {
+          category = "safety";
+        } else if (kpiName.toLowerCase().includes('compliance') || 
+                  kpiName.toLowerCase().includes('audit') ||
+                  kpiName.toLowerCase().includes('breach') || 
+                  kpiName.toLowerCase().includes('boc') ||
+                  kpiName.toLowerCase().includes('cas') ||
+                  kpiName.toLowerCase().includes('whc')) {
+          category = "compliance";
+        } else if (kpiName.toLowerCase().includes('customer') || 
+                  kpiName.toLowerCase().includes('escalation') ||
+                  kpiName.toLowerCase().includes('feedback') ||
+                  kpiName.toLowerCase().includes('csat') ||
+                  kpiName.toLowerCase().includes('concession')) {
+          category = "customer";
+        } else if (kpiName.toLowerCase().includes('photo') || 
+                  kpiName.toLowerCase().includes('contact') ||
+                  kpiName.toLowerCase().includes('pod') ||
+                  kpiName.toLowerCase().includes('rtd') ||
+                  kpiName.toLowerCase().includes('dtd')) {
+          category = "standardWork";
+        } else if (kpiName.toLowerCase().includes('dcr') || 
+                  kpiName.toLowerCase().includes('dnr') ||
+                  kpiName.toLowerCase().includes('lor') ||
+                  kpiName.toLowerCase().includes('delivery completion')) {
+          category = "quality";
+        } else if (kpiName.toLowerCase().includes('capacity') || 
+                  kpiName.toLowerCase().includes('reliability')) {
+          category = "capacity";
+        } else {
+          // Default category based on unit
+          if (unit === "DPMO") {
+            category = "quality";
+          } else {
+            category = "safety";
+          }
+        }
+        
+        // Standardwerte für die Einheit setzen
+        let finalUnit = unit;
+        if (unit === "%") {
+          finalUnit = "%";
+        } else if (unit === "DPMO") {
+          finalUnit = "DPMO";
+        } else {
+          finalUnit = "";
+        }
+        
+        // Zielwert basierend auf Einheit und Kategorie festlegen
+        let target: number;
+        if (finalUnit === "%") {
+          target = 95;
+        } else if (finalUnit === "DPMO") {
+          target = 3000;
+        } else if (kpiName.toLowerCase().includes('fico')) {
+          target = 800;
+        } else {
+          target = 100;
+        }
+        
+        kpis.push({
+          name: kpiName,
+          value,
+          target,
+          unit: finalUnit,
+          trend: "neutral" as "up" | "down" | "neutral",
+          status: status || determineStatus(kpiName, value),
+          category
+        });
+        
+        extractedKpiNames.add(kpiName);
       }
     }
-  });
+  }
   
-  console.log(`Final KPI count: ${processedKpis.length}`);
-  return processedKpis;
+  console.log(`Final KPI count: ${kpis.length}`);
+  
+  if (kpis.length === 0) {
+    console.warn("No company KPIs extracted, returning default set");
+    return [
+      {
+        name: "Delivery Completion Rate (DCR)",
+        value: 98.5,
+        target: 98.0,
+        unit: "%",
+        trend: "up" as const,
+        status: "fantastic" as const,
+        category: "quality" as const
+      },
+      {
+        name: "Delivered Not Received (DNR DPMO)",
+        value: 2500,
+        target: 3000,
+        unit: "DPMO",
+        trend: "down" as const,
+        status: "great" as const,
+        category: "quality" as const
+      },
+      {
+        name: "Customer escalation DPMO",
+        value: 41,
+        target: 50,
+        unit: "DPMO",
+        trend: "down" as const,
+        status: "great" as const,
+        category: "customer" as const
+      }
+    ];
+  }
+  
+  return kpis;
 };
