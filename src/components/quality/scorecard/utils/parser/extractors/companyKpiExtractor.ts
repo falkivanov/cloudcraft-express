@@ -324,7 +324,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         
         // Look for DPMO patterns with status
         const dpmoWithStatusMatch = rowText.match(/([A-Za-z\s\(\)]+)(?:\s*:|:\s*)(\d+)\s*(?:DPMO)?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
-        if (dpmoWithStatusMatch && (rowText.includes('DPMO') || rowText.includes('DNR') || rowText.includes('escalation'))) {
+        if (dpmoWithStatusMatch && (rowText.includes('DPMO') || rowText.includes('DNR') || rowText.includes('escalation') || rowText.includes('LoR'))) {
           const kpiName = dpmoWithStatusMatch[1].trim();
           const value = parseInt(dpmoWithStatusMatch[2], 10);
           const statusText = dpmoWithStatusMatch[3].toLowerCase();
@@ -359,7 +359,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
         
         // Regular DPMO pattern (without status)
         const dpmoMatch = rowText.match(/([A-Za-z\s\(\)]+)(?:\s*:|:\s*)(\d+)\s*(?:DPMO)?/);
-        if (dpmoMatch && (rowText.includes('DPMO') || rowText.includes('DNR') || rowText.includes('escalation'))) {
+        if (dpmoMatch && (rowText.includes('DPMO') || rowText.includes('DNR') || rowText.includes('escalation') || rowText.includes('LoR'))) {
           const kpiName = dpmoMatch[1].trim();
           const value = parseInt(dpmoMatch[2], 10);
           
@@ -407,7 +407,7 @@ export const extractCompanyKPIsFromStructure = (pageData: Record<number, any>) =
     // Try to find overall status patterns
     for (const item of page.items) {
       // Look for "Overall: XX% | Status" pattern
-      const overallMatch = item.str.match(/overall.*?(\d+(?:\.\d+)?)\s*%\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
+      const overallMatch = item.str.match(/overall.*?(\d+(?:\.\d+)?)\s*%?\s*(?:\||\s+)?\s*(poor|fair|great|fantastic)/i);
       if (overallMatch) {
         overallScore = parseFloat(overallMatch[1]);
         const statusText = overallMatch[2].toLowerCase();
