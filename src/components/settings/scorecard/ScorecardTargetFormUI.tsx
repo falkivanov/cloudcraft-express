@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -9,12 +8,8 @@ import { KPI_CATEGORIES } from "./useScorecardTargetForm";
 
 interface ScorecardTargetFormUIProps {
   form: any;
-  showEffectiveDate: { [key: string]: boolean };
   isEditing: boolean;
   onSubmit: (data: FormValues) => void;
-  currentWeek: number;
-  currentYear: number;
-  toggleEffectiveDate: (name: string) => void;
   findTargetIndex: (name: string) => number;
   setIsEditing: (val: boolean) => void;
   accordionValue: string[];
@@ -23,12 +18,8 @@ interface ScorecardTargetFormUIProps {
 
 const ScorecardTargetFormUI: React.FC<ScorecardTargetFormUIProps> = ({
   form,
-  showEffectiveDate,
   isEditing,
   onSubmit,
-  currentWeek,
-  currentYear,
-  toggleEffectiveDate,
   findTargetIndex,
   setIsEditing,
   accordionValue,
@@ -62,11 +53,7 @@ const ScorecardTargetFormUI: React.FC<ScorecardTargetFormUIProps> = ({
                       form={form}
                       index={idx}
                       metric={form.getValues().targets[idx]}
-                      showEffectiveDate={showEffectiveDate[kpi.name] || false}
-                      currentWeek={currentWeek}
-                      currentYear={currentYear}
-                      onToggleEffectiveDate={toggleEffectiveDate}
-                      disabled={!isEditing}
+                      isEditing={isEditing}
                     />
                   );
                 })}

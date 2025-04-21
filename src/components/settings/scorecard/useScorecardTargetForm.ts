@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,9 +5,9 @@ import * as z from "zod";
 import { TargetDefinition } from "@/components/quality/scorecard/utils/helpers/statusHelper";
 import { FormValues, TargetItem } from "./ScorecardTargetForm";
 
-export const KPI_CATEGORIES: { 
-  label: string, 
-  kpis: TargetDefinition[] 
+export const KPI_CATEGORIES: {
+  label: string,
+  kpis: TargetDefinition[]
 }[] = [
   {
     label: "Safety",
@@ -65,8 +64,7 @@ const targetItemSchema = z.object({
   name: z.string(),
   value: z.number().min(0),
   unit: z.string().default(""),
-  effectiveFromWeek: z.number().min(1).max(53).optional(),
-  effectiveFromYear: z.number().min(2020).max(2030).optional(),
+  validFrom: z.string().optional()
 });
 
 const formSchema = z.object({
@@ -74,7 +72,6 @@ const formSchema = z.object({
 });
 
 export function useScorecardTargetForm(STORAGE_KEY: string) {
-  const [showEffectiveDate, setShowEffectiveDate] = useState<{[key: string]: boolean}>({});
   const [isEditing, setIsEditing] = useState(false);
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
 
@@ -84,7 +81,8 @@ export function useScorecardTargetForm(STORAGE_KEY: string) {
       targets: COMPANY_KPI_TARGETS.map(target => ({
         name: target.name,
         value: target.value,
-        unit: target.unit || ""
+        unit: target.unit || "",
+        validFrom: undefined
       }))
     }
   });
@@ -94,47 +92,25 @@ export function useScorecardTargetForm(STORAGE_KEY: string) {
     if (savedTargets) {
       try {
         const parsedTargets = JSON.parse(savedTargets);
-        form.reset({ targets: parsedTargets });
-
-        const effectiveDates: {[key: string]: boolean} = {};
-        parsedTargets.forEach((target: TargetDefinition) => {
-          effectiveDates[target.name] = !!target.effectiveFromWeek && !!target.effectiveFromYear;
+        form.reset({
+          targets: parsedTargets.map((t: any) => ({
+            ...t,
+            validFrom: t.validFrom || undefined
+          }))
         });
-        setShowEffectiveDate(effectiveDates);
       } catch (error) {
         console.error("Error loading saved targets:", error);
       }
     }
   }, [form, STORAGE_KEY]);
 
-  const toggleEffectiveDate = (kpiName: string) => {
-    setShowEffectiveDate(prev => ({
-      ...prev,
-      [kpiName]: !prev[kpiName]
-    }));
-  };
-
-  const getCurrentWeek = () => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 1);
-    const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil(days / 7);
-    return { week: weekNumber, year: now.getFullYear() };
-  };
-  const { week: currentWeek, year: currentYear } = getCurrentWeek();
-
   const findTargetIndex = (kpiName: string) =>
     form.getValues().targets.findIndex(t => t.name === kpiName);
 
   return {
     form,
-    showEffectiveDate,
-    setShowEffectiveDate,
     isEditing,
     setIsEditing,
-    toggleEffectiveDate,
-    currentWeek,
-    currentYear,
     findTargetIndex,
     KPI_CATEGORIES,
     accordionValue,
