@@ -1,20 +1,14 @@
 
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
-import { de } from "date-fns/locale"
+import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import { de } from "date-fns/locale";
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { useCalendarNavigation, YEARS, MONTHS } from "./useCalendarNavigation";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
-
-// Hilfswerte für Jahr/Monat-Auswahl
-const YEARS = Array.from({ length: 31 }, (_, i) => 2015 + i)
-const MONTHS = [
-  "Januar", "Februar", "März", "April", "Mai", "Juni",
-  "Juli", "August", "September", "Oktober", "November", "Dezember"
-]
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({
   className,
@@ -22,35 +16,13 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  // Aktuellen Monat/Jahr fürs Dropdown merken
-  const [viewMonth, setViewMonth] = React.useState(() => {
-    // Startmonat initial von props übernehmen falls gegeben
-    if (props.month) return props.month
-    if (props.selected && props.selected instanceof Date) return props.selected
-    return new Date()
-  })
-
-  React.useEffect(() => {
-    if (props.month) setViewMonth(props.month)
-  }, [props.month])
-
-  // Handler fürs Wechseln per Dropdown
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMonth = parseInt(e.target.value, 10)
-    setViewMonth((prev) => {
-      const d = new Date(prev)
-      d.setMonth(newMonth)
-      return d
-    })
-  }
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newYear = parseInt(e.target.value, 10)
-    setViewMonth((prev) => {
-      const d = new Date(prev)
-      d.setFullYear(newYear)
-      return d
-    })
-  }
+  // Kalender-Navigation ausgelagert!
+  const {
+    viewMonth,
+    setViewMonth,
+    handleMonthChange,
+    handleYearChange,
+  } = useCalendarNavigation({ month: props.month, selected: props.selected as Date });
 
   return (
     <DayPicker
@@ -98,7 +70,6 @@ function Calendar({
         IconRight: () => <ChevronRight className="h-4 w-4" />,
         CaptionLabel: ({ displayMonth }) => (
           <span className="flex gap-2 items-center">
-            {/* Monat Dropdown */}
             <select
               value={displayMonth.getMonth()}
               onChange={handleMonthChange}
@@ -110,7 +81,6 @@ function Calendar({
                 <option key={m} value={idx}>{m}</option>
               ))}
             </select>
-            {/* Jahr Dropdown */}
             <select
               value={displayMonth.getFullYear()}
               onChange={handleYearChange}
@@ -126,8 +96,8 @@ function Calendar({
       }}
       {...props}
     />
-  )
+  );
 }
-Calendar.displayName = "Calendar"
+Calendar.displayName = "Calendar";
 
-export { Calendar }
+export { Calendar };
