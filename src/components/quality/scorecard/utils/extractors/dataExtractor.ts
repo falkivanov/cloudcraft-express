@@ -14,11 +14,11 @@ import {
 /**
  * Extract structured data from the raw text content
  */
-export const extractScorecardData = (
+export const extractScorecardData = async (
   companyText: string, 
   driverText: string, 
   weekNum: number
-): ScoreCardData => {
+): Promise<ScoreCardData> => {
   console.log("Extracting scorecard data from text");
   console.log("Company text sample:", companyText.substring(0, 150));
   console.log("Driver text sample:", driverText.substring(0, 150));
@@ -44,7 +44,8 @@ export const extractScorecardData = (
   console.log(`Extracted ${companyKPIs.length} company KPIs`);
   
   // Extract driver metrics from driver text (usually page 3)
-  const driverKPIs = extractDriverKPIs(driverText);
+  // Since this now returns a Promise, we need to await it
+  const driverKPIs = await extractDriverKPIs(driverText);
   console.log(`Extracted ${driverKPIs.length} driver KPIs`);
   
   // Extract focus areas

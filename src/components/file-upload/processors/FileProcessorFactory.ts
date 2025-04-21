@@ -20,7 +20,7 @@ export class FileProcessorFactory {
     
     switch (category) {
       case "scorecard":
-        return new ScorecardProcessor(file, category, setProcessing, onFileUpload);
+        return new ScorecardProcessor(file, setProcessing, onFileUpload);
       case "customerContact":
         return new CustomerContactProcessor(file, category, setProcessing, onFileUpload);
       case "concessions":

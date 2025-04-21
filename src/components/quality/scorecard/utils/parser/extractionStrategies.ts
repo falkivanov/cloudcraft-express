@@ -36,17 +36,21 @@ export const attemptPositionalExtraction = async (
     
     // Improve driver extraction by using both positional and text data
     if (structuredData) {
-      // Extract drivers more aggressively
-      const enhancedDrivers = extractDriverKPIs(fullText, posData);
-      
-      if (enhancedDrivers && enhancedDrivers.length > 0) {
-        console.log(`Enhanced driver extraction found ${enhancedDrivers.length} drivers`);
+      // Extract drivers more aggressively - now handling it as async
+      try {
+        const enhancedDrivers = await extractDriverKPIs(fullText, posData);
         
-        // Use enhanced drivers only if we found more than in the structured data
-        if (enhancedDrivers.length > (structuredData.driverKPIs?.length || 0)) {
-          structuredData.driverKPIs = enhancedDrivers;
-          console.log(`Using enhanced drivers (${enhancedDrivers.length}) instead of original (${structuredData.driverKPIs?.length || 0})`);
+        if (enhancedDrivers && enhancedDrivers.length > 0) {
+          console.log(`Enhanced driver extraction found ${enhancedDrivers.length} drivers`);
+          
+          // Use enhanced drivers only if we found more than in the structured data
+          if (enhancedDrivers.length > (structuredData.driverKPIs?.length || 0)) {
+            structuredData.driverKPIs = enhancedDrivers;
+            console.log(`Using enhanced drivers (${enhancedDrivers.length}) instead of original (${structuredData.driverKPIs?.length || 0})`);
+          }
         }
+      } catch (error) {
+        console.error("Error during enhanced driver extraction:", error);
       }
     }
     
@@ -92,8 +96,8 @@ export const attemptTextBasedExtraction = async (
       });
     }
     
-    // First try regular text-based extraction
-    const parsedData = extractScorecardData(companyText, driverText, weekNum);
+    // First try regular text-based extraction - now awaiting since it's async
+    const parsedData = await extractScorecardData(companyText, driverText, weekNum);
     
     // Validate the extracted data
     if (parsedData && isValidScorecardData(parsedData)) {
