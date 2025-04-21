@@ -18,6 +18,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { formatDate } from "@/utils/dateUtils";
+import { Trash } from "lucide-react"; // Trash-Icon importieren
 
 const STORAGE_KEY = "finance_settings";
 const FINANCE_HISTORY_KEY = "finance_settings_history";
@@ -125,6 +126,14 @@ const FinanceSettings: React.FC = () => {
     loadHistory();
 
     toast({ title: "Finanzeinstellungen gespeichert", description: "Die Werte wurden gespeichert." });
+  };
+
+  // NEU: Eintrag aus Verlauf löschen
+  const handleDeleteHistoryItem = (createdAt: string) => {
+    const updatedHistory = historyItems.filter((item) => item.createdAt !== createdAt);
+    setHistoryItems(updatedHistory);
+    localStorage.setItem(FINANCE_HISTORY_KEY, JSON.stringify(updatedHistory));
+    toast({ title: "Eintrag gelöscht", description: "Finanzeinstellungs-Eintrag wurde entfernt." });
   };
 
   // Watch hasExpenses to control disabled state
@@ -284,16 +293,27 @@ const FinanceSettings: React.FC = () => {
             <Accordion type="single" collapsible className="w-full">
               {historyItems.map((item, index) => (
                 <AccordionItem value={`item-${index}`} key={index}>
-                  <AccordionTrigger className="hover:bg-gray-50 px-3 rounded">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <span className="font-medium">
-                        Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
-                      </span>
-                      <span className="text-muted-foreground text-sm">
-                        Erstellt am {formatDate(item.createdAt)}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
+                  <div className="flex items-center justify-between w-full pr-2">
+                    <AccordionTrigger className="hover:bg-gray-50 px-3 rounded flex-1">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <span className="font-medium">
+                          Gültig ab {item.validFrom ? formatDate(item.validFrom) : "—"}
+                        </span>
+                        <span className="text-muted-foreground text-sm">
+                          Erstellt am {formatDate(item.createdAt)}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <button
+                      type="button"
+                      aria-label="Eintrag löschen"
+                      className="ml-2 p-2 rounded hover:bg-red-50 group"
+                      title="Eintrag löschen"
+                      onClick={() => handleDeleteHistoryItem(item.createdAt)}
+                    >
+                      <Trash className="h-4 w-4 text-red-500 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </div>
                   <AccordionContent className="px-3">
                     <div className="grid gap-2 text-sm">
                       <div className="flex justify-between py-1 border-b">
@@ -323,3 +343,4 @@ const FinanceSettings: React.FC = () => {
 };
 
 export default FinanceSettings;
+
