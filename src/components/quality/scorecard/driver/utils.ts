@@ -1,3 +1,4 @@
+
 import { DriverKPI } from "../types";
 
 // Function to get status badge styling
@@ -64,7 +65,37 @@ export const getChangeDisplay = (current: number, previousValue: number | null) 
   };
 };
 
-// Function to calculate driver score based on metrics and weightings
+// Interface for driver KPI targets
+interface DriverKpiTarget {
+  name: string;
+  scoreTarget: number;
+  colorTarget: number;
+  unit?: string;
+}
+
+// Function to load target values from localStorage
+const loadTargetValues = (): DriverKpiTarget[] => {
+  try {
+    const storedTargets = localStorage.getItem("scorecard_driver_targets");
+    if (storedTargets) {
+      return JSON.parse(storedTargets);
+    }
+  } catch (e) {
+    console.error("Error loading driver KPI targets:", e);
+  }
+  
+  // Default values if nothing in localStorage
+  return [
+    { name: "DCR", scoreTarget: 99.5, colorTarget: 98, unit: "%" },
+    { name: "DNR DPMO", scoreTarget: 1000, colorTarget: 1600, unit: "DPMO" },
+    { name: "POD", scoreTarget: 99, colorTarget: 97, unit: "%" },
+    { name: "CC", scoreTarget: 99, colorTarget: 94, unit: "%" },
+    { name: "CE", scoreTarget: 0, colorTarget: 0, unit: "" },
+    { name: "DEX", scoreTarget: 95, colorTarget: 90, unit: "%" }
+  ];
+};
+
+// Function to calculate driver score based on metrics and weightings from localStorage
 export const calculateDriverScore = (driver: DriverKPI) => {
   // Define weightings
   const weightings = {
@@ -76,6 +107,9 @@ export const calculateDriverScore = (driver: DriverKPI) => {
     "DEX": 14,
     "CE": 16
   };
+
+  // Load current target values
+  const targets = loadTargetValues();
 
   let totalScore = 0;
   let maxPossibleScore = 0;
@@ -96,26 +130,49 @@ export const calculateDriverScore = (driver: DriverKPI) => {
     maxPossibleScore += weight;
     let points = 0;
     
+    // Find target for this metric
+    const target = targets.find(t => t.name === metricName);
+    
     switch (metricName) {
       case "DCR":
-        if (metric.value >= 99.5) points = weight;
-        else if (metric.value >= 98) points = weight * 0.5;
+        if (target) {
+          if (metric.value >= target.scoreTarget) points = weight;
+          else if (metric.value >= target.colorTarget) points = weight * 0.5;
+        } else {
+          if (metric.value >= 99.5) points = weight;
+          else if (metric.value >= 98) points = weight * 0.5;
+        }
         break;
       
       case "DNR DPMO":
-        if (metric.value <= 1000) points = weight;
-        else if (metric.value <= 1600) points = weight * 0.5;
+        if (target) {
+          if (metric.value <= target.scoreTarget) points = weight;
+          else if (metric.value <= target.colorTarget) points = weight * 0.5;
+        } else {
+          if (metric.value <= 1000) points = weight;
+          else if (metric.value <= 1600) points = weight * 0.5;
+        }
         break;
       
       case "POD":
-        if (metric.value >= 99) points = weight;
-        else if (metric.value >= 97) points = weight * 0.5;
+        if (target) {
+          if (metric.value >= target.scoreTarget) points = weight;
+          else if (metric.value >= target.colorTarget) points = weight * 0.5;
+        } else {
+          if (metric.value >= 99) points = weight;
+          else if (metric.value >= 97) points = weight * 0.5;
+        }
         break;
       
       case "CC":
         if (metric.status === "none") break; // Skip if it's a "-" value
-        if (metric.value >= 99) points = weight;
-        else if (metric.value >= 94) points = weight * 0.5;
+        if (target) {
+          if (metric.value >= target.scoreTarget) points = weight;
+          else if (metric.value >= target.colorTarget) points = weight * 0.5;
+        } else {
+          if (metric.value >= 99) points = weight;
+          else if (metric.value >= 94) points = weight * 0.5;
+        }
         break;
       
       case "CE":
@@ -123,8 +180,13 @@ export const calculateDriverScore = (driver: DriverKPI) => {
         break;
       
       case "DEX":
-        if (metric.value >= 95) points = weight;
-        else if (metric.value >= 90) points = weight * 0.5;
+        if (target) {
+          if (metric.value >= target.scoreTarget) points = weight;
+          else if (metric.value >= target.colorTarget) points = weight * 0.5;
+        } else {
+          if (metric.value >= 95) points = weight;
+          else if (metric.value >= 90) points = weight * 0.5;
+        }
         break;
     }
     

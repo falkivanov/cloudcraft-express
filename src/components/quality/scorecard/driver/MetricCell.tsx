@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { TableCell } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -8,40 +8,69 @@ interface MetricCellProps {
   unit?: string;
 }
 
+interface DriverKpiTarget {
+  name: string;
+  scoreTarget: number;
+  colorTarget: number;
+  unit?: string;
+}
+
 const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
-  // Format the display value based on the metric type
+  const [targets, setTargets] = useState<DriverKpiTarget[]>([]);
+  
+  useEffect(() => {
+    try {
+      const storedTargets = localStorage.getItem("scorecard_driver_targets");
+      if (storedTargets) {
+        const parsedTargets = JSON.parse(storedTargets);
+        setTargets(parsedTargets);
+      }
+    } catch (e) {
+      console.error("Error loading driver KPI targets:", e);
+    }
+    
+    const handleTargetsUpdated = () => {
+      try {
+        const updatedTargets = localStorage.getItem("scorecard_driver_targets");
+        if (updatedTargets) {
+          const parsedTargets = JSON.parse(updatedTargets);
+          setTargets(parsedTargets);
+        }
+      } catch (e) {
+        console.error("Error loading updated driver KPI targets:", e);
+      }
+    };
+    
+    window.addEventListener('scorecard_driver_targets_updated', handleTargetsUpdated);
+    
+    return () => {
+      window.removeEventListener('scorecard_driver_targets_updated', handleTargetsUpdated);
+    };
+  }, []);
+
   let displayValue;
   
   if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE" && metricName !== "Delivered") {
     displayValue = "-";
   } else if (metricName === "DNR DPMO") {
-    // For DPMO, always display as integer
     displayValue = Math.round(value).toString();
   } else if (metricName === "Delivered" || metricName === "CE") {
-    // For Delivered and CE, display as integer
     displayValue = Math.round(value).toString();
   } else if (unit === "%") {
-    // For percentage values
     if (value <= 1 && value > 0) {
-      // Value is in decimal form (e.g., 0.955)
       displayValue = `${(value * 100).toFixed(1)}%`;
     } else if (value > 1 && value <= 100) {
-      // Value is already in percentage form (e.g., 95.5)
       displayValue = `${value.toFixed(1)}%`;
     } else if (value > 100) {
-      // Handle very large values by dividing
       displayValue = `${(value / 100).toFixed(1)}%`;
     } else {
-      // Handle zero or negative values
       displayValue = `${value}%`;
     }
   } else {
-    // Default formatting
     displayValue = `${value}${unit || ''}`;
   }
 
-  // Determine the color class based on metric name and value
-  const colorClass = getMetricColorClass(metricName, value);
+  const colorClass = getMetricColorClass(metricName, value, targets);
   
   return (
     <TableCell className={cn("py-2 px-3 text-sm text-center font-medium", colorClass)}>
@@ -50,34 +79,70 @@ const MetricCell: React.FC<MetricCellProps> = ({ metricName, value, unit }) => {
   );
 };
 
-// Function to determine color classes based on metric thresholds
-function getMetricColorClass(metricName: string, value: number): string {
-  // For values that were previously zero or represented "-", keep gray color
+function getMetricColorClass(metricName: string, value: number, targets: DriverKpiTarget[]): string {
   if (value === 0 && metricName !== "DNR DPMO" && metricName !== "CE" && metricName !== "Delivered") {
     return "text-gray-400";
   }
-
-  // Apply color based on metric type and thresholds
+  
+  const target = targets.find(t => t.name === metricName);
+  
+  if (!target) {
+    switch (metricName) {
+      case "DCR":
+        if (value >= 99.5) return "text-blue-600";
+        if (value >= 98) return "text-orange-500";
+        return "text-red-500";
+        
+      case "DNR DPMO":
+        if (value <= 1000) return "text-blue-600";
+        if (value <= 1600) return "text-orange-500";
+        return "text-red-500";
+        
+      case "POD":
+        if (value >= 99) return "text-blue-600";
+        if (value >= 97) return "text-orange-500";
+        return "text-red-500";
+        
+      case "CC":
+        if (value === 0) return "text-gray-400";
+        if (value >= 99) return "text-blue-600";
+        if (value >= 94) return "text-orange-500";
+        return "text-red-500";
+        
+      case "CE":
+        if (value === 0) return "text-blue-600";
+        return "text-red-500";
+        
+      case "DEX":
+        if (value >= 95) return "text-blue-600";
+        if (value >= 90) return "text-orange-500";
+        return "text-red-500";
+        
+      default:
+        return "text-gray-700";
+    }
+  }
+  
   switch (metricName) {
     case "DCR":
-      if (value >= 99.5) return "text-blue-600";
-      if (value >= 98) return "text-orange-500";
+      if (value >= target.scoreTarget) return "text-blue-600";
+      if (value >= target.colorTarget) return "text-orange-500";
       return "text-red-500";
       
     case "DNR DPMO":
-      if (value <= 1000) return "text-blue-600";
-      if (value <= 1600) return "text-orange-500";
+      if (value <= target.scoreTarget) return "text-blue-600";
+      if (value <= target.colorTarget) return "text-orange-500";
       return "text-red-500";
       
     case "POD":
-      if (value >= 99) return "text-blue-600";
-      if (value >= 97) return "text-orange-500";
+      if (value >= target.scoreTarget) return "text-blue-600";
+      if (value >= target.colorTarget) return "text-orange-500";
       return "text-red-500";
       
     case "CC":
-      if (value === 0) return "text-gray-400"; // Handle dash case
-      if (value >= 99) return "text-blue-600";
-      if (value >= 94) return "text-orange-500";
+      if (value === 0) return "text-gray-400";
+      if (value >= target.scoreTarget) return "text-blue-600";
+      if (value >= target.colorTarget) return "text-orange-500";
       return "text-red-500";
       
     case "CE":
@@ -85,8 +150,8 @@ function getMetricColorClass(metricName: string, value: number): string {
       return "text-red-500";
       
     case "DEX":
-      if (value >= 90) return "text-blue-600";
-      if (value >= 80) return "text-orange-500";
+      if (value >= target.scoreTarget) return "text-blue-600";
+      if (value >= target.colorTarget) return "text-orange-500";
       return "text-red-500";
       
     default:
