@@ -1,3 +1,4 @@
+
 import React from "react";
 import ScorecardTargetFormUI from "./ScorecardTargetFormUI";
 import { useToast } from "@/hooks/use-toast";
@@ -7,10 +8,10 @@ export type TargetItem = {
   name: string;
   value: number;
   unit: string;
-  validFrom?: string; // ISO date
 };
 export type FormValues = {
   targets: TargetItem[];
+  validFrom?: string; // Ein globales Datumsfeld
 };
 
 interface ScorecardTargetFormProps {
@@ -31,7 +32,7 @@ const ScorecardTargetForm: React.FC<ScorecardTargetFormProps> = ({ onSubmit }) =
 
   const handleSubmit = (formData: FormValues) => {
     try {
-      onSubmit({ targets: formData.targets });
+      onSubmit({ targets: formData.targets, validFrom: formData.validFrom });
       setIsEditing(false);
     } catch (e) {
       toast({

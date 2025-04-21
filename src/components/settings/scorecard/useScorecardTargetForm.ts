@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,15 +61,15 @@ export const KPI_CATEGORIES: {
 
 const COMPANY_KPI_TARGETS: TargetDefinition[] = KPI_CATEGORIES.flatMap(cat => cat.kpis);
 
-const targetItemSchema = z.object({
-  name: z.string(),
-  value: z.number().min(0),
-  unit: z.string().default(""),
-  validFrom: z.string().optional()
-});
-
 const formSchema = z.object({
-  targets: z.array(targetItemSchema)
+  validFrom: z.string().optional(), // globales Datumsfeld
+  targets: z.array(
+    z.object({
+      name: z.string(),
+      value: z.number().min(0),
+      unit: z.string().default("")
+    })
+  )
 });
 
 export function useScorecardTargetForm(STORAGE_KEY: string) {
@@ -78,11 +79,11 @@ export function useScorecardTargetForm(STORAGE_KEY: string) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      validFrom: undefined,
       targets: COMPANY_KPI_TARGETS.map(target => ({
         name: target.name,
         value: target.value,
-        unit: target.unit || "",
-        validFrom: undefined
+        unit: target.unit || ""
       }))
     }
   });
@@ -91,11 +92,21 @@ export function useScorecardTargetForm(STORAGE_KEY: string) {
     const savedTargets = localStorage.getItem(STORAGE_KEY);
     if (savedTargets) {
       try {
-        const parsedTargets = JSON.parse(savedTargets);
+        const parsed = JSON.parse(savedTargets);
+        let loadedValidFrom: string | undefined = undefined;
+        let loadedTargets: any[] = [];
+        // Unterscheide altes Format (Array ohne gültig ab) und neues Format (Objekt mit validFrom)
+        if (Array.isArray(parsed)) {
+          // Legacy: Kein gültig ab gespeichert
+          loadedTargets = parsed;
+        } else {
+          loadedTargets = parsed.targets || [];
+          loadedValidFrom = parsed.validFrom;
+        }
         form.reset({
-          targets: parsedTargets.map((t: any) => ({
-            ...t,
-            validFrom: t.validFrom || undefined
+          validFrom: loadedValidFrom,
+          targets: loadedTargets.map((t: any) => ({
+            ...t
           }))
         });
       } catch (error) {
