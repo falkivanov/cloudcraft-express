@@ -5,6 +5,7 @@ import { ScorecardProcessor } from "./ScorecardProcessor";
 import { CustomerContactProcessor } from "./CustomerContactProcessor";
 import { ConcessionsProcessor } from "./ConcessionsProcessor";
 import { MentorProcessor } from "./MentorProcessor";
+import { api } from "@/services/api";
 
 export class FileProcessorFactory {
   /**
@@ -17,6 +18,15 @@ export class FileProcessorFactory {
     onFileUpload?: (file: File, type: string, category: string) => void
   ): BaseFileProcessor {
     console.log(`Creating processor for category: ${category} and file: ${file.name}`);
+    
+    // Check if API is available for enhanced processing
+    const useApi = import.meta.env.VITE_USE_API === "true";
+    
+    if (useApi) {
+      // We could create API-aware processors here in the future
+      console.log("API processing enabled, but using local processors for now");
+      // API checks will happen inside the processors themselves
+    }
     
     switch (category) {
       case "scorecard":
