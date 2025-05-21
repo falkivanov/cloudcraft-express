@@ -1,4 +1,7 @@
 
+// Import des Employee-Typs, um zirkuläre Abhängigkeiten zu vermeiden
+import { Employee } from "@/types/employee";
+
 /**
  * Typdefinitionen für die API-Kommunikation
  */
@@ -35,6 +38,3 @@ export interface EmployeeBatchResponse {
   created: Employee[];
   skipped: number;
 }
-
-// Import des Employee-Typs, um zirkuläre Abhängigkeiten zu vermeiden
-import { Employee } from "@/types/employee";
