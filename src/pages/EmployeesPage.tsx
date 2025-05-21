@@ -17,12 +17,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { toast: shadcnToast } = useToast();
   
   // Fetch employees from API on initial load
@@ -33,21 +36,37 @@ const EmployeesPage = () => {
 
   const fetchEmployees = async () => {
     setIsLoading(true);
+    setApiError(null);
     
     try {
-      const employees = await api.employees.getAll();
-      console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', employees.length);
-      setLoadedEmployees(employees);
+      const response = await api.employees.getAll();
       
-      toast("Mitarbeiterdaten geladen", {
-        description: `${employees.length} Mitarbeiter wurden erfolgreich geladen.`
-      });
+      if (!response.success) {
+        console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', response.error);
+        setApiError(response.error || "Die Verbindung zum Server konnte nicht hergestellt werden.");
+        toast.error("Fehler beim Laden der Daten", {
+          description: response.error || "Die Mitarbeiterdaten konnten nicht vom Server geladen werden."
+        });
+        setLoadedEmployees([]);
+      } else {
+        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', response.data?.length || 0);
+        setLoadedEmployees(response.data || []);
+        
+        if (response.data && response.data.length > 0) {
+          toast("Mitarbeiterdaten geladen", {
+            description: `${response.data.length} Mitarbeiter wurden erfolgreich geladen.`
+          });
+        }
+      }
     } catch (error) {
-      console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', error);
+      console.error('EmployeesPage - Unbehandelter Fehler beim Laden der Mitarbeiter:', error);
+      setApiError("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       
       toast.error("Fehler beim Laden der Daten", {
         description: "Die Mitarbeiterdaten konnten nicht vom Server geladen werden."
       });
+      
+      setLoadedEmployees([]);
     } finally {
       setIsLoading(false);
     }
@@ -62,14 +81,20 @@ const EmployeesPage = () => {
     setIsLoading(true);
     
     try {
-      await api.employees.deleteAll();
+      const response = await api.employees.deleteAll();
       
-      // Refresh employee list
-      setLoadedEmployees([]);
-      
-      toast.success("Mitarbeiterdaten zurückgesetzt", {
-        description: "Alle Mitarbeiterdaten wurden erfolgreich gelöscht."
-      });
+      if (response.success) {
+        // Refresh employee list
+        setLoadedEmployees([]);
+        
+        toast.success("Mitarbeiterdaten zurückgesetzt", {
+          description: "Alle Mitarbeiterdaten wurden erfolgreich gelöscht."
+        });
+      } else {
+        toast.error("Fehler beim Zurücksetzen", {
+          description: response.error || "Die Mitarbeiterdaten konnten nicht gelöscht werden."
+        });
+      }
     } catch (error) {
       console.error('Error deleting employees:', error);
       
@@ -88,6 +113,22 @@ const EmployeesPage = () => {
         onAddEmployeeClick={() => setIsAddEmployeeDialogOpen(true)} 
         onResetEmployees={handleResetEmployeeData}
       />
+      
+      {apiError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Verbindungsfehler</AlertTitle>
+          <AlertDescription>
+            {apiError}
+            <button 
+              onClick={fetchEmployees} 
+              className="underline ml-2 font-medium"
+            >
+              Erneut versuchen
+            </button>
+          </AlertDescription>
+        </Alert>
+      )}
       
       <EmployeePageContent 
         initialEmployees={loadedEmployees} 
