@@ -1,6 +1,5 @@
-
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
 # Basis-Schema für API-Antworten
@@ -183,3 +182,55 @@ class EmployeeResponse(EmployeeBase):
 
     class Config:
         orm_mode = True
+
+# Employee-Schemas - aktualisiert für die Frontend-Kompatibilität
+class EmployeeBase(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    status: str
+    transporter_id: Optional[str] = None  # Equivalent zu transporterId im Frontend
+    start_date: datetime
+    end_date: Optional[datetime] = None
+    address: Optional[str] = None
+    telegram_username: Optional[str] = None
+    working_days_a_week: int = 5
+    preferred_vehicle: Optional[str] = None
+    preferred_working_days: Optional[List[str]] = []
+    wants_to_work_six_days: bool = False
+    is_working_days_flexible: bool = True
+    mentor_first_name: Optional[str] = None
+    mentor_last_name: Optional[str] = None
+
+class EmployeeCreate(EmployeeBase):
+    employee_id: str  # Wird vom Frontend generiert (UUID)
+
+class EmployeeUpdate(EmployeeBase):
+    pass
+
+class EmployeeInDB(EmployeeBase):
+    id: int
+    employee_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class EmployeeResponse(EmployeeBase):
+    id: str  # Wir verwenden employee_id für die Frontend-Kompatibilität
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+# Für Batch-Operationen
+class EmployeeBatchCreate(BaseModel):
+    employees: List[EmployeeCreate]
+
+class EmployeeBatchResponse(BaseModel):
+    employees: List[EmployeeResponse]
+    count: int
+    success: bool
+    message: Optional[str] = None

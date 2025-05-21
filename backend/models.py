@@ -1,9 +1,10 @@
-
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime, Text, Boolean, ARRAY
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.ext.mutable import MutableList
 from datetime import datetime
 
-from db import Base
+from db import Base, engine
 
 # Modell für hochgeladene Dateien
 class FileUpload(Base):
@@ -135,20 +136,28 @@ class MentorDriver(Base):
     # Beziehung
     report = relationship("MentorReport", back_populates="mentor_drivers")
 
-# Modell für Mitarbeiter (für Mapping von Fahrer-IDs)
+# Erweitertes Modell für Mitarbeiter (passend zum Frontend-Modell)
 class Employee(Base):
     __tablename__ = "employees"
     
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(String, unique=True, index=True)
-    first_name = Column(String)
-    last_name = Column(String)
+    employee_id = Column(String, unique=True, index=True)  # UUID aus dem Frontend
+    name = Column(String, nullable=False)
     email = Column(String, nullable=True)
-    station = Column(String)
-    position = Column(String)
-    status = Column(String)  # active, inactive, terminated
-    driver_id = Column(String, nullable=True, index=True)  # Verbindung zur Fahrer-ID
-    hiring_date = Column(DateTime, nullable=True)
-    termination_date = Column(DateTime, nullable=True)
-    
-    # Beziehungen können nach Bedarf hinzugefügt werden
+    phone = Column(String, nullable=True)
+    status = Column(String, nullable=False)  # Aktiv, Inaktiv
+    transporter_id = Column(String, nullable=True)  # Equivalent zu transporterId im Frontend
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
+    address = Column(String, nullable=True)
+    telegram_username = Column(String, nullable=True)
+    working_days_a_week = Column(Integer, nullable=False, default=5)
+    preferred_vehicle = Column(String, nullable=True)
+    # Liste der bevorzugten Arbeitstage als Text (JSON-String)
+    preferred_working_days = Column(Text, nullable=True)  # JSON-Array als String
+    wants_to_work_six_days = Column(Boolean, default=False)
+    is_working_days_flexible = Column(Boolean, default=True)
+    mentor_first_name = Column(String, nullable=True)
+    mentor_last_name = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)

@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,6 +26,9 @@ from schemas import (
     ExtractionResult,
     EmployeeBase
 )
+
+# Import der Employee-Routes
+from routes import employee
 
 # Erstelle Tabellen in der Datenbank
 Base.metadata.create_all(bind=engine)
@@ -57,6 +59,9 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Employee-Router integrieren
+app.include_router(employee.router)
 
 # Gesundheits-Endpunkt
 @app.get("/health")

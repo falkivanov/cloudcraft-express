@@ -32,6 +32,17 @@ export const API_ENDPOINTS = {
     extractMetadata: `/api/${API_VERSION}/scorecard/extract-metadata`,
   },
   
+  // Mitarbeiter-Endpunkte
+  employees: {
+    getAll: `/api/${API_VERSION}/employees`,
+    getById: (id: string) => `/api/${API_VERSION}/employees/${id}`,
+    create: `/api/${API_VERSION}/employees`,
+    createBatch: `/api/${API_VERSION}/employees/batch`,
+    update: (id: string) => `/api/${API_VERSION}/employees/${id}`,
+    delete: (id: string) => `/api/${API_VERSION}/employees/${id}`,
+    deleteAll: `/api/${API_VERSION}/employees`,
+  },
+  
   // Dateiverwaltung
   files: {
     upload: `/api/${API_VERSION}/files/upload`,

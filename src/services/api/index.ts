@@ -17,6 +17,7 @@ export * from './client';
 // Re-export der Domain-spezifischen Services
 export * from './endpoints/pdfService';
 export * from './endpoints/scorecardService';
+export * from './endpoints/employeeService';
 
 // Liste der verfügbaren API-Funktionen für die vereinfachte Verwendung
 export const api = {
@@ -48,6 +49,27 @@ export const api = {
       
     extractMetadata: (text: string, filename: string) => 
       import('./endpoints/scorecardService').then(m => m.extractMetadata(text, filename))
+  },
+  
+  // Mitarbeiter-Funktionen
+  employees: {
+    getAll: (options?: { status?: string; search?: string; skip?: number; limit?: number }) =>
+      import('./endpoints/employeeService').then(m => m.getAllEmployees(options)),
+      
+    getById: (id: string) =>
+      import('./endpoints/employeeService').then(m => m.getEmployeeById(id)),
+      
+    create: (employee: any) =>
+      import('./endpoints/employeeService').then(m => m.createEmployee(employee)),
+      
+    createBatch: (employees: any[]) =>
+      import('./endpoints/employeeService').then(m => m.createEmployeesBatch(employees)),
+      
+    update: (id: string, employee: any) =>
+      import('./endpoints/employeeService').then(m => m.updateEmployee(id, employee)),
+      
+    delete: (id: string) =>
+      import('./endpoints/employeeService').then(m => m.deleteEmployee(id))
   },
   
   // Verarbeitungsstatus
