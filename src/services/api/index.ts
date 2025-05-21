@@ -1,3 +1,4 @@
+
 /**
  * API-Service-Haupteinstiegspunkt
  * 
@@ -17,6 +18,9 @@ export * from './client';
 export * from './endpoints/pdfService';
 export * from './endpoints/scorecardService';
 export * from './endpoints/employeeService';
+
+// Import des Employee-Typs
+import { Employee } from '@/types/employee';
 
 // Liste der verfügbaren API-Funktionen für die vereinfachte Verwendung
 export const api = {

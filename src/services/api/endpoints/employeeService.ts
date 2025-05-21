@@ -2,6 +2,7 @@
 import { Employee } from '@/types/employee';
 import { get, post, put, del } from '../client';
 import { API_ENDPOINTS } from '../config';
+import { ApiResponse, EmployeeBatchResponse } from '../types';
 
 // Alle Mitarbeiter abrufen
 export async function getAllEmployees(options?: { 
@@ -17,32 +18,32 @@ export async function getAllEmployees(options?: {
   if (options?.skip) params.skip = options.skip.toString();
   if (options?.limit) params.limit = options.limit.toString();
   
-  return get<Employee[]>(API_ENDPOINTS.employees.getAll, params);
+  const response = await get<Employee[]>(API_ENDPOINTS.employees.getAll, params);
+  return response.data || [];
 }
 
 // Einzelnen Mitarbeiter abrufen
 export async function getEmployeeById(id: string) {
-  return get<Employee>(API_ENDPOINTS.employees.getById(id));
+  const response = await get<Employee>(API_ENDPOINTS.employees.getById(id));
+  return response.data;
 }
 
 // Neuen Mitarbeiter erstellen
 export async function createEmployee(employee: Employee) {
-  return post<Employee>(API_ENDPOINTS.employees.create, employee);
+  const response = await post<Employee>(API_ENDPOINTS.employees.create, employee);
+  return response.data;
 }
 
 // Mehrere Mitarbeiter erstellen (für Import)
 export async function createEmployeesBatch(employees: Employee[]) {
-  return post<{ 
-    success: boolean; 
-    message: string; 
-    created: Employee[]; 
-    skipped: number;
-  }>(API_ENDPOINTS.employees.createBatch, employees);
+  const response = await post<EmployeeBatchResponse>(API_ENDPOINTS.employees.createBatch, employees);
+  return response.data;
 }
 
 // Mitarbeiter aktualisieren
 export async function updateEmployee(id: string, employee: Employee) {
-  return put<Employee>(API_ENDPOINTS.employees.update(id), employee);
+  const response = await put<Employee>(API_ENDPOINTS.employees.update(id), employee);
+  return response.data;
 }
 
 // Mitarbeiter löschen

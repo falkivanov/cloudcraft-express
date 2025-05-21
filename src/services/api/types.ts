@@ -27,3 +27,14 @@ export interface ProcessingStatusResponse extends ApiResponse<{
   resultUrl?: string;
   error?: string;
 }> {}
+
+// Definitionen für Employee-Batch-Operationen
+export interface EmployeeBatchResponse {
+  success: boolean;
+  message: string;
+  created: Employee[];
+  skipped: number;
+}
+
+// Import des Employee-Typs, um zirkuläre Abhängigkeiten zu vermeiden
+import { Employee } from "@/types/employee";

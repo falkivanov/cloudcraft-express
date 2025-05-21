@@ -66,7 +66,7 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
 
   const handleUpdateEmployee = async (updatedEmployee: Employee) => {
     try {
-      await api.employees.update(updatedEmployee.id, updatedEmployee);
+      const result = await api.employees.update(updatedEmployee.id, updatedEmployee);
       
       // Update local state
       const updatedEmployees = employees.map(emp => 
