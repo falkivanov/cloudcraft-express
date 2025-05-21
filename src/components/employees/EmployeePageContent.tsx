@@ -68,15 +68,19 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     try {
       const result = await api.employees.update(updatedEmployee.id, updatedEmployee);
       
-      // Update local state
-      const updatedEmployees = employees.map(emp => 
-        emp.id === updatedEmployee.id ? updatedEmployee : emp
-      );
-      setEmployees(updatedEmployees);
-      
-      toast("Mitarbeiter aktualisiert", {
-        description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`
-      });
+      if (result.success && result.data) {
+        // Update local state
+        const updatedEmployees = employees.map(emp => 
+          emp.id === updatedEmployee.id ? updatedEmployee : emp
+        );
+        setEmployees(updatedEmployees);
+        
+        toast("Mitarbeiter aktualisiert", {
+          description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`
+        });
+      } else {
+        throw new Error(result.error || "Unbekannter Fehler");
+      }
     } catch (error) {
       console.error('Error updating employee:', error);
       toast.error("Fehler beim Aktualisieren", {
@@ -87,16 +91,20 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
 
   const handleAddEmployee = async (newEmployee: Employee) => {
     try {
-      const createdEmployee = await api.employees.create(newEmployee);
+      const result = await api.employees.create(newEmployee);
       
-      // Update local state
-      setEmployees(prev => [...prev, createdEmployee]);
-      
-      setIsAddEmployeeDialogOpen(false);
-      
-      toast("Mitarbeiter hinzugefügt", {
-        description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`
-      });
+      if (result.success && result.data) {
+        // Update local state with the created employee from the response
+        setEmployees(prev => [...prev, result.data as Employee]);
+        
+        setIsAddEmployeeDialogOpen(false);
+        
+        toast("Mitarbeiter hinzugefügt", {
+          description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`
+        });
+      } else {
+        throw new Error(result.error || "Unbekannter Fehler");
+      }
     } catch (error) {
       console.error('Error adding employee:', error);
       toast.error("Fehler beim Hinzufügen", {
@@ -109,21 +117,28 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     try {
       const result = await api.employees.createBatch(importedEmployees);
       
-      // Update local state with newly created employees
-      if (result.created && result.created.length > 0) {
-        setEmployees(prev => [...prev, ...result.created]);
-      }
-      
-      toast(
-        result.skipped > 0 
-          ? "Mitarbeiter teilweise importiert" 
-          : "Mitarbeiter importiert", 
-        {
-          description: `${result.created.length} Mitarbeiter wurden erfolgreich importiert. ${
-            result.skipped > 0 ? `${result.skipped} wurden übersprungen.` : ''
-          }`
+      if (result.success && result.data) {
+        // Access the batch response data properly
+        const batchResponse = result.data;
+        
+        // Update local state with newly created employees
+        if (batchResponse.created && batchResponse.created.length > 0) {
+          setEmployees(prev => [...prev, ...batchResponse.created]);
         }
-      );
+        
+        toast(
+          batchResponse.skipped > 0 
+            ? "Mitarbeiter teilweise importiert" 
+            : "Mitarbeiter importiert", 
+          {
+            description: `${batchResponse.created.length} Mitarbeiter wurden erfolgreich importiert. ${
+              batchResponse.skipped > 0 ? `${batchResponse.skipped} wurden übersprungen.` : ''
+            }`
+          }
+        );
+      } else {
+        throw new Error(result.error || "Import fehlgeschlagen");
+      }
     } catch (error) {
       console.error('Error importing employees:', error);
       toast.error("Fehler beim Importieren", {

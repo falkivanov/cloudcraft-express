@@ -21,6 +21,7 @@ export * from './endpoints/employeeService';
 
 // Import des Employee-Typs
 import { Employee } from '@/types/employee';
+import { ApiResponse, EmployeeBatchResponse } from './types';
 
 // Liste der verfügbaren API-Funktionen für die vereinfachte Verwendung
 export const api = {

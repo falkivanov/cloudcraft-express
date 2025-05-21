@@ -50,11 +50,14 @@ const EmployeesPage = () => {
         setLoadedEmployees([]);
       } else {
         console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', response.data?.length || 0);
-        setLoadedEmployees(response.data || []);
         
-        if (response.data && response.data.length > 0) {
+        // Access the data properly from the API response
+        const employeeData = response.data || [];
+        setLoadedEmployees(employeeData);
+        
+        if (employeeData.length > 0) {
           toast("Mitarbeiterdaten geladen", {
-            description: `${response.data.length} Mitarbeiter wurden erfolgreich geladen.`
+            description: `${employeeData.length} Mitarbeiter wurden erfolgreich geladen.`
           });
         }
       }

@@ -23,7 +23,7 @@ export async function getAllEmployees(options?: {
     return response;
   } catch (error) {
     console.error("Error fetching employees:", error);
-    return { success: false, error: "Fehler beim Abrufen der Mitarbeiter", data: [] };
+    return { success: false, error: "Fehler beim Abrufen der Mitarbeiter", data: [] as Employee[] };
   }
 }
 
@@ -60,7 +60,7 @@ export async function createEmployeesBatch(employees: Employee[]) {
       success: false, 
       error: "Fehler beim Importieren der Mitarbeiter",
       data: { success: false, message: "Import fehlgeschlagen", created: [], skipped: 0 } 
-    };
+    } as ApiResponse<EmployeeBatchResponse>;
   }
 }
 
