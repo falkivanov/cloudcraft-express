@@ -2,6 +2,10 @@
 /**
  * Central storage utilities module
  * Re-exports all storage-related functionality
+ * 
+ * NOTE: This module is being phased out as we migrate from localStorage 
+ * to backend API for data management. It is kept for backward compatibility
+ * and will eventually be removed.
  */
 
 // Core storage functionality
@@ -12,7 +16,7 @@ export {
   loadFromStorage as loadRawFromStorage,
   clearStorageItem,
   clearAllStorage,
-  clearEmployeesStorage  // Adding this line to export the function
+  clearEmployeesStorage
 } from './storageCore';
 
 // Serialization and validation utilities

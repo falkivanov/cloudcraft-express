@@ -1,4 +1,3 @@
-
 /**
  * API-Service-Haupteinstiegspunkt
  * 
@@ -59,17 +58,20 @@ export const api = {
     getById: (id: string) =>
       import('./endpoints/employeeService').then(m => m.getEmployeeById(id)),
       
-    create: (employee: any) =>
+    create: (employee: Employee) =>
       import('./endpoints/employeeService').then(m => m.createEmployee(employee)),
       
-    createBatch: (employees: any[]) =>
+    createBatch: (employees: Employee[]) =>
       import('./endpoints/employeeService').then(m => m.createEmployeesBatch(employees)),
       
-    update: (id: string, employee: any) =>
+    update: (id: string, employee: Employee) =>
       import('./endpoints/employeeService').then(m => m.updateEmployee(id, employee)),
       
     delete: (id: string) =>
-      import('./endpoints/employeeService').then(m => m.deleteEmployee(id))
+      import('./endpoints/employeeService').then(m => m.deleteEmployee(id)),
+      
+    deleteAll: () =>
+      import('./endpoints/employeeService').then(m => m.deleteAllEmployees())
   },
   
   // Verarbeitungsstatus
