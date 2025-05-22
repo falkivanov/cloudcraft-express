@@ -1,11 +1,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useQualityStorage } from './quality/useQualityStorage';
 
 export function useQualityData(timePeriod: string = 'week', location?: string) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
+  const { saveToLocalStorage, loadFromLocalStorage } = useQualityStorage();
   
   // API-Abfrage mit React Query
   const { 
@@ -28,57 +30,30 @@ export function useQualityData(timePeriod: string = 'week', location?: string) {
     // Bei Fehler auf localStorage zurückfallen
     retry: false,
     meta: {
-      onError: (err: Error) => {
-        console.error('API-Fehler beim Laden der Qualitätsdaten:', err);
-        // Auf localStorage umschalten
-        setIsUsingLocalStorage(true);
-        toast('Verbindungsproblem', {
-          description: 'Fallback auf lokale Daten aktiviert.'
-        });
+      onSettled: (data, err) => {
+        if (err) {
+          console.error('API-Fehler beim Laden der Qualitätsdaten:', err);
+          // Auf localStorage umschalten
+          setIsUsingLocalStorage(true);
+          toast('Verbindungsproblem', {
+            description: 'Fallback auf lokale Daten aktiviert.'
+          });
+        }
       }
     }
   });
   
-  // Fallback: Lade Daten aus localStorage, wenn API-Aufruf fehlschlägt
-  const loadLocalStorageData = () => {
-    try {
-      const localStorageKey = `qualityData_${timePeriod}_${location || 'all'}`;
-      const storedData = localStorage.getItem(localStorageKey);
-      
-      if (storedData) {
-        return JSON.parse(storedData);
-      }
-      
-      // Fallback auf Standard-Schlüssel
-      const defaultData = localStorage.getItem('qualityData');
-      if (defaultData) {
-        return JSON.parse(defaultData);
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Fehler beim Laden der Daten aus localStorage:', error);
-      return null;
-    }
-  };
-  
-  // Daten speichern im localStorage (für Offline-Funktionalität)
-  const saveToLocalStorage = (data: any) => {
-    try {
-      const localStorageKey = `qualityData_${timePeriod}_${location || 'all'}`;
-      localStorage.setItem(localStorageKey, JSON.stringify(data));
-    } catch (error) {
-      console.error('Fehler beim Speichern der Daten im localStorage:', error);
-    }
-  };
-  
   // Cache erfolgreiche API-Antworten im localStorage
-  if (apiData && !isUsingLocalStorage) {
-    saveToLocalStorage(apiData);
-  }
+  useEffect(() => {
+    if (apiData && !isUsingLocalStorage) {
+      saveToLocalStorage(apiData, timePeriod, location);
+    }
+  }, [apiData, isUsingLocalStorage, timePeriod, location, saveToLocalStorage]);
   
   // Endgültige Daten: API-Daten oder Fallback auf localStorage
-  const data = isUsingLocalStorage ? loadLocalStorageData() : apiData;
+  const data = isUsingLocalStorage 
+    ? loadFromLocalStorage(timePeriod, location) 
+    : apiData;
   
   // Status zusammenfassen
   const isLoading = isApiLoading && !isUsingLocalStorage;
