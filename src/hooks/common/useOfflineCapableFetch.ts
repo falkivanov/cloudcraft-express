@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery, UseQueryOptions, QueryKey } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions, QueryKey, QueryFunction } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-// Define a stricter constraint: TQueryFnData must be assignable to TData
+// Modify the type constraint to ensure TData extends TQueryFnData
 export interface UseOfflineCapableFetchOptions<
   TQueryFnData,
   TError = Error,
@@ -32,6 +32,11 @@ export function useOfflineCapableFetch<
 }: UseOfflineCapableFetchOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
+  // Create a query function that matches React Query's expected signature
+  const queryFnWrapper: QueryFunction<TQueryFnData, TQueryKey> = async () => {
+    return await queryFn();
+  };
+  
   const { 
     data: apiData,
     error: apiError,
@@ -41,10 +46,7 @@ export function useOfflineCapableFetch<
     ...rest
   } = useQuery<TData, TError, TQueryFnData, TQueryKey>({
     queryKey,
-    queryFn: async () => {
-      // Call the provided queryFn
-      return await queryFn();
-    },
+    queryFn: queryFnWrapper,
     retry: false,
     meta: {
       onSettled: (data, err) => {
@@ -67,10 +69,9 @@ export function useOfflineCapableFetch<
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
     if (apiData && !isUsingLocalStorage) {
-      // Since our type definitions specify TQueryFnData as the source type for TData,
-      // we can safely cast apiData back to TQueryFnData for storage
-      const queryFnData = apiData as unknown as TQueryFnData;
-      saveLocalData(queryFnData);
+      // Since we're using TQueryFnData as the output of queryFn, we need to cast apiData
+      // back to TQueryFnData for storage
+      saveLocalData(apiData as unknown as TQueryFnData);
     }
   }, [apiData, isUsingLocalStorage, saveLocalData]);
   
