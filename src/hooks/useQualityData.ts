@@ -27,13 +27,15 @@ export function useQualityData(timePeriod: string = 'week', location?: string) {
     },
     // Bei Fehler auf localStorage zurückfallen
     retry: false,
-    onError: (err) => {
-      console.error('API-Fehler beim Laden der Qualitätsdaten:', err);
-      // Auf localStorage umschalten
-      setIsUsingLocalStorage(true);
-      toast.error('Verbindungsproblem', {
-        description: 'Fallback auf lokale Daten aktiviert.'
-      });
+    meta: {
+      onError: (err: Error) => {
+        console.error('API-Fehler beim Laden der Qualitätsdaten:', err);
+        // Auf localStorage umschalten
+        setIsUsingLocalStorage(true);
+        toast('Verbindungsproblem', {
+          description: 'Fallback auf lokale Daten aktiviert.'
+        });
+      }
     }
   });
   

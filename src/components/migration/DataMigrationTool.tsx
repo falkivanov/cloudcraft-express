@@ -10,10 +10,9 @@ import { api } from '@/services/api';
 import { STORAGE_KEYS, loadFromStorage } from '@/utils/storage';
 import { Employee } from '@/types/employee';
 import { ShiftAssignment } from '@/types/shift';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const DataMigrationTool = () => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('employees');
   const [migrationStatus, setMigrationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
@@ -34,7 +33,7 @@ const DataMigrationTool = () => {
       const employees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
       
       if (!employees || employees.length === 0) {
-        toast.warning('Keine Mitarbeiterdaten gefunden', {
+        toast("Keine Mitarbeiterdaten gefunden", {
           description: 'Es wurden keine Daten zum Migrieren gefunden.'
         });
         setMigrationStatus('idle');
@@ -59,12 +58,12 @@ const DataMigrationTool = () => {
         
         setMigrationStatus('success');
         
-        toast.success('Mitarbeiterdaten migriert', {
+        toast("Mitarbeiterdaten migriert", {
           description: `${response.data.created.length} Mitarbeiter erfolgreich migriert.`
         });
       } else {
         setMigrationStatus('error');
-        toast.error('Fehler bei der Migration', {
+        toast("Fehler bei der Migration", {
           description: response.error || 'Unbekannter Fehler'
         });
       }
@@ -73,7 +72,7 @@ const DataMigrationTool = () => {
       setMigrationStatus('error');
       setProgress(100);
       
-      toast.error('Fehler bei der Migration', {
+      toast("Fehler bei der Migration", {
         description: error instanceof Error ? error.message : 'Unbekannter Fehler'
       });
     }
@@ -89,7 +88,7 @@ const DataMigrationTool = () => {
       const shiftsObject = loadFromStorage<Record<string, ShiftAssignment>>(STORAGE_KEYS.SHIFTS_MAP);
       
       if (!shiftsObject || Object.keys(shiftsObject).length === 0) {
-        toast.warning('Keine Schichtdaten gefunden', {
+        toast("Keine Schichtdaten gefunden", {
           description: 'Es wurden keine Daten zum Migrieren gefunden.'
         });
         setMigrationStatus('idle');
@@ -117,12 +116,12 @@ const DataMigrationTool = () => {
         
         setMigrationStatus('success');
         
-        toast.success('Schichtdaten migriert', {
+        toast("Schichtdaten migriert", {
           description: `${response.data.length} Schichten erfolgreich migriert.`
         });
       } else {
         setMigrationStatus('error');
-        toast.error('Fehler bei der Migration', {
+        toast("Fehler bei der Migration", {
           description: response.error || 'Unbekannter Fehler'
         });
       }
@@ -131,7 +130,7 @@ const DataMigrationTool = () => {
       setMigrationStatus('error');
       setProgress(100);
       
-      toast.error('Fehler bei der Migration', {
+      toast("Fehler bei der Migration", {
         description: error instanceof Error ? error.message : 'Unbekannter Fehler'
       });
     }
@@ -144,7 +143,7 @@ const DataMigrationTool = () => {
         const employees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
         
         if (!employees || employees.length === 0) {
-          toast.warning('Keine Mitarbeiterdaten gefunden');
+          toast("Keine Mitarbeiterdaten gefunden");
           return false;
         }
         
@@ -158,7 +157,7 @@ const DataMigrationTool = () => {
         });
         
         if (!isValid) {
-          toast.warning('Einige Mitarbeiterdaten sind ungültig', {
+          toast("Einige Mitarbeiterdaten sind ungültig", {
             description: 'Prüfen Sie die Konsole für Details.'
           });
         }
@@ -168,7 +167,7 @@ const DataMigrationTool = () => {
         const shiftsObject = loadFromStorage<Record<string, ShiftAssignment>>(STORAGE_KEYS.SHIFTS_MAP);
         
         if (!shiftsObject || Object.keys(shiftsObject).length === 0) {
-          toast.warning('Keine Schichtdaten gefunden');
+          toast("Keine Schichtdaten gefunden");
           return false;
         }
         
@@ -182,7 +181,7 @@ const DataMigrationTool = () => {
         });
         
         if (!isValid) {
-          toast.warning('Einige Schichtdaten sind ungültig', {
+          toast("Einige Schichtdaten sind ungültig", {
             description: 'Prüfen Sie die Konsole für Details.'
           });
         }
@@ -193,7 +192,7 @@ const DataMigrationTool = () => {
       return false;
     } catch (error) {
       console.error(`Fehler bei der Validierung von ${dataType}:`, error);
-      toast.error('Fehler bei der Datenvalidierung');
+      toast("Fehler bei der Datenvalidierung");
       return false;
     }
   };

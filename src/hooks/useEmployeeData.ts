@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { useState, useEffect } from 'react';
@@ -35,13 +34,15 @@ export function useEmployeeData(options?: {
     },
     // Bei Fehler auf localStorage zurückfallen
     retry: false,
-    onError: (err) => {
-      console.error('API-Fehler beim Laden der Mitarbeiter:', err);
-      // Auf localStorage umschalten
-      setIsUsingLocalStorage(true);
-      toast.error('Verbindungsproblem', {
-        description: 'Fallback auf lokale Mitarbeiterdaten aktiviert.'
-      });
+    meta: {
+      onError: (err: Error) => {
+        console.error('API-Fehler beim Laden der Mitarbeiter:', err);
+        // Auf localStorage umschalten
+        setIsUsingLocalStorage(true);
+        toast('Verbindungsproblem', {
+          description: 'Fallback auf lokale Mitarbeiterdaten aktiviert.'
+        });
+      }
     }
   });
   
@@ -73,10 +74,10 @@ export function useEmployeeData(options?: {
     onSuccess: () => {
       // Invalidiere den Cache, um aktualisierte Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Mitarbeiter erstellt');
+      toast('Mitarbeiter erstellt');
     },
     onError: (error) => {
-      toast.error('Fehler beim Erstellen des Mitarbeiters', {
+      toast('Fehler beim Erstellen des Mitarbeiters', {
         description: error instanceof Error ? error.message : 'Unbekannter Fehler'
       });
     }
@@ -110,10 +111,10 @@ export function useEmployeeData(options?: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Mitarbeiter aktualisiert');
+      toast('Mitarbeiter aktualisiert');
     },
     onError: (error) => {
-      toast.error('Fehler beim Aktualisieren des Mitarbeiters', {
+      toast('Fehler beim Aktualisieren des Mitarbeiters', {
         description: error instanceof Error ? error.message : 'Unbekannter Fehler'
       });
     }
@@ -145,10 +146,10 @@ export function useEmployeeData(options?: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Mitarbeiter gelöscht');
+      toast('Mitarbeiter gelöscht');
     },
     onError: (error) => {
-      toast.error('Fehler beim Löschen des Mitarbeiters', {
+      toast('Fehler beim Löschen des Mitarbeiters', {
         description: error instanceof Error ? error.message : 'Unbekannter Fehler'
       });
     }
