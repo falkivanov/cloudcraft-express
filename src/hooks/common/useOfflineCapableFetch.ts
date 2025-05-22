@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions, QueryKey, QueryFunction } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData, TQueryKey> 
+export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData, TQueryKey extends QueryKey> 
   extends Omit<UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>, 'queryKey' | 'queryFn'> {
   queryKey: TQueryKey;
   queryFn: () => Promise<TQueryFnData>;
@@ -12,7 +12,12 @@ export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData, TQue
   onSwitchToOffline?: () => void;
 }
 
-export function useOfflineCapableFetch<TData = unknown, TError = Error, TQueryFnData = TData, TQueryKey extends unknown[] = unknown[]>({
+export function useOfflineCapableFetch<
+  TData = unknown, 
+  TError = Error, 
+  TQueryFnData = TData, 
+  TQueryKey extends QueryKey = QueryKey
+>({
   queryKey,
   queryFn,
   loadLocalData,
@@ -29,9 +34,9 @@ export function useOfflineCapableFetch<TData = unknown, TError = Error, TQueryFn
     isError: isApiError,
     refetch,
     ...rest
-  } = useQuery({
+  } = useQuery<TData, TError, TQueryFnData, TQueryKey>({
     queryKey,
-    queryFn,
+    queryFn: queryFn as QueryFunction<TQueryFnData, TQueryKey>,
     retry: false,
     meta: {
       onSettled: (data, err) => {
@@ -54,7 +59,7 @@ export function useOfflineCapableFetch<TData = unknown, TError = Error, TQueryFn
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
     if (apiData && !isUsingLocalStorage) {
-      saveLocalData(apiData as TQueryFnData);
+      saveLocalData(apiData as unknown as TQueryFnData);
     }
   }, [apiData, isUsingLocalStorage, saveLocalData]);
   
