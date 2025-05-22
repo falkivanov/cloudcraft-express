@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, UseQueryOptions, QueryKey, QueryFunction } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-// Modify the type constraint to ensure TData extends TQueryFnData
+// Modify the interface to ensure proper type constraints
 export interface UseOfflineCapableFetchOptions<
   TQueryFnData,
   TError = Error,
@@ -32,21 +32,12 @@ export function useOfflineCapableFetch<
 }: UseOfflineCapableFetchOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
-  // Create a query function that matches React Query's expected signature
-  const queryFnWrapper: QueryFunction<TQueryFnData, TQueryKey> = async () => {
-    return await queryFn();
-  };
-  
-  const { 
-    data: apiData,
-    error: apiError,
-    isLoading: isApiLoading,
-    isError: isApiError,
-    refetch,
-    ...rest
-  } = useQuery<TData, TError, TQueryFnData, TQueryKey>({
+  // The React Query options including the wrapped queryFn
+  const queryOptions: UseQueryOptions<TData, TError, TQueryFnData, TQueryKey> = {
     queryKey,
-    queryFn: queryFnWrapper,
+    queryFn: async () => {
+      return await queryFn();
+    },
     retry: false,
     meta: {
       onSettled: (data, err) => {
@@ -64,13 +55,23 @@ export function useOfflineCapableFetch<
       }
     },
     ...options
-  });
+  };
+
+  // Use the query with the properly typed options
+  const { 
+    data: apiData,
+    error: apiError,
+    isLoading: isApiLoading,
+    isError: isApiError,
+    refetch,
+    ...rest
+  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions);
   
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
     if (apiData && !isUsingLocalStorage) {
-      // Since we're using TQueryFnData as the output of queryFn, we need to cast apiData
-      // back to TQueryFnData for storage
+      // We need to cast apiData to TQueryFnData for storage
+      // This cast is necessary because of how React Query's generics work
       saveLocalData(apiData as unknown as TQueryFnData);
     }
   }, [apiData, isUsingLocalStorage, saveLocalData]);
