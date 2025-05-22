@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, UseQueryOptions, QueryKey, QueryFunction } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData, TQueryKey extends QueryKey> 
+export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData = TData, TQueryKey extends QueryKey = QueryKey> 
   extends Omit<UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>, 'queryKey' | 'queryFn'> {
   queryKey: TQueryKey;
   queryFn: () => Promise<TQueryFnData>;
@@ -36,7 +36,11 @@ export function useOfflineCapableFetch<
     ...rest
   } = useQuery<TData, TError, TQueryFnData, TQueryKey>({
     queryKey,
-    queryFn: queryFn as QueryFunction<TQueryFnData, TQueryKey>,
+    queryFn: async (context) => {
+      // This wrapper ensures the return type is correctly typed as TQueryFnData
+      const result = await queryFn();
+      return result;
+    },
     retry: false,
     meta: {
       onSettled: (data, err) => {
@@ -59,6 +63,7 @@ export function useOfflineCapableFetch<
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
     if (apiData && !isUsingLocalStorage) {
+      // We know apiData is of type TQueryFnData here since it's the return type of queryFn
       saveLocalData(apiData as unknown as TQueryFnData);
     }
   }, [apiData, isUsingLocalStorage, saveLocalData]);
