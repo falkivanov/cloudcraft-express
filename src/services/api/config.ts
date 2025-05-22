@@ -56,6 +56,36 @@ export const API_ENDPOINTS = {
     generatePlan: `/api/${API_VERSION}/shifts/generate-plan`,
   },
   
+  // Fahrzeugverwaltung
+  vehicles: {
+    getAll: `/api/${API_VERSION}/vehicles`,
+    getById: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
+    create: `/api/${API_VERSION}/vehicles`,
+    createBatch: `/api/${API_VERSION}/vehicles/batch`,
+    update: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
+    delete: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
+    // Reparaturen
+    repairs: {
+      getAll: `/api/${API_VERSION}/vehicles/repairs/all`,
+      add: (vehicleId: string) => `/api/${API_VERSION}/vehicles/${vehicleId}/repairs`,
+      update: (repairId: string) => `/api/${API_VERSION}/vehicles/repairs/${repairId}`,
+      delete: (repairId: string) => `/api/${API_VERSION}/vehicles/repairs/${repairId}`,
+    },
+    // Termine
+    appointments: {
+      getAll: `/api/${API_VERSION}/vehicles/appointments/all`,
+      add: (vehicleId: string) => `/api/${API_VERSION}/vehicles/${vehicleId}/appointments`,
+      update: (appointmentId: string) => `/api/${API_VERSION}/vehicles/appointments/${appointmentId}`,
+      delete: (appointmentId: string) => `/api/${API_VERSION}/vehicles/appointments/${appointmentId}`,
+    },
+    // Fahrzeugzuweisungen
+    assignments: {
+      getAll: `/api/${API_VERSION}/vehicles/assignments`,
+      create: `/api/${API_VERSION}/vehicles/assignments`,
+      delete: (assignmentId: string) => `/api/${API_VERSION}/vehicles/assignments/${assignmentId}`,
+    }
+  },
+  
   // Dateiverwaltung
   files: {
     upload: `/api/${API_VERSION}/files/upload`,

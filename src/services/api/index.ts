@@ -19,10 +19,12 @@ export * from './endpoints/pdfService';
 export * from './endpoints/scorecardService';
 export * from './endpoints/employeeService';
 export * from './endpoints/shiftService';
+export * from './endpoints/vehicleService';
 
 // Import der Typen
 import { Employee } from '@/types/employee';
 import { ShiftAssignment, ShiftPlanRequest, ShiftPlanResponse } from '@/types/shift';
+import { Vehicle, RepairEntry, Appointment } from '@/types/vehicle';
 import { ApiResponse, EmployeeBatchResponse, ShiftBatchResponse } from './types';
 
 // Liste der verfügbaren API-Funktionen für die vereinfachte Verwendung
@@ -109,6 +111,69 @@ export const api = {
       
     generatePlan: (planRequest: ShiftPlanRequest) =>
       import('./endpoints/shiftService').then(m => m.generateShiftPlan(planRequest))
+  },
+  
+  // Fahrzeugverwaltung
+  vehicles: {
+    getAll: (options?: { status?: string; brand?: string; search?: string; skip?: number; limit?: number }) =>
+      import('./endpoints/vehicleService').then(m => m.getAllVehicles(options)),
+      
+    getById: (id: string) =>
+      import('./endpoints/vehicleService').then(m => m.getVehicleById(id)),
+      
+    create: (vehicle: Omit<Vehicle, "id">) =>
+      import('./endpoints/vehicleService').then(m => m.createVehicle(vehicle)),
+      
+    createBatch: (vehicles: Omit<Vehicle, "id">[]) =>
+      import('./endpoints/vehicleService').then(m => m.createVehiclesBatch(vehicles)),
+      
+    update: (id: string, vehicle: Vehicle) =>
+      import('./endpoints/vehicleService').then(m => m.updateVehicle(id, vehicle)),
+      
+    delete: (id: string) =>
+      import('./endpoints/vehicleService').then(m => m.deleteVehicle(id)),
+      
+    // Reparaturen
+    repairs: {
+      getAll: (options?: { startDate?: string; endDate?: string; vehicleId?: string; skip?: number; limit?: number }) =>
+        import('./endpoints/vehicleService').then(m => m.getAllRepairs(options)),
+        
+      add: (vehicleId: string, repair: Omit<RepairEntry, "id" | "date" | "duration">) =>
+        import('./endpoints/vehicleService').then(m => m.addRepair(vehicleId, repair)),
+        
+      update: (repairId: string, repair: Partial<RepairEntry>) =>
+        import('./endpoints/vehicleService').then(m => m.updateRepair(repairId, repair)),
+        
+      delete: (repairId: string) =>
+        import('./endpoints/vehicleService').then(m => m.deleteRepair(repairId))
+    },
+      
+    // Termine
+    appointments: {
+      getAll: (options?: { startDate?: string; endDate?: string; vehicleId?: string; completed?: boolean; skip?: number; limit?: number }) =>
+        import('./endpoints/vehicleService').then(m => m.getAllAppointments(options)),
+        
+      add: (vehicleId: string, appointment: Omit<Appointment, "id">) =>
+        import('./endpoints/vehicleService').then(m => m.addAppointment(vehicleId, appointment)),
+        
+      update: (appointmentId: string, appointment: Partial<Appointment>) =>
+        import('./endpoints/vehicleService').then(m => m.updateAppointment(appointmentId, appointment)),
+        
+      delete: (appointmentId: string) =>
+        import('./endpoints/vehicleService').then(m => m.deleteAppointment(appointmentId))
+    },
+      
+    // Fahrzeugzuweisungen
+    assignments: {
+      getAll: (options?: { date?: string; vehicleId?: string; employeeId?: string; skip?: number; limit?: number }) =>
+        import('./endpoints/vehicleService').then(m => m.getVehicleAssignments(options)),
+        
+      create: (assignment: { vehicleId: string; employeeId: string; date: string; assignedBy: string }) =>
+        import('./endpoints/vehicleService').then(m => m.createVehicleAssignment(assignment)),
+        
+      delete: (assignmentId: string) =>
+        import('./endpoints/vehicleService').then(m => m.deleteVehicleAssignment(assignmentId))
+    }
   },
   
   // Verarbeitungsstatus
