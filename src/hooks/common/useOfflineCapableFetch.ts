@@ -32,18 +32,18 @@ export function useOfflineCapableFetch<
 }: UseOfflineCapableFetchOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
-  // Create a properly typed query function
-  const typedQueryFn: QueryFunction<TQueryFnData, TQueryKey> = async () => {
+  // Create a properly typed query function that aligns with React Query's expectations
+  const wrappedQueryFn: QueryFunction<TQueryFnData, TQueryKey> = async (context) => {
     return await queryFn();
   };
   
   // Build query options with proper types
-  const queryOptions: UseQueryOptions<TData, TError, TQueryFnData, TQueryKey> = {
+  const queryOptions = {
     queryKey,
-    queryFn: typedQueryFn,
+    queryFn: wrappedQueryFn,
     retry: false,
     meta: {
-      onSettled: (data, err) => {
+      onSettled: (data: TQueryFnData | undefined, err: TError | null) => {
         if (err) {
           console.error(`API-Fehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
           setIsUsingLocalStorage(true);
@@ -68,7 +68,7 @@ export function useOfflineCapableFetch<
     isError: isApiError,
     refetch,
     ...rest
-  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions);
+  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions as UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>);
   
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
