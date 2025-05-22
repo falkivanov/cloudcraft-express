@@ -1,4 +1,3 @@
-
 /**
  * API-Service-Haupteinstiegspunkt
  * 
@@ -20,6 +19,7 @@ export * from './endpoints/scorecardService';
 export * from './endpoints/employeeService';
 export * from './endpoints/shiftService';
 export * from './endpoints/vehicleService';
+export * from './endpoints/qualityService';
 
 // Import der Typen
 import { Employee } from '@/types/employee';
@@ -174,6 +174,29 @@ export const api = {
       delete: (assignmentId: string) =>
         import('./endpoints/vehicleService').then(m => m.deleteVehicleAssignment(assignmentId))
     }
+  },
+  
+  // Qualitätsdaten
+  quality: {
+    // Scorecard-Statistiken
+    getScorecardStats: (timePeriod?: string, location?: string) =>
+      import('./endpoints/qualityService').then(m => m.getScorecardStatistics(timePeriod, location)),
+      
+    // Fahrer-Performance
+    getDriverPerformance: (timePeriod?: string, metricType?: string, minScore?: number, maxScore?: number) =>
+      import('./endpoints/qualityService').then(m => m.getDriverPerformance(timePeriod, metricType, minScore, maxScore)),
+      
+    // Kundenkontakt-Compliance
+    getCustomerContactCompliance: (week?: number, year?: number) =>
+      import('./endpoints/qualityService').then(m => m.getCustomerContactCompliance(week, year)),
+      
+    // Qualitätsberichte filtern
+    filterReports: (options?: { reportType?: string; startDate?: string; endDate?: string; location?: string; search?: string }) =>
+      import('./endpoints/qualityService').then(m => m.filterQualityReports(options)),
+      
+    // Metrik-Trends
+    getMetricsTrends: (metricType: string, timePeriod?: string, location?: string) =>
+      import('./endpoints/qualityService').then(m => m.getMetricsTrends(metricType, timePeriod, location))
   },
   
   // Verarbeitungsstatus

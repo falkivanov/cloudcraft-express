@@ -4,19 +4,22 @@ import { API_ENDPOINTS } from '../config';
 import { ApiResponse } from '../types';
 
 /**
- * Get scorecard statistics for a specific time period
+ * Qualitätsdaten-Service
+ * 
+ * Stellt Funktionen bereit, um auf Qualitätsdaten zuzugreifen.
  */
-export async function getScorecardStatistics(options?: {
-  timePeriod?: string;
-  location?: string;
-}) {
+
+// Scorecard-Statistiken abrufen
+export async function getScorecardStatistics(
+  timePeriod: string = "week", 
+  location?: string
+) {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { time_period: timePeriod };
     
-    if (options?.timePeriod) params.time_period = options.timePeriod;
-    if (options?.location) params.location = options.location;
+    if (location) params.location = location;
     
-    const response = await get(API_ENDPOINTS.quality.scorecard.stats, params);
+    const response = await get<any>(API_ENDPOINTS.quality.scorecard.stats, params);
     return response;
   } catch (error) {
     console.error("Error fetching scorecard statistics:", error);
@@ -24,55 +27,45 @@ export async function getScorecardStatistics(options?: {
   }
 }
 
-/**
- * Get driver performance data filtered by various criteria
- */
-export async function getDriverPerformance(options?: {
-  timePeriod?: string;
-  metricType?: string;
-  minScore?: number;
-  maxScore?: number;
-}) {
+// Fahrer-Performance-Daten abrufen
+export async function getDriverPerformance(
+  timePeriod: string = "week",
+  metricType?: string,
+  minScore?: number,
+  maxScore?: number
+) {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { time_period: timePeriod };
     
-    if (options?.timePeriod) params.time_period = options.timePeriod;
-    if (options?.metricType) params.metric_type = options.metricType;
-    if (options?.minScore !== undefined) params.min_score = options.minScore.toString();
-    if (options?.maxScore !== undefined) params.max_score = options.maxScore.toString();
+    if (metricType) params.metric_type = metricType;
+    if (minScore !== undefined) params.min_score = minScore.toString();
+    if (maxScore !== undefined) params.max_score = maxScore.toString();
     
-    const response = await get(API_ENDPOINTS.quality.drivers.performance, params);
+    const response = await get<any>(API_ENDPOINTS.quality.drivers.performance, params);
     return response;
   } catch (error) {
     console.error("Error fetching driver performance:", error);
-    return { success: false, error: "Fehler beim Abrufen der Fahrerleistung", data: [] };
+    return { success: false, error: "Fehler beim Abrufen der Fahrer-Performance", data: [] };
   }
 }
 
-/**
- * Get customer contact compliance for a specific week and year
- */
-export async function getCustomerContactCompliance(options?: {
-  week?: number;
-  year?: number;
-}) {
+// Kundenkontakt-Compliance-Daten abrufen
+export async function getCustomerContactCompliance(week?: number, year?: number) {
   try {
     const params: Record<string, string> = {};
     
-    if (options?.week !== undefined) params.week = options.week.toString();
-    if (options?.year !== undefined) params.year = options.year.toString();
+    if (week !== undefined) params.week = week.toString();
+    if (year !== undefined) params.year = year.toString();
     
-    const response = await get(API_ENDPOINTS.quality.customerContact.compliance, params);
+    const response = await get<any>(API_ENDPOINTS.quality.customerContact.compliance, params);
     return response;
   } catch (error) {
     console.error("Error fetching customer contact compliance:", error);
-    return { success: false, error: "Fehler beim Abrufen der Kundenkonktakt-Compliance" };
+    return { success: false, error: "Fehler beim Abrufen der Kundenkontakt-Compliance" };
   }
 }
 
-/**
- * Filter quality reports based on various criteria
- */
+// Qualitätsberichte filtern
 export async function filterQualityReports(options?: {
   reportType?: string;
   startDate?: string;
@@ -89,7 +82,7 @@ export async function filterQualityReports(options?: {
     if (options?.location) params.location = options.location;
     if (options?.search) params.search = options.search;
     
-    const response = await get(API_ENDPOINTS.quality.reports.filter, params);
+    const response = await get<any>(API_ENDPOINTS.quality.reports.filter, params);
     return response;
   } catch (error) {
     console.error("Error filtering quality reports:", error);
@@ -97,25 +90,24 @@ export async function filterQualityReports(options?: {
   }
 }
 
-/**
- * Get trends for specific quality metrics over time
- */
-export async function getMetricsTrends(metricType: string, options?: {
-  timePeriod?: string;
-  location?: string;
-}) {
+// Trendverläufe für Metriken abrufen
+export async function getMetricsTrends(
+  metricType: string,
+  timePeriod: string = "week",
+  location?: string
+) {
   try {
-    const params: Record<string, string> = {
-      metric_type: metricType
+    const params: Record<string, string> = { 
+      metric_type: metricType,
+      time_period: timePeriod
     };
     
-    if (options?.timePeriod) params.time_period = options.timePeriod;
-    if (options?.location) params.location = options.location;
+    if (location) params.location = location;
     
-    const response = await get(API_ENDPOINTS.quality.metrics.trends, params);
+    const response = await get<any>(API_ENDPOINTS.quality.metrics.trends, params);
     return response;
   } catch (error) {
     console.error("Error fetching metrics trends:", error);
-    return { success: false, error: "Fehler beim Abrufen der Metriktrends" };
+    return { success: false, error: "Fehler beim Abrufen der Metrik-Trends" };
   }
 }
