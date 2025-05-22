@@ -9,7 +9,7 @@ export interface UseOfflineCapableFetchOptions<
   TError = Error,
   TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey
-> extends Omit<UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>, 'queryKey' | 'queryFn'> {
+> extends Omit<UseQueryOptions<TData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'> {
   queryKey: TQueryKey;
   queryFn: () => Promise<TQueryFnData>;
   loadLocalData: () => TData | null;
@@ -33,17 +33,18 @@ export function useOfflineCapableFetch<
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
   // Create a properly typed query function that returns the correct type
-  const wrappedQueryFn = async () => {
-    return await queryFn();
+  const wrappedQueryFn: QueryFunction<TData, TQueryKey> = async () => {
+    const result = await queryFn();
+    return result as unknown as TData;
   };
   
   // Build query options matching expected React Query types
-  const queryOptions: UseQueryOptions<TData, TError, TQueryFnData, TQueryKey> = {
+  const queryOptions: UseQueryOptions<TData, TError, TData, TQueryKey> = {
     queryKey,
-    queryFn: wrappedQueryFn as unknown as QueryFunction<TQueryFnData, TQueryKey>,
+    queryFn: wrappedQueryFn,
     retry: false,
     meta: {
-      onSettled: (data: TQueryFnData | undefined, err: TError | null) => {
+      onSettled: (data: TData | undefined, err: TError | null) => {
         if (err) {
           console.error(`API-Fehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
           setIsUsingLocalStorage(true);
@@ -68,7 +69,7 @@ export function useOfflineCapableFetch<
     isError: isApiError,
     refetch,
     ...rest
-  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions);
+  } = useQuery<TData, TError, TData, TQueryKey>(queryOptions);
   
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
