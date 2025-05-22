@@ -1,4 +1,3 @@
-
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, Float, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -184,3 +183,102 @@ class VehicleAssignment(Base):
     # Beziehungen
     # vehicle = relationship("Vehicle", back_populates="assignments")
     # employee = relationship("Employee", back_populates="vehicle_assignments")
+
+# FileUpload-Tabelle für hochgeladene Dateien
+class FileUpload(Base):
+    __tablename__ = "file_uploads"
+    
+    # Primärschlüssel
+    id = Column(Integer, primary_key=True)
+    
+    # Datei-Informationen
+    file_id = Column(String(36), unique=True, nullable=False)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(String(512), nullable=False)
+    file_type = Column(String(50), nullable=False)  # z.B. "scorecard", "customerContact"
+    upload_date = Column(DateTime, default=datetime.now)
+    
+    # Verarbeitungs-Informationen
+    processing_id = Column(String(36), nullable=False)
+    processing_status = Column(String(50), default="queued")  # queued, processing, completed, failed
+    processing_progress = Column(Integer, default=0)  # 0-100%
+    processing_message = Column(String(255), nullable=True)
+    result_url = Column(String(512), nullable=True)
+    result_data = Column(Text, nullable=True)  # JSON-String der Ergebnisse
+    error_message = Column(Text, nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+# Scorecard-Tabelle
+class Scorecard(Base):
+    __tablename__ = "scorecards"
+    
+    # Primärschlüssel
+    id = Column(Integer, primary_key=True)
+    
+    # Referenz zur Datei
+    file_id = Column(String(36), ForeignKey("file_uploads.file_id"))
+    
+    # Metadaten
+    week = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
+    location = Column(String(10), nullable=False)
+    overall_score = Column(Float, nullable=False)
+    overall_status = Column(String(20), nullable=False)
+    rank = Column(Integer, nullable=True)
+    rank_note = Column(String(255), nullable=True)
+    is_sample_data = Column(Boolean, default=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # Beziehungen
+    company_kpis = relationship("CompanyKPI", back_populates="scorecard", cascade="all, delete-orphan")
+    driver_kpis = relationship("DriverKPI", back_populates="scorecard", cascade="all, delete-orphan")
+
+# CompanyKPI-Tabelle
+class CompanyKPI(Base):
+    __tablename__ = "company_kpis"
+    
+    # Primärschlüssel
+    id = Column(Integer, primary_key=True)
+    
+    # Referenz zur Scorecard
+    scorecard_id = Column(Integer, ForeignKey("scorecards.id"), nullable=False)
+    
+    # KPI-Informationen
+    name = Column(String(255), nullable=False)
+    value = Column(Float, nullable=False)
+    target = Column(Float, nullable=False)
+    status = Column(String(20), nullable=False)  # success, warning, danger
+    category = Column(String(50), nullable=False)  # safety, compliance, customer, standardWork, quality, capacity
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # Beziehung
+    scorecard = relationship("Scorecard", back_populates="company_kpis")
+
+# DriverKPI-Tabelle
+class DriverKPI(Base):
+    __tablename__ = "driver_kpis"
+    
+    # Primärschlüssel
+    id = Column(Integer, primary_key=True)
+    
+    # Referenz zur Scorecard
+    scorecard_id = Column(Integer, ForeignKey("scorecards.id"), nullable=False)
+    
+    # Driver-Informationen
+    driver_id = Column(String(20), nullable=False)
+    name = Column(String(255), nullable=False)
+    metrics = Column(Text, nullable=False)  # JSON-String mit Metriken
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # Beziehung
+    scorecard = relationship("Scorecard", back_populates="driver_kpis")

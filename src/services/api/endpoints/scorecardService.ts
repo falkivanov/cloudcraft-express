@@ -4,7 +4,7 @@
  */
 
 import { API_ENDPOINTS } from '../config';
-import { uploadFile, post } from '../client';
+import { uploadFile, post, get } from '../client';
 import { ApiResponse } from '../types';
 import { DriverKPI, ScoreCardData } from '@/components/quality/scorecard/types';
 
@@ -12,7 +12,15 @@ import { DriverKPI, ScoreCardData } from '@/components/quality/scorecard/types';
  * Extrahiert Scorecard-Daten aus einer PDF-Datei
  */
 export async function extractScorecardFromPDF(file: File): Promise<ApiResponse<ScoreCardData>> {
+  console.log("Sending PDF to backend API for extraction:", file.name);
   return uploadFile<ScoreCardData>(API_ENDPOINTS.scorecard.extract, file);
+}
+
+/**
+ * Lädt eine bereits verarbeitete Scorecard anhand ihrer ID
+ */
+export async function getScorecardById(id: string): Promise<ApiResponse<ScoreCardData>> {
+  return get<ScoreCardData>(`${API_ENDPOINTS.scorecard.base}/${id}`);
 }
 
 /**
@@ -52,4 +60,22 @@ export async function extractMetadata(
     API_ENDPOINTS.scorecard.extractMetadata,
     { text, filename }
   );
+}
+
+/**
+ * Lädt alle verfügbaren Scorecards
+ */
+export async function getAllScorecards(options?: {
+  week?: number;
+  year?: number;
+  location?: string;
+}): Promise<ApiResponse<ScoreCardData[]>> {
+  return get<ScoreCardData[]>(API_ENDPOINTS.scorecard.list, options);
+}
+
+/**
+ * Überprüft den Verarbeitungsstatus einer Scorecard-Extraktion
+ */
+export async function checkProcessingStatus(processingId: string): Promise<ApiResponse<any>> {
+  return post(API_ENDPOINTS.processing.status, { processingId });
 }

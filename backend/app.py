@@ -7,6 +7,7 @@ import os
 import uuid
 import json
 import shutil
+import re
 from tempfile import NamedTemporaryFile
 from datetime import datetime
 
@@ -27,8 +28,8 @@ from schemas import (
     EmployeeBase
 )
 
-# Import der Employee-Routes
-from routes import employee
+# Import all route modules
+from routes import employee, scorecard
 
 # Erstelle Tabellen in der Datenbank
 Base.metadata.create_all(bind=engine)
@@ -60,8 +61,9 @@ def get_db():
     finally:
         db.close()
 
-# Employee-Router integrieren
+# Integrate all routers
 app.include_router(employee.router)
+app.include_router(scorecard.router)
 
 # Gesundheits-Endpunkt
 @app.get("/health")
@@ -109,17 +111,17 @@ async def upload_scorecard(
         db.add(file_upload)
         db.commit()
         
-        # Starte asynchrone Verarbeitung der PDF (in der Praxis würde hier ein Task Queue System wie Celery verwendet)
-        if background_tasks:
-            background_tasks.add_task(process_scorecard_pdf, file_location, file_id, processing_id, db)
+        # Starte asynchrone Verarbeitung der PDF (direkt, nicht verzögert)
+        result = await process_scorecard_pdf(file_location, file_id, processing_id, db)
         
         return {
             "success": True,
             "data": {
                 "fileId": file_id,
                 "filename": file.filename,
-                "processingStatus": "queued",
-                "processingId": processing_id
+                "processingStatus": "completed" if result else "failed",
+                "processingId": processing_id,
+                "result": result
             }
         }
     except Exception as e:
@@ -132,7 +134,6 @@ async def upload_scorecard(
 @app.post("/api/v1/scorecard/extract-drivers", response_model=ExtractionResult)
 async def extract_drivers(
     request_data: Dict[str, Any],
-    db: Session = Depends(get_db)
 ):
     """
     Extrahiere Fahrer-KPIs aus Textinhalt.
@@ -141,29 +142,37 @@ async def extract_drivers(
         text = request_data.get("text", "")
         page_data = request_data.get("pageData")
         
-        # Hier würde die tatsächliche Extraktionslogik implementiert werden
-        # In diesem Beispiel geben wir nur Beispieldaten zurück
-        
-        # In einer vollständigen Implementierung würden wir hier:
-        # 1. Den Text nach Fahrer-KPIs durchsuchen
-        # 2. Strukturierte Daten erstellen
-        # 3. Die Daten zurückgeben
-        
-        # Dummy-Daten zur Demonstration
-        example_drivers = [
-            {
-                "driverId": "1001",
-                "name": "Max Mustermann",
-                "metrics": [
-                    {"name": "DNR", "value": "0.5%", "target": "1.2%", "status": "success"},
-                    {"name": "Concessions", "value": "2", "target": "3", "status": "success"}
-                ]
-            }
-        ]
+        # Extrahiere Driver-KPIs mit regulären Ausdrücken
+        drivers = extract_driver_kpis_from_text(text)
         
         return {
             "success": True,
-            "data": example_drivers
+            "data": drivers
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Fehler bei der Extraktion: {str(e)}"}
+        )
+
+# Endpunkt zum Extrahieren von Company-KPIs aus Text
+@app.post("/api/v1/scorecard/extract-company-kpis", response_model=ExtractionResult)
+async def extract_company_kpis(
+    request_data: Dict[str, Any],
+):
+    """
+    Extrahiere Company KPIs aus Textinhalt.
+    """
+    try:
+        text = request_data.get("text", "")
+        page_data = request_data.get("pageData")
+        
+        # Extrahiere Company-KPIs mit regulären Ausdrücken
+        kpis = extract_company_kpis_from_text(text)
+        
+        return {
+            "success": True,
+            "data": kpis
         }
     except Exception as e:
         return JSONResponse(
@@ -175,7 +184,6 @@ async def extract_drivers(
 @app.post("/api/v1/pdf/extract-text")
 async def extract_text_from_pdf(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
 ):
     """
     Extrahiere Text aus einer PDF-Datei.
@@ -214,7 +222,6 @@ async def extract_text_from_pdf(
 @app.post("/api/v1/pdf/extract-structure")
 async def extract_structure_from_pdf(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
 ):
     """
     Extrahiere strukturierte Daten (Text mit Positionen) aus einer PDF-Datei.
@@ -292,7 +299,104 @@ async def get_processing_status(
         }
     }
 
-# Hilfsfunktion zur Verarbeitung von Scorecard-PDFs (würde in der Praxis asynchron ausgeführt)
+# Hilfsfunktionen für die Extraktion
+
+def extract_driver_kpis_from_text(text):
+    """
+    Extrahiere Fahrer-KPIs aus Text mit regulären Ausdrücken.
+    """
+    # Einfaches Muster für Fahrer-IDs (z.B. TR-001, D-1234)
+    driver_pattern = r"([A-Z]+-\d{3,4}|[A-Z]-\d{4})"
+    
+    # Muster für Metriken (Name: Wert / Target, Status)
+    metric_pattern = r"(\w+(?:\s\w+)?)\s*:\s*([\d.]+%?)\s*\/\s*([\d.]+%?)\s*,\s*(\w+)"
+    
+    # Suche nach Fahrer-IDs im Text
+    drivers = []
+    for match in re.finditer(driver_pattern, text):
+        driver_id = match.group(1)
+        
+        # Extrahiere Text für diesen Fahrer (bis zum nächsten Fahrer oder Ende)
+        start_pos = match.end()
+        end_pos = len(text)
+        for next_match in re.finditer(driver_pattern, text[start_pos:]):
+            end_pos = start_pos + next_match.start()
+            break
+        
+        driver_text = text[start_pos:end_pos]
+        
+        # Suche nach Metriken für diesen Fahrer
+        metrics = []
+        for metric_match in re.finditer(metric_pattern, driver_text):
+            name = metric_match.group(1)
+            value = metric_match.group(2)
+            target = metric_match.group(3)
+            status = metric_match.group(4)
+            
+            metrics.append({
+                "name": name,
+                "value": value,
+                "target": target,
+                "status": status.lower()
+            })
+        
+        drivers.append({
+            "name": driver_id,
+            "status": "active",
+            "metrics": metrics
+        })
+    
+    return drivers
+
+def extract_company_kpis_from_text(text):
+    """
+    Extrahiere Company-KPIs aus Text mit regulären Ausdrücken.
+    """
+    # Muster für KPIs (Name: Wert / Target, Status)
+    kpi_pattern = r"(\w+(?:\s\w+)?)\s*:\s*([\d.]+%?)\s*\/\s*([\d.]+%?)\s*,\s*(\w+)"
+    
+    kpis = []
+    for match in re.finditer(kpi_pattern, text):
+        name = match.group(1)
+        value_str = match.group(2)
+        target_str = match.group(3)
+        status = match.group(4)
+        
+        # Konvertiere Werte
+        try:
+            # Entferne % und konvertiere zu float
+            value = float(value_str.replace('%', ''))
+            target = float(target_str.replace('%', ''))
+            unit = '%' if '%' in value_str else ''
+            
+            # Bestimme Kategorie basierend auf dem Namen
+            category = "customer"
+            if "safety" in name.lower():
+                category = "safety"
+            elif "compli" in name.lower():
+                category = "compliance"
+            elif "quality" in name.lower():
+                category = "quality"
+            elif "capacity" in name.lower() or "volume" in name.lower():
+                category = "capacity"
+            elif "standard" in name.lower() or "work" in name.lower():
+                category = "standardWork"
+            
+            kpis.append({
+                "name": name,
+                "value": value,
+                "target": target,
+                "unit": unit,
+                "status": status.lower(),
+                "category": category
+            })
+        except ValueError:
+            # Ignoriere Werte, die nicht konvertiert werden können
+            continue
+    
+    return kpis
+
+# Hilfsfunktion zur Verarbeitung von Scorecard-PDFs
 async def process_scorecard_pdf(file_path: str, file_id: str, processing_id: str, db: Session):
     """
     Verarbeitet eine Scorecard-PDF und extrahiert Daten.
@@ -312,85 +416,105 @@ async def process_scorecard_pdf(file_path: str, file_id: str, processing_id: str
             # Extrahiere Metadaten und Text
             num_pages = len(pdf.pages)
             
-            # Extrahiere Text aus den ersten Seiten (in einer vollständigen Implementierung würde hier mehr Logik stehen)
+            # Extrahiere Text aus allen Seiten
             page_texts = {}
             for i, page in enumerate(pdf.pages):
-                if i < 3:  # Beschränke auf die ersten drei Seiten für Demonstration
-                    text = page.extract_text()
-                    if text:
-                        page_texts[i] = text
+                text = page.extract_text()
+                if text:
+                    page_texts[i] = text
+            
+            # Aktualisiere Fortschritt
+            if file_upload:
+                file_upload.processing_progress = 30
+                file_upload.processing_message = "Extrahiere Metadaten..."
+                db.commit()
+            
+            # Extrahiere Wochennummer aus Dateiname
+            week_num = extract_week_from_filename(os.path.basename(file_path))
             
             # Aktualisiere Fortschritt
             if file_upload:
                 file_upload.processing_progress = 50
-                file_upload.processing_message = "Analysiere Daten..."
+                file_upload.processing_message = "Extrahiere KPIs..."
                 db.commit()
             
-            # Hier würde die eigentliche Datenextraktion stattfinden
-            # In diesem Beispiel erstellen wir nur Dummy-Daten
+            # Kombiniere Text für verschiedene Analysen
+            combined_text = " ".join(page_texts.values())
+            
+            # Extrahiere Standort
+            location = extract_location_from_text(combined_text) or "DSU1"
+            
+            # Extrahiere Overall Score
+            overall_score = extract_overall_score_from_text(combined_text) or 90.0
+            
+            # Extrahiere Rank
+            rank = extract_rank_from_text(combined_text) or 5
+            
+            # Extrahiere Driver KPIs
+            driver_kpis = extract_driver_kpis_from_text(combined_text)
+            
+            # Extrahiere Company KPIs
+            company_kpis = extract_company_kpis_from_text(combined_text)
             
             # Erstelle eine neue Scorecard in der Datenbank
-            week_num = extract_week_from_filename(os.path.basename(file_path))
             scorecard = models.Scorecard(
                 file_id=file_id,
                 week=week_num,
                 year=datetime.now().year,
-                location="DSU1",
-                overall_score=90.5,
-                overall_status="success",
-                rank=3,
-                rank_note="Up 2 places from last week",
+                location=location,
+                overall_score=overall_score,
+                overall_status=determine_status_from_score(overall_score),
+                rank=rank,
+                rank_note=generate_rank_note(rank),
                 is_sample_data=False
             )
             db.add(scorecard)
             db.flush()  # Um die ID zu bekommen
             
-            # Erstelle einige Beispiel-KPIs für die Scorecard
-            company_kpis = [
-                models.CompanyKPI(
-                    scorecard_id=scorecard.id,
-                    name="DNR",
-                    value=0.8,
-                    target=1.2,
-                    status="success",
-                    category="customer"
-                ),
-                models.CompanyKPI(
-                    scorecard_id=scorecard.id,
-                    name="Delivery Quality",
-                    value=99.2,
-                    target=98.5,
-                    status="success",
-                    category="quality"
-                )
-            ]
-            db.add_all(company_kpis)
+            # Aktualisiere Fortschritt
+            if file_upload:
+                file_upload.processing_progress = 80
+                file_upload.processing_message = "Speichere Ergebnisse..."
+                db.commit()
             
-            # Erstelle einige Beispiel-Fahrer-KPIs
-            driver_kpis = [
-                models.DriverKPI(
+            # Erstelle Company-KPIs für die Scorecard
+            for kpi in company_kpis:
+                company_kpi = models.CompanyKPI(
                     scorecard_id=scorecard.id,
-                    driver_id="D12345",
-                    name="Max Mustermann",
-                    metrics=json.dumps([
-                        {"name": "DNR", "value": "0.5%", "target": "1.2%", "status": "success"},
-                        {"name": "POD", "value": "98%", "target": "95%", "status": "success"}
-                    ])
-                ),
-                models.DriverKPI(
-                    scorecard_id=scorecard.id,
-                    driver_id="D67890",
-                    name="Anna Schmidt",
-                    metrics=json.dumps([
-                        {"name": "DNR", "value": "1.8%", "target": "1.2%", "status": "warning"},
-                        {"name": "POD", "value": "96%", "target": "95%", "status": "success"}
-                    ])
+                    name=kpi["name"],
+                    value=kpi["value"],
+                    target=kpi["target"],
+                    status=kpi["status"],
+                    category=kpi["category"]
                 )
-            ]
-            db.add_all(driver_kpis)
+                db.add(company_kpi)
+            
+            # Erstelle Driver-KPIs für die Scorecard
+            for i, driver in enumerate(driver_kpis):
+                driver_kpi = models.DriverKPI(
+                    scorecard_id=scorecard.id,
+                    driver_id=f"D{10000+i}" if not isinstance(driver["name"], str) or not re.match(r"[A-Z]+-\d+", driver["name"]) else driver["name"],
+                    name=driver["name"],
+                    metrics=json.dumps(driver["metrics"])
+                )
+                db.add(driver_kpi)
             
             # Speichern
             db.commit()
+            
+            # Erstelle das Ergebnis-Objekt
+            result = {
+                "week": week_num,
+                "year": datetime.now().year,
+                "location": location,
+                "overallScore": overall_score,
+                "overallStatus": determine_status_from_score(overall_score),
+                "rank": rank,
+                "rankNote": generate_rank_note(rank),
+                "companyKPIs": company_kpis,
+                "driverKPIs": driver_kpis,
+                "recommendedFocusAreas": extract_focus_areas(combined_text, company_kpis)
+            }
             
             # Aktualisiere Status auf "completed"
             if file_upload:
@@ -398,7 +522,10 @@ async def process_scorecard_pdf(file_path: str, file_id: str, processing_id: str
                 file_upload.processing_progress = 100
                 file_upload.processing_message = "Verarbeitung abgeschlossen"
                 file_upload.result_url = f"/api/v1/scorecard/{scorecard.id}"
+                file_upload.result_data = json.dumps(result)
                 db.commit()
+            
+            return result
                 
     except Exception as e:
         # Bei Fehler Status auf "failed" setzen
@@ -406,7 +533,8 @@ async def process_scorecard_pdf(file_path: str, file_id: str, processing_id: str
             file_upload.processing_status = "failed"
             file_upload.error_message = str(e)
             db.commit()
-        raise e
+        print(f"Error processing PDF: {e}")
+        return None
 
 # Hilfsfunktion zum Extrahieren der Wochennummer aus einem Dateinamen
 def extract_week_from_filename(filename: str) -> int:
@@ -414,8 +542,6 @@ def extract_week_from_filename(filename: str) -> int:
     Extrahiert die Wochennummer aus einem Dateinamen.
     Sucht nach Mustern wie "KW12", "Week12", etc.
     """
-    import re
-    
     # Verschiedene Muster für Wochennummern
     patterns = [
         r"Week[_\s-]*(\d+)",      # Week12, Week-12, Week_12, Week 12
@@ -435,6 +561,119 @@ def extract_week_from_filename(filename: str) -> int:
     
     # Wenn keine Wochennummer gefunden wurde, aktuelle Woche verwenden
     return datetime.now().isocalendar()[1]  # Aktuelle Kalenderwoche
+
+# Hilfsfunktionen zur Datenextraktion 
+
+def extract_location_from_text(text: str) -> str:
+    """
+    Extrahiert den Standort aus dem Text.
+    """
+    location_patterns = [
+        r"Station[:\s]+([A-Z]{3}\d)",
+        r"Location[:\s]+([A-Z]{3}\d)",
+        r"Standort[:\s]+([A-Z]{3}\d)",
+    ]
+    
+    for pattern in location_patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(1)
+    
+    # Fallback: Suche nach bekannten Standort-Codes
+    for location in ["DSU1", "DMU1", "DBO1", "DAM1", "DDU1", "DUS1"]:
+        if location in text:
+            return location
+            
+    return "DSU1"  # Default
+
+def extract_overall_score_from_text(text: str) -> float:
+    """
+    Extrahiert den Overall Score aus dem Text.
+    """
+    score_patterns = [
+        r"Overall[:\s]+(\d+\.?\d*)",
+        r"Score[:\s]+(\d+\.?\d*)",
+        r"Gesamtpunktzahl[:\s]+(\d+\.?\d*)",
+    ]
+    
+    for pattern in score_patterns:
+        match = re.search(pattern, text)
+        if match:
+            try:
+                return float(match.group(1))
+            except ValueError:
+                continue
+    
+    return 90.0  # Default
+
+def extract_rank_from_text(text: str) -> int:
+    """
+    Extrahiert den Rank aus dem Text.
+    """
+    rank_patterns = [
+        r"Rank[:\s]+#?(\d+)",
+        r"Platz[:\s]+#?(\d+)",
+        r"Position[:\s]+#?(\d+)",
+        r"#(\d+) von",
+    ]
+    
+    for pattern in rank_patterns:
+        match = re.search(pattern, text)
+        if match:
+            try:
+                return int(match.group(1))
+            except ValueError:
+                continue
+    
+    return 5  # Default
+
+def determine_status_from_score(score: float) -> str:
+    """
+    Bestimmt den Status basierend auf dem Score.
+    """
+    if score >= 95:
+        return "fantastic"
+    elif score >= 90:
+        return "great"
+    elif score >= 85:
+        return "good"
+    elif score >= 80:
+        return "fair"
+    else:
+        return "poor"
+
+def generate_rank_note(rank: int) -> str:
+    """
+    Generiert eine Notiz zum Rang.
+    """
+    if rank <= 3:
+        return f"Top {rank}! Great job!"
+    elif rank <= 10:
+        return f"Rank {rank}, in the top 10"
+    else:
+        return f"Currently at rank {rank}"
+
+def extract_focus_areas(text: str, company_kpis: list) -> list:
+    """
+    Extrahiert empfohlene Fokus-Bereiche basierend auf Text und KPIs.
+    """
+    focus_areas = []
+    
+    # Füge KPIs mit niedrigem Status hinzu
+    for kpi in company_kpis:
+        if kpi.get("status") in ["poor", "fair"]:
+            focus_areas.append(kpi.get("name"))
+    
+    # Wenn weniger als 2 Bereiche gefunden wurden, füge die niedrigsten KPIs hinzu
+    if len(focus_areas) < 2:
+        sorted_kpis = sorted(company_kpis, key=lambda k: k.get("value", 0))
+        for kpi in sorted_kpis:
+            if kpi.get("name") not in focus_areas:
+                focus_areas.append(kpi.get("name"))
+                if len(focus_areas) >= 2:
+                    break
+    
+    return focus_areas[:3]  # Maximal 3 Fokus-Bereiche
 
 # Wenn die Datei direkt ausgeführt wird
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-
 /**
  * API-Konfiguration
  * 
@@ -26,10 +25,12 @@ export const API_ENDPOINTS = {
   
   // Scorecard-spezifische Endpunkte
   scorecard: {
+    base: `/api/${API_VERSION}/scorecard`,
     extract: `/api/${API_VERSION}/scorecard/extract`,
     extractDrivers: `/api/${API_VERSION}/scorecard/extract-drivers`,
-    extractCompanyKPIs: `/api/${API_VERSION}/scorecard/extract-company`,
+    extractCompanyKPIs: `/api/${API_VERSION}/scorecard/extract-company-kpis`,
     extractMetadata: `/api/${API_VERSION}/scorecard/extract-metadata`,
+    list: `/api/${API_VERSION}/scorecard/list`,
   },
   
   // Mitarbeiter-Endpunkte
