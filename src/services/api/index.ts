@@ -18,10 +18,12 @@ export * from './client';
 export * from './endpoints/pdfService';
 export * from './endpoints/scorecardService';
 export * from './endpoints/employeeService';
+export * from './endpoints/shiftService';
 
-// Import des Employee-Typs
+// Import der Typen
 import { Employee } from '@/types/employee';
-import { ApiResponse, EmployeeBatchResponse } from './types';
+import { ShiftAssignment, ShiftPlanRequest, ShiftPlanResponse } from '@/types/shift';
+import { ApiResponse, EmployeeBatchResponse, ShiftBatchResponse } from './types';
 
 // Liste der verfügbaren API-Funktionen für die vereinfachte Verwendung
 export const api = {
@@ -77,6 +79,36 @@ export const api = {
       
     deleteAll: () =>
       import('./endpoints/employeeService').then(m => m.deleteAllEmployees())
+  },
+  
+  // Schichtplanung-Funktionen
+  shifts: {
+    getAll: (options?: { startDate?: string; endDate?: string; employeeId?: string; status?: string; skip?: number; limit?: number }) =>
+      import('./endpoints/shiftService').then(m => m.getAllShifts(options)),
+      
+    getByDate: (date: string) =>
+      import('./endpoints/shiftService').then(m => m.getShiftsByDate(date)),
+      
+    getByEmployee: (employeeId: string) =>
+      import('./endpoints/shiftService').then(m => m.getShiftsByEmployee(employeeId)),
+      
+    create: (shift: ShiftAssignment) =>
+      import('./endpoints/shiftService').then(m => m.createShift(shift)),
+      
+    createBatch: (shifts: ShiftAssignment[]) =>
+      import('./endpoints/shiftService').then(m => m.createShiftsBatch(shifts)),
+      
+    update: (id: string, shift: ShiftAssignment) =>
+      import('./endpoints/shiftService').then(m => m.updateShift(id, shift)),
+      
+    delete: (id: string) =>
+      import('./endpoints/shiftService').then(m => m.deleteShift(id)),
+      
+    deleteByDate: (date: string) =>
+      import('./endpoints/shiftService').then(m => m.deleteShiftsByDate(date)),
+      
+    generatePlan: (planRequest: ShiftPlanRequest) =>
+      import('./endpoints/shiftService').then(m => m.generateShiftPlan(planRequest))
   },
   
   // Verarbeitungsstatus

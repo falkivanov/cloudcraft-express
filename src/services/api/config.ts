@@ -43,6 +43,19 @@ export const API_ENDPOINTS = {
     deleteAll: `/api/${API_VERSION}/employees`,
   },
   
+  // Schichtplanung-Endpunkte
+  shifts: {
+    getAll: `/api/${API_VERSION}/shifts`,
+    getByDate: (date: string) => `/api/${API_VERSION}/shifts/date/${date}`,
+    getByEmployee: (employeeId: string) => `/api/${API_VERSION}/shifts/employee/${employeeId}`,
+    create: `/api/${API_VERSION}/shifts`,
+    createBatch: `/api/${API_VERSION}/shifts/batch`,
+    update: (id: string) => `/api/${API_VERSION}/shifts/${id}`,
+    delete: (id: string) => `/api/${API_VERSION}/shifts/${id}`,
+    deleteByDate: (date: string) => `/api/${API_VERSION}/shifts/date/${date}`,
+    generatePlan: `/api/${API_VERSION}/shifts/generate-plan`,
+  },
+  
   // Dateiverwaltung
   files: {
     upload: `/api/${API_VERSION}/files/upload`,

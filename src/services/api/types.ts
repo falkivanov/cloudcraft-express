@@ -1,6 +1,7 @@
 
 // Import des Employee-Typs, um zirkuläre Abhängigkeiten zu vermeiden
 import { Employee } from "@/types/employee";
+import { ShiftAssignment, ShiftPlanResponse } from "@/types/shift";
 
 /**
  * Typdefinitionen für die API-Kommunikation
@@ -36,5 +37,13 @@ export interface EmployeeBatchResponse {
   success: boolean;
   message: string;
   created: Employee[];
+  skipped: number;
+}
+
+// Definitionen für Shift-Batch-Operationen
+export interface ShiftBatchResponse {
+  success: boolean;
+  message: string;
+  created: ShiftAssignment[];
   skipped: number;
 }
