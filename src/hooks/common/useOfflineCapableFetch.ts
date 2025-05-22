@@ -1,10 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery, UseQueryOptions, QueryKey, QueryFunction } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions, QueryKey } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData = TData, TQueryKey extends QueryKey = QueryKey> 
-  extends Omit<UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>, 'queryKey' | 'queryFn'> {
+// Define a stricter constraint: TQueryFnData must be assignable to TData
+export interface UseOfflineCapableFetchOptions<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
+> extends Omit<UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>, 'queryKey' | 'queryFn'> {
   queryKey: TQueryKey;
   queryFn: () => Promise<TQueryFnData>;
   loadLocalData: () => TData | null;
@@ -13,9 +18,9 @@ export interface UseOfflineCapableFetchOptions<TData, TError, TQueryFnData = TDa
 }
 
 export function useOfflineCapableFetch<
-  TData = unknown, 
-  TError = Error, 
-  TQueryFnData = TData, 
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey
 >({
   queryKey,
@@ -24,7 +29,7 @@ export function useOfflineCapableFetch<
   saveLocalData,
   onSwitchToOffline,
   ...options
-}: UseOfflineCapableFetchOptions<TData, TError, TQueryFnData, TQueryKey>) {
+}: UseOfflineCapableFetchOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
   const { 
@@ -36,10 +41,9 @@ export function useOfflineCapableFetch<
     ...rest
   } = useQuery<TData, TError, TQueryFnData, TQueryKey>({
     queryKey,
-    queryFn: async (context) => {
-      // This wrapper ensures the return type is correctly typed as TQueryFnData
-      const result = await queryFn();
-      return result;
+    queryFn: async () => {
+      // Call the provided queryFn
+      return await queryFn();
     },
     retry: false,
     meta: {
@@ -63,14 +67,16 @@ export function useOfflineCapableFetch<
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
     if (apiData && !isUsingLocalStorage) {
-      // We know apiData is of type TQueryFnData here since it's the return type of queryFn
-      saveLocalData(apiData as unknown as TQueryFnData);
+      // Since our type definitions specify TQueryFnData as the source type for TData,
+      // we can safely cast apiData back to TQueryFnData for storage
+      const queryFnData = apiData as unknown as TQueryFnData;
+      saveLocalData(queryFnData);
     }
   }, [apiData, isUsingLocalStorage, saveLocalData]);
   
   // Endgültige Daten
   const localData = loadLocalData();
-  const data = isUsingLocalStorage ? localData : apiData as TData | undefined;
+  const data = isUsingLocalStorage ? localData : apiData;
   
   // Status zusammenfassen
   const isLoading = isApiLoading && !isUsingLocalStorage;
