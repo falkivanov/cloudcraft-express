@@ -11,6 +11,9 @@ export interface ShiftAssignment {
   notes?: string;
   created_at: string;
   updated_at: string;
+  // Add the missing shiftType property that's being used in the code
+  shiftType?: "Arbeit" | "Frei" | "Termin" | "Urlaub" | "Krank" | null;
+  confirmed?: boolean;
 }
 
 export interface ShiftPlanRequest {
@@ -28,4 +31,16 @@ export interface ShiftPlanResponse {
   assignments: ShiftAssignment[];
   unassignedEmployees: string[];
   waveDistribution: Record<string, string[]>; // Wave name -> Employee IDs
+}
+
+// Add the missing VehicleAssignment type that's being imported in various components
+export interface VehicleAssignment {
+  id: string;
+  date: string;
+  employeeId: string;
+  employeeName: string;
+  vehicleId: string;
+  vehicleInfo: string;
+  assignedAt: string;
+  assignedBy: string;
 }
