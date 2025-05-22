@@ -86,6 +86,25 @@ export const API_ENDPOINTS = {
     }
   },
   
+  // Qualitätsdaten
+  quality: {
+    scorecard: {
+      stats: `/api/${API_VERSION}/quality/scorecard/stats`,
+    },
+    drivers: {
+      performance: `/api/${API_VERSION}/quality/drivers/performance`,
+    },
+    customerContact: {
+      compliance: `/api/${API_VERSION}/quality/customer-contact/compliance`,
+    },
+    reports: {
+      filter: `/api/${API_VERSION}/quality/reports/filter`,
+    },
+    metrics: {
+      trends: `/api/${API_VERSION}/quality/metrics/trends`,
+    },
+  },
+  
   // Dateiverwaltung
   files: {
     upload: `/api/${API_VERSION}/files/upload`,
