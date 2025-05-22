@@ -1,3 +1,4 @@
+
 /**
  * API-Service-Haupteinstiegspunkt
  * 
@@ -15,7 +16,9 @@ export * from './client';
 
 // Re-export der Domain-spezifischen Services
 export * from './endpoints/pdfService';
-export * from './endpoints/scorecardService';
+// Import scorecardService explicitly to avoid naming conflicts
+import * as scorecardService from './endpoints/scorecardService';
+export { scorecardService };
 export * from './endpoints/employeeService';
 export * from './endpoints/shiftService';
 export * from './endpoints/vehicleService';

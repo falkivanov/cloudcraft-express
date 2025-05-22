@@ -70,7 +70,16 @@ export async function getAllScorecards(options?: {
   year?: number;
   location?: string;
 }): Promise<ApiResponse<ScoreCardData[]>> {
-  return get<ScoreCardData[]>(API_ENDPOINTS.scorecard.list, options);
+  // Convert number values to strings to match the expected Record<string, string> type
+  const stringOptions: Record<string, string> = {};
+  
+  if (options) {
+    if (options.week !== undefined) stringOptions.week = options.week.toString();
+    if (options.year !== undefined) stringOptions.year = options.year.toString();
+    if (options.location !== undefined) stringOptions.location = options.location;
+  }
+  
+  return get<ScoreCardData[]>(API_ENDPOINTS.scorecard.list, stringOptions);
 }
 
 /**
