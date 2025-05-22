@@ -32,15 +32,15 @@ export function useOfflineCapableFetch<
 }: UseOfflineCapableFetchOptions<TQueryFnData, TError, TData, TQueryKey>) {
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState<boolean>(false);
   
-  // Create a properly typed query function that aligns with React Query's expectations
-  const wrappedQueryFn: QueryFunction<TQueryFnData, TQueryKey> = async (context) => {
+  // Create a properly typed query function that returns the correct type
+  const wrappedQueryFn = async () => {
     return await queryFn();
   };
   
-  // Build query options with proper types
-  const queryOptions = {
+  // Build query options matching expected React Query types
+  const queryOptions: UseQueryOptions<TData, TError, TQueryFnData, TQueryKey> = {
     queryKey,
-    queryFn: wrappedQueryFn,
+    queryFn: wrappedQueryFn as unknown as QueryFunction<TQueryFnData, TQueryKey>,
     retry: false,
     meta: {
       onSettled: (data: TQueryFnData | undefined, err: TError | null) => {
@@ -68,7 +68,7 @@ export function useOfflineCapableFetch<
     isError: isApiError,
     refetch,
     ...rest
-  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions as UseQueryOptions<TData, TError, TQueryFnData, TQueryKey>);
+  } = useQuery<TData, TError, TQueryFnData, TQueryKey>(queryOptions);
   
   // Cache erfolgreiche API-Antworten
   useEffect(() => {
