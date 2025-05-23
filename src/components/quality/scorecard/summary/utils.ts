@@ -2,7 +2,9 @@
 // Utility functions for the summary cards
 
 // Function to get the color class based on status
-export const getStatusColorClass = (status: string) => {
+export const getStatusColorClass = (status: string | undefined | null) => {
+  if (!status) return "text-gray-600"; // Fallback for undefined or null
+  
   switch (status.toLowerCase()) {
     case "fantastic":
       return "text-blue-600";
