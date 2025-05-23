@@ -10,11 +10,26 @@ services:
       - "8000:8000"
     volumes:
       - ./uploads:/app/uploads
-      - ./test.db:/app/test.db
     environment:
-      - SQLALCHEMY_DATABASE_URL=sqlite:///./test.db
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/scorecard_db
       - HOST=0.0.0.0
       - PORT=8000
       - DEBUG=True
       - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174,http://localhost:3000
+    depends_on:
+      - postgres
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=scorecard_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

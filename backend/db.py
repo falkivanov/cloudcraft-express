@@ -2,14 +2,21 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-# Konfiguration der SQLite-Datenbank
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# Lade Umgebungsvariablen aus .env Datei
+load_dotenv()
 
-# Engine erstellen (echo=True für Debug-Ausgaben)
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+# Konfiguration der Datenbank
+# Verwende Umgebungsvariable oder Standard-Verbindungsstring für PostgreSQL
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/scorecard_db"
 )
+
+# Engine erstellen
+engine = create_engine(DATABASE_URL)
 
 # SessionLocal-Klasse erstellen
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
