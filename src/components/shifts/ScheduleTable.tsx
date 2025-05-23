@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -72,30 +73,32 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           ))}
         </div>
       )}
-      <table className="w-full border-collapse">
-        <ScheduleTableHeader 
-          weekDays={weekDays}
-          requiredEmployees={requiredEmployees}
-          scheduledEmployees={scheduledEmployees}
-          onRequiredChange={handleRequiredChange}
-          formatDateKey={formatDateKey}
-          finalizedDays={finalizedDays}
-          onFinalizeDay={onFinalizeDay}
-          tomorrowDate={nextWorkday}
-        />
-        <tbody>
-          {filteredEmployees.map((employee) => (
-            <EmployeeRow
-              key={employee.id}
-              employee={employee}
-              weekDays={weekDays}
-              formatDateKey={formatDateKey}
-              onFlexibilityOverride={onFlexibilityOverride}
-              isTemporarilyFlexible={isTemporarilyFlexible}
-            />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-auto max-h-[calc(100vh-300px)]">
+        <table className="w-full border-collapse">
+          <ScheduleTableHeader 
+            weekDays={weekDays}
+            requiredEmployees={requiredEmployees}
+            scheduledEmployees={scheduledEmployees}
+            onRequiredChange={handleRequiredChange}
+            formatDateKey={formatDateKey}
+            finalizedDays={finalizedDays}
+            onFinalizeDay={onFinalizeDay}
+            tomorrowDate={nextWorkday}
+          />
+          <tbody>
+            {filteredEmployees.map((employee) => (
+              <EmployeeRow
+                key={employee.id}
+                employee={employee}
+                weekDays={weekDays}
+                formatDateKey={formatDateKey}
+                onFlexibilityOverride={onFlexibilityOverride}
+                isTemporarilyFlexible={isTemporarilyFlexible}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

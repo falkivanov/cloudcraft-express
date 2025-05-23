@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
 import { de } from "date-fns/locale";
@@ -44,9 +45,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   console.log('ScheduleTableHeader - finalizedDays:', finalizedDays);
   
   return (
-    <thead className="bg-muted">
+    <thead className="bg-muted sticky top-0 z-10">
       <tr>
-        <th className="p-3 text-left min-w-[200px]">
+        <th className="p-3 text-left min-w-[200px] sticky left-0 z-20 bg-muted">
           <div>Mitarbeiter</div>
         </th>
         {weekDays.map((day, index) => {
