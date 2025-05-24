@@ -15,6 +15,8 @@ interface ScheduleToolbarProps {
   isAutoPlanningLoading: boolean;
   isPlanningOptionsOpen: boolean;
   setIsPlanningOptionsOpen: (open: boolean) => void;
+  viewMode: '1week' | '2weeks';
+  onViewModeChange: (mode: '1week' | '2weeks') => void;
 }
 
 const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
@@ -26,7 +28,9 @@ const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
   onPlanNow,
   isAutoPlanningLoading,
   isPlanningOptionsOpen,
-  setIsPlanningOptionsOpen
+  setIsPlanningOptionsOpen,
+  viewMode,
+  onViewModeChange
 }) => {
   return (
     <div className="flex justify-between items-center">
@@ -34,6 +38,8 @@ const ScheduleToolbar: React.FC<ScheduleToolbarProps> = ({
         selectedWeek={selectedWeek}
         onPreviousWeek={previousWeek}
         onNextWeek={nextWeek}
+        viewMode={viewMode}
+        onViewModeChange={onViewModeChange}
       />
       
       <div className="flex items-center gap-2">

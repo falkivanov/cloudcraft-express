@@ -15,7 +15,7 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
   
   // Combine our smaller hooks
   const weekNavigation = useWeekNavigation();
-  const { weekDays, selectedWeek, previousWeek, nextWeek } = weekNavigation;
+  const { weekDays, selectedWeek, previousWeek, nextWeek, viewMode, setViewMode } = weekNavigation;
   
   const employeeFlexibility = useEmployeeFlexibility();
   const { 
@@ -98,6 +98,8 @@ export const useShiftSchedule = (initialEmployees: Employee[]) => {
     showNextDaySchedule,
     setShowNextDaySchedule,
     getScheduledEmployeesForDay,
-    refreshScheduledCounts
+    refreshScheduledCounts,
+    viewMode,
+    setViewMode
   };
 };

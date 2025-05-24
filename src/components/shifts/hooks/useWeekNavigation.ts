@@ -5,9 +5,12 @@ import { addDays, startOfWeek } from "date-fns";
 export const useWeekNavigation = () => {
   const [currentDate] = useState(new Date());
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [viewMode, setViewMode] = useState<'1week' | '2weeks'>('1week');
   
-  // Generate days of the week starting from Monday (6 days only, excluding Sunday)
-  const weekDays = Array.from({ length: 6 }, (_, i) => addDays(selectedWeek, i));
+  // Generate days based on view mode
+  const weekDays = viewMode === '1week' 
+    ? Array.from({ length: 6 }, (_, i) => addDays(selectedWeek, i))
+    : Array.from({ length: 12 }, (_, i) => addDays(selectedWeek, i));
   
   const previousWeek = useCallback(() => {
     const prevWeek = addDays(selectedWeek, -7);
@@ -65,6 +68,8 @@ export const useWeekNavigation = () => {
     selectedWeek,
     weekDays,
     previousWeek,
-    nextWeek
+    nextWeek,
+    viewMode,
+    setViewMode
   };
 };
