@@ -38,6 +38,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   const nextWorkday = findNextWorkday();
   const bundesland = getSelectedBundesland();
   
+  // Bestimme ob es sich um eine 2-Wochen-Ansicht handelt
+  const isTwoWeekView = weekDays.length > 6;
+  
   // Console-Log zur Fehlersuche
   console.log('ScheduleTableHeader - Current date:', new Date().toISOString());
   console.log('ScheduleTableHeader - Next workday calculated:', nextWorkday.toISOString());
@@ -70,24 +73,30 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const isWorkDay = !isWeekend(day) && !isHoliday;
           
           return (
-            <th key={day.toString()} className="p-3 text-center border-l">
-              <div className="font-medium">
-                {format(day, "EEEE", { locale: de })}
-              </div>
-              <div className="text-sm font-normal">
+            <th 
+              key={day.toString()} 
+              className={`p-3 text-center border-l ${isTwoWeekView ? 'min-w-[80px] w-20' : 'min-w-[120px]'}`}
+            >
+              {/* In 2-Wochen-Ansicht nur Datum, sonst Wochentag + Datum */}
+              {!isTwoWeekView && (
+                <div className="font-medium">
+                  {format(day, "EEEE", { locale: de })}
+                </div>
+              )}
+              <div className={`${isTwoWeekView ? 'text-xs' : 'text-sm'} font-normal`}>
                 {format(day, "dd.MM.", { locale: de })}
               </div>
               
               {/* Anzeige von Feiertagen */}
               {isHoliday && holidayName && (
-                <div className="text-xs text-red-600 font-medium mt-1 mb-1">
-                  {holidayName}
+                <div className={`${isTwoWeekView ? 'text-[10px]' : 'text-xs'} text-red-600 font-medium mt-1 mb-1`}>
+                  {isTwoWeekView ? 'Feiertag' : holidayName}
                 </div>
               )}
               
               {isFinalized && (
-                <div className="text-xs text-green-600 font-medium mt-1 mb-2">
-                  ✓ Finalisiert
+                <div className={`${isTwoWeekView ? 'text-[10px]' : 'text-xs'} text-green-600 font-medium mt-1 mb-2`}>
+                  ✓ {isTwoWeekView ? 'Final.' : 'Finalisiert'}
                 </div>
               )}
               
