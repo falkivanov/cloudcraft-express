@@ -115,6 +115,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                     dateKey={dateKey}
                     onFinalize={onFinalizeDay}
                     isFinalized={isFinalized}
+                    isTwoWeekView={isTwoWeekView}
                   />
                 </div>
               )}
