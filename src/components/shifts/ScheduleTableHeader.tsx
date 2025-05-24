@@ -104,6 +104,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 requiredCount={requiredCount}
                 scheduledCount={scheduledCount}
                 onRequiredChange={(value) => onRequiredChange(index, value)}
+                isTwoWeekView={isTwoWeekView}
               />
               
               {/* Zeige den Finalisierungs-Button nur für den nächsten Arbeitstag an und nur wenn er noch nicht finalisiert ist */}
