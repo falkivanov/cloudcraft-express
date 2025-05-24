@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { initialEmployees } from "@/data/sampleEmployeeData";
 import FlexibilityOverrideDialog from "./FlexibilityOverrideDialog";
@@ -36,7 +37,9 @@ const ShiftSchedule = () => {
     showNextDaySchedule,
     setShowNextDaySchedule,
     getScheduledEmployeesForDay,
-    refreshScheduledCounts
+    refreshScheduledCounts,
+    viewMode,
+    setViewMode
   } = useShiftSchedule(initialEmployees);
   
   // Log the number of employees loaded to help debug
@@ -138,6 +141,8 @@ const ShiftSchedule = () => {
           isAutoPlanningLoading={isAutoPlanningLoading}
           isPlanningOptionsOpen={isPlanningOptionsOpen}
           setIsPlanningOptionsOpen={setIsPlanningOptionsOpen}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         
         <Button 
