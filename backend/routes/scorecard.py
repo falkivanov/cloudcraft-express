@@ -39,6 +39,9 @@ def normalize_transporter_id(tid: str) -> str:
     return tid
 
 def extract_week_from_filename(filename: str) -> int:
+    """Verbesserte Wochenerkennung mit detailliertem Logging"""
+    print(f"DEBUG: Trying to extract week from filename: {filename}")
+    
     patterns = [
         r"Week[_\s-]*(\d+)",      # Week12, Week-12, Week_12, Week 12
         r"KW[_\s-]*(\d+)",        # KW12, KW-12, KW_12, KW 12
@@ -49,14 +52,17 @@ def extract_week_from_filename(filename: str) -> int:
     ]
     
     for pattern in patterns:
-        match = re.search(pattern, filename)
+        match = re.search(pattern, filename, re.IGNORECASE)
         if match and match.group(1):
             week_num = int(match.group(1))
             if 1 <= week_num <= 53:
+                print(f"DEBUG: Found week {week_num} using pattern: {pattern}")
                 return week_num
     
     # Wenn keine Wochennummer gefunden wurde, aktuelle Woche verwenden
-    return datetime.now().isocalendar()[1]
+    current_week = datetime.now().isocalendar()[1]
+    print(f"DEBUG: No week found in filename, using current week: {current_week}")
+    return current_week
 
 def determine_status_from_score(score: float) -> str:
     """Bestimmt den Status basierend auf dem Score."""
@@ -81,31 +87,37 @@ async def upload_combined_scorecard(
     Lade eine Scorecard-PDF hoch und extrahiere alle Daten automatisch.
     """
     try:
+        print(f"DEBUG: Processing file: {file.filename}")
         contents = await file.read()
         pdf = pdfplumber.open(io.BytesIO(contents))
 
         week = extract_week_from_filename(file.filename)
         year = datetime.now().year
+        
+        print(f"DEBUG: Extracted week: {week}, year: {year}")
 
         # Lösche existierende Daten für diese Woche/Jahr
-        db.query(models.DriverKPI).filter(
+        deleted_drivers = db.query(models.DriverKPI).filter(
             models.DriverKPI.week == week,
             models.DriverKPI.year == year
         ).delete()
         
-        db.query(models.CompanyKPI).filter(
+        deleted_company = db.query(models.CompanyKPI).filter(
             models.CompanyKPI.week == week,
             models.CompanyKPI.year == year
         ).delete()
         
-        db.query(models.Scorecard).filter(
+        deleted_scorecards = db.query(models.Scorecard).filter(
             models.Scorecard.week == week,
             models.Scorecard.year == year
         ).delete()
 
+        print(f"DEBUG: Deleted existing data - Drivers: {deleted_drivers}, Company: {deleted_company}, Scorecards: {deleted_scorecards}")
+
         # Hole alle Mitarbeiter für ID-Mapping
         employees = db.query(models.Employee).all() if hasattr(models, 'Employee') else []
         transporter_id_map = {emp.transporter_id: emp.name for emp in employees if hasattr(emp, 'transporter_id') and emp.transporter_id}
+        print(f"DEBUG: Loaded {len(transporter_id_map)} employee mappings")
 
         # --- Seite 3+4: Fahrerdaten ---
         driver_text = ""
@@ -114,9 +126,12 @@ async def upload_combined_scorecard(
         if len(pdf.pages) >= 4:
             driver_text += "\n" + pdf.pages[3].extract_text()
 
+        print(f"DEBUG: Extracted driver text length: {len(driver_text)}")
+
         # Pattern für Fahrerdaten
         pattern_driver = r'([A-Z0-9]{13,14})[\s\n]+(\d+)[\s\n]+([\d.,%-]+)[\s\n]+(\d+)[\s\n]+([\d.,%-]+)[\s\n]+([\d.,%-]+)[\s\n]+(\d+)[\s\n]+([\d.,%-]+)'
         driver_matches = re.findall(pattern_driver, driver_text)
+        print(f"DEBUG: Found {len(driver_matches)} driver matches")
 
         # Erstelle Scorecard-Eintrag
         scorecard = models.Scorecard(
@@ -131,6 +146,7 @@ async def upload_combined_scorecard(
         )
         db.add(scorecard)
         db.flush()  # Um die ID zu bekommen
+        print(f"DEBUG: Created scorecard with ID: {scorecard.id}")
 
         driver_kpis = []
         for match in driver_matches:
@@ -171,10 +187,14 @@ async def upload_combined_scorecard(
                 }
             })
 
+        print(f"DEBUG: Created {len(driver_kpis)} driver KPIs")
+
         # --- Seite 2: Firm KPIs ---
         firm_text = ""
         if len(pdf.pages) >= 2:
             firm_text = pdf.pages[1].extract_text()
+
+        print(f"DEBUG: Extracted firm text length: {len(firm_text)}")
 
         kpi_patterns = {
             "dcr": r"Delivery Completion Rate\(DCR\)[\s:]*([\d.,]+)%",
@@ -219,7 +239,10 @@ async def upload_combined_scorecard(
                         "category": category
                     })
 
+        print(f"DEBUG: Created {len(company_kpis)} company KPIs")
+
         db.commit()
+        print(f"DEBUG: Successfully committed data to database for week {week}/{year}")
 
         # Erstelle das Ergebnis im erwarteten Format
         result = {
@@ -235,79 +258,16 @@ async def upload_combined_scorecard(
             "recommendedFocusAreas": [kpi["name"] for kpi in company_kpis if kpi["status"] in ["poor", "fair"]][:3]
         }
 
+        print(f"DEBUG: Returning result for week {week} with {len(driver_kpis)} drivers and {len(company_kpis)} company KPIs")
+
         return {
             "success": True,
             "data": result
         }
 
     except Exception as e:
+        print(f"ERROR: Exception during processing: {str(e)}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Fehler bei der Verarbeitung: {str(e)}")
 
-# --- GET: Lade Scorecard nach ID ---
-@router.get("/{scorecard_id}", response_model=ScorecardResponse)
-async def get_scorecard(scorecard_id: int, db: Session = Depends(get_db)):
-    """Lade eine Scorecard anhand ihrer ID."""
-    scorecard = db.query(models.Scorecard).filter(models.Scorecard.id == scorecard_id).first()
-    if not scorecard:
-        raise HTTPException(status_code=404, detail="Scorecard nicht gefunden")
-    return scorecard
-
-# --- GET: Liste aller Scorecards ---
-@router.get("/list", response_model=List[ScorecardResponse])
-async def list_scorecards(
-    week: Optional[int] = None,
-    year: Optional[int] = None,
-    location: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    """Liste alle Scorecards mit optionaler Filterung."""
-    query = db.query(models.Scorecard)
-    
-    if week:
-        query = query.filter(models.Scorecard.week == week)
-    if year:
-        query = query.filter(models.Scorecard.year == year)
-    if location:
-        query = query.filter(models.Scorecard.location == location)
-    
-    return query.all()
-
-# --- GET: Lade Scorecard nach Woche/Jahr ---
-@router.get("/week/{week}/year/{year}", response_model=ScorecardResponse)
-async def get_scorecard_by_week(week: int, year: int, db: Session = Depends(get_db)):
-    """Lade eine Scorecard anhand von Woche und Jahr."""
-    scorecard = db.query(models.Scorecard).filter(
-        models.Scorecard.week == week,
-        models.Scorecard.year == year
-    ).first()
-    
-    if not scorecard:
-        raise HTTPException(status_code=404, detail=f"Keine Scorecard für Woche {week}/{year} gefunden")
-    
-    return scorecard
-
-# --- Legacy-Endpunkte für Kompatibilität ---
-@router.post("/extract-drivers", response_model=ExtractionResult)
-async def extract_drivers_legacy(request_data: dict):
-    """Legacy-Endpunkt für Fahrer-Extraktion."""
-    return {
-        "success": True,
-        "data": []
-    }
-
-@router.post("/extract-company-kpis", response_model=ExtractionResult)
-async def extract_company_kpis_legacy(request_data: dict):
-    """Legacy-Endpunkt für Company-KPI-Extraktion."""
-    return {
-        "success": True,
-        "data": []
-    }
-
-@router.post("/extract-metadata", response_model=ExtractionResult)
-async def extract_metadata_legacy(request_data: dict):
-    """Legacy-Endpunkt für Metadaten-Extraktion."""
-    return {
-        "success": True,
-        "data": {}
-    }
+# ... keep existing code (other endpoints) the same

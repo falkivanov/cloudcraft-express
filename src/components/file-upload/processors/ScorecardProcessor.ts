@@ -21,15 +21,20 @@ export class ScorecardProcessor extends BaseFileProcessor {
   }
 
   private saveScorecardData(data: ScoreCardData, weekNum: number): void {
+    console.log(`DEBUG: Saving scorecard data for week ${weekNum}, year ${data.year}`);
+    
     // Speichere Daten im aktuellen Wochenspeicher
     const currentYearWeekKey = `scorecard_data_week_${weekNum}_${data.year}`;
     saveToStorage(currentYearWeekKey, data);
+    console.log(`DEBUG: Saved to localStorage with key: ${currentYearWeekKey}`);
     
     // Speichere im zentralen Speicher
     saveToStorage(STORAGE_KEYS.EXTRACTED_SCORECARD_DATA, data);
+    console.log(`DEBUG: Saved to central storage: ${STORAGE_KEYS.EXTRACTED_SCORECARD_DATA}`);
     
     // Legacy-Speicherung für Kompatibilität
     localStorage.setItem("extractedScorecardData", JSON.stringify(data));
+    console.log(`DEBUG: Saved to legacy storage: extractedScorecardData`);
     
     console.log(`Gespeicherte Scorecard-Daten für Woche ${weekNum} mit ${data.driverKPIs?.length || 0} Fahrern`);
   }
@@ -60,10 +65,14 @@ export class ScorecardProcessor extends BaseFileProcessor {
       console.log("API ist verfügbar, starte Backend-Extraktion");
       const apiResult = await api.scorecard.extract(this.file);
       
+      console.log("DEBUG: API result:", apiResult);
+      
       if (apiResult.success && apiResult.data) {
         // Verarbeite das Ergebnis
         const scoreCardData = apiResult.data;
         const weekNum = scoreCardData.week || extractWeekFromFilename(this.file.name);
+        
+        console.log(`DEBUG: Extracted week ${weekNum} from API response or filename`);
         
         // Daten speichern
         this.saveScorecardData(scoreCardData, weekNum);
