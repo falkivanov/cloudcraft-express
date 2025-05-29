@@ -83,7 +83,7 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                   {format(day, "EEEE", { locale: de })}
                 </div>
               )}
-              <div className={`${isTwoWeekView ? 'text-xs' : 'text-sm'} font-normal`}>
+              <div className={`${isTwoWeekView ? 'text-xs font-bold' : 'text-sm font-normal'}`}>
                 {format(day, "dd.MM.", { locale: de })}
               </div>
               
