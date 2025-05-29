@@ -22,7 +22,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
 
   private saveScorecardData(data: ScoreCardData, weekNum: number): void {
     // Speichere Daten im aktuellen Wochenspeicher
-    const currentYearWeekKey = `scorecard_data_week_${weekNum}_${new Date().getFullYear()}`;
+    const currentYearWeekKey = `scorecard_data_week_${weekNum}_${data.year}`;
     saveToStorage(currentYearWeekKey, data);
     
     // Speichere im zentralen Speicher
@@ -75,7 +75,7 @@ export class ScorecardProcessor extends BaseFileProcessor {
         
         if (showToasts) {
           toast.success(
-            "Scorecard erfolgreich verarbeitet. Möchten Sie die Daten jetzt ansehen?",
+            `Scorecard KW${weekNum} erfolgreich verarbeitet. Möchten Sie die Daten jetzt ansehen?`,
             {
               action: {
                 label: "Ja",
@@ -88,10 +88,12 @@ export class ScorecardProcessor extends BaseFileProcessor {
           );
         }
         
-        console.log(`Scorecard erfolgreich verarbeitet: ${this.file.name}`);
+        console.log(`Scorecard erfolgreich verarbeitet: ${this.file.name} für KW${weekNum}`);
         
         // Event auslösen, dass neue Daten verfügbar sind
-        window.dispatchEvent(new CustomEvent('scorecardDataUpdated'));
+        window.dispatchEvent(new CustomEvent('scorecardDataUpdated', {
+          detail: { week: weekNum, year: scoreCardData.year }
+        }));
         
         return true;
       } else {
