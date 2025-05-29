@@ -10,10 +10,28 @@ import { DriverKPI, ScoreCardData } from '@/components/quality/scorecard/types';
 
 /**
  * Extrahiert Scorecard-Daten aus einer PDF-Datei
+ * Verwendet die neue Backend-Integration mit dem funktionierenden Parser
  */
 export async function extractScorecardFromPDF(file: File): Promise<ApiResponse<ScoreCardData>> {
   console.log("Sending PDF to backend API for extraction:", file.name);
-  return uploadFile<ScoreCardData>(API_ENDPOINTS.scorecard.extract, file);
+  
+  try {
+    const result = await uploadFile<ScoreCardData>(API_ENDPOINTS.scorecard.extract, file);
+    
+    if (result.success && result.data) {
+      console.log("Scorecard extraction successful:", result.data);
+      return result;
+    } else {
+      console.error("Scorecard extraction failed:", result.error);
+      return result;
+    }
+  } catch (error) {
+    console.error("Error during scorecard extraction:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unbekannter Fehler bei der Extraktion"
+    };
+  }
 }
 
 /**
@@ -24,7 +42,14 @@ export async function getScorecardById(id: string): Promise<ApiResponse<ScoreCar
 }
 
 /**
- * Extrahiert Fahrer-KPIs aus Text
+ * Lädt eine Scorecard anhand von Woche und Jahr
+ */
+export async function getScorecardByWeek(week: number, year: number): Promise<ApiResponse<ScoreCardData>> {
+  return get<ScoreCardData>(`${API_ENDPOINTS.scorecard.base}/week/${week}/year/${year}`);
+}
+
+/**
+ * Extrahiert Fahrer-KPIs aus Text (Legacy-Support)
  */
 export async function extractDriverKPIs(
   text: string, 
@@ -37,7 +62,7 @@ export async function extractDriverKPIs(
 }
 
 /**
- * Extrahiert Unternehmens-KPIs aus Text
+ * Extrahiert Unternehmens-KPIs aus Text (Legacy-Support)
  */
 export async function extractCompanyKPIs(
   text: string, 
@@ -50,7 +75,7 @@ export async function extractCompanyKPIs(
 }
 
 /**
- * Extrahiert Metadaten aus Text (wie Woche, Jahr, etc.)
+ * Extrahiert Metadaten aus Text (Legacy-Support)
  */
 export async function extractMetadata(
   text: string, 
