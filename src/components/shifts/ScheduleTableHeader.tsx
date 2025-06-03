@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format, isToday, isTomorrow, addDays } from "date-fns";
 import { de } from "date-fns/locale";
@@ -38,9 +37,6 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   const nextWorkday = findNextWorkday();
   const bundesland = getSelectedBundesland();
   
-  // Bestimme ob es sich um eine 2-Wochen-Ansicht handelt
-  const isTwoWeekView = weekDays.length > 6;
-  
   // Console-Log zur Fehlersuche
   console.log('ScheduleTableHeader - Current date:', new Date().toISOString());
   console.log('ScheduleTableHeader - Next workday calculated:', nextWorkday.toISOString());
@@ -48,9 +44,9 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
   console.log('ScheduleTableHeader - finalizedDays:', finalizedDays);
   
   return (
-    <thead className="bg-muted sticky top-0 z-10">
+    <thead className="bg-muted">
       <tr>
-        <th className="p-3 text-left min-w-[200px] sticky left-0 z-20 bg-muted">
+        <th className="p-3 text-left min-w-[200px]">
           <div>Mitarbeiter</div>
         </th>
         {weekDays.map((day, index) => {
@@ -73,30 +69,24 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
           const isWorkDay = !isWeekend(day) && !isHoliday;
           
           return (
-            <th 
-              key={day.toString()} 
-              className={`p-3 text-center border-l ${isTwoWeekView ? 'min-w-[80px] w-20' : 'min-w-[120px]'}`}
-            >
-              {/* In 2-Wochen-Ansicht nur Datum, sonst Wochentag + Datum */}
-              {!isTwoWeekView && (
-                <div className="font-medium">
-                  {format(day, "EEEE", { locale: de })}
-                </div>
-              )}
-              <div className={`${isTwoWeekView ? 'text-xs font-bold' : 'text-sm font-normal'}`}>
+            <th key={day.toString()} className="p-3 text-center border-l">
+              <div className="font-medium">
+                {format(day, "EEEE", { locale: de })}
+              </div>
+              <div className="text-sm font-normal">
                 {format(day, "dd.MM.", { locale: de })}
               </div>
               
               {/* Anzeige von Feiertagen */}
               {isHoliday && holidayName && (
-                <div className={`${isTwoWeekView ? 'text-[10px]' : 'text-xs'} text-red-600 font-medium mt-1 mb-1`}>
-                  {isTwoWeekView ? 'Feiertag' : holidayName}
+                <div className="text-xs text-red-600 font-medium mt-1 mb-1">
+                  {holidayName}
                 </div>
               )}
               
               {isFinalized && (
-                <div className={`${isTwoWeekView ? 'text-[10px]' : 'text-xs'} text-green-600 font-medium mt-1 mb-2`}>
-                  ✓ {isTwoWeekView ? 'Final.' : 'Finalisiert'}
+                <div className="text-xs text-green-600 font-medium mt-1 mb-2">
+                  ✓ Finalisiert
                 </div>
               )}
               
@@ -104,7 +94,6 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                 requiredCount={requiredCount}
                 scheduledCount={scheduledCount}
                 onRequiredChange={(value) => onRequiredChange(index, value)}
-                isTwoWeekView={isTwoWeekView}
               />
               
               {/* Zeige den Finalisierungs-Button nur für den nächsten Arbeitstag an und nur wenn er noch nicht finalisiert ist */}
@@ -115,7 +104,6 @@ const ScheduleTableHeader: React.FC<ScheduleTableHeaderProps> = ({
                     dateKey={dateKey}
                     onFinalize={onFinalizeDay}
                     isFinalized={isFinalized}
-                    isTwoWeekView={isTwoWeekView}
                   />
                 </div>
               )}

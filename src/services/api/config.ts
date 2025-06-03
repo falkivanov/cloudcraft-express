@@ -1,3 +1,4 @@
+
 /**
  * API-Konfiguration
  * 
@@ -25,85 +26,10 @@ export const API_ENDPOINTS = {
   
   // Scorecard-spezifische Endpunkte
   scorecard: {
-    base: `/api/${API_VERSION}/scorecard`,
     extract: `/api/${API_VERSION}/scorecard/extract`,
     extractDrivers: `/api/${API_VERSION}/scorecard/extract-drivers`,
-    extractCompanyKPIs: `/api/${API_VERSION}/scorecard/extract-company-kpis`,
+    extractCompanyKPIs: `/api/${API_VERSION}/scorecard/extract-company`,
     extractMetadata: `/api/${API_VERSION}/scorecard/extract-metadata`,
-    list: `/api/${API_VERSION}/scorecard/list`,
-  },
-  
-  // Mitarbeiter-Endpunkte
-  employees: {
-    getAll: `/api/${API_VERSION}/employees`,
-    getById: (id: string) => `/api/${API_VERSION}/employees/${id}`,
-    create: `/api/${API_VERSION}/employees`,
-    createBatch: `/api/${API_VERSION}/employees/batch`,
-    update: (id: string) => `/api/${API_VERSION}/employees/${id}`,
-    delete: (id: string) => `/api/${API_VERSION}/employees/${id}`,
-    deleteAll: `/api/${API_VERSION}/employees`,
-  },
-  
-  // Schichtplanung-Endpunkte
-  shifts: {
-    getAll: `/api/${API_VERSION}/shifts`,
-    getByDate: (date: string) => `/api/${API_VERSION}/shifts/date/${date}`,
-    getByEmployee: (employeeId: string) => `/api/${API_VERSION}/shifts/employee/${employeeId}`,
-    create: `/api/${API_VERSION}/shifts`,
-    createBatch: `/api/${API_VERSION}/shifts/batch`,
-    update: (id: string) => `/api/${API_VERSION}/shifts/${id}`,
-    delete: (id: string) => `/api/${API_VERSION}/shifts/${id}`,
-    deleteByDate: (date: string) => `/api/${API_VERSION}/shifts/date/${date}`,
-    generatePlan: `/api/${API_VERSION}/shifts/generate-plan`,
-  },
-  
-  // Fahrzeugverwaltung
-  vehicles: {
-    getAll: `/api/${API_VERSION}/vehicles`,
-    getById: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
-    create: `/api/${API_VERSION}/vehicles`,
-    createBatch: `/api/${API_VERSION}/vehicles/batch`,
-    update: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
-    delete: (id: string) => `/api/${API_VERSION}/vehicles/${id}`,
-    // Reparaturen
-    repairs: {
-      getAll: `/api/${API_VERSION}/vehicles/repairs/all`,
-      add: (vehicleId: string) => `/api/${API_VERSION}/vehicles/${vehicleId}/repairs`,
-      update: (repairId: string) => `/api/${API_VERSION}/vehicles/repairs/${repairId}`,
-      delete: (repairId: string) => `/api/${API_VERSION}/vehicles/repairs/${repairId}`,
-    },
-    // Termine
-    appointments: {
-      getAll: `/api/${API_VERSION}/vehicles/appointments/all`,
-      add: (vehicleId: string) => `/api/${API_VERSION}/vehicles/${vehicleId}/appointments`,
-      update: (appointmentId: string) => `/api/${API_VERSION}/vehicles/appointments/${appointmentId}`,
-      delete: (appointmentId: string) => `/api/${API_VERSION}/vehicles/appointments/${appointmentId}`,
-    },
-    // Fahrzeugzuweisungen
-    assignments: {
-      getAll: `/api/${API_VERSION}/vehicles/assignments`,
-      create: `/api/${API_VERSION}/vehicles/assignments`,
-      delete: (assignmentId: string) => `/api/${API_VERSION}/vehicles/assignments/${assignmentId}`,
-    }
-  },
-  
-  // Qualitätsdaten
-  quality: {
-    scorecard: {
-      stats: `/api/${API_VERSION}/quality/scorecard/stats`,
-    },
-    drivers: {
-      performance: `/api/${API_VERSION}/quality/drivers/performance`,
-    },
-    customerContact: {
-      compliance: `/api/${API_VERSION}/quality/customer-contact/compliance`,
-    },
-    reports: {
-      filter: `/api/${API_VERSION}/quality/reports/filter`,
-    },
-    metrics: {
-      trends: `/api/${API_VERSION}/quality/metrics/trends`,
-    },
   },
   
   // Dateiverwaltung

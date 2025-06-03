@@ -1,3 +1,4 @@
+
 /**
  * API-Client für die Kommunikation mit dem FastAPI-Backend
  */
@@ -27,8 +28,6 @@ async function fetchWithTimeout<T>(
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
   
   try {
-    console.log(`API request: ${options.method || 'GET'} ${url}`);
-    
     const response = await fetch(url, {
       ...defaultOptions,
       ...options,
@@ -71,24 +70,14 @@ async function fetchWithTimeout<T>(
   } catch (error) {
     clearTimeout(timeoutId);
     
-    console.error(`API request failed: ${url}`, error);
-    
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        return { success: false, error: 'Die Anfrage hat das Zeitlimit überschritten.' };
+        return { success: false, error: 'Request timeout' };
       }
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
-        return { 
-          success: false, 
-          error: 'Keine Verbindung zum Server möglich. Bitte überprüfen Sie Ihre Internetverbindung oder ob der Server läuft.' 
-        };
-      }
-      
       return { success: false, error: error.message };
     }
     
-    return { success: false, error: 'Ein unbekannter Fehler ist aufgetreten.' };
+    return { success: false, error: 'Unknown error' };
   }
 }
 

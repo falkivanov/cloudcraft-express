@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Container } from "@/components/ui/container";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RegionSettings from "@/components/settings/RegionSettings";
 import ScorecardSettings from "@/components/settings/ScorecardSettings";
 import FinanceSettings from "@/components/settings/FinanceSettings";
-import DataMigrationSettings from "@/components/settings/DataMigrationSettings";
 
 const SettingsPage = () => {
   return (
@@ -18,7 +16,6 @@ const SettingsPage = () => {
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
           <TabsTrigger value="account">Konto</TabsTrigger>
-          <TabsTrigger value="data">Datenverwaltung</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
         </TabsList>
         
@@ -65,26 +62,6 @@ const SettingsPage = () => {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="data">
-          <div className="grid gap-6">
-            <DataMigrationSettings />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Datensicherung</CardTitle>
-                <CardDescription>
-                  Erstellen und verwalten Sie Sicherungen Ihrer Daten.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Datensicherungsfunktionen werden in zukünftigen Updates verfügbar sein.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
         
         <TabsContent value="notifications">

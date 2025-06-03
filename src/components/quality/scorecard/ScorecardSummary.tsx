@@ -17,12 +17,6 @@ export interface ScorecardSummaryProps {
 }
 
 const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekData }) => {
-  // Stelle sicher, dass alle benötigten Daten vorhanden sind
-  if (!data) {
-    console.warn("ScorecardSummary: No data provided");
-    return null;
-  }
-
   // Calculate changes for KPIs
   const scoreChange = previousWeekData ? getMetricChange(data.overallScore, previousWeekData.overallScore) : null;
 
@@ -61,7 +55,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
 
         {/* Rank */}
         <SummaryCard
-          title={`Rank at ${data.location || 'Unknown'}`}
+          title={`Rank at ${data.location}`}
           icon={<Award className="h-4 w-4 mr-2 text-primary" />}
           value={data.rank}
           statusColorClass={getRankColorClass(data.rank)}
@@ -72,7 +66,7 @@ const ScorecardSummary: React.FC<ScorecardSummaryProps> = ({ data, previousWeekD
 
         {/* Focus Areas */}
         <FocusAreasCard 
-          focusAreas={data.recommendedFocusAreas || []}
+          focusAreas={data.recommendedFocusAreas}
           previousFocusAreas={previousWeekData?.recommendedFocusAreas}
         />
       </div>

@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from "react";
 import EmployeePageHeader from "@/components/employees/EmployeePageHeader";
 import EmployeePageContent from "@/components/employees/EmployeePageContent";
+import { initialEmployees } from "@/data/sampleEmployeeData";
 import { Container } from "@/components/ui/container";
 import { Employee } from "@/types/employee";
+import { loadFromStorage, saveToStorage, STORAGE_KEYS, clearEmployeesStorage } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
-import { api } from "@/services/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,97 +18,127 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+
+// Names of employees to be removed
+const EMPLOYEES_TO_REMOVE = ["Stefan Wagner", "Laura Krüger", "Julia Becker"];
 
 const EmployeesPage = () => {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [loadedEmployees, setLoadedEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
   const { toast: shadcnToast } = useToast();
   
-  // Fetch employees from API on initial load
+  // Improved loading of employees on initial load
   useEffect(() => {
-    console.log('EmployeesPage - Lade Mitarbeiterdaten vom Server');
-    fetchEmployees();
-  }, []);
-
-  const fetchEmployees = async () => {
+    console.log('EmployeesPage - Initialisieren und Laden der Mitarbeiterdaten');
     setIsLoading(true);
-    setApiError(null);
     
     try {
-      const response = await api.employees.getAll();
+      // Try to load saved employees from localStorage
+      const savedEmployees = loadFromStorage<Employee[]>(STORAGE_KEYS.EMPLOYEES);
       
-      if (!response.success) {
-        console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', response.error);
-        setApiError(response.error || "Die Verbindung zum Server konnte nicht hergestellt werden.");
-        toast.error("Fehler beim Laden der Daten", {
-          description: response.error || "Die Mitarbeiterdaten konnten nicht vom Server geladen werden."
-        });
-        setLoadedEmployees([]);
-      } else {
-        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', response.data?.length || 0);
+      if (savedEmployees && savedEmployees.length > 0) {
+        // Filter out the employees to remove
+        const filteredEmployees = savedEmployees.filter(
+          emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+        );
         
-        // Access the data properly from the API response
-        const employeeData = response.data || [];
-        setLoadedEmployees(employeeData);
+        console.log('EmployeesPage - Erfolgreich geladene Mitarbeiter:', filteredEmployees.length);
         
-        if (employeeData.length > 0) {
-          toast("Mitarbeiterdaten geladen", {
-            description: `${employeeData.length} Mitarbeiter wurden erfolgreich geladen.`
+        // If we filtered out employees, save the filtered list back to storage
+        if (filteredEmployees.length < savedEmployees.length) {
+          saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredEmployees);
+          toast.success("Mitarbeiterdaten aktualisiert", {
+            description: `${savedEmployees.length - filteredEmployees.length} Mitarbeiter wurden entfernt.`
           });
         }
+        
+        setLoadedEmployees(filteredEmployees);
+      } else {
+        console.log('EmployeesPage - Keine gespeicherten Mitarbeiter gefunden, verwende Beispieldaten');
+        // Make sure example data doesn't include the employees to remove
+        const filteredInitialEmployees = initialEmployees.filter(
+          emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+        );
+        setLoadedEmployees(filteredInitialEmployees);
+        
+        // Save filtered example employees immediately to localStorage
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredInitialEmployees);
+        
+        toast("Beispieldaten geladen", {
+          description: "Es wurden keine gespeicherten Mitarbeiterdaten gefunden. Beispieldaten wurden geladen."
+        });
       }
     } catch (error) {
-      console.error('EmployeesPage - Unbehandelter Fehler beim Laden der Mitarbeiter:', error);
-      setApiError("Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+      console.error('EmployeesPage - Fehler beim Laden der Mitarbeiter:', error);
+      // Make sure example data doesn't include the employees to remove
+      const filteredInitialEmployees = initialEmployees.filter(
+        emp => !EMPLOYEES_TO_REMOVE.includes(emp.name)
+      );
+      setLoadedEmployees(filteredInitialEmployees);
+      
+      // Save filtered example employees to localStorage as fallback
+      saveToStorage(STORAGE_KEYS.EMPLOYEES, filteredInitialEmployees);
       
       toast.error("Fehler beim Laden der Daten", {
-        description: "Die Mitarbeiterdaten konnten nicht vom Server geladen werden."
+        description: "Beispieldaten wurden stattdessen geladen."
       });
-      
-      setLoadedEmployees([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Ensure employees are saved when they change
+  useEffect(() => {
+    if (loadedEmployees.length > 0 && !isLoading) {
+      try {
+        saveToStorage(STORAGE_KEYS.EMPLOYEES, loadedEmployees);
+        console.log('EmployeesPage - Gespeicherte Mitarbeiter in localStorage:', loadedEmployees.length);
+        
+        // Trigger custom event to notify other components
+        const event = new CustomEvent('employees-updated', { 
+          detail: { employees: loadedEmployees } 
+        });
+        window.dispatchEvent(event);
+      } catch (error) {
+        console.error('EmployeesPage - Fehler beim Speichern der Mitarbeiter:', error);
+      }
+    }
+  }, [loadedEmployees, isLoading]);
 
   // Handle resetting employee data
   const handleResetEmployeeData = () => {
     setIsResetDialogOpen(true);
   };
 
-  const confirmResetEmployeeData = async () => {
+  const confirmResetEmployeeData = () => {
     setIsLoading(true);
     
-    try {
-      const response = await api.employees.deleteAll();
+    // Clear the employee data from localStorage
+    const success = clearEmployeesStorage();
+    
+    if (success) {
+      // Set empty employees array
+      setLoadedEmployees([]);
       
-      if (response.success) {
-        // Refresh employee list
-        setLoadedEmployees([]);
-        
-        toast.success("Mitarbeiterdaten zurückgesetzt", {
-          description: "Alle Mitarbeiterdaten wurden erfolgreich gelöscht."
-        });
-      } else {
-        toast.error("Fehler beim Zurücksetzen", {
-          description: response.error || "Die Mitarbeiterdaten konnten nicht gelöscht werden."
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting employees:', error);
+      // Create an event to notify other components
+      const event = new CustomEvent('employees-updated', { 
+        detail: { employees: [] } 
+      });
+      window.dispatchEvent(event);
       
+      toast.success("Mitarbeiterdaten zurückgesetzt", {
+        description: "Alle Mitarbeiterdaten wurden erfolgreich gelöscht."
+      });
+    } else {
       toast.error("Fehler beim Zurücksetzen", {
         description: "Die Mitarbeiterdaten konnten nicht gelöscht werden."
       });
-    } finally {
-      setIsLoading(false);
-      setIsResetDialogOpen(false);
     }
+    
+    setIsLoading(false);
+    setIsResetDialogOpen(false);
   };
 
   return (
@@ -117,28 +148,11 @@ const EmployeesPage = () => {
         onResetEmployees={handleResetEmployeeData}
       />
       
-      {apiError && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Verbindungsfehler</AlertTitle>
-          <AlertDescription>
-            {apiError}
-            <button 
-              onClick={fetchEmployees} 
-              className="underline ml-2 font-medium"
-            >
-              Erneut versuchen
-            </button>
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <EmployeePageContent 
         initialEmployees={loadedEmployees} 
         isAddEmployeeDialogOpen={isAddEmployeeDialogOpen}
         setIsAddEmployeeDialogOpen={setIsAddEmployeeDialogOpen}
         isLoading={isLoading}
-        onRefresh={fetchEmployees}
       />
 
       <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>

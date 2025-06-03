@@ -27,23 +27,15 @@ const ScorecardWeekSelector: React.FC<ScorecardWeekSelectorProps> = ({
     loadAvailableWeeks();
 
     // Listen for scorecard data updates
-    const handleScorecardUpdate = (event: CustomEvent) => {
-      console.log("Scorecard data updated, refreshing weeks", event.detail);
+    const handleScorecardUpdate = () => {
       loadAvailableWeeks();
-      
-      // Switch to the newly uploaded week if provided
-      if (event.detail?.week && event.detail?.year) {
-        const newWeekId = `week-${event.detail.week}-${event.detail.year}`;
-        console.log(`Switching to newly uploaded week: ${newWeekId}`);
-        setSelectedWeek(newWeekId);
-      }
     };
 
     window.addEventListener('scorecardDataUpdated', handleScorecardUpdate);
     return () => {
       window.removeEventListener('scorecardDataUpdated', handleScorecardUpdate);
     };
-  }, [setSelectedWeek]);
+  }, []);
   
   const loadAvailableWeeks = () => {
     try {

@@ -17,13 +17,7 @@ export const dispatchShiftEvent = (
         employeeId,
         date,
         shiftType,
-        confirmed: false,
-        // Add missing required properties
-        startTime: "08:00",  // Default start time
-        endTime: "16:00",    // Default end time
-        status: "assigned",  // Default status
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        confirmed: false
       };
       
       console.log(`Dispatching add shift event:`, {
@@ -52,13 +46,7 @@ export const dispatchShiftEvent = (
             id: `${employeeId}-${date}`,
             employeeId, 
             date,
-            shiftType: previousShiftType,
-            // Add missing required properties for the remove action as well
-            startTime: "08:00",
-            endTime: "16:00",
-            status: "cancelled", // Use cancelled for removes
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            shiftType: previousShiftType
           },
           action: 'remove'
         }

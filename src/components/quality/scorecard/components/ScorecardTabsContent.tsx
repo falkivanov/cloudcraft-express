@@ -45,7 +45,8 @@ const ScorecardTabsContent: React.FC<ScorecardTabsContentProps> = ({
           
           <div className="w-full mx-auto">
             <CompanyKPIs 
-              data={data}
+              companyKPIs={data.companyKPIs} 
+              previousWeekData={previousWeekData} 
             />
           </div>
         </TabsContent>

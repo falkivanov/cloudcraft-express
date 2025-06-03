@@ -8,26 +8,27 @@ import EmployeeDashboard from "./dashboard/EmployeeDashboard";
 import EmployeeFilter from "./EmployeeFilter";
 import EmployeeTabs from "./EmployeeTabs";
 import AddEmployeeDialog from "./AddEmployeeDialog";
+import { initialEmployees } from "@/data/sampleEmployeeData";
+import { saveToStorage, loadFromStorage, STORAGE_KEYS } from "@/utils/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { api } from "@/services/api";
 
 interface EmployeePageContentProps {
   initialEmployees: Employee[];
   isAddEmployeeDialogOpen?: boolean;
   setIsAddEmployeeDialogOpen?: (open: boolean) => void;
   isLoading?: boolean;
-  onRefresh?: () => Promise<void>;
 }
 
 const EmployeePageContent: React.FC<EmployeePageContentProps> = ({ 
   initialEmployees: propInitialEmployees,
   isAddEmployeeDialogOpen = false,
   setIsAddEmployeeDialogOpen = () => {},
-  isLoading = false,
-  onRefresh
+  isLoading = false
 }) => {
-  const [employees, setEmployees] = useState<Employee[]>(propInitialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>(
+    propInitialEmployees.length > 0 ? propInitialEmployees : initialEmployees
+  );
   const { toast: shadcnToast } = useToast();
   const { setOpen } = useSidebar();
 
@@ -43,15 +44,47 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     handleSort
   } = useEmployeeFilter(employees);
 
-  // Sync with prop changes
+  // Synchronisiere mit Prop-Änderungen
   useEffect(() => {
-    if (propInitialEmployees.length > 0 || propInitialEmployees.length === 0) {
+    if (propInitialEmployees.length > 0) {
       console.log('EmployeePageContent - Mitarbeiter aus Props aktualisieren:', propInitialEmployees.length);
       setEmployees(propInitialEmployees);
     }
   }, [propInitialEmployees]);
 
-  // Fix pointer-events issue
+  // Höre auf Speicherereignisse von anderen Tabs und auf benutzerdefinierte Ereignisse
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEYS.EMPLOYEES && e.newValue) {
+        try {
+          const parsedEmployees = JSON.parse(e.newValue);
+          if (parsedEmployees && Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+            console.log('EmployeePageContent - Mitarbeiter aus Speicher-Ereignis aktualisiert:', parsedEmployees.length);
+            setEmployees(parsedEmployees);
+          }
+        } catch (error) {
+          console.error('EmployeePageContent - Fehler beim Parsen der Mitarbeiter aus Speicher-Ereignis:', error);
+        }
+      }
+    };
+    
+    const handleCustomEvent = (e: CustomEvent<{employees: Employee[]}>) => {
+      if (e.detail && e.detail.employees) {
+        console.log('EmployeePageContent - Aktualisierung durch Custom Event:', e.detail.employees.length);
+        setEmployees(e.detail.employees);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('employees-updated', handleCustomEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('employees-updated', handleCustomEvent as EventListener);
+    };
+  }, []);
+
+  // Problem mit pointer-events beheben
   useEffect(() => {
     const handleMouseMove = () => {
       document.body.style.pointerEvents = 'auto';
@@ -64,87 +97,45 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
     };
   }, [setOpen]);
 
-  const handleUpdateEmployee = async (updatedEmployee: Employee) => {
-    try {
-      const result = await api.employees.update(updatedEmployee.id, updatedEmployee);
-      
-      if (result.success && result.data) {
-        // Update local state
-        const updatedEmployees = employees.map(emp => 
-          emp.id === updatedEmployee.id ? updatedEmployee : emp
-        );
-        setEmployees(updatedEmployees);
-        
-        toast("Mitarbeiter aktualisiert", {
-          description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`
-        });
-      } else {
-        throw new Error(result.error || "Unbekannter Fehler");
-      }
-    } catch (error) {
-      console.error('Error updating employee:', error);
-      toast.error("Fehler beim Aktualisieren", {
-        description: `Die Daten von ${updatedEmployee.name} konnten nicht aktualisiert werden.`
-      });
-    }
+  const handleUpdateEmployee = (updatedEmployee: Employee) => {
+    const updatedEmployees = employees.map(emp => 
+      emp.id === updatedEmployee.id ? updatedEmployee : emp
+    );
+    
+    setEmployees(updatedEmployees);
+    
+    // Sofort in localStorage speichern
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+    
+    toast("Mitarbeiter aktualisiert", {
+      description: `Die Daten von ${updatedEmployee.name} wurden erfolgreich aktualisiert.`
+    });
   };
 
-  const handleAddEmployee = async (newEmployee: Employee) => {
-    try {
-      const result = await api.employees.create(newEmployee);
-      
-      if (result.success && result.data) {
-        // Update local state with the created employee from the response
-        setEmployees(prev => [...prev, result.data as Employee]);
-        
-        setIsAddEmployeeDialogOpen(false);
-        
-        toast("Mitarbeiter hinzugefügt", {
-          description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`
-        });
-      } else {
-        throw new Error(result.error || "Unbekannter Fehler");
-      }
-    } catch (error) {
-      console.error('Error adding employee:', error);
-      toast.error("Fehler beim Hinzufügen", {
-        description: `${newEmployee.name} konnte nicht hinzugefügt werden.`
-      });
-    }
+  const handleAddEmployee = (newEmployee: Employee) => {
+    const updatedEmployees = [...employees, newEmployee];
+    setEmployees(updatedEmployees);
+    
+    // Sofort in localStorage speichern
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+    
+    setIsAddEmployeeDialogOpen(false);
+    
+    toast("Mitarbeiter hinzugefügt", {
+      description: `${newEmployee.name} wurde erfolgreich als neuer Mitarbeiter hinzugefügt.`
+    });
   };
 
-  const handleImportEmployees = async (importedEmployees: Employee[]) => {
-    try {
-      const result = await api.employees.createBatch(importedEmployees);
-      
-      if (result.success && result.data) {
-        // Access the batch response data properly
-        const batchResponse = result.data;
-        
-        // Update local state with newly created employees
-        if (batchResponse.created && batchResponse.created.length > 0) {
-          setEmployees(prev => [...prev, ...batchResponse.created]);
-        }
-        
-        toast(
-          batchResponse.skipped > 0 
-            ? "Mitarbeiter teilweise importiert" 
-            : "Mitarbeiter importiert", 
-          {
-            description: `${batchResponse.created.length} Mitarbeiter wurden erfolgreich importiert. ${
-              batchResponse.skipped > 0 ? `${batchResponse.skipped} wurden übersprungen.` : ''
-            }`
-          }
-        );
-      } else {
-        throw new Error(result.error || "Import fehlgeschlagen");
-      }
-    } catch (error) {
-      console.error('Error importing employees:', error);
-      toast.error("Fehler beim Importieren", {
-        description: `Die Mitarbeiter konnten nicht importiert werden.`
-      });
-    }
+  const handleImportEmployees = (importedEmployees: Employee[]) => {
+    const updatedEmployees = [...employees, ...importedEmployees];
+    setEmployees(updatedEmployees);
+    
+    // Sofort in localStorage speichern
+    saveToStorage(STORAGE_KEYS.EMPLOYEES, updatedEmployees);
+    
+    toast("Mitarbeiter importiert", {
+      description: `${importedEmployees.length} Mitarbeiter wurden erfolgreich importiert.`
+    });
   };
 
   if (isLoading) {
@@ -168,7 +159,6 @@ const EmployeePageContent: React.FC<EmployeePageContentProps> = ({
         onSearchChange={setSearchQuery}
         employees={employees}
         onImportEmployees={handleImportEmployees}
-        onRefresh={onRefresh}
       />
 
       <div className="w-full overflow-x-auto bg-background">

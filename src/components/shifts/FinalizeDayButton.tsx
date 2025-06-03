@@ -10,15 +10,13 @@ interface FinalizeDayButtonProps {
   onFinalize: (dateKey: string) => void;
   dateKey: string;
   isFinalized: boolean;
-  isTwoWeekView?: boolean;
 }
 
 const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({ 
   date, 
   onFinalize, 
   dateKey,
-  isFinalized,
-  isTwoWeekView = false
+  isFinalized
 }) => {
   // Handle the finalize button click
   const handleClick = (e: React.MouseEvent) => {
@@ -78,18 +76,18 @@ const FinalizeDayButton: React.FC<FinalizeDayButtonProps> = ({
           className="w-full"
           onClick={handleClick}
           disabled={isFinalized}
-          size={isTwoWeekView ? "sm" : "sm"}
+          size="sm"
           type="button" // Explicitly set to button to prevent form submission behavior
         >
           {isFinalized ? (
             <>
-              <CheckIcon className={`h-4 w-4 ${!isTwoWeekView ? 'mr-1' : ''}`} />
-              {!isTwoWeekView && 'Finalisiert'}
+              <CheckIcon className="h-4 w-4 mr-1" />
+              Finalisiert
             </>
           ) : (
             <>
-              <CalendarIcon className={`h-4 w-4 ${!isTwoWeekView ? 'mr-1' : ''}`} />
-              {!isTwoWeekView && 'Tag finalisieren'}
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              Tag finalisieren
             </>
           )}
         </Button>
